@@ -1,7 +1,7 @@
 {
   "name": "icebergs-frontend",
   "version": "1.0.0",
-  "description": "冰山图谱宇宙 - Astro SSR + React 19",
+  "description": "冰山图宇宙 - Astro SSR + React 19",
   "type": "module",
   "scripts": {
     "dev": "astro dev",
