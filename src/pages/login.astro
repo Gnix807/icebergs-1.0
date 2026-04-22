@@ -1,0 +1,11 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { LoginForm } from '../components/LoginForm';
+---
+
+<Layout title="登录 | 冰山图宇宙">
+  <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
+  <main class="bg-grid min-h-screen flex items-center justify-center relative z-10">
+    <LoginForm client:load isOpen={true} onClose={() => window.location.href = '/'} />
+  </main>
+</Layout>

@@ -1,0 +1,265 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { UserCenter } from '../../components/user/UserCenter';
+import { prisma } from '../../lib/prisma';
+import { getSessionById } from '../../lib/auth/index';
+
+const { id } = Astro.params;
+
+let user = null;
+let userIcebergs: {
+  id: string; slug: string; title: string; description: string | null;
+  status: string; viewCount: number; createdAt: Date;
+  _count: { tiers: number };
+}[] = [];
+let isOwner = false;
+let viewerRole: string | undefined = undefined;
+let viewerIsFounder = false;
+let appealEligible = false;
+let promotionEligible = false;
+let promotionPending = false;
+let rfaEligible = false;
+let rfaPending = false;
+let rfaActiveId: string | null = null;
+let socialStats = { totalViews: 0, totalVotes: 0 };
+let achievements: { achievementId: string; unlockedAt: string }[] = [];
+let achievementDefs: { key: string; icon: string; label: string; labelZh: string; desc: string; color: string; triggerType: string; triggerTarget: number; sortOrder: number; isHidden: boolean; }[] = [];
+let userReadCount = 0;
+let awards: { id: string; type: string; message: string | null; createdAt: string; giver: { id: string; username: string; nickname: string | null } }[] = [];
+let userboxIds: string[] = [];
+let error = null;
+
+try {
+  const sessionId = Astro.cookies.get('session')?.value;
+  const session = await getSessionById(sessionId);
+  isOwner = !!(session && session.userId === id);
+  viewerRole = session?.role;
+  viewerIsFounder = session?.isFounder ?? false;
+
+  if (id) {
+    user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        username: true,
+        nickname: true,
+        role: true,
+        status: true,
+        banUntil: true,
+        createdAt: true,
+        bio: true,
+        avatar: true,
+        qualityScore: true,
+        isFounder: true,
+        privacyShowStats: true,
+        privacyShowWatchlist: true,
+        userboxIds: true,
+        _count: {
+          select: { icebergs: true },
+        },
+      },
+    });
+
+    // 计算 WARNED_2 申诉资格（满 180 天 + 无待处理申诉）
+    if (isOwner && user?.status === 'WARNED_2') {
+      const appealDays = 180;
+      const threshold = new Date(Date.now() - appealDays * 24 * 60 * 60 * 1000);
+      const [lastWarning, pendingAppeal] = await Promise.all([
+        prisma.userWarning.findFirst({
+          where: { userId: id, level: 2, clearedAt: null },
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true },
+        }),
+        prisma.appeal.findFirst({
+          where: { userId: id, status: 'PENDING' },
+          select: { id: true },
+        }),
+      ]);
+      appealEligible = !!(lastWarning && lastWarning.createdAt < threshold && !pendingAppeal);
+    }
+    // READ_ONLY / TEMP_BANNED 也可以申诉（无冷却期限制，但不能重复提交）
+    if (isOwner && (user?.status === 'READ_ONLY' || user?.status === 'TEMP_BANNED')) {
+      const pendingAppeal = await prisma.appeal.findFirst({
+        where: { userId: id, status: 'PENDING' },
+        select: { id: true },
+      });
+      appealEligible = !pendingAppeal;
+    }
+
+    // 晋升申请资格（仅本人且为 USER 角色时计算）
+    if (isOwner && user?.role === 'USER') {
+      const pendingPromo = await prisma.promotionRequest.findFirst({
+        where: { userId: id!, status: 'PENDING' },
+        select: { id: true },
+      });
+      promotionPending = !!pendingPromo;
+
+      if (!promotionPending && user.status === 'ACTIVE') {
+        const ageDays = (Date.now() - new Date(user.createdAt).getTime()) / 86400000;
+        if (user.qualityScore >= 20 && user._count.icebergs >= 2 && ageDays >= 7) {
+          const recentWarn2 = await prisma.userWarning.findFirst({
+            where: {
+              userId: id!,
+              level: 2,
+              clearedAt: null,
+              createdAt: { gte: new Date(Date.now() - 90 * 86400000) },
+            },
+            select: { id: true },
+          });
+          promotionEligible = !recentWarn2;
+        }
+      }
+    }
+
+    // RfA 资格（仅本人且为 CONTRIBUTOR 角色时计算）
+    if (isOwner && user?.role === 'CONTRIBUTOR') {
+      const db = prisma as any;
+      const [openRfa, recentRejected, rfaSettings] = await Promise.all([
+        db.rfaRequest.findFirst({
+          where: { userId: id!, status: 'OPEN' },
+          select: { id: true },
+        }),
+        db.rfaRequest.findFirst({
+          where: {
+            userId: id!,
+            status: 'REJECTED',
+            resolvedAt: { gte: new Date(Date.now() - 15 * 86400_000) },
+          },
+          select: { id: true },
+        }),
+        prisma.systemSettings.findMany({
+          where: { key: { in: ['editor_min_score', 'editor_min_days'] } },
+        }),
+      ]);
+
+      rfaPending = !!openRfa;
+      rfaActiveId = openRfa?.id ?? null;
+
+      if (!rfaPending && !recentRejected && user.status === 'ACTIVE') {
+        const settingsMap: Record<string, string> = {};
+        rfaSettings.forEach((r: any) => { settingsMap[r.key] = r.value; });
+        const minScore = parseInt(settingsMap['editor_min_score'] ?? '100', 10);
+        const minDays  = parseInt(settingsMap['editor_min_days']  ?? '30',  10);
+        const ageDays  = (Date.now() - new Date(user.createdAt).getTime()) / 86400_000;
+        rfaEligible = user.qualityScore >= minScore && ageDays >= minDays;
+      }
+    }
+
+    if (user) {
+      const [fetchedIcebergs, totalVotes, fetchedAchDefs, readCount, fetchedAwards] = await Promise.all([
+        prisma.iceberg.findMany({
+          where: isOwner
+            ? { authorId: id }
+            : { authorId: id, status: 'PUBLISHED' },
+          select: {
+            id: true,
+            slug: true,
+            title: true,
+            description: true,
+            status: true,
+            viewCount: true,
+            createdAt: true,
+            _count: { select: { tiers: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+        prisma.vote.count({ where: { iceberg: { authorId: id }, value: 1 } }),
+        prisma.achievement.findMany({ orderBy: { sortOrder: 'asc' } }),
+        prisma.itemRead.count({ where: { userId: id } }),
+        (prisma as any).userAward.findMany({
+          where: { receiverId: id },
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true, type: true, message: true, createdAt: true,
+            giver: { select: { id: true, username: true, nickname: true } },
+          },
+        }),
+      ]);
+      userIcebergs = fetchedIcebergs;
+      achievementDefs = fetchedAchDefs;
+      userReadCount = readCount;
+      awards = fetchedAwards.map((a: any) => ({ ...a, createdAt: new Date(a.createdAt).toISOString() }));
+      userboxIds = JSON.parse(user.userboxIds ?? '[]');
+      const totalViews = fetchedIcebergs.reduce((sum, ic) => sum + ic.viewCount, 0);
+      socialStats = { totalViews, totalVotes };
+
+      // ── 成就系统：计算 + 持久化 ──────────────────────────────
+      const accountAgeDays = (Date.now() - new Date(user.createdAt).getTime()) / 86400000;
+      const earned = new Set<string>();
+      if (fetchedIcebergs.some(ic => ic.status === 'PUBLISHED'))        earned.add('pioneer');
+      if (user._count.icebergs >= 10)                                    earned.add('prolific');
+      if (totalVotes >= 50)                                               earned.add('popular');
+      if (user.qualityScore >= 100)                                       earned.add('analyst');
+      if (accountAgeDays >= 180)                                          earned.add('veteran');
+      if (user.qualityScore >= 500)                                       earned.add('scholar');
+
+      // 拉取已记录的成就
+      const existing: { achievementId: string; unlockedAt: Date }[] =
+        await prisma.userAchievement.findMany({
+          where: { userId: id },
+          select: { achievementId: true, unlockedAt: true },
+        });
+      const existingIds = new Set(existing.map((a: any) => a.achievementId));
+
+      // 写入新解锁的成就
+      const toCreate = [...earned].filter(aid => !existingIds.has(aid));
+      if (toCreate.length > 0) {
+        await prisma.userAchievement.createMany({
+          data: toCreate.map((achievementId: string) => ({ userId: id, achievementId })),
+        });
+      }
+
+      // 合并：已有 + 本次新解锁
+      const nowStr = new Date().toISOString();
+      achievements = [
+        ...existing.map((a: any) => ({
+          achievementId: a.achievementId,
+          unlockedAt: new Date(a.unlockedAt).toISOString(),
+        })),
+        ...toCreate.map((achievementId: string) => ({ achievementId, unlockedAt: nowStr })),
+      ];
+    }
+  }
+
+  if (!user) error = '用户不存在';
+} catch (err) {
+  console.error('加载用户信息失败:', err);
+  error = '加载失败';
+}
+---
+
+<Layout title={`${user?.nickname || user?.username || '用户'} | 冰山图宇宙`}>
+  <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
+
+  <div class="relative z-10">
+    {error ? (
+      <div class="max-w-4xl mx-auto px-4 md:px-6 py-12">
+        <div class="p-10 border border-[#2A2A2A] text-center boot-animate">
+          <p class="text-[#ef4444] font-mono mb-4">{error}</p>
+          <a href="/" class="text-[#00FF41] hover:underline font-mono text-sm">← 返回首页</a>
+        </div>
+      </div>
+    ) : (
+      <UserCenter
+        client:load
+        user={JSON.parse(JSON.stringify(user))}
+        icebergs={JSON.parse(JSON.stringify(userIcebergs))}
+        isOwner={isOwner}
+        viewerRole={viewerRole}
+        viewerIsFounder={viewerIsFounder}
+        appealEligible={appealEligible}
+        promotionEligible={promotionEligible}
+        promotionPending={promotionPending}
+        rfaEligible={rfaEligible}
+        rfaPending={rfaPending}
+        rfaActiveId={rfaActiveId}
+        socialStats={socialStats}
+        achievements={achievements}
+        achievementDefs={achievementDefs}
+        userReadCount={userReadCount}
+        awards={awards}
+        userboxIds={userboxIds}
+      />
+    )}
+  </div>
+</Layout>

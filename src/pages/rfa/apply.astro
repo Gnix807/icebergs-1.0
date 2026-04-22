@@ -1,0 +1,166 @@
+---
+/**
+ * /rfa/apply — 提交编辑资格申请表单页
+ * 仅 CONTRIBUTOR 可访问；不满足条件则显示具体原因
+ */
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+import { getSessionById } from '../../lib/auth';
+import { getRfaSettings } from '../../lib/rfa';
+
+const sessionId = Astro.cookies.get('session')?.value;
+const session   = await getSessionById(sessionId);
+
+if (!session) return Astro.redirect('/login');
+if (session.role !== 'CONTRIBUTOR') return Astro.redirect('/org');
+
+const db = prisma as any;
+const settings = await getRfaSettings();
+
+const user = await prisma.user.findUnique({
+  where: { id: session.userId },
+  select: { qualityScore: true, createdAt: true, status: true },
+});
+
+const ageDays   = user ? (Date.now() - user.createdAt.getTime()) / 86400_000 : 0;
+const [openRfa, recentRejected] = await Promise.all([
+  db.rfaRequest.findFirst({ where: { userId: session.userId, status: 'OPEN' }, select: { id: true } }),
+  db.rfaRequest.findFirst({
+    where: { userId: session.userId, status: 'REJECTED', resolvedAt: { gte: new Date(Date.now() - settings.cooldownDays * 86400_000) } },
+    select: { resolvedAt: true },
+  }),
+]);
+
+// 如果已有进行中的 RfA，直接跳转
+if (openRfa) return Astro.redirect(`/rfa/${openRfa.id}`);
+
+const reasons: string[] = [];
+if ((user?.qualityScore ?? 0) < settings.minScore)
+  reasons.push(`质量分不足（当前 ${user?.qualityScore ?? 0}，需要 ${settings.minScore}）`);
+if (ageDays < settings.minDays)
+  reasons.push(`注册时间不足（当前 ${Math.floor(ageDays)} 天，需要 ${settings.minDays} 天）`);
+if (['READ_ONLY', 'TEMP_BANNED', 'PERM_BANNED', 'WARNED_2'].includes(user?.status ?? ''))
+  reasons.push('账号当前状态不允许申请');
+
+const cooldownDaysLeft = recentRejected
+  ? Math.ceil((new Date(recentRejected.resolvedAt).getTime() + settings.cooldownDays * 86400_000 - Date.now()) / 86400_000)
+  : 0;
+if (cooldownDaysLeft > 0)
+  reasons.push(`冷却期未结束（还需等待 ${cooldownDaysLeft} 天）`);
+
+const eligible = reasons.length === 0;
+---
+
+<Layout title="申请编辑资格（RfA）— 冰山图宇宙">
+  <main class="max-w-xl mx-auto px-4 py-8 boot-animate">
+
+    <div class="text-[10px] font-mono text-[#374151] mb-6">
+      <a href="/org" class="hover:text-[#9ca3af] transition-colors">机构</a>
+      <span class="mx-2">›</span>
+      <span>申请编辑资格</span>
+    </div>
+
+    <div class="border border-[#1a1a1a] bg-[#0a0c10] p-5 mb-6">
+      <h1 class="font-mono text-base text-[#e5e5e5] mb-1">申请编辑资格（RfA）</h1>
+      <p class="text-[11px] font-mono text-[#4b5563]">
+        编辑可以审核冰山图、管理内容、参与平台治理。申请后将进入为期 {settings.voteDays} 天的公开投票，
+        CONTRIBUTOR 及以上均可投票，需获得足够的加权支持票方可通过。
+      </p>
+    </div>
+
+    <!-- 不满足条件 -->
+    {!eligible && (
+      <div class="border border-[#ef444430] bg-[#ef444408] p-4 mb-6">
+        <div class="text-[10px] font-mono text-[#ef4444] mb-2 tracking-wider">// 不满足申请条件</div>
+        <ul class="space-y-1">
+          {reasons.map(r => (
+            <li class="text-xs font-mono text-[#9ca3af] before:content-['·'] before:mr-2 before:text-[#ef4444]">{r}</li>
+          ))}
+        </ul>
+        <div class="mt-3 text-[10px] font-mono text-[#374151]">
+          达到条件后，在个人主页的快捷操作栏中申请。
+        </div>
+      </div>
+    )}
+
+    <!-- 条件达标：申请表单 -->
+    {eligible && (
+      <div class="border border-[#1a1a1a] bg-[#050505] p-5">
+        <div class="text-[10px] font-mono text-[#374151] mb-4 space-y-0.5">
+          <div>质量分：<span class="text-[#22c55e]">{user?.qualityScore}</span>（门槛 {settings.minScore}）</div>
+          <div>注册天数：<span class="text-[#22c55e]">{Math.floor(ageDays)}</span>（门槛 {settings.minDays} 天）</div>
+        </div>
+
+        <form id="rfa-form" class="space-y-4">
+          <div>
+            <label class="text-[10px] font-mono text-[#4b5563] block mb-1.5">
+              申请陈述（可选，最多 500 字）
+            </label>
+            <textarea
+              id="rfa-statement"
+              rows={5}
+              maxlength={500}
+              class="w-full px-3 py-2 bg-[#0a0c10] border border-[#2A2A2A] text-xs font-mono text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none resize-none"
+              placeholder="介绍你的参与经历、对内容质量的理解、以及你希望以编辑身份做什么……"
+            ></textarea>
+            <div id="char-count" class="text-right text-[10px] font-mono text-[#2A2A2A]">0/500</div>
+          </div>
+
+          <div class="text-[10px] font-mono text-[#374151] border border-[#1a1a1a] px-3 py-2 space-y-0.5">
+            <div>· 提交后进入 {settings.voteDays} 天公开投票，无法修改陈述</div>
+            <div>· 若未通过，需等待 {settings.cooldownDays} 天冷却期后方可再次申请</div>
+          </div>
+
+          <button
+            type="submit"
+            id="submit-btn"
+            class="w-full py-2.5 text-sm font-mono border border-[#3b82f640] text-[#3b82f6] hover:bg-[#3b82f610] transition-colors disabled:opacity-40"
+          >
+            提交申请
+          </button>
+        </form>
+      </div>
+    )}
+
+    <div class="mt-4 text-center">
+      <a href="/rules" class="text-[10px] font-mono text-[#374151] hover:text-[#9ca3af] transition-colors">
+        了解编辑资格规则 →
+      </a>
+    </div>
+
+  </main>
+</Layout>
+
+<script>
+  const textarea = document.getElementById('rfa-statement') as HTMLTextAreaElement | null;
+  const counter  = document.getElementById('char-count');
+  const form     = document.getElementById('rfa-form');
+  const btn      = document.getElementById('submit-btn') as HTMLButtonElement | null;
+
+  textarea?.addEventListener('input', () => {
+    if (counter) counter.textContent = `${textarea.value.length}/500`;
+  });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = '提交中...';
+
+    const statement = textarea?.value.trim() ?? '';
+    const res = await fetch('/api/rfa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ statement: statement || undefined }),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      window.location.href = `/rfa/${data.data.rfa.id}`;
+    } else {
+      alert(data.error?.message ?? '提交失败');
+      btn.disabled = false;
+      btn.textContent = '提交申请';
+    }
+  });
+</script>

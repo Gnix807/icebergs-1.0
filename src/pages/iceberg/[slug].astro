@@ -1,0 +1,831 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+import { marked } from 'marked';
+import { SocialBar } from '../../components/iceberg/SocialBar';
+import { ExportButton } from '../../components/iceberg/ExportButton';
+import { CommentSection } from '../../components/iceberg/CommentSection';
+import { getSessionById } from '../../lib/auth/index';
+import { checkAchievements, updateDailyStreak } from '../../lib/achievementService';
+
+const { slug } = Astro.params;
+
+// 读取登录态（供前端决定是否上报词条阅读）
+const sessionId = Astro.cookies.get('session')?.value;
+const session   = await getSessionById(sessionId);
+const isLoggedIn = !!session;
+
+let iceberg: any = null;
+let error = null;
+
+try {
+  if (slug) {
+    iceberg = await prisma.iceberg.findFirst({
+      where: {
+        OR: [{ slug }, { id: slug }],
+      },
+      include: {
+        tiers: {
+          orderBy: { order: 'asc' },
+          include: {
+            items: { orderBy: { order: 'asc' } },
+          },
+        },
+        author: {
+          select: { id: true, username: true, nickname: true },
+        },
+      },
+    });
+
+    if (iceberg) {
+      // 更新浏览计数 + 写入浏览日志（并发，不阻塞渲染）
+      await Promise.all([
+        prisma.iceberg.update({
+          where: { id: iceberg.id },
+          data: { viewCount: { increment: 1 } },
+        }),
+        iceberg.status === 'PUBLISHED'
+          ? prisma.viewLog.create({ data: { icebergId: iceberg.id } }).catch(() => {})
+          : Promise.resolve(),
+      ]);
+
+      // 追踪首次访问该冰山图（visitedIcebergCount）
+      if (session) {
+        const alreadyRead = await prisma.itemRead.findFirst({
+          where: { userId: session.userId, icebergId: iceberg.id },
+        });
+        if (!alreadyRead) {
+          updateDailyStreak(session.userId).catch(() => {});
+          prisma.userStats.upsert({
+            where: { userId: session.userId },
+            create: { userId: session.userId, visitedIcebergCount: 1 },
+            update: { visitedIcebergCount: { increment: 1 } },
+          }).catch(() => {});
+          checkAchievements(session.userId, {
+            type: 'visit',
+            currentIceberg: {
+              id: iceberg.id,
+              tierCount: iceberg.tiers?.length ?? 0,
+              itemCount: iceberg.tiers?.reduce((s: number, t: any) => s + (t.items?.length ?? 0), 0) ?? 0,
+            },
+            isFirstVisitIceberg: true,
+          });
+        }
+      }
+
+      if (iceberg.description) {
+        iceberg.description = marked.parse(iceberg.description) as string;
+      }
+
+      for (const tier of iceberg.tiers) {
+        for (const item of tier.items) {
+          if (item.desc) {
+            (item as any)._descHtml = marked.parse(item.desc) as string;
+          }
+          // Parse labels JSON array
+          try {
+            (item as any)._labels = JSON.parse(item.labels || '[]') as string[];
+          } catch {
+            (item as any)._labels = [];
+          }
+        }
+      }
+    }
+  }
+
+  if (!iceberg) {
+    error = '冰山图不存在';
+  }
+} catch (err) {
+  console.error('加载冰山图失败:', err);
+  error = '加载失败';
+}
+
+const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
+const tierBg     = ['#052e16', '#172554', '#451a03', '#450a0a', '#4a044e', '#2e1065'];
+
+// 展平所有词条，用于抽屉导航
+interface FlatItem {
+  id: string;
+  title: string;
+  tierName: string;
+  tierColor: string;
+  labels: string[];
+  descHtml: string;
+  icebergId: string;
+  icebergTitle: string;
+  isLastTier: boolean;
+}
+const totalTiers = (iceberg?.tiers ?? []).length;
+const allItemsFlat: FlatItem[] = (iceberg?.tiers ?? []).flatMap((tier: any, ti: number) =>
+  tier.items.map((item: any) => ({
+    id: item.id,
+    title: item.title,
+    tierName: tier.name,
+    tierColor: tierColors[ti % 6],
+    labels: (item as any)._labels as string[],
+    descHtml: (item as any)._descHtml ?? '',
+    icebergId: iceberg.id,
+    icebergTitle: iceberg.title,
+    isLastTier: ti === totalTiers - 1,
+  }))
+);
+
+// 每层词条的全局起始 index（用于按钮的 data-index）
+let globalIdx = 0;
+
+// 收集所有标签（按出现频率排序）
+const labelCounts: Map<string, number> = new Map();
+for (const tier of (iceberg?.tiers ?? [])) {
+  for (const item of tier.items) {
+    for (const lbl of ((item as any)._labels as string[]) ?? []) {
+      labelCounts.set(lbl, (labelCounts.get(lbl) ?? 0) + 1);
+    }
+  }
+}
+const allLabels: string[] = [...labelCounts.entries()]
+  .sort((a, b) => b[1] - a[1])
+  .map(([lbl]) => lbl);
+
+// Per-label display colors
+const PREDEFINED_LABEL_COLORS: Record<string, string> = {
+  'NSFW':   '#ef4444',
+  '争议':   '#f59e0b',
+  '猜测':   '#6b7280',
+  '未证实': '#3b82f6',
+};
+const CUSTOM_PALETTE = ['#a78bfa', '#34d399', '#fb923c', '#f472b6', '#38bdf8', '#a3e635'];
+const labelColorMap: Record<string, string> = {};
+let _ci = 0;
+for (const lbl of allLabels) {
+  labelColorMap[lbl] = PREDEFINED_LABEL_COLORS[lbl] ?? CUSTOM_PALETTE[_ci++ % CUSTOM_PALETTE.length];
+}
+---
+
+<Layout title={`${iceberg?.title || '冰山图'} | 冰山图宇宙`}>
+  <main class="max-w-5xl mx-auto px-4 py-12">
+    {error ? (
+      <div class="p-8 bg-[#121212] border border-[#2A2A2A] text-center boot-animate">
+        <p class="text-red-500 font-mono">{error}</p>
+        <a href="/iceberg/list" class="text-[#00FF41] hover:underline mt-4 inline-block font-mono text-sm">
+          ← 返回列表
+        </a>
+      </div>
+    ) : (
+      <>
+        {/* ── Header ─────────────────────────────────────── */}
+        <header class="mb-10 boot-animate">
+          <div class="text-xs text-[#4b5563] font-mono mb-3 flex items-center gap-2">
+            <a href="/iceberg/list" class="hover:text-[#00FF41] transition-colors">冰山图列表</a>
+            <span class="text-[#2A2A2A]">/</span>
+            <span class={iceberg.status === 'PUBLISHED' ? 'text-[#22c55e]' : 'text-[#6b7280]'}>
+              {iceberg.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT'}
+            </span>
+          </div>
+
+          <h1 class="text-3xl md:text-4xl font-mono font-semibold mb-4 leading-tight">
+            <span class="text-[#00FF41]">#</span> {iceberg.title}
+          </h1>
+
+          {iceberg.description && (
+            <div class="mt-4 text-[#9ca3af] markdown-content text-sm leading-relaxed border-l-2 border-[#2A2A2A] pl-4" set:html={iceberg.description} />
+          )}
+
+          <div class="iceberg-meta mt-5 flex flex-wrap items-center justify-between gap-4 text-xs text-[#6b7280] font-mono">
+            <div class="flex flex-wrap items-center gap-4">
+              <span class="text-[#374151]">
+                <span class="text-[#6b7280]">{iceberg.tiers.length}</span> 层 ·
+                <span class="text-[#6b7280] ml-1">{allItemsFlat.length}</span> 词条
+              </span>
+              <span class="text-[#374151]">
+                <span class="text-[#6b7280]">{iceberg.viewCount}</span> 次探索
+              </span>
+              <span>
+                作者:
+                <a href={`/user/${iceberg.author?.id}`} class="text-[#9ca3af] hover:text-[#00FF41] transition-colors ml-1">
+                  {iceberg.author?.nickname || iceberg.author?.username || '匿名'}
+                </a>
+              </span>
+            </div>
+            <SocialBar client:load icebergId={iceberg.id} />
+            {iceberg.status === 'PUBLISHED' && (
+              <ExportButton
+                client:load
+                targetId="iceberg-export-content"
+                icebergUrl={`${Astro.url.origin}/iceberg/${iceberg.slug}`}
+              />
+            )}
+          </div>
+        </header>
+
+        {/* ── Filter Bar ──────────────────────────────────── */}
+        {(iceberg.tiers.length > 1 || allLabels.length > 0) && (
+          <div id="filter-bar" class="mb-6 border border-[#1f2937] bg-[#06060a] px-4 py-3 space-y-2.5">
+            {iceberg.tiers.length > 1 && (
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[10px] font-mono text-[#374151] tracking-widest w-8 shrink-0">层级</span>
+                <button
+                  data-tier-filter="all"
+                  class="filter-btn text-[10px] font-mono px-2 py-1 border transition-colors"
+                  style="--filter-color: #00FF41"
+                >全部</button>
+                {iceberg.tiers.map((tier: any, ti: number) => (
+                  <button
+                    data-tier-filter={String(ti)}
+                    class="filter-btn text-[10px] font-mono px-2 py-1 border transition-colors"
+                    style={`--filter-color: ${tierColors[ti % 6]}`}
+                  >
+                    {tier.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            {allLabels.length > 0 && (
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[10px] font-mono text-[#374151] tracking-widest w-8 shrink-0">标签</span>
+                {allLabels.map((label: string) => (
+                  <button
+                    data-label-filter={label}
+                    class="label-filter-btn text-[10px] font-mono px-2 py-1 border transition-all"
+                    style={`--lc: ${labelColorMap[label]}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div class="flex items-center justify-between min-h-[1rem]">
+              <span id="filter-count" class="text-[10px] font-mono text-[#4b5563]"></span>
+              <button id="filter-reset" class="hidden text-[10px] font-mono text-[#4b5563] hover:text-[#00FF41] transition-colors">
+                × 清除筛选
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Tier Sections ──────────────────────────────── */}
+        <div id="iceberg-export-content" class="space-y-4">
+          {iceberg.tiers.map((tier: any, ti: number) => {
+            const startIdx = globalIdx;
+            globalIdx += tier.items.length;
+            const color = tierColors[ti % 6];
+            const bg = tierBg[ti % 6];
+            return (
+              <div class="boot-animate tier-section" data-tier-idx={String(ti)} style={`animation-delay: ${100 + ti * 60}ms`}>
+                {/* Tier header */}
+                <div
+                  class="tier-header border-l-4 px-4 py-2.5"
+                  style={`border-color: ${color}; background-color: ${bg}22`}
+                >
+                  <div class="flex items-center gap-3">
+                    <h3 class="font-mono text-sm font-semibold" style={`color: ${color}`}>
+                      {tier.name}
+                    </h3>
+                    <span class="tier-count font-mono text-[10px] text-[#4b5563] border border-[#2A2A2A] px-1.5 py-0.5">
+                      {tier.items.length} 词条
+                    </span>
+                  </div>
+                  {tier.desc && (
+                    <p class="mt-0.5 font-mono text-[11px] text-[#4b5563]">{tier.desc}</p>
+                  )}
+                </div>
+
+                {/* Items as chips */}
+                <div
+                  class="tier-body border-l-4 border-b border-r border-[#1f2937] p-4"
+                  style={`border-left-color: ${color}44`}
+                >
+                  {tier.items.length === 0 ? (
+                    <p class="text-xs text-[#374151] font-mono">暂无词条</p>
+                  ) : (
+                    <div class="flex flex-wrap gap-2">
+                      {tier.items.map((item: any, ii: number) => {
+                        const idx = startIdx + ii;
+                        return (
+                          <button
+                            class="item-chip group flex items-center gap-1.5 px-3 py-1.5 bg-[#0d0d0d] border border-[#2A2A2A]
+                                   hover:border-current hover:bg-[#111827] transition-all text-left cursor-pointer"
+                            style={`--chip-color: ${color}`}
+                            data-index={idx}
+                            data-id={item.id}
+                            data-labels={JSON.stringify((item as any)._labels ?? [])}
+                          >
+                            <span class="chip-title font-mono text-xs text-[#c9d1d9] group-hover:text-white transition-colors">
+                              {item.title}
+                            </span>
+                            {(item as any)._labels?.length > 0 && (
+                              <span class="flex items-center gap-0.5 shrink-0 ml-0.5">
+                                {(item as any)._labels.map((lbl: string) => (
+                                  <span
+                                    data-label={lbl}
+                                    class="chip-label block w-1.5 h-1.5 rounded-full transition-all"
+                                    style={`--lc: ${labelColorMap[lbl] ?? color}; background-color: ${labelColorMap[lbl] ?? color}`}
+                                    title={lbl}
+                                  ></span>
+                                ))}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── Footer Actions ─────────────────────────────── */}
+        <div class="mt-10 flex flex-wrap justify-between items-center gap-4 border-t border-[#1f2937] pt-6">
+          <a
+            href={`/feedback?id=${iceberg.id}&title=${encodeURIComponent(iceberg.title)}`}
+            class="px-4 py-2 border border-[#374151] text-xs font-mono text-[#6b7280] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
+          >
+            ! 提交反馈
+          </a>
+          <a
+            href="/iceberg/list"
+            class="px-5 py-2 border border-[#2A2A2A] font-mono text-sm text-[#6b7280] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+          >
+            ← 返回列表
+          </a>
+        </div>
+
+        {/* ── Comments ───────────────────────────────────── */}
+        {iceberg.status === 'PUBLISHED' && (
+          <CommentSection
+            client:load
+            icebergId={iceberg.id}
+            currentUserId={session?.userId ?? null}
+            currentUserRole={session?.role ?? null}
+            isFounder={session?.isFounder ?? false}
+          />
+        )}
+      </>
+    )}
+  </main>
+
+  {/* ── Drawer Overlay ────────────────────────────────────── */}
+  <div
+    id="drawer-overlay"
+    class="fixed inset-0 bg-black/75 z-40 opacity-0 pointer-events-none transition-opacity duration-300"
+    onclick="closeDrawer()"
+  ></div>
+
+  {/* ── Drawer Panel ──────────────────────────────────────── */}
+  <div
+    id="drawer"
+    class="fixed top-0 right-0 h-full w-full md:w-[520px] bg-[#080a0f] border-l border-[#1f2937]
+           shadow-[-20px_0_60px_rgba(0,0,0,0.7)] z-50
+           transform translate-x-full transition-transform duration-300 flex flex-col"
+  >
+    {/* Drawer Header */}
+    <div class="flex items-start justify-between px-6 py-4 border-b border-[#1f2937] bg-[#050508] shrink-0">
+      <div class="flex-1 min-w-0 mr-4">
+        <div id="drawer-tier" class="text-[10px] font-mono mb-1.5 tracking-widest"></div>
+        <h2 id="drawer-title" class="text-lg font-mono text-[#e5e5e5] leading-snug"></h2>
+      </div>
+      <button
+        onclick="closeDrawer()"
+        class="shrink-0 mt-0.5 text-[#6b7280] hover:text-[#e5e5e5] border border-[#1f2937] hover:border-[#374151]
+               px-2.5 py-1.5 text-xs font-mono transition-all"
+      >
+        ✕
+      </button>
+    </div>
+
+    {/* Navigation bar */}
+    <div id="drawer-nav" class="flex items-center justify-between px-6 py-2.5 border-b border-[#1f2937] bg-[#060609] shrink-0">
+      <button
+        id="drawer-prev"
+        onclick="navigateDrawer(-1)"
+        class="font-mono text-xs text-[#6b7280] hover:text-[#00FF41] disabled:opacity-30 disabled:cursor-not-allowed
+               border border-[#1f2937] hover:border-[#00FF41] px-2.5 py-1 transition-all"
+      >
+        ← 上一个
+      </button>
+      <span id="drawer-count" class="font-mono text-[10px] text-[#374151] tracking-widest"></span>
+      <button
+        id="drawer-next"
+        onclick="navigateDrawer(1)"
+        class="font-mono text-xs text-[#6b7280] hover:text-[#00FF41] disabled:opacity-30 disabled:cursor-not-allowed
+               border border-[#1f2937] hover:border-[#00FF41] px-2.5 py-1 transition-all"
+      >
+        下一个 →
+      </button>
+    </div>
+
+    {/* Labels */}
+    <div id="drawer-labels-row" class="px-6 py-2.5 border-b border-[#1f2937] shrink-0 hidden">
+      <div id="drawer-labels" class="flex flex-wrap gap-1.5"></div>
+    </div>
+
+    {/* Content */}
+    <div id="drawer-body" class="flex-1 overflow-y-auto p-6">
+      <div id="drawer-content" class="markdown-content text-sm text-[#9ca3af] leading-relaxed"></div>
+    </div>
+
+    {/* Footer */}
+    <div class="px-6 py-3 border-t border-[#1f2937] shrink-0 bg-[#050508] flex items-center justify-between">
+      <span class="text-[10px] font-mono text-[#2A2A2A] truncate">{iceberg?.title}</span>
+      <a
+        id="drawer-feedback-link"
+        href="#"
+        class="text-[10px] font-mono text-[#374151] hover:text-[#ef4444] transition-colors whitespace-nowrap ml-4"
+      >
+        ! 反馈
+      </a>
+    </div>
+  </div>
+</Layout>
+
+{/* ── Inline script: drawer logic ─────────────────────────── */}
+<script is:inline define:vars={{ allItemsFlat, allLabels, isLoggedIn, icebergId: iceberg?.id, icebergTitle: iceberg?.title }}>
+  const ITEMS = allItemsFlat;
+  let currentIndex = -1;
+  let activeTier   = null;   // null = all; or tier index as number
+  let activeLabels = new Set();
+
+  // ── 探索成就上报 ──────────────────────────────────────────
+  function reportRead(item) {
+    if (!isLoggedIn || !item) return;
+    fetch('/api/items/read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemId: item.id, icebergId: item.icebergId, isLastTier: item.isLastTier }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.newAchievements || d.newAchievements.length === 0) return;
+        window.dispatchEvent(new CustomEvent('app:achievement', { detail: d.newAchievements }));
+      })
+      .catch(function () {});
+  }
+
+  const overlay      = document.getElementById('drawer-overlay');
+  const drawer       = document.getElementById('drawer');
+  const drawerTitle  = document.getElementById('drawer-title');
+  const drawerTier   = document.getElementById('drawer-tier');
+  const drawerCount  = document.getElementById('drawer-count');
+  const drawerPrev   = document.getElementById('drawer-prev');
+  const drawerNext   = document.getElementById('drawer-next');
+  const drawerContent    = document.getElementById('drawer-content');
+  const drawerLabelsRow  = document.getElementById('drawer-labels-row');
+  const drawerLabels     = document.getElementById('drawer-labels');
+  const drawerFeedback   = document.getElementById('drawer-feedback-link');
+
+  function renderDrawer(idx) {
+    const item = ITEMS[idx];
+    if (!item) return;
+
+    currentIndex = idx;
+
+    // Header
+    drawerTier.textContent  = item.tierName;
+    drawerTier.style.color  = item.tierColor;
+    drawerTitle.textContent = item.title;
+    drawerTitle.style.color = item.tierColor;
+
+    // Navigation
+    drawerCount.textContent = `${idx + 1} / ${ITEMS.length}`;
+    drawerPrev.disabled = idx === 0;
+    drawerNext.disabled = idx === ITEMS.length - 1;
+
+    // Labels
+    if (item.labels && item.labels.length > 0) {
+      drawerLabels.innerHTML = item.labels.map(l =>
+        `<span class="text-[10px] font-mono px-2 py-0.5 border" style="color:${item.tierColor};border-color:${item.tierColor}44">${l}</span>`
+      ).join('');
+      drawerLabelsRow.classList.remove('hidden');
+    } else {
+      drawerLabelsRow.classList.add('hidden');
+    }
+
+    // Content
+    drawerContent.innerHTML = item.descHtml || '<p class="text-[#4b5563]">暂无描述</p>';
+
+    // Feedback link
+    if (drawerFeedback) {
+      drawerFeedback.href = `/feedback?id=${icebergId}&item=${encodeURIComponent(item.title)}`;
+    }
+
+    // Scroll content to top
+    const body = document.getElementById('drawer-body');
+    if (body) body.scrollTop = 0;
+  }
+
+  function openDrawer(idx) {
+    renderDrawer(idx);
+    overlay.classList.remove('opacity-0', 'pointer-events-none');
+    overlay.classList.add('opacity-100');
+    drawer.classList.remove('translate-x-full');
+    document.body.style.overflow = 'hidden';
+  }
+
+  window.closeDrawer = function () {
+    overlay.classList.add('opacity-0', 'pointer-events-none');
+    overlay.classList.remove('opacity-100');
+    drawer.classList.add('translate-x-full');
+    document.body.style.overflow = '';
+    currentIndex = -1;
+  };
+
+  window.navigateDrawer = function (dir) {
+    let next = currentIndex + dir;
+    while (next >= 0 && next < ITEMS.length) {
+      const chip = document.querySelector(`.item-chip[data-index="${next}"]`);
+      if (chip && chip.style.display !== 'none') {
+        const sec = chip.closest('.tier-section');
+        if (!sec || sec.style.display !== 'none') break;
+      }
+      next += dir;
+    }
+    if (next < 0 || next >= ITEMS.length) return;
+    renderDrawer(next);
+    highlightChip(next);
+    reportRead(ITEMS[next]);
+  };
+
+  function highlightChip(idx) {
+    document.querySelectorAll('.item-chip').forEach((el) => {
+      el.classList.remove('chip-active');
+    });
+    const active = document.querySelector(`.item-chip[data-index="${idx}"]`);
+    if (active) {
+      active.classList.add('chip-active');
+      active.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  // Bind chip clicks
+  document.querySelectorAll('.item-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.index, 10);
+      openDrawer(idx);
+      highlightChip(idx);
+      reportRead(ITEMS[idx]);
+    });
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (drawer.classList.contains('translate-x-full')) return;
+    if (e.key === 'Escape') { window.closeDrawer(); return; }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      window.navigateDrawer(1);
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      window.navigateDrawer(-1);
+    }
+  });
+
+  // ── Filter logic ─────────────────────────────────────────
+  function applyFilters() {
+    let visibleCount = 0;
+
+    document.querySelectorAll('.tier-section').forEach(function (section) {
+      var ti = parseInt(section.dataset.tierIdx, 10);
+      var tierMatch = activeTier === null || activeTier === ti;
+      if (!tierMatch) {
+        section.style.display = 'none';
+        return;
+      }
+      section.style.display = '';
+
+      var chips = section.querySelectorAll('.item-chip');
+      var tierVisible = 0;
+      chips.forEach(function (chip) {
+        var labels = [];
+        try { labels = JSON.parse(chip.dataset.labels || '[]'); } catch (_) {}
+        var labelMatch = activeLabels.size === 0 ||
+          Array.from(activeLabels).some(function (l) { return labels.indexOf(l) !== -1; });
+        chip.style.display = labelMatch ? '' : 'none';
+        if (labelMatch) { visibleCount++; tierVisible++; }
+      });
+
+      var countEl = section.querySelector('.tier-count');
+      if (countEl) {
+        var total = chips.length;
+        countEl.textContent = (activeTier !== null || activeLabels.size > 0)
+          ? tierVisible + ' / ' + total + ' 词条'
+          : total + ' 词条';
+      }
+    });
+
+    var isFiltered = activeTier !== null || activeLabels.size > 0;
+
+    var filterCount = document.getElementById('filter-count');
+    if (filterCount) {
+      filterCount.textContent = isFiltered
+        ? '显示 ' + visibleCount + ' / ' + ITEMS.length + ' 词条'
+        : '';
+    }
+
+    var resetBtn = document.getElementById('filter-reset');
+    if (resetBtn) resetBtn.classList.toggle('hidden', !isFiltered);
+
+    // Tier button styles
+    document.querySelectorAll('[data-tier-filter]').forEach(function (btn) {
+      var val = btn.dataset.tierFilter;
+      var isActive = val === 'all' ? activeTier === null : parseInt(val, 10) === activeTier;
+      var color = btn.style.getPropertyValue('--filter-color') || '#00FF41';
+      if (isActive) {
+        btn.style.borderColor = color;
+        btn.style.color = color;
+        btn.style.backgroundColor = color + '18';
+      } else {
+        btn.style.removeProperty('border-color');
+        btn.style.removeProperty('color');
+        btn.style.removeProperty('background-color');
+      }
+    });
+
+    // Label button styles — CSS vars handle color, JS toggles active class
+    document.querySelectorAll('[data-label-filter]').forEach(function (btn) {
+      btn.classList.toggle('label-active', activeLabels.has(btn.dataset.labelFilter));
+    });
+
+    // Highlight label badges on chips that match active filters
+    document.querySelectorAll('.chip-label').forEach(function (span) {
+      var isMatch = activeLabels.size > 0 && activeLabels.has(span.dataset.label);
+      span.classList.toggle('chip-label-active', isMatch);
+    });
+
+    // Close drawer if current item became hidden
+    if (currentIndex >= 0) {
+      var activeChip = document.querySelector('.item-chip[data-index="' + currentIndex + '"]');
+      if (activeChip) {
+        var sec = activeChip.closest('.tier-section');
+        if (activeChip.style.display === 'none' || (sec && sec.style.display === 'none')) {
+          window.closeDrawer();
+        }
+      }
+    }
+  }
+
+  // Bind tier filter buttons
+  document.querySelectorAll('[data-tier-filter]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var val = btn.dataset.tierFilter;
+      if (val === 'all') {
+        activeTier = null;
+      } else {
+        var ti = parseInt(val, 10);
+        activeTier = activeTier === ti ? null : ti;
+      }
+      applyFilters();
+    });
+  });
+
+  // Bind label filter buttons
+  document.querySelectorAll('[data-label-filter]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var label = btn.dataset.labelFilter;
+      if (activeLabels.has(label)) {
+        activeLabels.delete(label);
+      } else {
+        activeLabels.add(label);
+      }
+      applyFilters();
+    });
+  });
+
+  // Reset filter
+  var resetBtn = document.getElementById('filter-reset');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+      activeTier = null;
+      activeLabels.clear();
+      applyFilters();
+    });
+  }
+
+  // Initialise — sets "全部" as active
+  applyFilters();
+</script>
+
+<style>
+  /* ── Filter bar ── */
+  .filter-btn {
+    border-color: #374151;
+    color: #6b7280;
+    background-color: transparent;
+  }
+  .filter-btn:hover {
+    border-color: #6b7280;
+    color: #9ca3af;
+  }
+  html.light #filter-bar {
+    background-color: #f8fafc;
+    border-color: #e2e8f0;
+  }
+  html.light .filter-btn {
+    border-color: #e2e8f0;
+    color: #94a3b8;
+  }
+  html.light .filter-btn:hover {
+    border-color: #cbd5e1;
+    color: #64748b;
+  }
+
+  /* ── Label filter buttons (per-label color via --lc var) ── */
+  .label-filter-btn {
+    border-color: color-mix(in srgb, var(--lc) 22%, #2A2A2A);
+    color: color-mix(in srgb, var(--lc) 48%, #4b5563);
+    background-color: transparent;
+  }
+  .label-filter-btn:hover {
+    border-color: color-mix(in srgb, var(--lc) 60%, transparent);
+    color: var(--lc);
+    background-color: color-mix(in srgb, var(--lc) 8%, transparent);
+  }
+  .label-filter-btn.label-active {
+    border-color: var(--lc);
+    color: var(--lc);
+    background-color: color-mix(in srgb, var(--lc) 14%, transparent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--lc) 20%, transparent);
+  }
+  html.light .label-filter-btn {
+    border-color: color-mix(in srgb, var(--lc) 30%, #e2e8f0);
+    color: color-mix(in srgb, var(--lc) 60%, #94a3b8);
+  }
+  html.light .label-filter-btn:hover {
+    border-color: color-mix(in srgb, var(--lc) 55%, transparent);
+    color: var(--lc);
+  }
+  html.light .label-filter-btn.label-active {
+    border-color: var(--lc);
+    color: var(--lc);
+    background-color: color-mix(in srgb, var(--lc) 10%, transparent);
+  }
+
+  /* ── Chip label dots ── */
+  .chip-label {
+    opacity: 0.45;
+  }
+  .item-chip:hover .chip-label {
+    opacity: 0.85;
+  }
+  .chip-label-active {
+    opacity: 1 !important;
+    box-shadow: 0 0 5px color-mix(in srgb, var(--lc) 70%, transparent);
+    transform: scale(1.3);
+  }
+
+  /* ── Item chips ── */
+  .item-chip {
+    border-color: #2A2A2A;
+  }
+  .item-chip:hover {
+    border-color: var(--chip-color);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--chip-color) 20%, transparent);
+  }
+  .item-chip.chip-active {
+    border-color: var(--chip-color);
+    background-color: color-mix(in srgb, var(--chip-color) 10%, #080a0f);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--chip-color) 25%, transparent);
+  }
+  #drawer-content :global(h1),
+  #drawer-content :global(h2),
+  #drawer-content :global(h3) {
+    color: #e5e5e5;
+    font-family: 'JetBrains Mono', monospace;
+    margin: 1.25rem 0 0.5rem;
+  }
+  #drawer-content :global(p) {
+    margin: 0.75rem 0;
+    line-height: 1.75;
+  }
+  #drawer-content :global(a) {
+    color: #00FF41;
+    text-decoration: underline;
+  }
+  #drawer-content :global(blockquote) {
+    border-left: 3px solid #374151;
+    padding-left: 1rem;
+    color: #6b7280;
+    margin: 1rem 0;
+  }
+  #drawer-content :global(code) {
+    background: #1f2937;
+    padding: 0.1em 0.3em;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+  }
+  #drawer-content :global(hr) {
+    border-color: #1f2937;
+    margin: 1.5rem 0;
+  }
+  /* Scrollbar */
+  #drawer-body {
+    scrollbar-width: thin;
+    scrollbar-color: #374151 #080a0f;
+  }
+  #drawer-body::-webkit-scrollbar { width: 5px; }
+  #drawer-body::-webkit-scrollbar-track { background: #080a0f; }
+  #drawer-body::-webkit-scrollbar-thumb { background: #374151; }
+  #drawer-body::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+</style>

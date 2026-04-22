@@ -1,0 +1,10 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { IcebergEditor } from '../../components/iceberg/IcebergEditor';
+---
+
+<Layout title="创建冰山图 | 冰山图宇宙">
+  <main class="min-h-screen py-8">
+    <IcebergEditor client:only="react" />
+  </main>
+</Layout>

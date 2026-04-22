@@ -1,0 +1,34 @@
+---
+import { prisma } from '../../lib/prisma';
+import { getSessionById } from '../../lib/auth/index';
+import { checkAchievements, updateDailyStreak } from '../../lib/achievementService';
+
+const count = await prisma.iceberg.count({ where: { status: 'PUBLISHED' } });
+
+if (count === 0) {
+  return Astro.redirect('/iceberg/list');
+}
+
+const skip = Math.floor(Math.random() * count);
+const iceberg = await prisma.iceberg.findFirst({
+  where: { status: 'PUBLISHED' },
+  skip,
+  select: { slug: true, id: true },
+});
+
+// 追踪 randomCount + 检查成就
+const sessionId = Astro.cookies.get('session')?.value;
+const session = await getSessionById(sessionId);
+if (session) {
+  await updateDailyStreak(session.userId);
+  await prisma.userStats.upsert({
+    where: { userId: session.userId },
+    create: { userId: session.userId, randomCount: 1 },
+    update: { randomCount: { increment: 1 } },
+  });
+  checkAchievements(session.userId, { type: 'random' });
+}
+
+const target = encodeURIComponent(iceberg!.slug || iceberg!.id);
+return Astro.redirect(`/iceberg/${target}`);
+---

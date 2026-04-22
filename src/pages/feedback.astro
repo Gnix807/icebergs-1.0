@@ -1,0 +1,261 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { prisma } from '../lib/prisma';
+
+// 处理 POST 提交
+let submitted = false;
+let submitError: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const type     = formData.get('type')?.toString()     || 'bug';
+    const content  = formData.get('content')?.toString()  || '';
+    const contact  = formData.get('contact')?.toString()  || '';
+    const icebergId = formData.get('icebergId')?.toString() || '';
+    const itemName  = formData.get('itemName')?.toString()  || '';
+
+    if (!content.trim()) {
+      submitError = '请填写反馈内容';
+    } else {
+      await prisma.feedback.create({
+        data: {
+          type,
+          content: content.trim(),
+          contact: contact.trim() || null,
+          icebergId: icebergId || null,
+          itemName:  itemName  || null,
+        },
+      });
+      submitted = true;
+    }
+  } catch (err) {
+    console.error('反馈提交失败:', err);
+    submitError = '提交失败，请稍后重试';
+  }
+}
+
+// 从 URL 参数读取上下文（从冰山图详情页跳转过来时带入）
+const icebergId    = Astro.url.searchParams.get('id')    || '';
+const icebergTitle = Astro.url.searchParams.get('title') || '';
+const itemName     = Astro.url.searchParams.get('item')  || '';
+
+const hasContext = !!(icebergId || itemName);
+const defaultType = itemName ? 'error' : 'bug';
+---
+
+<Layout title="异常反馈 | 冰山图宇宙">
+  <main class="max-w-2xl mx-auto px-4 md:px-6 py-12">
+
+    <!-- Header -->
+    <header class="mb-10 boot-animate">
+      <div class="text-xs font-mono text-[#374151] mb-3 tracking-widest">
+        [ FEEDBACK ]
+      </div>
+      <h1 class="text-3xl font-mono font-semibold">
+        <span class="text-[#ef4444]">!</span> 异常反馈
+      </h1>
+      <p class="mt-2 text-sm text-[#6b7280] font-mono">
+        遇到问题？发现 Bug？想提建议？告诉我们。
+      </p>
+    </header>
+
+    {submitted ? (
+      <!-- 成功状态 -->
+      <div class="p-8 border border-[#22c55e] feedback-success text-center boot-animate">
+        <div class="text-4xl mb-4">✓</div>
+        <h2 class="font-mono text-[#22c55e] text-lg mb-2">反馈已收到</h2>
+        <p class="text-sm text-[#6b7280] font-mono mb-6">感谢你的反馈，我们会认真处理。</p>
+        <a href="/" class="text-[#00FF41] font-mono text-sm hover:underline">
+          返回首页 →
+        </a>
+      </div>
+    ) : (
+      <form method="POST" class="space-y-6 boot-animate" style="animation-delay:80ms">
+
+        <!-- 上下文信息 -->
+        {hasContext && (
+          <div class="p-4 border border-[#1f2937] bg-[#121212] font-mono text-xs space-y-1">
+            <div class="text-[#374151] mb-2">// 反馈上下文</div>
+            {icebergId && (
+              <div class="flex gap-3">
+                <span class="text-[#6b7280]">图谱:</span>
+                <span class="text-[#9ca3af]">{icebergTitle || icebergId}</span>
+              </div>
+            )}
+            {itemName && (
+              <div class="flex gap-3">
+                <span class="text-[#6b7280]">词条:</span>
+                <span class="text-[#ef4444]">{itemName}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <!-- 隐藏字段 -->
+        <input type="hidden" name="icebergId" value={icebergId} />
+        <input type="hidden" name="itemName"  value={itemName}  />
+
+        <!-- 反馈类型 -->
+        <div>
+          <label class="block text-xs font-mono text-[#9ca3af] mb-3">反馈类型</label>
+          <div class="flex flex-wrap gap-3" id="type-chips">
+            {[
+              { value: 'error',   label: '❌ 内容有误' },
+              { value: 'bug',     label: '🐛 Bug 报告' },
+              { value: 'feature', label: '✨ 功能建议' },
+              { value: 'other',   label: '💬 其他'     },
+            ].map(({ value, label }) => (
+              <label class="cursor-pointer">
+                <input
+                  type="radio"
+                  name="type"
+                  value={value}
+                  checked={value === defaultType}
+                  class="sr-only"
+                  data-type-radio
+                />
+                <span class="type-chip block px-3 py-1.5 text-xs font-mono border transition-colors cursor-pointer select-none">
+                  {label}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <!-- 反馈内容 -->
+        <div>
+          <label for="content" class="block text-xs font-mono text-[#9ca3af] mb-2">
+            反馈内容 <span class="text-[#ef4444]">*</span>
+          </label>
+          <textarea
+            id="content"
+            name="content"
+            rows="6"
+            placeholder={itemName
+              ? `请描述「${itemName}」词条中发现的问题...`
+              : '请描述你遇到的问题或建议...'}
+            required
+            class="w-full bg-[#121212] border border-[#1f2937] text-sm text-[#e5e5e5] font-mono p-3 resize-none
+                   focus:outline-none focus:border-[#ef4444] transition-colors placeholder:text-[#4b5563]"
+          ></textarea>
+        </div>
+
+        <!-- 联系方式 -->
+        <div>
+          <label for="contact" class="block text-xs font-mono text-[#9ca3af] mb-2">
+            联系方式 <span class="text-[#4b5563]">（可选）</span>
+          </label>
+          <input
+            id="contact"
+            name="contact"
+            type="text"
+            placeholder="邮箱 / GitHub 用户名 / 任意联系方式"
+            class="w-full bg-[#121212] border border-[#1f2937] text-sm text-[#e5e5e5] font-mono p-3
+                   focus:outline-none focus:border-[#ef4444] transition-colors placeholder:text-[#4b5563]"
+          />
+        </div>
+
+        {submitError && (
+          <div class="p-3 border border-[#ef4444] text-xs font-mono text-[#ef4444]">
+            {submitError}
+          </div>
+        )}
+
+        <div class="flex items-center justify-between pt-2">
+          {icebergId ? (
+            <a
+              href={`/iceberg/${icebergId}`}
+              class="text-xs font-mono text-[#6b7280] hover:text-[#9ca3af] transition-colors"
+            >
+              ← 返回冰山图
+            </a>
+          ) : <div />}
+          <button
+            type="submit"
+            class="px-6 py-2.5 bg-[#ef4444] text-white font-mono font-semibold text-sm
+                   hover:bg-[#dc2626] transition-colors"
+          >
+            提交反馈
+          </button>
+        </div>
+
+      </form>
+    )}
+
+  </main>
+</Layout>
+
+<script is:inline>
+  (function () {
+    var ACTIVE_COLOR = '#ef4444';
+    var INACTIVE_BORDER = '#374151';
+    var INACTIVE_TEXT   = '#6b7280';
+
+    function syncChips() {
+      var radios = document.querySelectorAll('[data-type-radio]');
+      radios.forEach(function (r) {
+        var span = r.nextElementSibling;
+        if (!span) return;
+        if (r.checked) {
+          span.style.borderColor = ACTIVE_COLOR;
+          span.style.color       = ACTIVE_COLOR;
+        } else {
+          span.style.borderColor = INACTIVE_BORDER;
+          span.style.color       = INACTIVE_TEXT;
+        }
+      });
+    }
+
+    function init() {
+      var radios = document.querySelectorAll('[data-type-radio]');
+      // 初始化样式
+      syncChips();
+      // 绑定 change 事件
+      radios.forEach(function (r) {
+        r.addEventListener('change', syncChips);
+      });
+      // 绑定 label 点击（解决某些浏览器 change 不触发的边缘情况）
+      var labels = document.querySelectorAll('#type-chips label');
+      labels.forEach(function (label) {
+        label.addEventListener('click', function () {
+          // 延迟一个 tick 确保 checked 状态已更新
+          setTimeout(syncChips, 0);
+        });
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
+
+<style>
+  /* 成功面板 */
+  .feedback-success {
+    background-color: #0d1a0d;
+  }
+  html.light .feedback-success {
+    background-color: #f0fdf4;
+    border-color: #22c55e;
+  }
+
+  /* 浅色下 textarea/input */
+  html.light #content,
+  html.light #contact {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #e2e8f0 !important;
+  }
+  html.light #content:focus,
+  html.light #contact:focus {
+    border-color: #ef4444 !important;
+  }
+  html.light #content::placeholder,
+  html.light #contact::placeholder {
+    color: #94a3b8;
+  }
+</style>

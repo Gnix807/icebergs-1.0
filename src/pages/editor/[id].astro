@@ -1,0 +1,12 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { IcebergEditor } from '../../components/iceberg/IcebergEditor';
+
+const { id } = Astro.params;
+---
+
+<Layout title="编辑器 | 冰山图宇宙">
+  <main class="min-h-screen py-8">
+    <IcebergEditor client:load icebergId={id} />
+  </main>
+</Layout>

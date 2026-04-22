@@ -1,0 +1,627 @@
+// Learn about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// V2: RBAC Phase 1
+// NOTE: SQLite does not support Prisma enums.
+//       Type-safety is enforced via TypeScript
+//       union types in src/lib/types.ts instead.
+// ============================================
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  nickname     String?
+  passwordHash String?  // 邮箱注册用户存哈希；OAuth 用户为 null
+
+  // role: "USER" | "CONTRIBUTOR" | "EDITOR" | "ADMIN"
+  role         String   @default("USER")
+
+  // status: "ACTIVE" | "WARNED_1" | "WARNED_2" | "READ_ONLY" | "TEMP_BANNED" | "PERM_BANNED"
+  status       String   @default("ACTIVE")
+  banUntil     DateTime? // TEMP_BANNED 解封时间
+
+  createdAt    DateTime @default(now())
+
+  // 个人资料
+  bio          String?
+  avatar       String?
+
+  // 创始人标识（不可通过 UI 修改，仅直接数据库操作）
+  isFounder    Boolean  @default(false)
+
+  // 质量分系统
+  qualityScore      Int       @default(0)
+  lastWeeklyBonusAt DateTime? // 上次获得周活跃奖励的时间
+
+  // 隐私设置
+  privacyShowStats     Boolean @default(true)
+  privacyShowWatchlist Boolean @default(false)
+
+  // 用户框（自选，JSON string[]）
+  userboxIds           String  @default("[]")
+
+  icebergs           Iceberg[]
+  sessions           Session[]
+  votes              Vote[]
+  watchlist          Watchlist[]
+  warnings           UserWarning[]
+  appeals            Appeal[]
+  promotionRequests  PromotionRequest[]
+  icebergReviews     IcebergReview[]  @relation("ReviewedBy")
+  reportsFiled       Report[]         @relation("ReportFiler")
+  reportsHandled     Report[]         @relation("ReportHandler")
+  notifications      Notification[]
+  achievements       UserAchievement[]
+  itemReads            ItemRead[]
+  stats                UserStats?
+  electionCandidacies  ElectionCandidate[]
+  electionVotesCast    ElectionVote[]
+  comments             Comment[]
+  commentLikes         CommentLike[]
+  rfaRequests          RfaRequest[]
+  rfaVotesCast         RfaVote[]
+  scoreLogs            ScoreLog[]
+  impeachTargets       ImpeachRequest[] @relation("ImpeachTarget")
+  impeachInitiated     ImpeachRequest[] @relation("ImpeachInitiator")
+  impeachVotesCast     ImpeachVote[]
+  receivedAwards       UserAward[]      @relation("AwardReceiver")
+  givenAwards          UserAward[]      @relation("AwardGiver")
+
+  @@map("users")
+}
+
+// ── 管理员/站长授予勋章 ────────────────────────────────────────
+model UserAward {
+  id         String   @id @default(cuid())
+  receiverId String
+  giverId    String
+  // type: "quality_star" | "community_star" | "creative_star" | "helpful_star" | "outstanding_star"
+  type       String
+  message    String?  // 颁奖留言，可选，200字以内
+  createdAt  DateTime @default(now())
+
+  receiver   User @relation("AwardReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  giver      User @relation("AwardGiver",    fields: [giverId],    references: [id])
+
+  @@index([receiverId])
+  @@map("user_awards")
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Iceberg {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String?
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+
+  // status: "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "ARCHIVED"
+  status      String   @default("DRAFT")
+
+  viewCount   Int      @default(0)
+  featured    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tiers       Tier[]
+  votes       Vote[]
+  watchlist   Watchlist[]
+  review      IcebergReview?
+  viewLogs    ViewLog[]
+  comments    Comment[]
+
+  @@index([authorId])
+  @@index([status, createdAt])
+  @@map("icebergs")
+}
+
+model Tier {
+  id        String  @id @default(cuid())
+  name      String
+  desc      String  @default("")
+  order     Int
+  icebergId String
+  iceberg   Iceberg @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+
+  items     Item[]
+
+  @@index([icebergId, order])
+  @@map("tiers")
+}
+
+model Item {
+  id        String   @id @default(cuid())
+  title     String
+  desc      String   // Markdown
+  order     Int      @default(0)
+  tierId    String
+  tier      Tier     @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  labels    String   @default("[]") // JSON array stored as string
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tierId, order])
+  @@map("items")
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  userId    String
+  icebergId String
+  value     Int      // 1 = upvote, -1 = downvote
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  iceberg Iceberg @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, icebergId])
+  @@map("votes")
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  icebergId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  iceberg Iceberg @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, icebergId])
+  @@map("watchlist")
+}
+
+// ── 站内通知 ─────────────────────────────────────────────
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // iceberg_approved | iceberg_rejected | promotion_approved | promotion_rejected
+                     // appeal_approved | appeal_rejected | warned | restricted | banned | unbanned
+  title     String
+  body      String?
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+// ── 浏览日志（用于本周趋势统计）──────────────────────────
+model ViewLog {
+  id        String   @id @default(cuid())
+  icebergId String
+  createdAt DateTime @default(now())
+
+  iceberg   Iceberg  @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+
+  @@index([icebergId, createdAt])
+  @@index([createdAt])
+  @@map("view_logs")
+}
+
+// ── 晋升申请（USER → CONTRIBUTOR）─────────────────────────
+model PromotionRequest {
+  id          String    @id @default(cuid())
+  userId      String
+  targetRole  String    // 目前只有 "CONTRIBUTOR"
+  statement   String?   // 申请说明，可选，200字以内
+  status      String    @default("PENDING")
+  // PENDING | APPROVED | REJECTED | EXPIRED
+  reviewedBy  String?
+  reviewNote  String?
+  createdAt   DateTime  @default(now())
+  reviewedAt  DateTime?
+  expiresAt   DateTime  // createdAt + 30 天
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("promotion_requests")
+}
+
+// ── 系统配置（治理参数，不硬编码）──────────────────────────
+model SystemSettings {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+  updatedBy String?  // ADMIN userId
+
+  @@map("system_settings")
+}
+
+// ── 内容审核记录──────────────────────────────────────────────
+model IcebergReview {
+  id             String    @id @default(cuid())
+  icebergId      String    @unique
+  reviewerId     String?
+
+  // status: "PENDING" | "APPROVED" | "REJECTED" | "OVERRIDDEN"
+  status         String    @default("PENDING")
+
+  note           String?   // 拒绝理由
+  overriddenBy   String?   // ADMIN Override 时填写
+  overrideReason String?
+  createdAt      DateTime  @default(now())
+  reviewedAt     DateTime?
+
+  iceberg        Iceberg   @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+  reviewer       User?     @relation("ReviewedBy", fields: [reviewerId], references: [id])
+
+  @@index([status, createdAt])
+  @@map("iceberg_reviews")
+}
+
+// ── 警告记录 ─────────────────────────────────────────────────
+model UserWarning {
+  id              String    @id @default(cuid())
+  userId          String
+  issuedBy        String    // EDITOR/ADMIN 的 userId
+  level           Int       // 1 | 2
+  reason          String
+  createdAt       DateTime  @default(now())
+  clearedAt       DateTime?
+  clearedByAppeal Boolean   @default(false)
+  autoClears      DateTime  // WARNED_1: createdAt + 90d；WARNED_2 不自动清除
+
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_warnings")
+}
+
+// ── 申诉 ─────────────────────────────────────────────────────
+model Appeal {
+  id          String    @id @default(cuid())
+  userId      String
+
+  // type: "WARNED_2_CLEAR" | "READ_ONLY" | "TEMP_BAN" | "PERM_BAN"
+  type        String
+
+  statement   String    // 用户说明，100字以上
+
+  // status: "PENDING" | "APPROVED" | "REJECTED"
+  status      String    @default("PENDING")
+
+  reviewerId  String?   // 处理此申诉的 ADMIN（回避原决定者）
+  reviewNote  String?
+  createdAt   DateTime  @default(now())
+  reviewedAt  DateTime?
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("appeals")
+}
+
+// ── 用户反馈 ─────────────────────────────────────────────────
+model Feedback {
+  id        String   @id @default(cuid())
+
+  // type: "error" | "bug" | "feature" | "other"
+  type      String
+
+  content   String
+  contact   String?   // 可选联系方式
+  icebergId String?   // 来源冰山图
+  itemName  String?   // 来源词条
+
+  // status: "pending" | "resolved" | "wontfix"
+  status       String    @default("pending")
+  resolvedNote String?
+  resolvedAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([status])
+  @@map("feedbacks")
+}
+model Report {
+  id          String    @id @default(cuid())
+
+  // type: "iceberg" | "user" | "rfa_candidate"
+  type        String
+
+  targetId    String    // 举报对象的 id
+  reason      String    // 举报理由，50字以内
+  detail      String?
+  filerId     String
+
+  // status: "PENDING" | "RESOLVED_ACTION" | "RESOLVED_DISMISSED"
+  status      String    @default("PENDING")
+
+  handlerId   String?
+  resolution  String?
+  createdAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  filer       User  @relation("ReportFiler",   fields: [filerId],   references: [id])
+  handler     User? @relation("ReportHandler", fields: [handlerId], references: [id])
+
+  @@index([type, targetId])
+  @@index([status])
+  @@map("reports")
+}
+
+// ── 用户成就 ──────────────────────────────────────────────────
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  // achievementId: "pioneer" | "prolific" | "popular" | "analyst" | "veteran" | "scholar"
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@map("user_achievements")
+}
+
+// ── 探索成就定义（管理员可配置）────────────────────────────────
+model Achievement {
+  id           String   @id @default(cuid())
+  key          String   @unique  // 唯一键，对应 UserAchievement.achievementId
+  icon         String
+  label        String            // 英文标题
+  labelZh      String            // 中文标题
+  desc         String
+  color        String   @default("#6b7280")
+  // triggerType: "read_count" | "bottom_tier" | "all_clear" | "manual"
+  triggerType  String
+  triggerTarget Int     @default(0) // read_count 时表示需达到的阅读数
+  sortOrder    Int      @default(0)
+  isHidden     Boolean  @default(false) // true = 未解锁时不展示
+  conditions   String   @default("[]") // JSON Condition[] 可视化积木
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("achievements")
+}
+
+// ── 用户行为统计（成就系统）──────────────────────────────────────
+model UserStats {
+  userId              String   @id
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  totalRead           Int      @default(0)
+  searchCount         Int      @default(0)
+  randomCount         Int      @default(0)
+  nightReadCount      Int      @default(0)   // 0:00–5:00 阅读次数
+  visitedIcebergCount Int      @default(0)   // 探索过的不同冰山图数量
+  consecutiveDays     Int      @default(0)   // 连续访问天数
+  lastVisitDate       String?               // YYYY-MM-DD
+  totalVotesCast      Int      @default(0)
+  totalSessionMinutes Int      @default(0)
+  pendingAchievements String   @default("[]") // JSON string[]
+
+  updatedAt           DateTime @updatedAt
+
+  @@map("user_stats")
+}
+
+// ── 词条阅读记录（探索成就触发依据）────────────────────────────
+model ItemRead {
+  id        String   @id @default(cuid())
+  userId    String
+  itemId    String
+  icebergId String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, itemId])
+  @@index([userId, icebergId])
+  @@map("item_reads")
+}
+
+// ── 站长轮换制 — 选举系统 ─────────────────────────────────────
+
+model Election {
+  id            String    @id @default(cuid())
+  initiatedBy   String    // ADMIN/FOUNDER userId
+  title         String    @default("站长选举")
+  description   String?
+  // status: "OPEN_APPLY" | "VOTING" | "CLOSED" | "CONFIRMED"
+  status        String    @default("OPEN_APPLY")
+  applyDeadline DateTime  // 候选人申请截止
+  voteDeadline  DateTime  // 投票截止
+  confirmedAt   DateTime?
+  winnerId      String?   // 当选者 userId（CONFIRMED 后写入）
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  candidates    ElectionCandidate[]
+  votes         ElectionVote[]
+
+  @@index([status])
+  @@map("elections")
+}
+
+model ElectionCandidate {
+  id         String   @id @default(cuid())
+  electionId String
+  userId     String
+  statement  String?  // 竞选宣言，最多 500 字
+  // status: "RUNNING" | "WITHDRAWN" | "ELECTED" | "DEFEATED"
+  status     String   @default("RUNNING")
+  createdAt  DateTime @default(now())
+
+  election   Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([electionId, userId])
+  @@index([electionId])
+  @@map("election_candidates")
+}
+
+model ElectionVote {
+  id          String   @id @default(cuid())
+  electionId  String
+  voterId     String
+  candidateId String   // ElectionCandidate.id
+  weight      Int      // USER=1 CONTRIBUTOR=2 EDITOR=3 MODERATOR=5 ADMIN=7
+  createdAt   DateTime @default(now())
+
+  election    Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  voter       User     @relation(fields: [voterId], references: [id], onDelete: Cascade)
+
+  @@unique([electionId, voterId])
+  @@index([electionId, candidateId])
+  @@map("election_votes")
+}
+
+// ── 评论 ─────────────────────────────────────────────────
+model Comment {
+  id        String   @id @default(cuid())
+  icebergId String
+  userId    String
+  content   String
+  parentId  String?  // null = 顶层评论；非 null = 回复（最多一级）
+  createdAt DateTime @default(now())
+
+  iceberg Iceberg      @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  Comment?     @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[]    @relation("CommentReplies")
+  likes   CommentLike[]
+
+  @@index([icebergId, createdAt])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model CommentLike {
+  id        String   @id @default(cuid())
+  commentId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@map("comment_likes")
+}
+
+// ── EDITOR RfA（编辑申请资格投票）───────────────────────────
+model RfaRequest {
+  id          String    @id @default(cuid())
+  userId      String
+  statement   String?   // 自我陈述，可选，500字以内
+  // status: "OPEN" | "APPROVED" | "REJECTED" | "CANCELLED"
+  status      String    @default("OPEN")
+  createdAt   DateTime  @default(now())
+  closesAt    DateTime  // createdAt + rfa_vote_days
+  resolvedAt  DateTime?
+
+  user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  votes RfaVote[]
+
+  @@index([userId])
+  @@index([status, closesAt])
+  @@map("rfa_requests")
+}
+
+model RfaVote {
+  id        String   @id @default(cuid())
+  requestId String
+  voterId   String
+  // vote: "APPROVE" | "OPPOSE" | "ABSTAIN"
+  vote      String
+  weight    Int      // CONTRIBUTOR=1 EDITOR=2 MODERATOR=3 ADMIN=5 FOUNDER=7
+  comment   String?  // 可选留言
+  createdAt DateTime @default(now())
+
+  request RfaRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  voter   User       @relation(fields: [voterId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, voterId])
+  @@index([requestId])
+  @@map("rfa_votes")
+}
+
+// ── 弹劾流程 ──────────────────────────────────────────────
+model ImpeachRequest {
+  id           String    @id @default(cuid())
+  targetUserId String
+  // targetRole: "MODERATOR" | "ADMIN"（被弹劾时所持有的角色）
+  targetRole   String
+  initiatedBy  String
+  reason       String    // 必填弹劾理由
+  // status: "OPEN" | "PASSED" | "REJECTED" | "CANCELLED"
+  status       String    @default("OPEN")
+  closesAt     DateTime
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  target    User          @relation("ImpeachTarget",    fields: [targetUserId], references: [id])
+  initiator User          @relation("ImpeachInitiator", fields: [initiatedBy],  references: [id])
+  votes     ImpeachVote[]
+
+  @@index([status, closesAt])
+  @@index([targetUserId])
+  @@map("impeach_requests")
+}
+
+model ImpeachVote {
+  id        String   @id @default(cuid())
+  requestId String
+  voterId   String
+  // vote: "SUPPORT" | "OPPOSE" | "ABSTAIN"
+  vote      String
+  weight    Int      // EDITOR=1 MODERATOR=2 ADMIN=3 FOUNDER=5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  request ImpeachRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  voter   User           @relation(fields: [voterId],   references: [id], onDelete: Cascade)
+
+  @@unique([requestId, voterId])
+  @@index([requestId])
+  @@map("impeach_votes")
+}
+
+// ── 质量分流水记录 ─────────────────────────────────────────
+model ScoreLog {
+  id        String   @id @default(cuid())
+  userId    String
+  delta     Int      // 正数加分，负数扣分
+  // reason: "comment" | "vote_cast" | "comment_liked" | "iceberg_created"
+  //       | "iceberg_voted" | "promoted" | "weekly_bonus"
+  reason    String
+  note      String?  // 附加上下文，例如冰山图标题
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("score_logs")
+}

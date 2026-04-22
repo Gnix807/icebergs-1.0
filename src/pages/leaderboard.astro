@@ -1,0 +1,281 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { prisma } from '../lib/prisma';
+
+const tab = (Astro.url.searchParams.get('tab') ?? 'views') as 'views' | 'votes';
+
+let ranked: any[] = [];
+let error = null;
+
+try {
+  if (tab === 'votes') {
+    // ── 点赞排行：先聚合净票数，再拉详情 ──────────────────────
+    const publishedIds = await prisma.iceberg.findMany({
+      where: { status: 'PUBLISHED' },
+      select: { id: true },
+    }).then(r => r.map(x => x.id));
+
+    const voteAgg = await prisma.vote.groupBy({
+      by: ['icebergId'],
+      _sum: { value: true },
+      where: { icebergId: { in: publishedIds } },
+      orderBy: { _sum: { value: 'desc' } },
+      take: 50,
+    });
+
+    const topIds = voteAgg.map(v => v.icebergId);
+    if (topIds.length > 0) {
+      const icebergs = await prisma.iceberg.findMany({
+        where: { id: { in: topIds }, status: 'PUBLISHED' },
+        select: {
+          id: true, slug: true, title: true, description: true,
+          viewCount: true, createdAt: true,
+          author: { select: { id: true, nickname: true, username: true } },
+          _count: { select: { tiers: true } },
+        },
+      });
+      const voteMap: Record<string, number> = Object.fromEntries(
+        voteAgg.map(v => [v.icebergId, v._sum.value ?? 0])
+      );
+      ranked = icebergs
+        .map(r => ({ ...r, voteScore: voteMap[r.id] ?? 0 }))
+        .sort((a, b) => b.voteScore - a.voteScore);
+    }
+  } else {
+    // ── 浏览量排行 ─────────────────────────────────────────────
+    const icebergs = await prisma.iceberg.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: [{ viewCount: 'desc' }, { createdAt: 'desc' }],
+      take: 50,
+      select: {
+        id: true, slug: true, title: true, description: true,
+        viewCount: true, createdAt: true,
+        author: { select: { id: true, nickname: true, username: true } },
+        _count: { select: { tiers: true } },
+      },
+    });
+    const voteAgg = await prisma.vote.groupBy({
+      by: ['icebergId'],
+      _sum: { value: true },
+      where: { icebergId: { in: icebergs.map(r => r.id) } },
+    });
+    const voteMap: Record<string, number> = Object.fromEntries(
+      voteAgg.map(v => [v.icebergId, v._sum.value ?? 0])
+    );
+    ranked = icebergs.map(r => ({ ...r, voteScore: voteMap[r.id] ?? 0 }));
+  }
+} catch (err) {
+  console.error('排行榜加载失败:', err);
+  error = '加载失败';
+}
+
+// 统计
+const maxViews     = ranked.length > 0 ? Math.max(ranked[0].viewCount, 1) : 1;
+const maxVoteScore = ranked.length > 0 ? Math.max(...ranked.map(r => r.voteScore), 1) : 1;
+const totalViews   = ranked.reduce((s, r) => s + r.viewCount, 0);
+const totalVotes   = ranked.reduce((s, r) => s + r.voteScore, 0);
+const topItem      = ranked[0];
+
+function formatDate(date: Date | string) {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const rankBorderClass = (i: number) =>
+  i === 0 ? 'top-1' : i === 1 ? 'top-2' : i === 2 ? 'top-3' : '';
+
+const rankLabel = (i: number) =>
+  i === 0 ? '01' : i === 1 ? '02' : i === 2 ? '03' : String(i + 1).padStart(2, '0');
+---
+
+<Layout title="排行榜 | 冰山图宇宙">
+  <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
+
+  <main class="bg-grid max-w-4xl mx-auto px-4 md:px-6 py-12 relative z-10">
+
+    <!-- Header -->
+    <header class="mb-8 boot-animate" style="animation-delay:0ms">
+      <div class="text-xs font-mono text-[#374151] mb-3 tracking-widest">[ LEADERBOARD ]</div>
+      <h1 class="text-3xl font-mono font-semibold glitch-hover cursor-default">
+        <span class="text-[#00FF41]">#</span> 冰山图排行榜
+      </h1>
+      <p class="mt-2 text-sm text-[#6b7280] font-mono">
+        {tab === 'views'
+          ? '按浏览量排名，最受关注的冰山图'
+          : '按净票数排名，最受认可的冰山图'}
+      </p>
+    </header>
+
+    <!-- Tab 切换 -->
+    <div class="flex gap-0 mb-8 border border-[#2A2A2A] w-fit boot-animate" style="animation-delay:30ms">
+      <a
+        href="/leaderboard?tab=views"
+        class={`px-5 py-2 text-xs font-mono tracking-widest transition-colors ${
+          tab === 'views'
+            ? 'bg-[#00FF41] text-[#0A0A0A] font-bold'
+            : 'text-[#6b7280] hover:text-[#00FF41] hover:bg-[#00FF4108]'
+        }`}
+      >
+        浏览量
+      </a>
+      <a
+        href="/leaderboard?tab=votes"
+        class={`px-5 py-2 text-xs font-mono tracking-widest transition-colors border-l border-[#2A2A2A] ${
+          tab === 'votes'
+            ? 'bg-[#22c55e] text-[#0A0A0A] font-bold'
+            : 'text-[#6b7280] hover:text-[#22c55e] hover:bg-[#22c55e08]'
+        }`}
+      >
+        点赞数
+      </a>
+    </div>
+
+    <!-- Stats 概览 -->
+    {ranked.length > 0 && (
+      <div class="grid grid-cols-3 gap-4 mb-8 boot-animate" style="animation-delay:60ms">
+        <div class="bg-[#0a0c10] border border-[#1f2937] p-4 text-center">
+          <div class="text-2xl font-mono font-bold text-[#00FF41]">{ranked.length}</div>
+          <div class="text-xs text-[#6b7280] mt-1 tracking-widest font-mono">上榜图谱</div>
+        </div>
+        {tab === 'views' ? (
+          <>
+            <div class="bg-[#0a0c10] border border-[#1f2937] p-4 text-center">
+              <div class="text-2xl font-mono font-bold text-[#e5e5e5]">{totalViews.toLocaleString()}</div>
+              <div class="text-xs text-[#6b7280] mt-1 tracking-widest font-mono">总浏览量</div>
+            </div>
+            <div class="bg-[#0a0c10] border border-[#1f2937] p-4 text-center">
+              <div class="text-xl font-mono font-bold text-[#e5e5e5] truncate" title={topItem?.title}>
+                {topItem ? topItem.viewCount.toLocaleString() : '—'}
+              </div>
+              <div class="text-xs text-[#6b7280] mt-1 tracking-widest font-mono">最高浏览</div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div class="bg-[#0a0c10] border border-[#1f2937] p-4 text-center">
+              <div class={`text-2xl font-mono font-bold ${totalVotes >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                {totalVotes >= 0 ? '+' : ''}{totalVotes.toLocaleString()}
+              </div>
+              <div class="text-xs text-[#6b7280] mt-1 tracking-widest font-mono">净票总数</div>
+            </div>
+            <div class="bg-[#0a0c10] border border-[#1f2937] p-4 text-center">
+              <div class={`text-2xl font-mono font-bold ${(topItem?.voteScore ?? 0) >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                {topItem ? `${topItem.voteScore > 0 ? '+' : ''}${topItem.voteScore}` : '—'}
+              </div>
+              <div class="text-xs text-[#6b7280] mt-1 tracking-widest font-mono">最高票数</div>
+            </div>
+          </>
+        )}
+      </div>
+    )}
+
+    {error ? (
+      <div class="p-8 text-center border border-[#2A2A2A]">
+        <p class="text-red-500 font-mono">{error}</p>
+      </div>
+    ) : ranked.length === 0 ? (
+      <div class="py-20 text-center border border-dashed border-[#2A2A2A]">
+        <p class="text-[#6b7280] font-mono text-sm mb-4">
+          {tab === 'votes' ? '暂无被投票的冰山图' : '暂无已发布的冰山图'}
+        </p>
+        <a href="/iceberg/new" class="text-[#00FF41] font-mono text-sm hover:underline">成为第一个 →</a>
+      </div>
+    ) : (
+      <div class="space-y-2 boot-animate" style="animation-delay:120ms">
+        {ranked.map((iceberg, index) => {
+          const barWidth = tab === 'views'
+            ? Math.round((iceberg.viewCount / maxViews) * 100)
+            : Math.round((Math.max(0, iceberg.voteScore) / maxVoteScore) * 100);
+          const barColor = tab === 'views' ? '#00FF41' : '#22c55e';
+          return (
+            <a
+              href={`/iceberg/${iceberg.slug || iceberg.id}`}
+              class={`rank-card ${rankBorderClass(index)} group flex items-center gap-4 p-4 bg-[#0a0c10] border border-[#1f2937] transition-all duration-200`}
+            >
+              <!-- 排名序号 -->
+              <div class="w-8 flex flex-col items-center gap-0.5 flex-shrink-0 font-mono">
+                {index < 3 ? (
+                  <>
+                    <span class={`text-[9px] leading-none ${
+                      index === 0 ? 'text-[#f59e0b]' :
+                      index === 1 ? 'text-[#9ca3af]' :
+                      'text-[#cd7f32]'
+                    }`}>{index === 0 ? '▲' : index === 1 ? '●' : '■'}</span>
+                    <span class={`text-sm font-bold leading-none border px-1.5 py-0.5 ${
+                      index === 0 ? 'text-[#f59e0b] border-[#f59e0b40] bg-[#f59e0b08]' :
+                      index === 1 ? 'text-[#9ca3af] border-[#9ca3af30] bg-[#9ca3af06]' :
+                                    'text-[#cd7f32] border-[#cd7f3240] bg-[#cd7f3208]'
+                    }`}>{rankLabel(index)}</span>
+                  </>
+                ) : (
+                  <span class="text-xs text-[#374151]">{rankLabel(index)}</span>
+                )}
+              </div>
+
+              <!-- 标题 + 描述 + 进度条 -->
+              <div class="flex-1 min-w-0">
+                <h3 class={`font-mono text-sm text-[#e5e5e5] transition-colors truncate ${
+                  index === 0 ? 'group-hover:text-[#f59e0b]' :
+                  index === 1 ? 'group-hover:text-[#9ca3af]' :
+                  index === 2 ? 'group-hover:text-[#cd7f32]' :
+                  'group-hover:text-[#00FF41]'
+                }`}>
+                  {iceberg.title}
+                </h3>
+                {iceberg.description && (
+                  <p class="text-xs text-[#4b5563] mt-0.5 truncate">{iceberg.description}</p>
+                )}
+                <div class="view-bar mt-2">
+                  <div class="view-bar-fill" style={`width:${barWidth}%; background:${barColor}`}></div>
+                </div>
+                <div class="flex items-center gap-3 mt-1.5 text-xs text-[#374151] font-mono">
+                  <span>{iceberg._count.tiers} 层</span>
+                  {iceberg.author && (
+                    <span>@{iceberg.author.nickname || iceberg.author.username}</span>
+                  )}
+                  <span>{formatDate(iceberg.createdAt)}</span>
+                </div>
+              </div>
+
+              <!-- 主指标（大） + 副指标（小） -->
+              <div class="flex-shrink-0 text-right space-y-1.5 min-w-[4rem]">
+                {tab === 'views' ? (
+                  <>
+                    <div>
+                      <div class="text-base font-mono font-semibold text-[#00FF41]">
+                        {iceberg.viewCount.toLocaleString()}
+                      </div>
+                      <div class="text-[10px] text-[#374151] font-mono">浏览</div>
+                    </div>
+                    <div>
+                      <div class={`text-sm font-mono ${iceberg.voteScore > 0 ? 'text-[#22c55e]' : iceberg.voteScore < 0 ? 'text-[#ef4444]' : 'text-[#374151]'}`}>
+                        {iceberg.voteScore > 0 ? '+' : ''}{iceberg.voteScore}
+                      </div>
+                      <div class="text-[10px] text-[#374151] font-mono">票</div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <div class={`text-base font-mono font-semibold ${iceberg.voteScore > 0 ? 'text-[#22c55e]' : iceberg.voteScore < 0 ? 'text-[#ef4444]' : 'text-[#4b5563]'}`}>
+                        {iceberg.voteScore > 0 ? '+' : ''}{iceberg.voteScore}
+                      </div>
+                      <div class="text-[10px] text-[#374151] font-mono">票</div>
+                    </div>
+                    <div>
+                      <div class="text-sm font-mono text-[#4b5563]">
+                        {iceberg.viewCount.toLocaleString()}
+                      </div>
+                      <div class="text-[10px] text-[#374151] font-mono">浏览</div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    )}
+
+  </main>
+</Layout>

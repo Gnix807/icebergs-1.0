@@ -1,0 +1,567 @@
+---
+/**
+ * /guide — 平台使用指南与冰山图撰写细则
+ */
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="使用指南 — 冰山图宇宙">
+  <main class="max-w-3xl mx-auto px-4 py-8 boot-animate">
+
+    <!-- 标题 -->
+    <div class="mb-10">
+      <div class="text-[10px] font-mono text-[#374151] tracking-widest mb-2">// GUIDE · 使用指南</div>
+      <h1 class="text-2xl font-mono text-[#e5e5e5] mb-2">冰山图宇宙 · 使用指南</h1>
+      <p class="text-xs font-mono text-[#4b5563]">
+        本页介绍平台核心功能与冰山图撰写规范，帮助你快速上手并创作高质量内容。
+      </p>
+      <!-- 跳转索引 -->
+      <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1">
+        {[
+          ['#what',    '什么是冰山图'],
+          ['#start',   '快速开始'],
+          ['#create',  '创建冰山图'],
+          ['#writing', '撰写细则'],
+          ['#tiers',   '层级规范'],
+          ['#items',   '词条规范'],
+          ['#features','功能一览'],
+          ['#faq',     '常见问题'],
+        ].map(([href, label]) => (
+          <a href={href} class="text-[10px] font-mono text-[#374151] hover:text-[#00FF41] transition-colors">
+            › {label}
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- ── 01 什么是冰山图 ── -->
+    <section id="what" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#00FF41] tracking-widest">01 · 什么是冰山图</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4 mb-3">
+        <p class="text-[11px] font-mono text-[#9ca3af] leading-relaxed mb-3">
+          冰山图是一种将某一主题的知识按"大众认知 → 深层奥秘"分层呈现的结构化内容形式。
+          就像冰山一样，浮出水面的只是表层，而真正庞大而有趣的部分藏在水面之下。
+        </p>
+        <p class="text-[11px] font-mono text-[#4b5563] leading-relaxed">
+          例如，一张关于"宇宙"的冰山图，顶层可能是"太阳系""银河系"这样的常识；
+          往下则是"暗物质""弦理论"；更深处是"时间的本质""多宇宙猜想"……
+          每一层都比上一层更冷门、更深入、更令人震惊。
+        </p>
+      </div>
+
+      <!-- 视觉结构示意 -->
+      <div class="border border-[#1f2937] bg-[#050508] p-4 font-mono text-xs">
+        <div class="text-[10px] text-[#374151] mb-3">// 结构示意</div>
+        <div class="space-y-1">
+          <div class="flex items-center gap-3">
+            <span class="text-[#2A2A2A] w-20 text-right text-[10px]">第 1 层</span>
+            <div class="flex-1 bg-[#00FF41]/10 border border-[#00FF41]/20 px-3 py-1 text-[#9ca3af] text-[11px]">
+              ██████████████████  大众熟知的常识与入门知识
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-[#2A2A2A] w-20 text-right text-[10px]">第 2 层</span>
+            <div class="flex-1 bg-[#22c55e]/8 border border-[#22c55e]/15 px-3 py-1 text-[#9ca3af] text-[11px]">
+              ██████████████  略有了解的人才知道的内容
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-[#2A2A2A] w-20 text-right text-[10px]">第 3 层</span>
+            <div class="flex-1 bg-[#3b82f6]/8 border border-[#3b82f6]/15 px-3 py-1 text-[#9ca3af] text-[11px]">
+              ██████████  需要深入了解才能接触到的知识
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-[#2A2A2A] w-20 text-right text-[10px]">第 4 层+</span>
+            <div class="flex-1 bg-[#8b5cf6]/8 border border-[#8b5cf6]/15 px-3 py-1 text-[#9ca3af] text-[11px]">
+              ████████  极小众的冷知识、猎奇内容、深层理论
+            </div>
+          </div>
+        </div>
+        <div class="mt-3 text-[10px] text-[#2A2A2A] text-center tracking-wider">▼ 越往下越冷门、越小众</div>
+      </div>
+    </section>
+
+    <!-- ── 02 快速开始 ── -->
+    <section id="start" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#00FF41] tracking-widest">02 · 快速开始</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="space-y-2">
+        {[
+          ['注册 / 登录', '点击右上角"登录"，使用 GitHub 账号或邮箱注册。新账号默认为 USER 角色。', '#374151'],
+          ['浏览内容', '前往冰山广场（/iceberg/list）探索公开内容，点击卡片进入详情页，可展开各层词条并查看描述。', '#374151'],
+          ['投票与评论', '登录后可对冰山图投赞 / 踩，可在词条详情中发表评论并对评论点赞。这些互动都会为你积累质量分。', '#374151'],
+          ['创建你的第一张冰山图', '点击右上角用户菜单中的"创建冰山图"，进入编辑器。填写标题、描述、层级与词条后，通过提交前检查单即可提交审核。', '#00FF41'],
+          ['成为 CONTRIBUTOR', '累积足够的质量分与冰山图数量后，可申请晋升 CONTRIBUTOR。CONTRIBUTOR 可发布冰山图并参与 RfA 投票。', '#374151'],
+        ].map(([title, desc, color], i) => (
+          <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4 flex gap-4">
+            <span class="font-mono text-sm flex-shrink-0 w-6 text-right" style={`color:${color}`}>{i + 1}.</span>
+            <div>
+              <div class="text-xs font-mono text-[#e5e5e5] mb-1">{title}</div>
+              <p class="text-[11px] font-mono text-[#4b5563] leading-relaxed">{desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- ── 03 创建冰山图 ── -->
+    <section id="create" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#00FF41] tracking-widest">03 · 创建冰山图</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="space-y-3">
+
+        <!-- 字段说明 -->
+        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4">
+          <div class="text-[10px] font-mono text-[#9ca3af] mb-3">字段说明</div>
+          <div class="space-y-3 text-[11px] font-mono">
+            <div class="flex gap-3 items-start">
+              <span class="text-[#00FF41] w-14 flex-shrink-0">标题</span>
+              <span class="text-[#4b5563]">冰山图的主题名称。至少 <strong class="text-[#e5e5e5]">5 个字</strong>，简洁说明主题即可，例如"日本历史""深海生物""量子力学"。</span>
+            </div>
+            <div class="flex gap-3 items-start">
+              <span class="text-[#00FF41] w-14 flex-shrink-0">摘要</span>
+              <span class="text-[#4b5563]">对冰山图主题的简短介绍。至少 <strong class="text-[#e5e5e5]">20 个字</strong>，帮助读者了解该冰山图的范围与视角。</span>
+            </div>
+            <div class="flex gap-3 items-start">
+              <span class="text-[#00FF41] w-14 flex-shrink-0">层级</span>
+              <span class="text-[#4b5563]">代表知识深度的分层。至少需要 <strong class="text-[#e5e5e5]">3 层</strong>，可自定义层名（如"水面""浅水区""深水区""深渊"）。</span>
+            </div>
+            <div class="flex gap-3 items-start">
+              <span class="text-[#00FF41] w-14 flex-shrink-0">词条</span>
+              <span class="text-[#4b5563]">每个知识点。每层至少 <strong class="text-[#e5e5e5]">2 个词条</strong>，词条有标题（必填）和描述（推荐填写，全图 50% 以上词条须有描述）。</span>
+            </div>
+            <div class="flex gap-3 items-start">
+              <span class="text-[#00FF41] w-14 flex-shrink-0">标签</span>
+              <span class="text-[#4b5563]">给词条打上分类标签，包含成人内容须打 <strong class="text-[#ef4444]">NSFW</strong> 标签，提交时需额外勾选确认。</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 提交检查单 -->
+        <div class="border border-[#00FF41]/15 bg-[#00FF41]/3 p-4">
+          <div class="text-[10px] font-mono text-[#00FF41] mb-3">// 提交前检查单（所有项目必须通过）</div>
+          <ul class="space-y-1.5 text-[11px] font-mono">
+            {[
+              '标题已填写（≥ 5 字）',
+              '摘要已填写（≥ 20 字）',
+              '层数 ≥ 3 层',
+              '每层词条数 ≥ 2 条',
+              '词条描述覆盖率 ≥ 50%（超过一半的词条有描述）',
+              '含 NSFW 内容时已勾选确认',
+            ].map(item => (
+              <li class="flex items-center gap-2">
+                <span class="text-[#00FF41]">✓</span>
+                <span class="text-[#4b5563]">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <!-- 审核流程 -->
+        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4">
+          <div class="text-[10px] font-mono text-[#9ca3af] mb-3">审核流程</div>
+          <div class="flex items-center gap-2 flex-wrap text-[11px] font-mono text-[#4b5563]">
+            <span class="border border-[#1a1a1a] px-2 py-1 text-[#6b7280]">草稿</span>
+            <span class="text-[#2A2A2A]">──通过检查单──▶</span>
+            <span class="border border-[#f59e0b30] px-2 py-1 text-[#f59e0b]">待审核</span>
+            <span class="text-[#2A2A2A]">──EDITOR 审核──▶</span>
+            <span class="border border-[#22c55e30] px-2 py-1 text-[#22c55e]">已发布</span>
+          </div>
+          <p class="text-[10px] font-mono text-[#374151] mt-3">
+            · 审核通常在 24–48 小时内完成。NSFW 内容进入专项审核队列，审核时间可能更长。<br/>
+            · 被驳回时会收到通知并附上驳回原因，修改后可重新提交。
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── 04 撰写细则 ── -->
+    <section id="writing" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">04 · 冰山撰写细则</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="space-y-3">
+
+        <div class="border border-[#22c55e20] bg-[#22c55e05] p-4">
+          <div class="text-[10px] font-mono text-[#22c55e] mb-3">// 核心原则</div>
+          <ul class="space-y-2 text-[11px] font-mono text-[#4b5563]">
+            <li class="flex items-start gap-2">
+              <span class="text-[#22c55e] flex-shrink-0">▶</span>
+              <span><strong class="text-[#9ca3af]">层级要有梯度。</strong>越靠下的层级，内容应越冷门、越偏门、越令人意外。如果读者对你的"第 5 层"内容感到"这我知道啊"，说明分层不够深。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-[#22c55e] flex-shrink-0">▶</span>
+              <span><strong class="text-[#9ca3af]">内容要可查证。</strong>所有词条内容应有据可查，建议在描述中注明来源（文章、视频、论文、Wikipedia 等）。禁止编造事实。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-[#22c55e] flex-shrink-0">▶</span>
+              <span><strong class="text-[#9ca3af]">描述要有信息量。</strong>描述不应只是标题的同义反复。好的描述能解释"为什么这个词条在这一层"，提供背景、来源或延伸信息。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-[#22c55e] flex-shrink-0">▶</span>
+              <span><strong class="text-[#9ca3af]">主题要聚焦。</strong>一张冰山图应围绕单一主题展开，不要把不同领域的内容混合在同一张图里。宁可做多张，不要做一张什么都有的大杂烩。</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="border border-[#ef444420] bg-[#ef444405] p-4">
+          <div class="text-[10px] font-mono text-[#ef4444] mb-3">// 常见问题与避雷指南</div>
+          <ul class="space-y-2 text-[11px] font-mono text-[#4b5563]">
+            <li class="flex items-start gap-2">
+              <span class="text-[#ef4444] flex-shrink-0">✕</span>
+              <span><strong class="text-[#9ca3af]">层级梯度混乱。</strong>比如把"爱因斯坦"放在第 5 层——这是常识，不是深层内容。每层的冷门度应明显高于上一层。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-[#ef4444] flex-shrink-0">✕</span>
+              <span><strong class="text-[#9ca3af]">词条描述空洞。</strong>描述如"这是一个很有趣的事情""详见百度百科"无法通过审核。描述至少要说明该词条的核心信息。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-[#ef4444] flex-shrink-0">✕</span>
+              <span><strong class="text-[#9ca3af]">未打标的 NSFW 内容。</strong>含血腥、色情、强烈暴力内容的词条必须打上 NSFW 标签。漏标将导致冰山图被直接驳回。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-[#ef4444] flex-shrink-0">✕</span>
+              <span><strong class="text-[#9ca3af]">主观评价代替事实。</strong>"某某是最伟大的……""某某绝对是错的……"——观点性内容需标明为观点，不可作为客观事实呈现。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-[#ef4444] flex-shrink-0">✕</span>
+              <span><strong class="text-[#9ca3af]">重复提交相似主题。</strong>提交前请在广场搜索是否已有类似主题。重复主题可能被驳回或要求合并。</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── 05 层级规范 ── -->
+    <section id="tiers" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">05 · 层级设计规范</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="space-y-3">
+        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-[#9ca3af] mb-3">层级数量建议</div>
+          <div class="space-y-2 text-[#4b5563]">
+            <div class="flex items-center justify-between">
+              <span>最少层数</span>
+              <span class="text-[#e5e5e5]">3 层（提交要求下限）</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>推荐层数</span>
+              <span class="text-[#22c55e]">5 — 8 层</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>层数过多时</span>
+              <span class="text-[#f59e0b]">考虑拆分为多张冰山图</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-[#9ca3af] mb-3">层级命名建议</div>
+          <p class="text-[#4b5563] mb-3">层名是读者的阅读引导，好的层名能强化"冰山感"。以下是几种常见风格：</p>
+          <div class="space-y-2">
+            {[
+              ['比喻风格', ['水面', '浅水区', '深水区', '深渊', '海底未知带']],
+              ['数字风格', ['第一级', '第二级', '第三级', '第四级', '密级：绝密']],
+              ['认知风格', ['常识', '教科书知识', '专业知识', '学术前沿', '阴谋论领域']],
+            ].map(([style, examples]) => (
+              <div>
+                <span class="text-[#374151]">{style}：</span>
+                <span class="text-[#6b7280]">
+                  {(examples as string[]).map((e, i, arr) => (
+                    <span>{e}{i < arr.length - 1 ? ' → ' : ''}</span>
+                  ))}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-[#9ca3af] mb-3">层级内容配比建议</div>
+          <div class="space-y-1.5 text-[#4b5563]">
+            <div class="flex items-center gap-2">
+              <div class="w-32 text-right text-[10px]">顶层（第 1–2 层）</div>
+              <div class="flex-1 bg-[#1a1a1a] h-2 relative overflow-hidden">
+                <div class="absolute inset-y-0 left-0 bg-[#00FF41]/40" style="width:70%"></div>
+              </div>
+              <span class="text-[#6b7280] w-32">词条多，内容浅</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-32 text-right text-[10px]">中层（第 3–5 层）</div>
+              <div class="flex-1 bg-[#1a1a1a] h-2 relative overflow-hidden">
+                <div class="absolute inset-y-0 left-0 bg-[#22c55e]/40" style="width:45%"></div>
+              </div>
+              <span class="text-[#6b7280] w-32">适量词条，需描述</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-32 text-right text-[10px]">底层（第 6 层+）</div>
+              <div class="flex-1 bg-[#1a1a1a] h-2 relative overflow-hidden">
+                <div class="absolute inset-y-0 left-0 bg-[#8b5cf6]/40" style="width:20%"></div>
+              </div>
+              <span class="text-[#6b7280] w-32">词条少但质量高</span>
+            </div>
+          </div>
+          <p class="text-[10px] text-[#374151] mt-3">顶层内容多但浅，越往下词条越少但每个词条的信息密度越高，这样整体读起来有强烈的"探索感"。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 06 词条规范 ── -->
+    <section id="items" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">06 · 词条撰写规范</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="space-y-3">
+        <!-- 词条标题 -->
+        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-[#9ca3af] mb-2">词条标题</div>
+          <ul class="space-y-1.5 text-[#4b5563]">
+            <li class="flex gap-2"><span class="text-[#22c55e]">✓</span> 简洁明了，一般为专有名词或短语，例如："薛定谔的猫"、"曼德拉效应"</li>
+            <li class="flex gap-2"><span class="text-[#22c55e]">✓</span> 中英文均可，保持一张图内的风格统一</li>
+            <li class="flex gap-2"><span class="text-[#ef4444]">✕</span> 不要用整句话作为标题，例如："有一种理论认为宇宙是模拟的"（这应该是描述内容）</li>
+          </ul>
+        </div>
+
+        <!-- 词条描述 -->
+        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-[#9ca3af] mb-2">词条描述（推荐所有词条都填写）</div>
+          <ul class="space-y-1.5 text-[#4b5563]">
+            <li class="flex gap-2"><span class="text-[#22c55e]">✓</span> 解释这个词条是什么，以及它为什么属于这一层（为什么冷门、为什么深）</li>
+            <li class="flex gap-2"><span class="text-[#22c55e]">✓</span> 提供背景信息：时间、地点、人物、事件起因</li>
+            <li class="flex gap-2"><span class="text-[#22c55e]">✓</span> 引用来源：书名、纪录片、论文标题、网址等</li>
+            <li class="flex gap-2"><span class="text-[#22c55e]">✓</span> 描述支持 Markdown 格式（加粗、斜体、链接、代码块）</li>
+            <li class="flex gap-2"><span class="text-[#ef4444]">✕</span> 不要只写"见百度百科"或"Google 可查"——这不是有效描述</li>
+            <li class="flex gap-2"><span class="text-[#ef4444]">✕</span> 不要复制粘贴大段维基百科原文，应提炼核心信息</li>
+          </ul>
+        </div>
+
+        <!-- 好描述 vs 差描述对比 -->
+        <div class="border border-[#1f2937] bg-[#050508] p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-[#374151] mb-3">// 描述质量对比示例</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <div class="text-[10px] text-[#ef4444] mb-1.5">差的描述</div>
+              <div class="border border-[#ef444420] bg-[#ef444405] px-3 py-2 text-[#4b5563] leading-relaxed">
+                <div class="text-[#6b7280] mb-1">词条：曼德拉效应</div>
+                "这是一个很有意思的心理现象，感兴趣的朋友可以自己搜索。"
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] text-[#22c55e] mb-1.5">好的描述</div>
+              <div class="border border-[#22c55e20] bg-[#22c55e05] px-3 py-2 text-[#4b5563] leading-relaxed">
+                <div class="text-[#6b7280] mb-1">词条：曼德拉效应</div>
+                "大量人群对某一历史事件拥有错误的集体记忆。得名于许多人错误地记得南非前总统曼德拉死于20世纪80年代狱中（实际于2013年去世）。心理学上解释为记忆的可塑性与社会暗示效应。"
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 标签使用 -->
+        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-[#9ca3af] mb-2">标签使用规范</div>
+          <div class="space-y-1.5 text-[#4b5563]">
+            <div class="flex items-center gap-2">
+              <span class="border border-[#ef444440] text-[#ef4444] px-1.5 py-0.5 text-[10px]">NSFW</span>
+              <span>含成人内容、强烈血腥暴力、色情内容时必须标注</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="border border-[#f59e0b40] text-[#f59e0b] px-1.5 py-0.5 text-[10px]">争议</span>
+              <span>内容存在较大争议性或学界尚无定论时建议标注</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="border border-[#3b82f640] text-[#3b82f6] px-1.5 py-0.5 text-[10px]">猜测</span>
+              <span>内容为推测、假说、未经证实的理论时标注</span>
+            </div>
+          </div>
+          <p class="text-[10px] text-[#374151] mt-3">漏打 NSFW 标签将导致冰山图被直接驳回，需修改后重新提交。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 07 功能一览 ── -->
+    <section id="features" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#3b82f6] tracking-widest">07 · 平台功能一览</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="space-y-2">
+        {[
+          {
+            icon: '⬛', label: '冰山广场',
+            link: '/iceberg/list', linkLabel: '/iceberg/list',
+            desc: '浏览所有已发布的冰山图，支持按分类、关键词搜索。点击卡片展开各层词条与描述。',
+          },
+          {
+            icon: '△', label: '投票',
+            link: null, linkLabel: null,
+            desc: '对冰山图投赞（+1）或踩（-1）。改变投票方向会抵消上一次投票。投票影响冰山图排名并给作者带来质量分变化。',
+          },
+          {
+            icon: '◎', label: '评论',
+            link: null, linkLabel: null,
+            desc: '在冰山图详情页对词条发表评论，支持楼中楼回复。评论可被点赞，点赞给评论作者加质量分。',
+          },
+          {
+            icon: '★', label: '收藏',
+            link: null, linkLabel: null,
+            desc: '登录后可收藏感兴趣的冰山图，在个人主页的"收藏"标签页中查看。',
+          },
+          {
+            icon: '▲', label: '排行榜',
+            link: '/leaderboard', linkLabel: '/leaderboard',
+            desc: '查看按热度、质量分等维度排名的冰山图与用户榜单。',
+          },
+          {
+            icon: '◆', label: '个人主页',
+            link: null, linkLabel: null,
+            desc: '查看个人发布的冰山图、收藏、评论、质量分积分记录、成就等。点击他人头像/用户名也可访问其主页。',
+          },
+          {
+            icon: '!', label: '举报',
+            link: null, linkLabel: null,
+            desc: '在冰山图或评论处点击举报按钮，填写原因提交。由 MODERATOR+ 处理。',
+          },
+          {
+            icon: '↑', label: 'RfA（编辑申请）',
+            link: '/rfa', linkLabel: '/rfa',
+            desc: 'CONTRIBUTOR 资格用户可申请晋升为 EDITOR，需通过公开投票。详见规则页。',
+          },
+          {
+            icon: '⊘', label: '申诉',
+            link: null, linkLabel: null,
+            desc: '账号受到处罚（限制、封禁）后，可在个人主页的通知中找到申诉入口，向 ADMIN 申请复查。',
+          },
+        ].map(({ icon, label, link, linkLabel, desc }) => (
+          <div class="border border-[#1a1a1a] bg-[#0a0c10] px-4 py-3 flex gap-3 items-start">
+            <span class="text-xs font-mono text-[#374151] mt-0.5 w-4 flex-shrink-0">{icon}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1 flex-wrap">
+                <span class="text-xs font-mono text-[#e5e5e5]">{label}</span>
+                {link && (
+                  <a href={link} class="text-[10px] font-mono text-[#374151] hover:text-[#00FF41] transition-colors">{linkLabel}</a>
+                )}
+              </div>
+              <p class="text-[11px] font-mono text-[#4b5563] leading-relaxed">{desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- ── 08 常见问题 ── -->
+    <section id="faq" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#8b5cf6] tracking-widest">08 · 常见问题</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="space-y-2" id="faq-list">
+        {[
+          {
+            q: '我的冰山图提交后多久会被审核？',
+            a: '一般 24–48 小时内由 EDITOR 审核。平台活跃度较低时可能稍长。含 NSFW 内容的会进入专项队列，时间不定。',
+          },
+          {
+            q: '冰山图被驳回后我该怎么做？',
+            a: '你会收到站内通知，并附有驳回原因。根据原因修改草稿（尤其是层级结构、描述质量、NSFW 标签）后，可重新提交审核。',
+          },
+          {
+            q: '我能修改已发布的冰山图吗？',
+            a: '发布后可以继续编辑词条内容，但对结构的重大修改需要重新提交审核。具体逻辑以编辑器的提示为准。',
+          },
+          {
+            q: '质量分会不会下降？',
+            a: '会。他人对你的冰山图投踩，或撤回对你冰山图的赞，都会扣分（每次 -1）。质量分直接影响晋升资格，请保持内容质量。',
+          },
+          {
+            q: '我已经是 CONTRIBUTOR，什么时候可以申请 RfA？',
+            a: '需满足：质量分达到门槛且注册天数达到要求（见规则页）。同一时刻只能有一个进行中的 RfA，失败后有冷却期。',
+          },
+          {
+            q: '什么样的内容会被驳回？',
+            a: '无事实依据的内容、层级梯度不合理、词条描述覆盖率低于 50%、NSFW 内容未打标、含广告/垃圾信息、与主题无关等情况均可能被驳回。',
+          },
+          {
+            q: '搜索功能怎么用？',
+            a: '点击导航栏搜索框或按 Ctrl+K（Mac 上是 ⌘K）打开全局搜索，输入至少 2 个字即可搜索已发布的冰山图标题。',
+          },
+          {
+            q: '如何反馈 bug 或建议？',
+            a: '前往反馈页（/feedback）提交问题或建议，管理员会查看并回复。',
+          },
+        ].map(({ q, a }, i) => (
+          <div class="border border-[#1a1a1a] bg-[#0a0c10] overflow-hidden">
+            <button
+              type="button"
+              class="w-full text-left px-4 py-3 flex items-start gap-2 hover:bg-[#0f131a] transition-colors faq-btn"
+              data-index={i}
+            >
+              <span class="text-[#00FF41] font-mono text-xs mt-0.5 flex-shrink-0">?</span>
+              <span class="text-xs font-mono text-[#9ca3af] leading-snug">{q}</span>
+              <span class="ml-auto text-[#374151] font-mono text-xs flex-shrink-0 faq-arrow">+</span>
+            </button>
+            <div class="faq-body px-4 pb-0 max-h-0 overflow-hidden transition-all duration-200">
+              <p class="text-[11px] font-mono text-[#4b5563] leading-relaxed pb-3 border-t border-[#1a1a1a] pt-2">{a}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- 底部链接 -->
+    <div class="flex items-center justify-between flex-wrap gap-4 border-t border-[#1a1a1a] pt-6">
+      <div class="flex gap-4">
+        <a href="/rules" class="text-[10px] font-mono text-[#374151] hover:text-[#00FF41] transition-colors">
+          查看完整规则 →
+        </a>
+        <a href="/iceberg/list" class="text-[10px] font-mono text-[#374151] hover:text-[#00FF41] transition-colors">
+          前往冰山广场 →
+        </a>
+      </div>
+      <a href="/feedback" class="text-[10px] font-mono text-[#374151] hover:text-[#00FF41] transition-colors">
+        反馈与建议 →
+      </a>
+    </div>
+
+  </main>
+</Layout>
+
+<script>
+  // FAQ 折叠/展开
+  document.querySelectorAll('.faq-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const body = btn.nextElementSibling as HTMLElement;
+      const arrow = btn.querySelector('.faq-arrow') as HTMLElement;
+      const isOpen = body.style.maxHeight && body.style.maxHeight !== '0px';
+      if (isOpen) {
+        body.style.maxHeight = '0px';
+        body.style.paddingBottom = '0';
+        if (arrow) arrow.textContent = '+';
+      } else {
+        body.style.maxHeight = body.scrollHeight + 'px';
+        if (arrow) arrow.textContent = '−';
+      }
+    });
+  });
+</script>

@@ -1,0 +1,1512 @@
+import { useState, useEffect, useRef, type ComponentType } from 'react';
+import { AWARD_TYPES, USERBOX_LIBRARY, getUserboxDef } from '../../lib/awards';
+import { useModalAnimation } from '../../hooks/useModalAnimation';
+import { Eye, Layers, Anchor, BookOpen, Brain, Fish, Trophy } from 'lucide-react';
+
+// 探索成就 key → Lucide 图标组件映射（DB 中的 icon 字段作为降级备用）
+const EXPLORE_ICON_MAP: Record<string, ComponentType<{ size?: number; strokeWidth?: number; color?: string }>> = {
+  explore_first:     Anchor,
+  explore_10:        BookOpen,
+  explore_50:        Brain,
+  explore_depth:     Fish,
+  explore_all_clear: Trophy,
+};
+import { UserIcebergs } from './UserIcebergs';
+import { UserWatchlist } from './UserWatchlist';
+import { UserSettings } from './UserSettings';
+import { AdminPanel } from '../admin/AdminPanel';
+import { getQualityLevel } from '../../lib/qualityLevel';
+import { toast } from '../ui/Toast';
+
+interface Iceberg {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  status: string;
+  viewCount: number;
+  createdAt: string;
+  _count: { tiers: number };
+}
+
+interface User {
+  id: string;
+  username: string;
+  nickname: string | null;
+  role: string;
+  status: string;
+  banUntil: string | null;
+  createdAt: string;
+  bio: string | null;
+  avatar: string | null;
+  qualityScore: number;
+  isFounder?: boolean;
+  privacyShowStats: boolean;
+  privacyShowWatchlist: boolean;
+  _count: { icebergs: number };
+}
+
+interface SocialStats {
+  totalViews: number;
+  totalVotes: number;
+}
+
+interface Notification {
+  id: string;
+  type: string;
+  title: string;
+  body: string | null;
+  link: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
+interface AchievementDef {
+  key: string;
+  icon: string;
+  label: string;
+  labelZh: string;
+  desc: string;
+  color: string;
+  triggerType: string;
+  triggerTarget: number;
+  sortOrder: number;
+  isHidden: boolean;
+}
+
+interface Props {
+  user: User;
+  icebergs: Iceberg[];
+  isOwner: boolean;
+  viewerRole?: string;
+  viewerIsFounder?: boolean;
+  appealEligible?: boolean;
+  promotionEligible?: boolean;
+  promotionPending?: boolean;
+  rfaEligible?: boolean;       // CONTRIBUTOR + 满足门槛
+  rfaPending?: boolean;        // 已有 OPEN 的 RfA
+  rfaActiveId?: string | null; // 进行中的 RfA id（用于跳转）
+  socialStats?: SocialStats;
+  achievements?: { achievementId: string; unlockedAt: string }[];
+  achievementDefs?: AchievementDef[];
+  userReadCount?: number;
+  awards?: { id: string; type: string; message: string | null; createdAt: string; giver: { id: string; username: string; nickname: string | null } }[];
+  userboxIds?: string[];
+}
+
+type Tab = 'icebergs' | 'watchlist' | 'explore' | 'score' | 'settings' | 'admin';
+
+const LEVEL_COLORS: Record<number, string> = {
+  0: '#6b7280',
+  1: '#22c55e',
+  2: '#3b82f6',
+  3: '#f59e0b',
+  4: '#ef4444',
+};
+
+const ROLE_BADGES: Record<string, { label: string; color: string }> = {
+  ADMIN:       { label: 'ADMIN',   color: '#ef4444' },
+  EDITOR:      { label: 'EDITOR',  color: '#3b82f6' },
+  CONTRIBUTOR: { label: 'CONTRIB', color: '#22c55e' },
+  USER:        { label: 'USER',    color: '#6b7280' },
+};
+
+const NOTIF_ICONS: Record<string, { icon: string; color: string }> = {
+  iceberg_approved:   { icon: '✓', color: '#22c55e' },
+  iceberg_rejected:   { icon: '✕', color: '#ef4444' },
+  promotion_approved: { icon: '★', color: '#f59e0b' },
+  promotion_rejected: { icon: '✕', color: '#ef4444' },
+  appeal_approved:    { icon: '✓', color: '#22c55e' },
+  appeal_rejected:    { icon: '✕', color: '#ef4444' },
+  warned:             { icon: '!', color: '#f97316' },
+  restricted:         { icon: '⊘', color: '#3b82f6' },
+  banned:             { icon: '✕', color: '#ef4444' },
+  unbanned:           { icon: '✓', color: '#22c55e' },
+  comment_reply:      { icon: '↩', color: '#00FF41' },
+  rfa_submitted:      { icon: '◈', color: '#3b82f6' },
+  rfa_vote:           { icon: '○', color: '#6b7280' },
+  rfa_approved:       { icon: '★', color: '#8b5cf6' },
+  rfa_rejected:       { icon: '✕', color: '#ef4444' },
+  weekly_bonus:       { icon: '◆', color: '#f59e0b' },
+  impeach_initiated:  { icon: '⚑', color: '#ef4444' },
+  impeach_vote:       { icon: '○', color: '#ef4444' },
+  impeach_passed:     { icon: '▼', color: '#8b5cf6' },
+  impeach_rejected:   { icon: '✓', color: '#22c55e' },
+  award_received:     { icon: '✦', color: '#f59e0b' },
+};
+
+const COMMUNITY_BADGES = [
+  { id: 'pioneer',  icon: '◈', label: 'PIONEER',  labelZh: '探路者', desc: '发布首篇冰山图',  color: '#22c55e' },
+  { id: 'prolific', icon: '◉', label: 'PROLIFIC', labelZh: '多产者', desc: '累计发布 10 篇', color: '#06b6d4' },
+  { id: 'popular',  icon: '★', label: 'POPULAR',  labelZh: '受众者', desc: '累计获赞 50+',   color: '#f59e0b' },
+  { id: 'analyst',  icon: '◆', label: 'ANALYST',  labelZh: '分析师', desc: '质量分达到 100', color: '#3b82f6' },
+  { id: 'veteran',  icon: '⬡', label: 'VETERAN',  labelZh: '资深者', desc: '注册满 180 天',  color: '#8b5cf6' },
+  { id: 'scholar',  icon: '✦', label: 'SCHOLAR',  labelZh: '学者',   desc: '质量分达到 500', color: '#ef4444' },
+] as const;
+
+// ── 质量分记录 Tab 子组件 ──────────────────────────────────────────────────
+const SCORE_REASON_META: Record<string, { label: string; icon: string; color: string }> = {
+  comment:         { label: '发表评论',     icon: '◎', color: '#22c55e'  },
+  vote_cast:       { label: '投票',         icon: '○', color: '#3b82f6'  },
+  comment_liked:   { label: '评论被点赞',   icon: '★', color: '#f59e0b'  },
+  iceberg_created: { label: '创建冰山图',   icon: '◈', color: '#00FF41'  },
+  iceberg_voted:   { label: '冰山图投票',   icon: '◆', color: '#8b5cf6'  },
+  promoted:        { label: '晋升奖励',     icon: '▲', color: '#f59e0b'  },
+  weekly_bonus:    { label: '周活跃奖励',   icon: '◉', color: '#ec4899'  },
+};
+
+interface ScoreLogEntry {
+  id: string;
+  delta: number;
+  reason: string;
+  note: string | null;
+  createdAt: string;
+}
+
+function ScoreLogTab({ userId }: { userId: string }) {
+  const [logs,    setLogs]    = useState<ScoreLogEntry[]>([]);
+  const [page,    setPage]    = useState(1);
+  const [total,   setTotal]   = useState(0);
+  const [pages,   setPages]   = useState(1);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/users/${userId}/score-log?page=${page}&limit=20`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          setLogs(d.data.items);
+          setTotal(d.data.meta.total);
+          setPages(d.data.meta.totalPages);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [userId, page]);
+
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-12 bg-[#0a0c10] border border-[#1a1a1a] animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  if (logs.length === 0) {
+    return (
+      <div className="py-20 text-center border border-dashed border-[#1f2937]">
+        <p className="text-[#374151] font-mono text-sm">暂无质量分记录</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="text-[10px] font-mono text-[#374151] mb-4">
+        // 共 {total} 条记录
+      </div>
+      <div className="space-y-1.5">
+        {logs.map(log => {
+          const meta = SCORE_REASON_META[log.reason] ?? { label: log.reason, icon: '·', color: '#6b7280' };
+          return (
+            <div key={log.id} className="flex items-center gap-3 px-4 py-3 border border-[#1a1a1a] bg-[#0a0c10]">
+              <span className="text-base flex-shrink-0" style={{ color: meta.color }}>{meta.icon}</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-mono text-[#9ca3af]">{meta.label}</span>
+                {log.note && (
+                  <span className="ml-2 text-[10px] font-mono text-[#374151] truncate">{log.note}</span>
+                )}
+              </div>
+              <span className={`text-sm font-mono font-bold tabular-nums flex-shrink-0 ${log.delta >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                {log.delta >= 0 ? `+${log.delta}` : log.delta}
+              </span>
+              <span className="text-[10px] font-mono text-[#2a2a2a] flex-shrink-0 w-20 text-right">
+                {new Date(log.createdAt).toLocaleDateString('zh-CN')}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {pages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-5">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="px-3 py-1.5 text-[10px] font-mono border border-[#1a1a1a] text-[#4b5563] hover:border-[#2A2A2A] hover:text-[#9ca3af] disabled:opacity-30 transition-colors"
+          >← 上一页</button>
+          <span className="text-[10px] font-mono text-[#374151]">{page} / {pages}</span>
+          <button
+            onClick={() => setPage(p => Math.min(pages, p + 1))}
+            disabled={page >= pages}
+            className="px-3 py-1.5 text-[10px] font-mono border border-[#1a1a1a] text-[#4b5563] hover:border-[#2A2A2A] hover:text-[#9ca3af] disabled:opacity-30 transition-colors"
+          >下一页 →</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── 探索成就 Tab 子组件 ────────────────────────────────────────────────────
+function ExploreTab({
+  achievementDefs, achievementMap, userReadCount,
+}: {
+  achievementDefs: AchievementDef[];
+  achievementMap: Record<string, string>;
+  userReadCount: number;
+}) {
+  const [isLight, setIsLight] = useState(false);
+  useEffect(() => {
+    const update = () => setIsLight(document.documentElement.classList.contains('light'));
+    update();
+    const obs = new MutationObserver(update);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+  const visible = achievementDefs.filter(d => !d.isHidden || d.key in achievementMap);
+
+  if (visible.length === 0) {
+    return (
+      <div className="py-16 text-center font-mono">
+        <div className="flex justify-center mb-4 opacity-20">
+          <Layers size={48} strokeWidth={1} className="text-[#00FF41]" />
+        </div>
+        <div className="text-sm text-[#374151]">暂无探索成就定义</div>
+      </div>
+    );
+  }
+
+  const unlocked = visible.filter(d => d.key in achievementMap).length;
+
+  return (
+    <div>
+      {/* 顶部进度栏 */}
+      <div className="border border-[#1f2937] bg-[#0a0c10] px-5 py-4 mb-5">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-mono text-[#374151] tracking-widest">探索进度</span>
+          <span className="text-xs font-mono text-[#f59e0b] tabular-nums">{unlocked} / {visible.length}</span>
+        </div>
+        <div className="w-full h-2 bg-[#0d0f14] border border-[#111518] overflow-hidden">
+          <div
+            className="h-full transition-all duration-700"
+            style={{
+              width: `${Math.round((unlocked / Math.max(1, visible.length)) * 100)}%`,
+              background: 'linear-gradient(90deg, #22c55e, #f59e0b, #ef4444)',
+            }}
+          />
+        </div>
+        <div className="flex justify-between text-[10px] font-mono text-[#2a2a2a] mt-1">
+          <span>累计阅读词条 {userReadCount}</span>
+          <span>{Math.round((unlocked / Math.max(1, visible.length)) * 100)}%</span>
+        </div>
+      </div>
+
+      {/* 成就列表 */}
+      <div className="space-y-3">
+        {visible.map(ach => {
+          const isUnlocked    = ach.key in achievementMap;
+          const unlockedAt    = achievementMap[ach.key];
+          const dateStr       = unlockedAt
+            ? new Date(unlockedAt).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+            : null;
+          const isCountType   = ach.triggerType === 'read_count';
+          const hasConditions = (() => { try { return JSON.parse((ach as any).conditions || '[]').length > 0; } catch { return false; } })();
+          const progress      = isCountType && ach.triggerTarget > 0
+            ? Math.min(1, userReadCount / ach.triggerTarget)
+            : isUnlocked ? 1 : 0;
+
+          return (
+            <div
+              key={ach.key}
+              className="relative overflow-hidden transition-all"
+              style={isUnlocked ? {
+                border:     `1px solid ${ach.color}44`,
+                borderLeft: `3px solid ${ach.color}`,
+                background: `${ach.color}0d`,
+                boxShadow:  `0 0 20px ${ach.color}10`,
+              } : {
+                border:     isLight ? '1px solid #d1d5db' : '1px solid #12161e',
+                borderLeft: isLight ? '3px solid #9ca3af' : '3px solid #1a1f2a',
+                background: isLight ? '#f3f4f6' : '#070809',
+              }}
+            >
+              {/* 未解锁：加深扫描线 + 右上角锁标 */}
+              {!isUnlocked && (
+                <>
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.25) 2px, rgba(0,0,0,0.25) 3px)' }}
+                  />
+                  <div className="absolute top-2 right-3 text-[10px] font-mono tracking-widest select-none"
+                    style={{ color: isLight ? '#9ca3af' : '#1f2937' }}>
+                    LOCKED
+                  </div>
+                </>
+              )}
+
+              <div className="relative flex items-start gap-4 px-5 py-4">
+                {/* 大图标 */}
+                <div
+                  className="flex-shrink-0 w-14 h-14 border flex items-center justify-center"
+                  style={isUnlocked ? {
+                    borderColor: `${ach.color}55`,
+                    background:  `${ach.color}18`,
+                    boxShadow:   `0 0 16px ${ach.color}44`,
+                  } : {
+                    borderColor: isLight ? '#d1d5db' : '#12161e',
+                    background:  isLight ? '#e5e7eb' : '#050608',
+                    filter:      'grayscale(1) brightness(0.6)',
+                  }}
+                >
+                  {(() => {
+                    const IconComp = EXPLORE_ICON_MAP[ach.key];
+                    return IconComp
+                      ? <IconComp size={26} strokeWidth={1.5} color={isUnlocked ? ach.color : (isLight ? '#9ca3af' : '#2d3748')} />
+                      : <span className="text-3xl">{ach.icon}</span>;
+                  })()}
+                </div>
+
+                {/* 信息 */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2 mb-1">
+                    <span
+                      className="text-sm font-mono font-bold tracking-wide"
+                      style={{ color: isUnlocked ? ach.color : (isLight ? '#6b7280' : '#2d3748') }}
+                    >
+                      {ach.label}
+                    </span>
+                    <span
+                      className="text-xs font-mono"
+                      style={{ color: isUnlocked ? '#4b5563' : (isLight ? '#9ca3af' : '#252d3a') }}
+                    >
+                      {ach.labelZh}
+                    </span>
+                    {isUnlocked && (
+                      <span className="ml-auto text-xs font-mono text-[#22c55e] flex-shrink-0">
+                        ✓ {dateStr}
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className="text-xs font-mono leading-relaxed mb-2"
+                    style={{ color: isUnlocked ? '#6b7280' : (isLight ? '#9ca3af' : '#1a1f28') }}
+                  >
+                    {ach.desc}
+                  </div>
+
+                  {/* 进度条（read_count 类型） */}
+                  {isCountType && !isUnlocked && ach.triggerTarget > 0 && (
+                    <div>
+                      <div className="flex justify-between text-[10px] font-mono text-[#374151] mb-1">
+                        <span>进度</span>
+                        <span className="tabular-nums">{Math.min(userReadCount, ach.triggerTarget)} / {ach.triggerTarget}</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-[#0d0f14] border border-[#111518] overflow-hidden">
+                        <div
+                          className="h-full transition-all duration-500"
+                          style={{ width: `${Math.round(progress * 100)}%`, background: ach.color }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 非计数类型提示 */}
+                  {!isCountType && !isUnlocked && !hasConditions && (
+                    <div className="text-[10px] font-mono text-[#1e2330]">
+                      {ach.triggerType === 'bottom_tier' && '需要：阅读冰山最底层的一个词条'}
+                      {ach.triggerType === 'all_clear'   && '需要：读完某张冰山的所有词条'}
+                      {ach.triggerType === 'manual'      && '需要：由管理员手动发放'}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 已解锁底部光晕线 */}
+              {isUnlocked && (
+                <div className="h-px w-full" style={{ background: `linear-gradient(90deg, transparent, ${ach.color}88, transparent)` }} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const d    = Math.floor(diff / 86400000);
+  if (d > 30) return `${Math.floor(d / 30)} 月前`;
+  if (d >= 1) return `${d} 天前`;
+  const h    = Math.floor(diff / 3600000);
+  if (h >= 1) return `${h} 小时前`;
+  return '刚刚';
+}
+
+const SCAN_LINES: React.CSSProperties = {
+  backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,255,65,0.013) 3px, rgba(0,255,65,0.013) 4px)',
+};
+
+export function UserCenter({
+  user, icebergs, isOwner, viewerRole, viewerIsFounder,
+  appealEligible, promotionEligible, promotionPending,
+  rfaEligible, rfaPending, rfaActiveId,
+  socialStats,
+  achievements = [], achievementDefs = [], userReadCount = 0,
+  awards = [], userboxIds = [],
+}: Props) {
+  const [activeTab, setActiveTab]     = useState<Tab>('icebergs');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // 通知面板
+  const [showNotifPanel, setShowNotifPanel]   = useState(false);
+  const { mounted: notifMounted, isLeaving: notifLeaving }   = useModalAnimation(showNotifPanel);
+  const [notifications, setNotifications]     = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount]         = useState(0);
+  const [notifLoaded, setNotifLoaded]         = useState(false);
+  const [markingAll, setMarkingAll]           = useState(false);
+  const notifPanelRef                         = useRef<HTMLDivElement>(null);
+
+  // 弹窗
+  const [actionModal, setActionModal]               = useState<'warn' | 'restrict' | 'ban' | null>(null);
+  const { mounted: actionMounted, isLeaving: actionLeaving } = useModalAnimation(actionModal !== null);
+  const [showAppeal, setShowAppeal]                 = useState(false);
+  const { mounted: appealMounted, isLeaving: appealLeaving }   = useModalAnimation(showAppeal);
+  const [appealStatement, setAppealStatement]       = useState('');
+  const [appealBusy, setAppealBusy]                 = useState(false);
+  const [actionForm, setActionForm]                 = useState<Record<string, string>>({});
+  const [actionBusy, setActionBusy]                 = useState(false);
+  const [showPromotion, setShowPromotion]           = useState(false);
+  const { mounted: promoMounted, isLeaving: promoLeaving }     = useModalAnimation(showPromotion);
+  const [showAwardModal, setShowAwardModal]         = useState(false);
+  const { mounted: awardMounted, isLeaving: awardLeaving }     = useModalAnimation(showAwardModal);
+  const [promotionStatement, setPromotionStatement] = useState('');
+  const [promotionBusy, setPromotionBusy]           = useState(false);
+  const [promotionSent, setPromotionSent]           = useState(false);
+
+  const qLevel      = getQualityLevel(user.qualityScore, user.role);
+  const levelColor  = LEVEL_COLORS[qLevel.level] ?? '#6b7280';
+  const displayName = user.nickname || user.username;
+  const roleBadge   = ROLE_BADGES[user.role] ?? { label: user.role, color: '#6b7280' };
+
+  const isEditorViewer = viewerRole === 'EDITOR' || viewerRole === 'ADMIN';
+  const isAdminViewer  = viewerRole === 'ADMIN';
+  const showStats      = isOwner || user.privacyShowStats;
+
+  // 从 DB 数据构建成就映射（unlockedAt 用于 tooltip）
+  const achievementMap = Object.fromEntries(
+    achievements.map(a => [a.achievementId, a.unlockedAt])
+  );
+  const unlockedCommunityCount = COMMUNITY_BADGES.filter(b => b.id in achievementMap).length;
+  const unlockedExploreCount   = achievementDefs.filter(d => d.key in achievementMap).length;
+
+  const tabs: { id: Tab; label: string; code: string; amber?: boolean }[] = [
+    { id: 'icebergs',  label: '冰山图',   code: 'ICEBERGS'  },
+    { id: 'watchlist', label: '收藏',     code: 'WATCHLIST' },
+    { id: 'explore',   label: '探索成就', code: 'EXPLORE'   },
+    ...(isOwner ? [{ id: 'score' as Tab, label: '积分', code: 'SCORE' }] : []),
+    ...(isOwner ? [{ id: 'settings' as Tab, label: '设置', code: 'SETTINGS' }] : []),
+    ...(isOwner && isEditorViewer
+      ? [{ id: 'admin' as Tab, label: '管理', code: 'RESTRICTED', amber: true }]
+      : []),
+  ];
+
+  // 加载通知
+  useEffect(() => {
+    if (!isOwner) return;
+    fetch('/api/notifications')
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          setNotifications(d.data.notifications);
+          setUnreadCount(d.data.unreadCount);
+          setNotifLoaded(true);
+        }
+      })
+      .catch(() => {});
+  }, [isOwner]);
+
+  // 点外部关闭通知面板
+  useEffect(() => {
+    if (!showNotifPanel) return;
+    const handler = (e: MouseEvent) => {
+      if (notifPanelRef.current && !notifPanelRef.current.contains(e.target as Node)) {
+        setShowNotifPanel(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showNotifPanel]);
+
+  const markAllRead = async () => {
+    setMarkingAll(true);
+    try {
+      await fetch('/api/notifications/read-all', { method: 'PUT' });
+      setNotifications(n => n.map(x => ({ ...x, read: true })));
+      setUnreadCount(0);
+    } finally { setMarkingAll(false); }
+  };
+
+  const markOneRead = async (id: string, link: string | null) => {
+    await fetch(`/api/notifications/${id}`, { method: 'PUT' });
+    setNotifications(n => n.map(x => x.id === id ? { ...x, read: true } : x));
+    setUnreadCount(c => Math.max(0, c - 1));
+    if (link) window.location.href = link;
+  };
+
+  const submitAppeal = async () => {
+    if (appealStatement.trim().length < 20) return;
+    setAppealBusy(true);
+    try {
+      const res  = await fetch(`/api/users/${user.id}/appeal`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ statement: appealStatement }),
+      });
+      const data = await res.json();
+      if (data.success) { toast('申诉已提交，等待管理员审核'); setShowAppeal(false); setAppealStatement(''); }
+      else toast(data.error?.message ?? '提交失败', 'error');
+    } finally { setAppealBusy(false); }
+  };
+
+  const submitPromotion = async () => {
+    setPromotionBusy(true);
+    try {
+      const res  = await fetch('/api/promotion/request', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ statement: promotionStatement }),
+      });
+      const data = await res.json();
+      if (data.success) { toast('晋升申请已提交，等待编辑审批'); setShowPromotion(false); setPromotionStatement(''); setPromotionSent(true); }
+      else toast(data.error?.message ?? '提交失败', 'error');
+    } finally { setPromotionBusy(false); }
+  };
+
+  const execAction = async () => {
+    if (!actionModal) return;
+    setActionBusy(true);
+    try {
+      let url = ''; let body: Record<string, unknown> = {};
+      if (actionModal === 'warn')     { url = `/api/users/${user.id}/warn`;     body = { level: Number(actionForm.level ?? 1), reason: actionForm.reason }; }
+      else if (actionModal === 'restrict') { url = `/api/users/${user.id}/restrict`; body = { reason: actionForm.reason }; }
+      else if (actionModal === 'ban') { url = `/api/users/${user.id}/ban`;      body = { type: actionForm.banType ?? 'TEMP', days: Number(actionForm.days ?? 7), reason: actionForm.reason }; }
+      const res  = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json();
+      if (data.success) { toast('操作已执行'); setActionModal(null); setActionForm({}); window.location.reload(); }
+      else toast(data.error?.message ?? '操作失败', 'error');
+    } finally { setActionBusy(false); }
+  };
+
+  // ── 侧边栏内容（桌面 + 移动端共用）────────────────────────────────
+  function renderSidebar() {
+    // ── Userbox 数据构建 ───────────────────────────────────────────
+    const roleLabels: Record<string, string> = {
+      ADMIN: '管理员', EDITOR: '编辑者', MODERATOR: '版主',
+      CONTRIBUTOR: '贡献者', USER: '注册用户',
+    };
+    const memberDays = Math.floor((Date.now() - new Date(user.createdAt).getTime()) / 86400000);
+    const memberStr  = memberDays >= 365
+      ? `${Math.floor(memberDays / 365)} 年 ${Math.floor((memberDays % 365) / 30)} 个月`
+      : `${memberDays} 天`;
+    const levelNames = ['访客', '研究员', '分析师', '督察员'];
+    const unlockedTotal = unlockedCommunityCount + unlockedExploreCount;
+
+    const userboxes: Array<{ leftBg: string; leftFg: string; leftText: string; text: string }> = [];
+    if (user.isFounder) {
+      userboxes.push({ leftBg: '#f59e0b', leftFg: '#0a0a0a', leftText: '◆', text: '该用户是平台创始人' });
+    }
+    userboxes.push({
+      leftBg: roleBadge.color, leftFg: '#0a0a0a',
+      leftText: roleBadge.label,
+      text: `该用户是${roleLabels[user.role] ?? user.role}`,
+    });
+    userboxes.push({
+      leftBg: '#111827', leftFg: '#6b7280',
+      leftText: String(new Date(user.createdAt).getFullYear()),
+      text: `注册时长 ${memberStr}`,
+    });
+    userboxes.push({
+      leftBg: `${levelColor}1a`, leftFg: levelColor,
+      leftText: String(user.qualityScore),
+      text: `质量等级：${levelNames[qLevel.level] ?? qLevel.label}`,
+    });
+    if (user._count.icebergs > 0) {
+      userboxes.push({
+        leftBg: '#001a00', leftFg: '#00FF41',
+        leftText: String(user._count.icebergs),
+        text: `发布了 ${user._count.icebergs} 篇冰山图`,
+      });
+    }
+    if (unlockedTotal > 0) {
+      userboxes.push({
+        leftBg: '#1a1020', leftFg: '#8b5cf6',
+        leftText: String(unlockedTotal),
+        text: `已解锁 ${unlockedTotal} 枚成就`,
+      });
+    }
+    // 已解锁的社区成就逐一展示
+    COMMUNITY_BADGES.forEach(badge => {
+      if (badge.id in achievementMap) {
+        userboxes.push({
+          leftBg: `${badge.color}22`, leftFg: badge.color,
+          leftText: badge.icon,
+          text: `${badge.labelZh} — ${badge.desc}`,
+        });
+      }
+    });
+    // 用户自选框
+    userboxIds.forEach(bid => {
+      const def = getUserboxDef(bid);
+      if (def) userboxes.push(def);
+    });
+
+    return (
+      <>
+        {/* Wikipedia 风用户框 */}
+        <div className="relative border border-[#1f2937] bg-[#0a0c10] overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none" style={SCAN_LINES} />
+          <div className="relative">
+            <div className="px-3.5 pt-3 pb-2.5 border-b border-[#111518]">
+              <div className="text-[11px] font-mono text-[#374151] tracking-[0.2em]">// USERBOX</div>
+            </div>
+            <div className="divide-y divide-[#0d0f14]">
+              {userboxes.map((box, i) => (
+                <div key={i} className="flex items-stretch" style={{ minHeight: '36px' }}>
+                  <div
+                    className="w-[52px] flex items-center justify-center flex-shrink-0 text-[11px] font-mono font-bold leading-tight px-1 text-center"
+                    style={{ background: box.leftBg, color: box.leftFg }}
+                  >
+                    {box.leftText}
+                  </div>
+                  <div className="flex-1 flex items-center px-2.5 bg-[#050608] min-w-0 border-l border-[#111518]">
+                    <span className="text-[11px] font-mono text-[#9ca3af] truncate">{box.text}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 授予勋章面板 */}
+        {awards.length > 0 && (
+          <div className="relative border border-[#1f2937] bg-[#0a0c10] overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none" style={SCAN_LINES} />
+            <div className="relative">
+              <div className="px-3.5 pt-3 pb-2.5 border-b border-[#111518] flex items-center justify-between">
+                <div className="text-[11px] font-mono text-[#374151] tracking-[0.2em]">// AWARDS</div>
+                <span className="text-[11px] font-mono text-[#f59e0b]">{awards.length}</span>
+              </div>
+              <div className="divide-y divide-[#0d0f14]">
+                {awards.map(award => {
+                  const def = AWARD_TYPES.find(a => a.id === award.type);
+                  if (!def) return null;
+                  const giverName = award.giver.nickname || award.giver.username;
+                  return (
+                    <div key={award.id} className="flex items-stretch" style={{ minHeight: '44px' }}>
+                      <div
+                        className="w-[52px] flex items-center justify-center flex-shrink-0 text-xl"
+                        style={{ background: `${def.color}22`, color: def.color }}
+                        title={def.labelZh}
+                      >
+                        {def.icon}
+                      </div>
+                      <div className="flex-1 flex flex-col justify-center px-2.5 bg-[#050608] min-w-0 border-l border-[#111518] py-1.5">
+                        <span className="text-[11px] font-mono font-semibold leading-tight" style={{ color: def.color }}>{def.labelZh}</span>
+                        {award.message && (
+                          <span className="text-[10px] font-mono text-[#6b7280] leading-tight mt-0.5 line-clamp-2">{award.message}</span>
+                        )}
+                        <span className="text-[10px] font-mono text-[#374151] leading-tight mt-0.5">
+                          by @{giverName} · {new Date(award.createdAt).toLocaleDateString('zh-CN')}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 通知入口 */}
+        {isOwner && (
+          <div className="relative border border-[#1f2937] bg-[#0a0c10] overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none" style={SCAN_LINES} />
+            <div className="relative p-3.5">
+              <div className="text-[11px] font-mono text-[#374151] tracking-[0.2em] mb-3">// NOTIFICATIONS</div>
+              <button
+                onClick={() => setShowNotifPanel(true)}
+                className="flex items-center justify-between w-full text-sm font-mono text-[#6b7280] hover:text-[#00FF41] transition-colors group"
+              >
+                <span className="group-hover:translate-x-0.5 transition-transform">通知中心</span>
+                <div className="flex items-center gap-2">
+                  {unreadCount > 0
+                    ? <span className="bg-[#ef4444] text-white text-[10px] font-mono px-1.5 py-0.5 min-w-[20px] text-center">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                    : <span className="text-[#2a2a2a] text-xs">▶</span>
+                  }
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Wikipedia 风成就徽章 — 社区贡献 */}
+        <div className="relative border border-[#1f2937] bg-[#0a0c10] overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none" style={SCAN_LINES} />
+          <div className="relative">
+            <div className="flex items-center justify-between px-3.5 pt-3.5 pb-2.5 border-b border-[#111518]">
+              <div className="text-[11px] font-mono text-[#374151] tracking-[0.2em]">// COMMUNITY</div>
+              <span className="text-[11px] font-mono" style={{ color: unlockedCommunityCount > 0 ? levelColor : '#374151' }}>
+                {unlockedCommunityCount}/{COMMUNITY_BADGES.length}
+              </span>
+            </div>
+
+            {/* 社区徽章 barnstar 网格 */}
+            <div className="grid grid-cols-2 gap-2 p-3">
+              {COMMUNITY_BADGES.map(badge => {
+                const unlocked   = badge.id in achievementMap;
+                const unlockedAt = achievementMap[badge.id];
+                const dateStr    = unlockedAt
+                  ? new Date(unlockedAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', year: '2-digit' })
+                  : null;
+                return (
+                  <div
+                    key={badge.id}
+                    className="flex flex-col items-center text-center p-2 border transition-all"
+                    style={{
+                      borderColor:    unlocked ? `${badge.color}55` : '#1a1f2a',
+                      background:     unlocked ? `${badge.color}0d` : '#050608',
+                      opacity:        unlocked ? 1 : 0.42,
+                      boxShadow:      unlocked ? `0 0 12px ${badge.color}22` : 'none',
+                    }}
+                  >
+                    <div className="text-2xl mb-1 leading-none" style={{ filter: unlocked ? `drop-shadow(0 0 6px ${badge.color}88)` : 'none' }}>
+                      {badge.icon}
+                    </div>
+                    <div className="text-[10px] font-mono font-bold tracking-wide leading-tight" style={{ color: unlocked ? badge.color : '#374151' }}>
+                      {badge.label}
+                    </div>
+                    <div className="text-[9px] font-mono text-[#4b5563] leading-tight mt-0.5">{badge.labelZh}</div>
+                    {unlocked && dateStr && (
+                      <div className="text-[9px] font-mono text-[#374151] mt-1 leading-tight">{dateStr}</div>
+                    )}
+                    {!unlocked && (
+                      <div className="text-[9px] font-mono text-[#1f2937] mt-1">— — —</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 探索成就概览 */}
+            <div className="border-t border-[#111518] px-3.5 py-2.5 flex items-center justify-between">
+              <div className="text-[10px] font-mono text-[#374151]">// EXPLORE</div>
+              <span className="text-[10px] font-mono" style={{ color: unlockedExploreCount > 0 ? '#f59e0b' : '#374151' }}>
+                {unlockedExploreCount}/{achievementDefs.filter(d => !d.isHidden || d.key in achievementMap).length}
+              </span>
+            </div>
+            {/* 迷你进度条 */}
+            <div className="px-3 pb-3">
+              <div className="w-full h-1.5 bg-[#0d0f14] border border-[#111518] overflow-hidden">
+                <div
+                  className="h-full transition-all"
+                  style={{
+                    width: achievementDefs.length > 0
+                      ? `${Math.round((unlockedExploreCount / Math.max(1, achievementDefs.filter(d => !d.isHidden || d.key in achievementMap).length)) * 100)}%`
+                      : '0%',
+                    background: 'linear-gradient(90deg, #f59e0b, #ef4444)',
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 社交数据 */}
+        {showStats && socialStats && (
+          <div className="relative border border-[#1f2937] bg-[#0a0c10] overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none" style={SCAN_LINES} />
+            <div className="relative p-3.5">
+              <div className="text-[11px] font-mono text-[#374151] tracking-[0.2em] mb-3">// STATS</div>
+              <div className="space-y-2">
+                {[
+                  { label: 'VIEWS',    value: socialStats.totalViews.toLocaleString(),       color: '#06b6d4' },
+                  { label: 'VOTES',    value: `+${socialStats.totalVotes.toLocaleString()}`, color: '#22c55e' },
+                  { label: 'ICEBERGS', value: user._count.icebergs.toString(),               color: levelColor  },
+                ].map(s => (
+                  <div key={s.label} className="flex items-center justify-between">
+                    <span className="text-xs font-mono text-[#374151] tracking-wider">{s.label}</span>
+                    <span className="text-sm font-mono font-bold tabular-nums" style={{ color: s.color }}>
+                      {s.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 快捷操作 */}
+        {isOwner && (
+          <div className="relative border border-[#1f2937] bg-[#0a0c10] overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none" style={SCAN_LINES} />
+            <div className="relative p-3.5">
+              <div className="text-[11px] font-mono text-[#374151] tracking-[0.2em] mb-3">// QUICK ACTIONS</div>
+              <div className="space-y-2">
+                <a
+                  href="/iceberg/new"
+                  className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-[#1f2937] text-[#6b7280] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors group"
+                >
+                  <span>创建冰山图</span>
+                  <span className="text-[#2a2a2a] group-hover:text-[#00FF41] transition-colors">+</span>
+                </a>
+                {user.role === 'USER' && promotionEligible && !promotionPending && !promotionSent && (
+                  <button
+                    onClick={() => setShowPromotion(true)}
+                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-[#f59e0b30] text-[#f59e0b] hover:bg-[#f59e0b10] transition-colors"
+                  >
+                    <span>申请晋升</span><span>→</span>
+                  </button>
+                )}
+                {user.role === 'USER' && (promotionPending || promotionSent) && (
+                  <div className="text-center text-xs font-mono text-[#f59e0b] py-2 border border-[#f59e0b20]">
+                    晋升审核中…
+                  </div>
+                )}
+                {user.role === 'CONTRIBUTOR' && rfaEligible && !rfaPending && (
+                  <a
+                    href="/rfa/apply"
+                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-[#3b82f630] text-[#3b82f6] hover:bg-[#3b82f610] transition-colors"
+                  >
+                    <span>申请编辑资格（RfA）</span><span>→</span>
+                  </a>
+                )}
+                {user.role === 'CONTRIBUTOR' && rfaPending && rfaActiveId && (
+                  <a
+                    href={`/rfa/${rfaActiveId}`}
+                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-[#3b82f630] text-[#3b82f6] hover:bg-[#3b82f610] transition-colors"
+                  >
+                    <span>RfA 进行中</span><span>→</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Steam 风最近活动 */}
+        {(showStats || isOwner) && icebergs.length > 0 && (
+          <div className="relative border border-[#1f2937] bg-[#0a0c10] overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none" style={SCAN_LINES} />
+            <div className="relative">
+              <div className="px-3.5 pt-3.5 pb-2.5 border-b border-[#111518]">
+                <div className="text-[11px] font-mono text-[#374151] tracking-[0.2em]">// RECENT ACTIVITY</div>
+              </div>
+              {icebergs.slice(0, 4).map(ic => (
+                <a
+                  key={ic.id}
+                  href={`/iceberg/${ic.slug}`}
+                  className="flex items-start gap-3 px-3.5 py-2.5 border-b border-[#0d0f14] hover:bg-[#0d1017] transition-colors group last:border-b-0"
+                >
+                  <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-[#1a1f2a] bg-[#050608] mt-0.5">
+                    <span className="text-[#2a3040] text-xs group-hover:text-[#00FF41] transition-colors">▼</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-mono text-[#6b7280] truncate group-hover:text-[#00FF41] transition-colors leading-tight mb-1">
+                      {ic.title}
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] font-mono text-[#374151]">
+                      <span className="flex items-center gap-1"><Eye size={11} strokeWidth={1.5} /> {ic.viewCount}</span>
+                      <span>{timeAgo(ic.createdAt)}</span>
+                      {ic.status !== 'PUBLISHED' && (
+                        <span className="text-[#f59e0b] opacity-70">{ic.status}</span>
+                      )}
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 md:px-6 py-8">
+
+      {/* ── 账户状态栏 ───────────────────────────────────────────────────── */}
+      {isOwner && user.status !== 'ACTIVE' && (() => {
+        const cfg: Record<string, { color: string; bg: string; icon: string; msg: string }> = {
+          WARNED_1:    { color: '#f59e0b', bg: '#f59e0b12', icon: '!',  msg: '你的账户有一条警告记录 (WARNED_1)，90 天内无新违规将自动清除。' },
+          WARNED_2:    { color: '#f97316', bg: '#f9731612', icon: '!!', msg: '你的账户有公开违规记录 (WARNED_2)，档案页面会显示警告标记。' },
+          READ_ONLY:   { color: '#3b82f6', bg: '#3b82f612', icon: '⊘',  msg: '账户处于只读状态，无法创建、编辑内容或参与投票。' },
+          TEMP_BANNED: { color: '#ef4444', bg: '#ef444412', icon: '✕',  msg: `账户已被临时封禁${user.banUntil ? '，解封时间：' + new Date(user.banUntil).toLocaleDateString('zh-CN') : ''}。` },
+          PERM_BANNED: { color: '#7f1d1d', bg: '#7f1d1d20', icon: '✕',  msg: '账户已被永久封禁。' },
+        };
+        const c = cfg[user.status];
+        if (!c) return null;
+        const canAppeal = appealEligible && ['WARNED_2', 'READ_ONLY', 'TEMP_BANNED', 'PERM_BANNED'].includes(user.status);
+        return (
+          <div className="border mb-5 px-4 py-3 font-mono boot-animate" style={{ borderColor: `${c.color}40`, background: c.bg, animationDelay: '0ms' }}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-2">
+                <span className="text-base font-bold flex-shrink-0" style={{ color: c.color }}>[{c.icon}]</span>
+                <div>
+                  <span className="text-sm" style={{ color: c.color }}>{user.status}</span>
+                  <p className="text-xs text-[#9ca3af] mt-0.5 leading-relaxed">{c.msg}</p>
+                </div>
+              </div>
+              {canAppeal && (
+                <button onClick={() => setShowAppeal(true)} className="flex-shrink-0 px-3 py-1.5 text-xs border transition-colors" style={{ borderColor: `${c.color}50`, color: c.color }}>
+                  提交申诉
+                </button>
+              )}
+              {user.status === 'WARNED_2' && !canAppeal && !appealEligible && (
+                <span className="flex-shrink-0 text-xs text-[#374151] font-mono">申诉冷却中</span>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── 管理操作栏（对他人）──────────────────────────────────────────── */}
+      {!isOwner && isEditorViewer && (
+        <div className="border border-[#1f2937] bg-[#0a0c10] mb-5 px-4 py-3 flex items-center gap-3 flex-wrap boot-animate" style={{ animationDelay: '0ms' }}>
+          <span className="text-xs font-mono text-[#374151] mr-auto tracking-wider">管理操作</span>
+          {(isAdminViewer || viewerIsFounder) && (
+            <button onClick={() => setShowAwardModal(true)} className="px-3 py-1.5 text-xs font-mono border border-[#f59e0b40] text-[#f59e0b] hover:bg-[#f59e0b15] transition-colors">✦ 授予勋章</button>
+          )}
+          <button onClick={() => { setActionModal('warn'); setActionForm({ level: '1' }); }} className="px-3 py-1.5 text-xs font-mono border border-[#f59e0b30] text-[#f59e0b] hover:bg-[#f59e0b15] transition-colors">发警告</button>
+          {isAdminViewer && (
+            <>
+              <button onClick={() => { setActionModal('restrict'); setActionForm({}); }} className="px-3 py-1.5 text-xs font-mono border border-[#3b82f630] text-[#3b82f6] hover:bg-[#3b82f615] transition-colors">只读限制</button>
+              <button onClick={() => { setActionModal('ban'); setActionForm({ banType: 'TEMP', days: '7' }); }} className="px-3 py-1.5 text-xs font-mono border border-[#ef444430] text-[#ef4444] hover:bg-[#ef444415] transition-colors">封禁</button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── HUD 档案头部 ──────────────────────────────────────────────────── */}
+      <div className="relative border border-[#1f2937] bg-[#0a0c10] mb-6 overflow-hidden boot-animate" style={{ animationDelay: '20ms' }}>
+        <div className="absolute inset-0 pointer-events-none" style={SCAN_LINES} />
+
+        <div className="relative flex items-center justify-between px-5 py-2 border-b border-[#1f2937] bg-[#030506]">
+          <span className="text-[11px] font-mono text-[#374151] tracking-[0.18em]">
+            PERSONNEL FILE — SUBJECT #{user.id.slice(-6).toUpperCase()}
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+            <span className="text-[11px] font-mono text-[#4b5563] tracking-wider">ONLINE</span>
+          </div>
+        </div>
+
+        <div className="relative p-5 md:p-7">
+          <div className="flex items-start gap-5 md:gap-6">
+
+            {/* 头像 + HUD 角码 + 角色徽章 */}
+            <div className="flex-shrink-0 flex flex-col items-center gap-2.5">
+              <div className="relative p-1.5">
+                <span className="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2" style={{ borderColor: levelColor }} />
+                <span className="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2" style={{ borderColor: levelColor }} />
+                <span className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2" style={{ borderColor: levelColor }} />
+                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2" style={{ borderColor: levelColor }} />
+                {user.avatar ? (
+                  <img src={user.avatar} alt={displayName} className="w-16 h-16 md:w-20 md:h-20 object-cover block"
+                    onError={e => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex'; }} />
+                ) : null}
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-[#0d1017] items-center justify-center" style={{ display: user.avatar ? 'none' : 'flex' }}>
+                  <span className="font-mono text-3xl" style={{ color: `${levelColor}60` }}>{displayName.charAt(0).toUpperCase()}</span>
+                </div>
+              </div>
+              <div className="text-[11px] font-mono border px-2.5 py-1 tracking-widest" style={{ color: roleBadge.color, borderColor: `${roleBadge.color}50`, background: `${roleBadge.color}12` }}>
+                {roleBadge.label}
+              </div>
+            </div>
+
+            {/* 名称 + bio + meta */}
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2.5 mb-2">
+                <h1 className="text-xl md:text-2xl font-mono font-bold">
+                  <span style={{ color: levelColor }}>@</span>
+                  <span className="glitch-hover cursor-default text-[#e5e5e5]">{displayName}</span>
+                </h1>
+                {user.nickname && <span className="text-xs font-mono text-[#374151]">({user.username})</span>}
+                {user.isFounder && (
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 border"
+                    style={{ color: '#f59e0b', borderColor: '#f59e0b50', background: '#f59e0b0d' }}>
+                    ◆ FOUNDER
+                  </span>
+                )}
+                {isOwner && <span className="text-xs font-mono border border-[#2A2A2A] text-[#374151] px-2 py-0.5">YOU</span>}
+              </div>
+
+              {user.bio
+                ? <p className="text-sm font-mono text-[#6b7280] leading-relaxed mb-3">{user.bio}</p>
+                : isOwner
+                  ? <p className="text-xs font-mono text-[#2A2A2A] mb-3 italic">// 点击「设置」添加个人简介</p>
+                  : <div className="mb-3" />
+              }
+
+              <div className="flex flex-wrap gap-x-5 gap-y-1.5">
+                {[
+                  { label: 'joined',   value: new Date(user.createdAt).toLocaleDateString('zh-CN') },
+                  ...(showStats ? [{ label: 'icebergs', value: String(user._count.icebergs) }] : []),
+                  ...(showStats && socialStats ? [
+                    { label: 'views', value: socialStats.totalViews.toLocaleString() },
+                    { label: 'votes', value: `+${socialStats.totalVotes.toLocaleString()}` },
+                  ] : []),
+                ].map(m => (
+                  <span key={m.label} className="flex items-center gap-1.5 text-xs font-mono">
+                    <span style={{ color: `${levelColor}70` }}>◆</span>
+                    <span className="text-[#374151]">{m.label}</span>
+                    <span className="text-[#6b7280]">{m.value}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Steam 风等级 rank 卡 */}
+            <div
+              className="flex-shrink-0 hidden sm:flex flex-col items-center border p-4 min-w-[110px] text-center"
+              style={{ borderColor: `${levelColor}50`, background: `${levelColor}08` }}
+            >
+              <div className="text-[10px] font-mono tracking-[0.2em] mb-1" style={{ color: `${levelColor}60` }}>CLEARANCE</div>
+              <div className="text-5xl font-mono font-black tabular-nums leading-none mb-1.5" style={{ color: levelColor, textShadow: `0 0 24px ${levelColor}55` }}>
+                {qLevel.level}
+              </div>
+              <div className="text-xs font-mono tracking-widest mb-3" style={{ color: `${levelColor}90` }}>
+                {qLevel.label}
+              </div>
+              {showStats && (
+                <>
+                  <div className="flex gap-px w-full mb-1.5">
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <div key={i} className="flex-1 h-2 transition-all" style={{ backgroundColor: i < Math.round(qLevel.progress * 10) ? levelColor : '#1a1f2a' }} />
+                    ))}
+                  </div>
+                  <div className="text-[10px] font-mono tabular-nums" style={{ color: `${levelColor}55` }}>
+                    {qLevel.nextScore ? `${user.qualityScore} / ${qLevel.nextScore}` : `${user.qualityScore} · MAX`}
+                  </div>
+                </>
+              )}
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* ── 两栏布局 ──────────────────────────────────────────────────────── */}
+      <div className="flex gap-6 items-start">
+
+        <div className="hidden md:flex flex-col gap-4 w-[230px] flex-shrink-0">
+          {renderSidebar()}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <button
+            onClick={() => setSidebarOpen(o => !o)}
+            className="md:hidden w-full py-2.5 mb-4 text-xs font-mono border border-[#1f2937] text-[#374151] hover:text-[#9ca3af] hover:border-[#374151] transition-colors"
+          >
+            [ 档案附录 {sidebarOpen ? '▲' : '▼'} ]
+          </button>
+          {sidebarOpen && <div className="md:hidden mb-5 flex flex-col gap-3">{renderSidebar()}</div>}
+
+          {/* Tab 导航 */}
+          <div className="flex border-b border-[#1f2937] mb-6 boot-animate" style={{ animationDelay: '60ms' }}>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 md:px-5 py-3 text-sm font-mono transition-colors border-b-2 -mb-px ${
+                  activeTab === tab.id
+                    ? tab.amber ? 'border-[#f59e0b] text-[#f59e0b]' : 'border-[#00FF41] text-[#00FF41]'
+                    : 'border-transparent text-[#4b5563] hover:text-[#9ca3af]'
+                }`}
+              >
+                {tab.label}
+                {tab.amber
+                  ? <span className="ml-1.5 text-[10px] opacity-50">[RESTRICTED]</span>
+                  : <span className="ml-1.5 opacity-30 text-xs">// {tab.code}</span>
+                }
+              </button>
+            ))}
+          </div>
+
+          <div className="boot-animate" style={{ animationDelay: '100ms' }}>
+            {activeTab === 'icebergs'  && <UserIcebergs icebergs={icebergs} isOwner={isOwner} />}
+            {activeTab === 'watchlist' && <UserWatchlist userId={user.id} isOwner={isOwner} publiclyVisible={user.privacyShowWatchlist} />}
+            {activeTab === 'explore'   && <ExploreTab achievementDefs={achievementDefs} achievementMap={achievementMap} userReadCount={userReadCount} />}
+            {activeTab === 'score' && isOwner && <ScoreLogTab userId={user.id} />}
+            {activeTab === 'settings' && isOwner && (
+              <div className="space-y-6">
+                {user.role === 'USER' && (
+                  <div className="border border-[#1f2937] bg-[#0a0c10] p-5">
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <div>
+                        <span className="text-sm font-mono text-[#e5e5e5]">晋升至 CONTRIBUTOR</span>
+                        <p className="text-xs font-mono text-[#374151] mt-1">
+                          条件：质量分 ≥ 20 · 冰山图 ≥ 2 · 注册 ≥ 7 天 · 账户正常 · 90 天内无 WARNED_2
+                        </p>
+                      </div>
+                      {(promotionPending || promotionSent)
+                        ? <span className="flex-shrink-0 text-xs font-mono text-[#f59e0b] border border-[#f59e0b30] px-2.5 py-1.5">审核中</span>
+                        : promotionEligible
+                          ? <button onClick={() => setShowPromotion(true)} className="flex-shrink-0 px-4 py-2 text-sm font-mono bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41] hover:bg-[#00FF4125] transition-colors">申请晋升</button>
+                          : <span className="flex-shrink-0 text-xs font-mono text-[#374151] border border-[#1f2937] px-2.5 py-1.5">条件未达到</span>
+                      }
+                    </div>
+                    <div className="flex flex-wrap gap-4 text-xs font-mono">
+                      <span className={user.qualityScore >= 20 ? 'text-[#22c55e]' : 'text-[#374151]'}>质量分 {user.qualityScore}/20</span>
+                      <span className={user._count.icebergs >= 2 ? 'text-[#22c55e]' : 'text-[#374151]'}>冰山图 {user._count.icebergs}/2</span>
+                      <span className={user.status === 'ACTIVE' ? 'text-[#22c55e]' : 'text-[#ef4444]'}>账户 {user.status}</span>
+                    </div>
+                  </div>
+                )}
+                <UserSettings userId={user.id} initial={{ nickname: user.nickname, bio: user.bio, avatar: user.avatar, privacyShowStats: user.privacyShowStats, privacyShowWatchlist: user.privacyShowWatchlist }} />
+                <UserboxPicker userId={user.id} currentIds={userboxIds} />
+              </div>
+            )}
+            {activeTab === 'admin' && isOwner && (viewerRole || viewerIsFounder) && <AdminPanel role={viewerRole ?? 'USER'} isFounder={viewerIsFounder} />}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 通知面板弹窗 ──────────────────────────────────────────────────── */}
+      {notifMounted && (
+        <div className={`${notifLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/60 flex items-start justify-center z-50 pt-16 px-4`}>
+          <div ref={notifPanelRef} className={`${notifLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#2A2A2A] w-full max-w-md font-mono max-h-[75vh] flex flex-col`}>
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#1f2937]">
+              <div>
+                <span className="text-[11px] text-[#374151] tracking-[0.2em]">// NOTIFICATIONS</span>
+                {unreadCount > 0 && (
+                  <span className="ml-2 bg-[#ef4444] text-white text-[10px] px-1.5 py-0.5">{unreadCount} 未读</span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                {unreadCount > 0 && (
+                  <button onClick={markAllRead} disabled={markingAll} className="text-xs text-[#374151] hover:text-[#00FF41] transition-colors">
+                    {markingAll ? '标记中...' : '全部已读'}
+                  </button>
+                )}
+                <button onClick={() => setShowNotifPanel(false)} className="text-[#374151] hover:text-[#e5e5e5] transition-colors text-lg leading-none">×</button>
+              </div>
+            </div>
+
+            <div className="overflow-y-auto flex-1">
+              {!notifLoaded ? (
+                <div className="py-10 text-center text-sm text-[#374151] animate-pulse">加载中...</div>
+              ) : notifications.length === 0 ? (
+                <div className="py-12 text-center text-sm text-[#2A2A2A]">// 暂无通知</div>
+              ) : (
+                notifications.map(n => {
+                  const ni = NOTIF_ICONS[n.type] ?? { icon: '·', color: '#4b5563' };
+                  return (
+                    <button
+                      key={n.id}
+                      onClick={() => markOneRead(n.id, n.link)}
+                      className={`w-full text-left flex items-start gap-3 px-5 py-4 border-b border-[#111518] hover:bg-[#111518] transition-colors ${!n.read ? 'bg-[#0d1017]' : ''}`}
+                    >
+                      <span className="text-sm flex-shrink-0 mt-0.5" style={{ color: ni.color }}>[{ni.icon}]</span>
+                      <div className="flex-1 min-w-0">
+                        <div className={`text-sm leading-snug mb-1 ${n.read ? 'text-[#6b7280]' : 'text-[#e5e5e5]'}`}>{n.title}</div>
+                        {n.body && <div className="text-xs text-[#4b5563] leading-relaxed line-clamp-2">{n.body}</div>}
+                        <div className="text-[11px] text-[#374151] mt-1">{timeAgo(n.createdAt)}</div>
+                      </div>
+                      {!n.read && <span className="w-2 h-2 rounded-full bg-[#00FF41] flex-shrink-0 mt-2" />}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 管理操作模态框 ───────────────────────────────────────────────── */}
+      {actionMounted && actionModal && (
+        <div className={`${actionLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
+          <div className={`${actionLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#2A2A2A] w-full max-w-sm p-6 font-mono`}>
+            <div className="text-sm text-[#4b5563] mb-1.5">对象：@{displayName}</div>
+            <div className="text-base text-[#e5e5e5] mb-5">
+              {actionModal === 'warn' && '发出警告'}{actionModal === 'restrict' && '设为只读'}{actionModal === 'ban' && '封禁用户'}
+            </div>
+            {actionModal === 'warn' && (
+              <div className="mb-4 flex gap-2">
+                {(['1', '2'] as const).map(l => (
+                  <button key={l} onClick={() => setActionForm(f => ({ ...f, level: l }))}
+                    className={`flex-1 py-2 text-sm border transition-colors ${actionForm.level === l ? 'border-[#f59e0b] text-[#f59e0b]' : 'border-[#2A2A2A] text-[#4b5563] hover:border-[#374151]'}`}>
+                    WARNED_{l}
+                  </button>
+                ))}
+              </div>
+            )}
+            {actionModal === 'ban' && (
+              <div className="mb-4 space-y-2">
+                <div className="flex gap-2">
+                  {(['TEMP', 'PERM'] as const).map(t => (
+                    <button key={t} onClick={() => setActionForm(f => ({ ...f, banType: t }))}
+                      className={`flex-1 py-2 text-sm border transition-colors ${actionForm.banType === t ? 'border-[#ef4444] text-[#ef4444]' : 'border-[#2A2A2A] text-[#4b5563] hover:border-[#374151]'}`}>
+                      {t === 'TEMP' ? '临时' : '永久'}
+                    </button>
+                  ))}
+                </div>
+                {actionForm.banType !== 'PERM' && (
+                  <input type="number" min={1} value={actionForm.days ?? '7'} onChange={e => setActionForm(f => ({ ...f, days: e.target.value }))}
+                    className="w-full px-3 py-2 bg-[#0a0c10] border border-[#2A2A2A] text-sm text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none"
+                    placeholder="封禁天数" />
+                )}
+              </div>
+            )}
+            <div className="mb-5">
+              <div className="text-xs text-[#4b5563] mb-1.5">理由</div>
+              <textarea value={actionForm.reason ?? ''} onChange={e => setActionForm(f => ({ ...f, reason: e.target.value }))}
+                rows={2} className="w-full px-3 py-2.5 bg-[#0a0c10] border border-[#2A2A2A] text-sm text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none resize-none"
+                placeholder="理由（至少 5 字）" />
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => { setActionModal(null); setActionForm({}); }} className="flex-1 py-2.5 border border-[#2A2A2A] text-sm hover:border-[#374151] transition-colors">取消</button>
+              <button onClick={execAction} disabled={actionBusy || (actionForm.reason ?? '').trim().length < 5}
+                className="flex-1 py-2.5 bg-[#ef444420] border border-[#ef444450] text-[#ef4444] text-sm hover:bg-[#ef444430] transition-colors disabled:opacity-40">
+                {actionBusy ? '执行中...' : '确认'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 晋升申请模态框 ───────────────────────────────────────────────── */}
+      {promoMounted && (
+        <div className={`${promoLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
+          <div className={`${promoLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#2A2A2A] w-full max-w-md p-6 font-mono`}>
+            <div className="text-xs text-[#374151] mb-1.5 tracking-widest">PROMOTION REQUEST</div>
+            <div className="text-base text-[#e5e5e5] mb-1.5">申请晋升至 CONTRIBUTOR</div>
+            <div className="text-sm text-[#4b5563] mb-5">可附上申请说明（可选），编辑审核后将通知结果。</div>
+            <div className="mb-1.5 flex justify-between">
+              <span className="text-xs text-[#4b5563]">申请说明（可选，200 字以内）</span>
+              <span className="text-xs text-[#4b5563]">{promotionStatement.length}/200</span>
+            </div>
+            <textarea value={promotionStatement} onChange={e => setPromotionStatement(e.target.value.slice(0, 200))}
+              rows={4} className="w-full px-3 py-2.5 bg-[#0a0c10] border border-[#2A2A2A] text-sm text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none resize-none mb-5"
+              placeholder="简述申请理由（非必填）" />
+            <div className="flex gap-3">
+              <button onClick={() => { setShowPromotion(false); setPromotionStatement(''); }} className="flex-1 py-2.5 border border-[#2A2A2A] text-sm hover:border-[#374151] transition-colors">取消</button>
+              <button onClick={submitPromotion} disabled={promotionBusy}
+                className="flex-1 py-2.5 bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41] text-sm hover:bg-[#00FF4125] transition-colors disabled:opacity-40">
+                {promotionBusy ? '提交中...' : '提交申请'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 授予勋章模态框 ──────────────────────────────────────────────── */}
+      {awardMounted && (
+        <AwardModal
+          userId={user.id}
+          isLeaving={awardLeaving}
+          onClose={() => setShowAwardModal(false)}
+          existingTypes={awards.map(a => a.type)}
+        />
+      )}
+
+      {/* ── 申诉模态框 ───────────────────────────────────────────────────── */}
+      {appealMounted && (
+        <div className={`${appealLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
+          <div className={`${appealLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#2A2A2A] w-full max-w-md p-6 font-mono`}>
+            <div className="text-xs text-[#374151] mb-1.5 tracking-widest">APPEAL REQUEST</div>
+            <div className="text-base text-[#e5e5e5] mb-1.5">提交申诉</div>
+            <div className="text-sm text-[#4b5563] mb-5">详细说明情况，管理员审核后将通知结果。</div>
+            <div className="mb-1.5 flex justify-between">
+              <span className="text-xs text-[#4b5563]">申诉说明</span>
+              <span className={`text-xs ${appealStatement.trim().length < 20 ? 'text-[#ef4444]' : 'text-[#22c55e]'}`}>{appealStatement.trim().length} / 20+</span>
+            </div>
+            <textarea value={appealStatement} onChange={e => setAppealStatement(e.target.value)}
+              rows={5} className="w-full px-3 py-2.5 bg-[#0a0c10] border border-[#2A2A2A] text-sm text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none resize-none mb-5"
+              placeholder="请详细说明申诉原因，包括对相关事件的解释和今后的改进承诺..." />
+            <div className="flex gap-3">
+              <button onClick={() => { setShowAppeal(false); setAppealStatement(''); }} className="flex-1 py-2.5 border border-[#2A2A2A] text-sm hover:border-[#374151] transition-colors">取消</button>
+              <button onClick={submitAppeal} disabled={appealBusy || appealStatement.trim().length < 20}
+                className="flex-1 py-2.5 bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41] text-sm hover:bg-[#00FF4125] transition-colors disabled:opacity-40">
+                {appealBusy ? '提交中...' : '提交申诉'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ── 授予勋章弹窗 ──────────────────────────────────────────────────────────
+function AwardModal({ userId, isLeaving, onClose, existingTypes }: {
+  userId: string;
+  isLeaving: boolean;
+  onClose: () => void;
+  existingTypes: string[];
+}) {
+  const [selectedType, setSelectedType] = useState('');
+  const [message, setMessage]           = useState('');
+  const [busy, setBusy]                 = useState(false);
+  const [error, setError]               = useState<string | null>(null);
+
+  const submit = async () => {
+    if (!selectedType) return;
+    setBusy(true); setError(null);
+    try {
+      const res  = await fetch(`/api/users/${userId}/awards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: selectedType, message: message.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (data.success) { onClose(); window.location.reload(); }
+      else setError(data.error?.message ?? '授予失败');
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div className={`${isLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
+      <div className={`${isLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#2A2A2A] border-l-4 border-l-[#f59e0b] w-full max-w-md p-6 font-mono`}>
+        <div className="text-[10px] text-[#374151] mb-1.5 tracking-widest">[ AWARD SYSTEM ]</div>
+        <div className="text-base text-[#e5e5e5] mb-1.5"><span className="text-[#f59e0b]">#</span> 授予勋章</div>
+        <div className="text-xs text-[#4b5563] mb-5">选择勋章类型并填写颁奖留言（可选）</div>
+
+        {error && (
+          <div className="mb-4 p-3 bg-[#1a0808] border border-[#ef444440] text-[#ef4444] text-xs">&gt; ERROR: {error}</div>
+        )}
+
+        <div className="space-y-2 mb-5">
+          {AWARD_TYPES.map(a => {
+            const already = existingTypes.includes(a.id);
+            return (
+              <button
+                key={a.id}
+                disabled={already}
+                onClick={() => setSelectedType(a.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 border transition-all text-left ${
+                  already ? 'opacity-30 cursor-not-allowed border-[#1f2937]' :
+                  selectedType === a.id ? 'border-[#f59e0b] bg-[#f59e0b0d]' : 'border-[#1f2937] hover:border-[#374151]'
+                }`}
+              >
+                <span className="text-lg flex-shrink-0" style={{ color: a.color }}>{a.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold" style={{ color: selectedType === a.id ? a.color : '#e5e5e5' }}>{a.labelZh}</div>
+                  <div className="text-[10px] text-[#4b5563]">{a.desc}</div>
+                </div>
+                {already && <span className="text-[10px] text-[#374151]">已授予</span>}
+                {selectedType === a.id && !already && <span className="text-[10px]" style={{ color: a.color }}>✓</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mb-1.5 flex justify-between">
+          <span className="text-xs text-[#4b5563]">颁奖留言（可选，200 字以内）</span>
+          <span className="text-xs text-[#4b5563]">{message.length}/200</span>
+        </div>
+        <textarea
+          value={message} onChange={e => setMessage(e.target.value.slice(0, 200))}
+          rows={3}
+          className="w-full px-3 py-2.5 bg-[#0a0c10] border border-[#2A2A2A] text-sm text-[#e5e5e5] focus:border-[#f59e0b] focus:outline-none resize-none mb-5"
+          placeholder="写下对该用户贡献的认可…"
+        />
+
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-2.5 border border-[#2A2A2A] text-sm text-[#6b7280] hover:border-[#374151] transition-colors">取消</button>
+          <button
+            onClick={submit} disabled={busy || !selectedType}
+            className="flex-1 py-2.5 text-sm font-bold transition-colors disabled:opacity-40"
+            style={{
+              background: selectedType ? `${AWARD_TYPES.find(a=>a.id===selectedType)?.color}15` : '',
+              borderWidth: 1, borderStyle: 'solid',
+              borderColor: selectedType ? `${AWARD_TYPES.find(a=>a.id===selectedType)?.color}50` : '#374151',
+              color: selectedType ? AWARD_TYPES.find(a=>a.id===selectedType)?.color : '#374151',
+            }}
+          >
+            {busy ? '授予中...' : '✦ 确认授予'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 用户框选择器（Settings Tab 内）──────────────────────────────────────
+function UserboxPicker({ userId, currentIds }: { userId: string; currentIds: string[] }) {
+  const [selected, setSelected] = useState<Set<string>>(new Set(currentIds));
+  const [saving, setSaving]     = useState(false);
+  const [saved, setSaved]       = useState(false);
+
+  const toggle = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); }
+      else if (next.size < 20) { next.add(id); }
+      return next;
+    });
+    setSaved(false);
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res  = await fetch(`/api/users/${userId}/userboxes`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [...selected] }),
+      });
+      const data = await res.json();
+      if (data.success) setSaved(true);
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="border border-[#1f2937] bg-[#0a0c10] p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <div className="text-sm font-mono text-[#e5e5e5]">用户框定制</div>
+          <div className="text-xs font-mono text-[#374151] mt-0.5">选择展示在主页侧边栏的自定义用户框（最多 20 个）</div>
+        </div>
+        <button
+          onClick={save} disabled={saving}
+          className={`flex-shrink-0 px-4 py-2 text-xs font-mono border transition-colors disabled:opacity-40 ${saved ? 'border-[#22c55e40] text-[#22c55e]' : 'border-[#00FF4140] text-[#00FF41] hover:bg-[#00FF4115]'}`}
+        >
+          {saving ? '保存中...' : saved ? '✓ 已保存' : '保存'}
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {USERBOX_LIBRARY.map(cat => (
+          <div key={cat.category}>
+            <div className="text-[10px] font-mono text-[#374151] tracking-widest mb-2">// {cat.category}</div>
+            <div className="space-y-1">
+              {cat.boxes.map(box => {
+                const on = selected.has(box.id);
+                return (
+                  <button
+                    key={box.id}
+                    onClick={() => toggle(box.id)}
+                    className={`w-full flex items-stretch border transition-all ${on ? 'border-[#00FF4140]' : 'border-[#1f2937] opacity-60 hover:opacity-90'}`}
+                    style={{ minHeight: '32px' }}
+                  >
+                    <div className="w-12 flex items-center justify-center flex-shrink-0 text-[11px] font-mono font-bold" style={{ background: box.leftBg, color: box.leftFg }}>
+                      {box.leftText}
+                    </div>
+                    <div className="flex-1 flex items-center px-2.5 bg-[#050608] min-w-0 border-l border-[#111518]">
+                      <span className="text-[11px] font-mono text-[#9ca3af] truncate">{box.text}</span>
+                    </div>
+                    <div className="w-8 flex items-center justify-center flex-shrink-0 bg-[#050608]">
+                      <span className="text-[10px] font-mono" style={{ color: on ? '#00FF41' : '#374151' }}>{on ? '✓' : '+'}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 text-[10px] font-mono text-[#374151] text-right">已选 {selected.size}/20</div>
+    </div>
+  );
+}

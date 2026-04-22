@@ -1,0 +1,445 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { prisma } from '../lib/prisma';
+
+let recentIcebergs: any[] = [];
+let topDeep: any[] = [];
+let trendingIcebergs: any[] = [];
+let featuredIcebergs: any[] = [];
+let stats = { total: 0, totalViews: 0, totalItems: 0 };
+
+const ICEBERG_SELECT = {
+  id: true,
+  slug: true,
+  title: true,
+  description: true,
+  viewCount: true,
+  createdAt: true,
+  author: { select: { nickname: true, username: true } },
+  _count: { select: { tiers: true } },
+  tiers: {
+    take: 1,
+    orderBy: { order: 'asc' as const },
+    select: {
+      name: true,
+      items: {
+        take: 4,
+        orderBy: { order: 'asc' as const },
+        select: { id: true, title: true },
+      },
+    },
+  },
+};
+
+try {
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  const [icebergs, deep, aggregate, itemCount, trendGroups, featured] = await Promise.all([
+    prisma.iceberg.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+      select: ICEBERG_SELECT,
+    }),
+    prisma.iceberg.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: { tiers: { _count: 'desc' } },
+      take: 5,
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        _count: { select: { tiers: true } },
+      },
+    }),
+    prisma.iceberg.aggregate({
+      where: { status: 'PUBLISHED' },
+      _count: { id: true },
+      _sum: { viewCount: true },
+    }),
+    prisma.item.count(),
+    prisma.viewLog.groupBy({
+      by: ['icebergId'],
+      where: { createdAt: { gte: weekAgo } },
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 5,
+    }),
+    prisma.iceberg.findMany({
+      where: { status: 'PUBLISHED', featured: true },
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+      select: ICEBERG_SELECT,
+    }),
+  ]);
+
+  recentIcebergs = icebergs;
+  topDeep = deep;
+  featuredIcebergs = featured;
+  stats = {
+    total: aggregate._count.id,
+    totalViews: aggregate._sum.viewCount ?? 0,
+    totalItems: itemCount,
+  };
+
+  // 把 trendGroups 与 iceberg 详情合并
+  if (trendGroups.length > 0) {
+    const trendIds = trendGroups.map((g: any) => g.icebergId);
+    const trendDetails = await prisma.iceberg.findMany({
+      where: { id: { in: trendIds }, status: 'PUBLISHED' },
+      select: { id: true, slug: true, title: true, viewCount: true },
+    });
+    trendingIcebergs = trendGroups
+      .map((g: any) => {
+        const detail = trendDetails.find((d: any) => d.id === g.icebergId);
+        return detail ? { ...detail, weekViews: g._count.id } : null;
+      })
+      .filter(Boolean);
+  }
+} catch (err) {
+  console.error('首页数据加载失败:', err);
+}
+
+function formatDate(date: Date | string) {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
+---
+
+<Layout title="冰山图宇宙 | 首页">
+  <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
+
+  <main class="bg-grid max-w-7xl mx-auto px-4 md:px-6 py-12 relative z-10">
+
+    <!-- Hero -->
+    <header class="text-center mb-10 boot-animate" style="animation-delay: 0ms">
+      <div class="inline-block font-mono text-xs text-[#374151] mb-5 tracking-widest border border-[#1f2937] px-3 py-1">
+        ICEBERG DATABASE v1.0
+      </div>
+      <h1 class="text-4xl md:text-5xl font-mono font-semibold terminal-glow glitch-hover mb-5 cursor-default">
+        <span class="text-[#00FF41]">冰山图</span>宇宙
+      </h1>
+      <p class="text-base text-[#9ca3af] max-w-md mx-auto font-mono leading-loose">
+        任何话题的表面之下，都藏着冰山。<br />
+        <span class="text-[#6b7280]">在这里，探索被隐藏的 99%。</span>
+      </p>
+    </header>
+
+    <!-- Stats Bar -->
+    <div class="flex justify-center gap-8 md:gap-16 mb-8 font-mono boot-animate" style="animation-delay: 80ms">
+      <div class="text-center">
+        <div
+          class="text-3xl md:text-4xl font-bold text-[#00FF41] tabular-nums"
+          data-countup={stats.total}
+        >{stats.total}</div>
+        <div class="text-xs text-[#6b7280] mt-1 tracking-widest">张图</div>
+      </div>
+      <div class="w-px bg-[#1f2937]"></div>
+      <div class="text-center">
+        <div
+          class="text-3xl md:text-4xl font-bold text-[#00FF41] tabular-nums"
+          data-countup={stats.totalViews}
+        >{stats.totalViews.toLocaleString()}</div>
+        <div class="text-xs text-[#6b7280] mt-1 tracking-widest">次探索</div>
+      </div>
+      <div class="w-px bg-[#1f2937]"></div>
+      <div class="text-center">
+        <div
+          class="text-3xl md:text-4xl font-bold text-[#00FF41] tabular-nums"
+          data-countup={stats.totalItems}
+        >{stats.totalItems.toLocaleString()}</div>
+        <div class="text-xs text-[#6b7280] mt-1 tracking-widest">个词条</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-center flex-wrap gap-3 mb-4 boot-animate" style="animation-delay: 140ms">
+      <a
+        href="/iceberg/new"
+        class="px-6 py-2.5 bg-[#00FF41] text-[#0A0A0A] font-mono font-semibold text-sm hover:bg-[#00CC33] transition-colors"
+      >
+        + 创建冰山图
+      </a>
+      <a
+        href="/iceberg/random"
+        class="px-6 py-2.5 border border-[#00FF41] text-[#00FF41] font-mono text-sm hover:bg-[#00FF41]/10 transition-all"
+      >
+        ◈ 随机漫游
+      </a>
+      <a
+        href="/iceberg/list"
+        class="px-6 py-2.5 border border-[#2A2A2A] text-[#6b7280] font-mono text-sm hover:border-[#374151] hover:text-[#9ca3af] transition-all"
+      >
+        浏览全部
+      </a>
+    </div>
+
+    <!-- Ctrl+K hint -->
+    <div class="text-center mb-14 boot-animate" style="animation-delay: 160ms">
+      <span class="text-xs font-mono text-[#2A2A2A]">// 按</span>
+      <kbd class="mx-1 text-xs font-mono text-[#374151] bg-[#111] border border-[#2A2A2A] px-1.5 py-0.5">Ctrl+K</kbd>
+      <span class="text-xs font-mono text-[#2A2A2A]">快速搜索</span>
+    </div>
+
+    <!-- 编辑精选（有数据才显示）-->
+    {featuredIcebergs.length > 0 && (
+      <section class="mb-10 boot-animate" style="animation-delay: 180ms">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-mono text-[#f59e0b]">
+            <span class="text-[#374151]">// </span>编辑精选
+            <span class="ml-2 text-[10px] text-[#374151] border border-[#374151] px-1">FEATURED</span>
+          </h2>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {featuredIcebergs.map((iceberg: any, index: number) => (
+            <a
+              href={`/iceberg/${iceberg.slug || iceberg.id}`}
+              class="archive-card group relative block p-5 border-[#f59e0b30]"
+              style={`animation-delay: ${200 + index * 30}ms`}
+            >
+              <div class="flex gap-px mb-3 h-3 opacity-50 group-hover:opacity-90 transition-opacity duration-200">
+                {Array.from({ length: Math.max(iceberg._count.tiers, 1) }).map((_, i: number) => (
+                  <div class="flex-1" style={`background-color: ${tierColors[i % 6]}`} />
+                ))}
+              </div>
+              <div class="text-[10px] font-mono text-[#f59e0b80] mb-1 tracking-widest">★ FEATURED</div>
+              <h3 class="font-mono text-sm font-semibold text-[#e5e5e5] group-hover:text-[#f59e0b] transition-colors mb-2 line-clamp-1">
+                <span class="text-[#374151] mr-1">#</span>{iceberg.title}
+              </h3>
+              {iceberg.description && (
+                <p class="text-xs text-[#6b7280] mb-3 line-clamp-2 leading-relaxed">{iceberg.description}</p>
+              )}
+              <div class="flex items-center justify-between text-xs text-[#4b5563] font-mono">
+                <span>{iceberg._count.tiers} 层</span>
+                <span class="flex items-center gap-1">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  {iceberg.viewCount}
+                </span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Main grid: content + sidebar -->
+    <div class="grid lg:grid-cols-3 gap-8 items-start">
+
+      <!-- Recent icebergs (2/3) -->
+      <section class="lg:col-span-2 boot-animate" style="animation-delay: 200ms">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-sm font-mono text-[#00FF41]">
+            <span class="text-[#374151]">// </span>最新发布
+          </h2>
+          {recentIcebergs.length > 0 && (
+            <a href="/iceberg/list" class="text-xs font-mono text-[#6b7280] hover:text-[#00FF41] transition-colors">
+              查看更多 →
+            </a>
+          )}
+        </div>
+
+        {recentIcebergs.length === 0 ? (
+          <div class="py-20 text-center border border-dashed border-[#2A2A2A]">
+            <p class="text-[#6b7280] font-mono text-sm mb-4">还没有冰山图，成为第一个创建者</p>
+            <a href="/iceberg/new" class="text-[#00FF41] font-mono text-sm hover:underline">立即创建 →</a>
+          </div>
+        ) : (
+          <div class="grid gap-3 sm:grid-cols-2">
+            {recentIcebergs.map((iceberg, index) => (
+              <a
+                href={`/iceberg/${iceberg.slug || iceberg.id}`}
+                class="archive-card group relative block p-5"
+                style={`animation-delay: ${220 + index * 40}ms`}
+              >
+                <!-- Tier color strip -->
+                <div class="flex gap-px mb-3 h-3 opacity-50 group-hover:opacity-90 transition-opacity duration-200">
+                  {Array.from({ length: Math.max(iceberg._count.tiers, 1) }).map((_, i) => (
+                    <div class="flex-1" style={`background-color: ${tierColors[i % 6]}`} />
+                  ))}
+                </div>
+
+                <h3 class="font-mono text-sm font-semibold text-[#e5e5e5] group-hover:text-[#00FF41] transition-colors mb-2 line-clamp-1">
+                  <span class="text-[#374151] mr-1">#</span>{iceberg.title}
+                </h3>
+
+                {iceberg.description && (
+                  <p class="text-xs text-[#6b7280] mb-3 line-clamp-2 leading-relaxed">
+                    {iceberg.description}
+                  </p>
+                )}
+
+                <div class="flex items-center justify-between text-xs text-[#4b5563] font-mono">
+                  <div class="flex items-center gap-3">
+                    <span>{iceberg._count.tiers} 层</span>
+                    <span class="flex items-center gap-1">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      {iceberg.viewCount}
+                    </span>
+                  </div>
+                  <span class="text-[#2A2A2A]">{formatDate(iceberg.createdAt)}</span>
+                </div>
+
+                {iceberg.author && (
+                  <div class="mt-2 pt-2 border-t border-[#1f2937] text-xs text-[#374151] font-mono">
+                    @{iceberg.author.nickname || iceberg.author.username}
+                  </div>
+                )}
+
+                <!-- Hover preview -->
+                {iceberg.tiers[0]?.items?.length > 0 && (
+                  <div class="card-preview absolute left-0 right-0 top-full mt-px z-50
+                              bg-[#050505] border border-[#00FF41]/20 px-3 py-2.5
+                              opacity-0 pointer-events-none group-hover:opacity-100
+                              transition-opacity duration-150">
+                    <div class="text-[10px] font-mono text-[#374151] mb-1.5 uppercase tracking-widest truncate">
+                      {iceberg.tiers[0].name}
+                    </div>
+                    {iceberg.tiers[0].items.map((item: any) => (
+                      <div class="text-xs font-mono text-[#4b5563] py-0.5 truncate">
+                        <span class="text-[#2A2A2A] mr-1.5">›</span>{item.title}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </a>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <!-- Sidebar (1/3) -->
+      <aside class="space-y-8 boot-animate" style="animation-delay: 260ms">
+
+        <!-- 最深探索 TOP5 -->
+        <section>
+          <h2 class="text-xs font-mono text-[#374151] mb-3 tracking-widest uppercase">
+            // 最深探索
+          </h2>
+          {topDeep.length === 0 ? (
+            <p class="text-xs text-[#2A2A2A] font-mono py-4 text-center border border-dashed border-[#1f2937]">
+              暂无数据
+            </p>
+          ) : (
+            <div class="space-y-px">
+              {topDeep.map((iceberg, i) => (
+                <a
+                  href={`/iceberg/${iceberg.slug || iceberg.id}`}
+                  class="flex items-center gap-2 px-2 py-2 group hover:bg-[#0a0c10] transition-colors"
+                >
+                  <span class="font-mono text-[10px] text-[#2A2A2A] w-5 flex-shrink-0 text-right">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <span class="font-mono text-xs text-[#6b7280] group-hover:text-[#00FF41] transition-colors flex-1 truncate">
+                    {iceberg.title}
+                  </span>
+                  <span class="font-mono text-[10px] text-[#374151] flex-shrink-0 border border-[#1f2937] px-1">
+                    {iceberg._count.tiers}F
+                  </span>
+                </a>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <!-- 本周趋势 TOP5 -->
+        <section>
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-xs font-mono text-[#374151] tracking-widest uppercase">
+              // 本周趋势
+            </h2>
+            <a href="/leaderboard" class="text-[10px] font-mono text-[#374151] hover:text-[#00FF41] transition-colors">
+              完整榜单 →
+            </a>
+          </div>
+          {trendingIcebergs.length === 0 ? (
+            <p class="text-xs text-[#2A2A2A] font-mono py-4 text-center border border-dashed border-[#1f2937]">
+              // 本周暂无数据
+            </p>
+          ) : (
+            <div class="space-y-px">
+              {trendingIcebergs.map((iceberg: any, i: number) => (
+                <a
+                  href={`/iceberg/${iceberg.slug || iceberg.id}`}
+                  class="flex items-center gap-2 px-2 py-2 group hover:bg-[#0a0c10] transition-colors"
+                >
+                  <span class="font-mono text-[10px] text-[#2A2A2A] w-5 flex-shrink-0 text-right">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <span class="font-mono text-xs text-[#6b7280] group-hover:text-[#00FF41] transition-colors flex-1 truncate">
+                    {iceberg.title}
+                  </span>
+                  <span class="font-mono text-[10px] text-[#22c55e] flex-shrink-0 border border-[#22c55e20] px-1">
+                    +{iceberg.weekViews}
+                  </span>
+                </a>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <!-- Quick nav -->
+        <section class="border-t border-[#1f2937] pt-6">
+          <div class="space-y-1">
+            {[
+              { href: '/leaderboard', label: '浏览量排行榜', icon: '▲' },
+              { href: '/iceberg/list', label: '全部冰山图', icon: '≡' },
+              { href: '/iceberg/new', label: '创建新冰山图', icon: '+' },
+            ].map(({ href, label, icon }) => (
+              <a
+                href={href}
+                class="flex items-center gap-2 px-2 py-1.5 group hover:bg-[#0a0c10] transition-colors"
+              >
+                <span class="font-mono text-xs text-[#2A2A2A] group-hover:text-[#00FF41] transition-colors w-4 text-center">
+                  {icon}
+                </span>
+                <span class="font-mono text-xs text-[#4b5563] group-hover:text-[#9ca3af] transition-colors">
+                  {label}
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
+
+      </aside>
+    </div>
+
+  </main>
+</Layout>
+
+<script>
+  // Count-up animation triggered after boot-animate (~500ms)
+  function countUp(el: HTMLElement, target: number, duration = 1400) {
+    if (target === 0) return;
+    const start = performance.now();
+    const fmt = target > 999
+      ? (n: number) => Math.floor(n).toLocaleString()
+      : (n: number) => String(Math.floor(n));
+
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = fmt(eased * target);
+      if (t < 1) requestAnimationFrame(tick);
+      else el.textContent = fmt(target);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  setTimeout(() => {
+    document.querySelectorAll<HTMLElement>('[data-countup]').forEach(el => {
+      const target = parseInt(el.dataset.countup ?? '0', 10);
+      countUp(el, target);
+    });
+  }, 500);
+</script>
+
+<style>
+  /* 悬停预览面板不受卡片 overflow 影响 */
+  .card-preview {
+    /* 阻止父级 transform 产生的 stacking context 裁剪 */
+    position: absolute;
+  }
+</style>
