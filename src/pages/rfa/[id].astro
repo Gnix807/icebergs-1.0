@@ -9,7 +9,7 @@ const { id } = Astro.params;
 const sessionId = Astro.cookies.get('session')?.value;
 const session   = await getSessionById(sessionId);
 
-const db = prisma as any;
+const db = prisma;
 
 const rfaRaw = await db.rfaRequest.findUnique({
   where: { id },
@@ -106,19 +106,19 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
 ---
 
 <Layout title={`@${applicantDisplay} 的编辑资格申请 — RfA`}>
-  <main class="max-w-2xl mx-auto px-4 py-8 boot-animate">
+  <main class="max-w-2xl mx-auto px-4 py-8 reveal">
 
     <!-- 面包屑 -->
-    <div class="text-[10px] font-mono text-[#374151] mb-6">
-      <a href="/org" class="hover:text-[#9ca3af] transition-colors">机构</a>
+    <div class="text-[10px] font-mono text-[#30363d] mb-6">
+      <a href="/org" class="hover:text-[#8b949e] transition-colors">机构</a>
       <span class="mx-2">›</span>
       <span>编辑资格申请</span>
     </div>
 
     <!-- 申请头部 -->
-    <div class="border border-[#1a1a1a] bg-[#0a0c10] p-5 mb-6">
+    <div class="border border-[#1a1a1a] bg-[#161b22] p-5 mb-6">
       <div class="flex items-center gap-3 flex-wrap mb-2">
-        <h1 class="font-mono text-base text-[#e5e5e5]">
+        <h1 class="font-mono text-base text-[#cdd9e5]">
           编辑资格申请（RfA）
         </h1>
         <span class="text-[10px] font-mono border px-1.5 py-0.5"
@@ -129,25 +129,25 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
 
       <!-- 申请人 -->
       <div class="flex items-center gap-2 mb-3">
-        <span class="text-[10px] font-mono text-[#374151]">申请人：</span>
+        <span class="text-[10px] font-mono text-[#30363d]">申请人：</span>
         <a href={`/user/${rfaRaw.user.id}`}
-          class="text-sm font-mono text-[#e5e5e5] hover:text-[#00FF41] transition-colors">
+          class="text-sm font-mono text-[#cdd9e5] hover:text-[#00FF41] transition-colors">
           @{applicantDisplay}
         </a>
-        <span class="text-[10px] font-mono text-[#374151]">{rfaRaw.user.role}</span>
-        <span class="text-[10px] font-mono text-[#2A2A2A]">质量分 {rfaRaw.user.qualityScore}</span>
+        <span class="text-[10px] font-mono text-[#30363d]">{rfaRaw.user.role}</span>
+        <span class="text-[10px] font-mono text-[#3d444d]">质量分 {rfaRaw.user.qualityScore}</span>
       </div>
 
       {rfaRaw.statement ? (
         <div class="border border-[#1a1a1a] bg-[#050505] px-4 py-3 mb-3">
-          <div class="text-[10px] font-mono text-[#374151] mb-1">申请陈述</div>
-          <p class="text-xs font-mono text-[#9ca3af] leading-relaxed whitespace-pre-wrap">{rfaRaw.statement}</p>
+          <div class="text-[10px] font-mono text-[#30363d] mb-1">申请陈述</div>
+          <p class="text-xs font-mono text-[#8b949e] leading-relaxed whitespace-pre-wrap">{rfaRaw.statement}</p>
         </div>
       ) : (
-        <div class="text-[10px] font-mono text-[#2A2A2A] mb-3">// 申请人未填写陈述</div>
+        <div class="text-[10px] font-mono text-[#3d444d] mb-3">// 申请人未填写陈述</div>
       )}
 
-      <div class="text-[10px] font-mono text-[#374151] space-y-0.5">
+      <div class="text-[10px] font-mono text-[#30363d] space-y-0.5">
         <div>申请时间：{new Date(rfaRaw.createdAt).toLocaleString('zh-CN')}</div>
         <div>投票截止：{new Date(rfaRaw.closesAt).toLocaleString('zh-CN')}</div>
         {rfaRaw.resolvedAt && (
@@ -160,7 +160,7 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
     {status === 'APPROVED' && (
       <div class="border border-[#8b5cf640] bg-[#8b5cf608] p-4 mb-6 font-mono">
         <div class="text-[10px] text-[#8b5cf6] mb-1 tracking-wider">// 申请结果</div>
-        <div class="text-sm text-[#e5e5e5]">
+        <div class="text-sm text-[#cdd9e5]">
           <span class="text-[#8b5cf6]">★</span>{' '}
           <a href={`/user/${rfaRaw.user.id}`} class="text-[#8b5cf6] hover:underline">
             @{applicantDisplay}
@@ -172,7 +172,7 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
     {status === 'REJECTED' && (
       <div class="border border-[#ef444430] bg-[#ef444408] p-4 mb-6 font-mono">
         <div class="text-[10px] text-[#ef4444] mb-1 tracking-wider">// 申请结果</div>
-        <div class="text-sm text-[#9ca3af]">本次申请未通过，申请人可在冷却期结束后再次申请。</div>
+        <div class="text-sm text-[#8b949e]">本次申请未通过，申请人可在冷却期结束后再次申请。</div>
       </div>
     )}
 

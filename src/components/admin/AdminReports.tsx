@@ -89,7 +89,7 @@ export function AdminReports() {
   return (
     <div className="space-y-4">
       {/* 状态 Tab */}
-      <div className="flex items-center gap-1 border-b border-[#1f2937] mb-4">
+      <div className="flex items-center gap-1 border-b border-[#21262d] mb-4">
         {STATUS_TABS.map(t => (
           <button
             key={t.id}
@@ -97,20 +97,20 @@ export function AdminReports() {
             className={`px-4 py-2 text-xs font-mono transition-colors border-b-2 -mb-px ${
               activeStatus === t.id
                 ? 'border-[#00FF41] text-[#00FF41]'
-                : 'border-transparent text-[#4b5563] hover:text-[#9ca3af]'
+                : 'border-transparent text-[#3d444d] hover:text-[#8b949e]'
             }`}
           >
             {t.label}
           </button>
         ))}
-        <span className="ml-auto text-[10px] font-mono text-[#374151]">共 {total} 条</span>
-        <button onClick={() => load(activeStatus)} className="ml-3 text-xs font-mono text-[#374151] hover:text-[#00FF41] transition-colors">[刷新]</button>
+        <span className="ml-auto text-[10px] font-mono text-[#6e7681]">共 {total} 条</span>
+        <button onClick={() => load(activeStatus)} className="ml-3 text-xs font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors">[刷新]</button>
       </div>
 
       {loading && <AdminListSkeleton rows={3} />}
 
       {!loading && reports.length === 0 && (
-        <div className="py-12 text-center text-[#2A2A2A] font-mono text-sm border border-[#1a1a1a]">
+        <div className="py-12 text-center text-[#3d444d] font-mono text-sm border border-[#21262d]">
           // 暂无{STATUS_TABS.find(t => t.id === activeStatus)?.label}举报
         </div>
       )}
@@ -118,7 +118,7 @@ export function AdminReports() {
       {!loading && reports.map(r => {
         const typeInfo = TYPE_LABELS[r.type] ?? { label: r.type, color: '#6b7280' };
         return (
-          <div key={r.id} className="border border-[#1f2937] bg-[#0a0c10] p-4">
+          <div key={r.id} className="border border-[#21262d] bg-[#161b22] p-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
 
@@ -134,22 +134,22 @@ export function AdminReports() {
                     href={targetLink(r.type, r.targetId)}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-xs font-mono text-[#6b7280] hover:text-[#00FF41] transition-colors truncate"
+                    className="text-xs font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors truncate"
                   >
                     ID: {r.targetId.slice(-8).toUpperCase()}
                   </a>
                 </div>
 
                 {/* 举报理由 */}
-                <p className="text-xs text-[#e5e5e5] font-mono mb-1">{r.reason}</p>
+                <p className="text-xs text-[#cdd9e5] font-mono mb-1">{r.reason}</p>
                 {r.detail && (
-                  <p className="text-[11px] text-[#6b7280] leading-relaxed line-clamp-2 border-l-2 border-[#2A2A2A] pl-2 mb-2">
+                  <p className="text-[11px] text-[#8b949e] leading-relaxed line-clamp-2 border-l-2 border-[#30363d] pl-2 mb-2">
                     {r.detail}
                   </p>
                 )}
 
                 {/* 元信息 */}
-                <div className="flex flex-wrap gap-3 text-[10px] font-mono text-[#374151]">
+                <div className="flex flex-wrap gap-3 text-[10px] font-mono text-[#6e7681]">
                   <span>
                     举报人: <a href={`/user/${r.filer.id}`} className="hover:text-[#00FF41] transition-colors">
                       @{r.filer.nickname ?? r.filer.username}
@@ -163,7 +163,7 @@ export function AdminReports() {
 
                 {/* 处理结果（已处理时显示） */}
                 {r.resolution && (
-                  <p className="mt-2 text-[11px] text-[#4b5563] border-l-2 border-[#374151] pl-2">
+                  <p className="mt-2 text-[11px] text-[#3d444d] border-l-2 border-[#30363d] pl-2">
                     处理说明：{r.resolution}
                   </p>
                 )}
@@ -180,7 +180,7 @@ export function AdminReports() {
                   </button>
                   <button
                     onClick={() => { setModal({ report: r, action: 'RESOLVED_DISMISSED' }); setResolution(''); }}
-                    className="px-3 py-1.5 text-xs font-mono bg-[#37415115] border border-[#37415140] text-[#6b7280] hover:bg-[#37415125] transition-colors"
+                    className="px-3 py-1.5 text-xs font-mono bg-[#30363d15] border border-[#30363d40] text-[#8b949e] hover:bg-[#30363d25] transition-colors"
                   >
                     驳回
                   </button>
@@ -194,31 +194,31 @@ export function AdminReports() {
       {/* 处理模态框 */}
       {modalMounted && modal && (
         <div className={`${modalLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#2A2A2A] w-full max-w-sm p-5 font-mono`}>
-            <div className="text-[10px] text-[#374151] mb-1 tracking-widest">REPORT RESOLUTION</div>
-            <div className="text-sm text-[#e5e5e5] mb-1">
+          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-sm p-5 font-mono`}>
+            <div className="text-[10px] text-[#6e7681] mb-1 tracking-widest">REPORT RESOLUTION</div>
+            <div className="text-sm text-[#cdd9e5] mb-1">
               {modal.action === 'RESOLVED_ACTION' ? '采取行动' : '驳回举报'}
             </div>
-            <div className="text-xs text-[#4b5563] mb-4">
+            <div className="text-xs text-[#3d444d] mb-4">
               {modal.report.type === 'iceberg' ? '冰山图' : '用户'} ·{' '}
               {modal.report.reason}
             </div>
 
-            <div className="mb-1 text-[10px] text-[#4b5563]">
+            <div className="mb-1 text-[10px] text-[#3d444d]">
               {modal.action === 'RESOLVED_ACTION' ? '已采取的行动说明' : '驳回理由'}
             </div>
             <textarea
               value={resolution}
               onChange={e => setResolution(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 bg-[#0a0c10] border border-[#2A2A2A] text-xs text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none resize-none mb-4"
+              className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none mb-4"
               placeholder={modal.action === 'RESOLVED_ACTION' ? '说明已对目标内容/用户采取的措施...' : '说明驳回原因...'}
             />
 
             <div className="flex gap-3">
               <button
                 onClick={() => { setModal(null); setResolution(''); }}
-                className="flex-1 py-2 border border-[#2A2A2A] text-xs hover:border-[#374151] transition-colors"
+                className="flex-1 py-2 border border-[#30363d] text-xs hover:border-[#30363d] transition-colors"
               >
                 取消
               </button>
@@ -228,7 +228,7 @@ export function AdminReports() {
                 className={`flex-1 py-2 text-xs border transition-colors disabled:opacity-40 ${
                   modal.action === 'RESOLVED_ACTION'
                     ? 'bg-[#ef444415] border-[#ef444440] text-[#ef4444] hover:bg-[#ef444425]'
-                    : 'bg-[#37415115] border-[#37415140] text-[#6b7280] hover:bg-[#37415125]'
+                    : 'bg-[#30363d15] border-[#30363d40] text-[#8b949e] hover:bg-[#30363d25]'
                 }`}
               >
                 {acting ? '处理中...' : '确认'}

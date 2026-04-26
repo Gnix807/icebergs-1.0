@@ -13,7 +13,7 @@ export function AdminListSkeleton({ rows = 4, cols = 1 }: { rows?: number; cols?
   return (
     <div className="space-y-3">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="border border-[#1a1d24] bg-[#0a0c10] p-4 space-y-2.5">
+        <div key={i} className="border border-[#1a1d24] bg-[#161b22] p-4 space-y-2.5">
           {cols === 1 ? (
             <>
               <div className="flex items-center justify-between gap-4">

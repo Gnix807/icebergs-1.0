@@ -33,22 +33,22 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
 
 function CardSkeleton() {
   return (
-    <div className="archive-card flex flex-col p-5 animate-pulse">
-      <div className="flex gap-px mb-4 h-3 opacity-30">
+    <div className="archive-card flex flex-col p-5">
+      <div className="flex gap-px mb-4 h-[5px] opacity-25">
         {[0, 1, 2].map(i => (
           <div key={i} className="flex-1" style={{ backgroundColor: tierColors[i] }} />
         ))}
       </div>
-      <div className="h-4 w-3/4 bg-[#1f2937] rounded mb-2" />
-      <div className="h-3 w-full bg-[#1f2937] rounded mb-1.5" />
-      <div className="h-3 w-2/3 bg-[#1f2937] rounded mb-3" />
+      <div className="h-4 w-3/4 skeleton-shimmer mb-2" />
+      <div className="h-3 w-full skeleton-shimmer mb-1.5" />
+      <div className="h-3 w-2/3 skeleton-shimmer mb-4" />
       <div className="space-y-1.5 mb-3">
-        <div className="h-2.5 w-4/5 bg-[#111827] rounded" />
-        <div className="h-2.5 w-3/5 bg-[#111827] rounded" />
+        <div className="h-2.5 w-4/5 skeleton-shimmer" />
+        <div className="h-2.5 w-3/5 skeleton-shimmer" />
       </div>
-      <div className="mt-auto pt-2.5 border-t border-[#1a1a1a] flex justify-between">
-        <div className="h-2.5 w-16 bg-[#1f2937] rounded" />
-        <div className="h-2.5 w-20 bg-[#1f2937] rounded" />
+      <div className="mt-auto pt-2.5 border-t border-[#21262d] flex justify-between">
+        <div className="h-2.5 w-16 skeleton-shimmer" />
+        <div className="h-2.5 w-20 skeleton-shimmer" />
       </div>
     </div>
   );
@@ -113,7 +113,7 @@ export function IcebergList() {
         {/* 搜索框 */}
         <div className="relative flex-1 min-w-[180px] max-w-sm">
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#374151]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#3d444d]"
             width="13" height="13" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
           >
@@ -124,12 +124,12 @@ export function IcebergList() {
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder="搜索标题或描述…"
-            className="w-full pl-8 pr-3 py-1.5 bg-[#0a0c10] border border-[#2A2A2A] text-xs font-mono text-[#e5e5e5] placeholder-[#374151] focus:border-[#00FF41] focus:outline-none transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#cdd9e5] placeholder-[#3d444d] focus:border-[#00FF41] focus:outline-none transition-colors"
           />
           {q && (
             <button
               onClick={() => setQ('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#374151] hover:text-[#9ca3af] transition-colors text-xs"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#3d444d] hover:text-[#adbac7] transition-colors text-xs"
             >
               ✕
             </button>
@@ -145,7 +145,7 @@ export function IcebergList() {
               className={`px-3 py-1.5 text-[10px] font-mono border transition-colors ${
                 sort === opt.value
                   ? 'border-[#00FF4140] text-[#00FF41] bg-[#00FF4108]'
-                  : 'border-[#1a1a1a] text-[#4b5563] hover:border-[#2A2A2A] hover:text-[#9ca3af]'
+                  : 'border-[#21262d] text-[#6e7681] hover:border-[#30363d] hover:text-[#adbac7]'
               }`}
             >
               {opt.label}
@@ -156,7 +156,7 @@ export function IcebergList() {
             className={`px-3 py-1.5 text-[10px] font-mono border transition-colors ${
               showNsfw
                 ? 'border-[#ef444440] text-[#ef4444] bg-[#ef444408]'
-                : 'border-[#1a1a1a] text-[#4b5563] hover:border-[#ef444440] hover:text-[#ef4444]'
+                : 'border-[#21262d] text-[#6e7681] hover:border-[#ef444440] hover:text-[#ef4444]'
             }`}
             title={showNsfw ? '已显示 NSFW 内容，点击隐藏' : '默认已过滤 NSFW 内容，点击显示'}
           >
@@ -167,7 +167,7 @@ export function IcebergList() {
 
       {/* 结果计数 */}
       {!loading && meta && (
-        <div className="text-[10px] font-mono text-[#374151] mb-4">
+        <div className="text-[10px] font-mono text-[#3d444d] mb-4">
           {debouncedQ
             ? `"${debouncedQ}" — 找到 ${meta.total} 条结果`
             : `共 ${meta.total} 篇冰山图`
@@ -186,22 +186,30 @@ export function IcebergList() {
       ) : error ? (
         <div className="py-16 text-center font-mono text-[#ef4444] text-sm">{error}</div>
       ) : icebergs.length === 0 ? (
-        <div className="py-20 text-center border border-dashed border-[#2A2A2A]">
+        <div className="py-20 text-center border border-dashed border-[#21262d] bg-[#161b22]/30">
+          <div className="font-mono text-[#484f58] text-3xl mb-4 leading-none select-none">∅</div>
           {debouncedQ ? (
             <>
-              <p className="text-[#6b7280] font-mono text-sm mb-2">没有找到相关冰山图</p>
+              <p className="text-[#8b949e] font-mono text-sm mb-1">// 没有找到相关冰山图</p>
+              <p className="text-[#484f58] font-mono text-xs mb-5">
+                搜索词：<span className="text-[#6e7681]">{debouncedQ}</span>
+              </p>
               <button
                 onClick={() => setQ('')}
-                className="text-[#00FF41] font-mono text-xs hover:underline"
+                className="px-4 py-1.5 border border-[#30363d] text-[#8b949e] font-mono text-xs hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
               >
-                清除搜索
+                × 清除搜索
               </button>
             </>
           ) : (
             <>
-              <p className="text-[#6b7280] font-mono text-sm mb-4">暂无冰山图</p>
-              <a href="/iceberg/new" className="text-[#00FF41] font-mono text-sm hover:underline">
-                立即创建 →
+              <p className="text-[#8b949e] font-mono text-sm mb-1">// 暂无冰山图</p>
+              <p className="text-[#484f58] font-mono text-xs mb-5">成为第一个探索者</p>
+              <a
+                href="/iceberg/new"
+                className="inline-block px-4 py-1.5 border border-[#00FF41] text-[#00FF41] font-mono text-xs hover:bg-[#00FF41]/10 transition-colors"
+              >
+                + 创建冰山图
               </a>
             </>
           )}
@@ -217,8 +225,8 @@ export function IcebergList() {
                 href={`/iceberg/${iceberg.slug || iceberg.id}`}
                 className="archive-card group flex flex-col p-5"
               >
-                {/* 层级深度条 — 段数 = 实际层数，悬停时变亮 */}
-                <div className="flex gap-px mb-4 h-3 opacity-50 group-hover:opacity-90 transition-opacity duration-200">
+                {/* 层级深度条 */}
+                <div className="flex gap-px mb-4 tier-strip opacity-50 group-hover:opacity-95 transition-all duration-200">
                   {Array.from({ length: tierCount }).map((_, i) => (
                     <div
                       key={i}
@@ -229,14 +237,14 @@ export function IcebergList() {
                 </div>
 
                 {/* 标题 */}
-                <h3 className="font-mono text-sm font-semibold text-[#e5e5e5] group-hover:text-[#00FF41] transition-colors mb-2 line-clamp-1">
-                  <span className="text-[#374151] mr-1">#</span>
+                <h3 className="font-mono text-sm font-semibold text-[#cdd9e5] group-hover:text-[#00FF41] transition-colors mb-2 line-clamp-1">
+                  <span className="text-[#3d444d] mr-1">#</span>
                   {debouncedQ ? highlightMatch(iceberg.title, debouncedQ) : iceberg.title}
                 </h3>
 
                 {/* 摘要 */}
                 {iceberg.description && (
-                  <p className="text-xs text-[#6b7280] mb-3 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-[#8b949e] mb-3 line-clamp-2 leading-relaxed">
                     {iceberg.description}
                   </p>
                 )}
@@ -246,16 +254,16 @@ export function IcebergList() {
                   <div className="mb-3 space-y-1">
                     {previewItems.map((item, i) => (
                       <div key={i} className="flex items-center gap-1.5 font-mono truncate">
-                        <span className="text-[#2A2A2A] group-hover:text-[#374151] transition-colors flex-shrink-0 text-xs">›</span>
-                        <span className="text-[10px] text-[#374151] group-hover:text-[#4b5563] transition-colors truncate">{item.title}</span>
+                        <span className="text-[#484f58] group-hover:text-[#3d444d] transition-colors flex-shrink-0 text-xs">›</span>
+                        <span className="text-[10px] text-[#3d444d] group-hover:text-[#6e7681] transition-colors truncate">{item.title}</span>
                       </div>
                     ))}
                   </div>
                 )}
 
                 {/* Footer */}
-                <div className="mt-auto pt-2.5 border-t border-[#1a1a1a] flex items-center justify-between text-[10px] font-mono">
-                  <div className="flex items-center gap-3 text-[#374151]">
+                <div className="mt-auto pt-2.5 border-t border-[#21262d] flex items-center justify-between text-[10px] font-mono">
+                  <div className="flex items-center gap-3 text-[#3d444d]">
                     <span>{tierCount} 层</span>
                     <span className="flex items-center gap-1">
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -265,13 +273,15 @@ export function IcebergList() {
                       {iceberg.viewCount}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-[#2A2A2A]">
+                  <div className="flex items-center gap-2 text-[#484f58]">
                     {iceberg.author && (
-                      <span className="text-[#374151] truncate max-w-[80px]">
+                      <span className="text-[#3d444d] truncate max-w-[80px]">
                         @{iceberg.author.nickname ?? iceberg.author.username}
                       </span>
                     )}
-                    <span>{new Date(iceberg.createdAt).toLocaleDateString('zh-CN')}</span>
+                    <span title={new Date(iceberg.createdAt).toLocaleDateString('zh-CN')}>
+                      {relativeTime(iceberg.createdAt)}
+                    </span>
                   </div>
                 </div>
               </a>
@@ -286,7 +296,7 @@ export function IcebergList() {
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className="px-3 py-1.5 text-[10px] font-mono border border-[#1a1a1a] text-[#4b5563] hover:border-[#2A2A2A] hover:text-[#9ca3af] disabled:opacity-30 transition-colors"
+            className="px-3 py-1.5 text-[10px] font-mono border border-[#21262d] text-[#6e7681] hover:border-[#30363d] hover:text-[#adbac7] disabled:opacity-30 transition-colors"
           >
             ← 上一页
           </button>
@@ -311,7 +321,7 @@ export function IcebergList() {
                 className={`w-8 h-8 text-[10px] font-mono border transition-colors ${
                   p === page
                     ? 'border-[#00FF4140] text-[#00FF41] bg-[#00FF4108]'
-                    : 'border-[#1a1a1a] text-[#4b5563] hover:border-[#2A2A2A] hover:text-[#9ca3af]'
+                    : 'border-[#21262d] text-[#6e7681] hover:border-[#30363d] hover:text-[#adbac7]'
                 }`}
               >
                 {p}
@@ -322,7 +332,7 @@ export function IcebergList() {
           <button
             onClick={() => setPage(p => Math.min(meta.totalPages, p + 1))}
             disabled={page >= meta.totalPages}
-            className="px-3 py-1.5 text-[10px] font-mono border border-[#1a1a1a] text-[#4b5563] hover:border-[#2A2A2A] hover:text-[#9ca3af] disabled:opacity-30 transition-colors"
+            className="px-3 py-1.5 text-[10px] font-mono border border-[#21262d] text-[#6e7681] hover:border-[#30363d] hover:text-[#adbac7] disabled:opacity-30 transition-colors"
           >
             下一页 →
           </button>
@@ -330,6 +340,17 @@ export function IcebergList() {
       )}
     </div>
   );
+}
+
+function relativeTime(date: string): string {
+  const diff = Date.now() - new Date(date).getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return '今天';
+  if (days === 1) return '昨天';
+  if (days < 7)  return `${days} 天前`;
+  if (days < 30) return `${Math.floor(days / 7)} 周前`;
+  if (days < 365) return `${Math.floor(days / 30)} 个月前`;
+  return `${Math.floor(days / 365)} 年前`;
 }
 
 // 高亮搜索词（纯文本 span，不用 dangerouslySetInnerHTML）

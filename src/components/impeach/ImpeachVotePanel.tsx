@@ -125,30 +125,30 @@ export function ImpeachVotePanel({
   return (
     <div className="space-y-6">
       {/* 状态栏 */}
-      <div className="border border-[#1a1a1a] bg-[#0a0c10] px-4 py-3 flex flex-wrap gap-4 text-xs font-mono">
+      <div className="border border-[#21262d] bg-[#161b22] px-4 py-3 flex flex-wrap gap-4 text-xs font-mono">
         {isOpen && (
-          <div className="text-[#4b5563]">
+          <div className="text-[#3d444d]">
             剩余 <span className="text-[#f59e0b]">{daysLeft}</span> 天
-            <span className="ml-1 text-[#2A2A2A]">（{closesDate.toLocaleDateString('zh-CN')} 截止）</span>
+            <span className="ml-1 text-[#3d444d]">（{closesDate.toLocaleDateString('zh-CN')} 截止）</span>
           </div>
         )}
-        <div className="text-[#4b5563]">
+        <div className="text-[#3d444d]">
           支持票权重比：<span className="text-[#ef4444]">{passRatio}%</span>
-          <span className="ml-1 text-[#2A2A2A]">（{summary.supportWeight}/{summary.totalWeight}）</span>
+          <span className="ml-1 text-[#3d444d]">（{summary.supportWeight}/{summary.totalWeight}）</span>
         </div>
-        <div className="text-[#4b5563]">
-          共 <span className="text-[#e5e5e5]">{totalVotes}</span> 票
+        <div className="text-[#3d444d]">
+          共 <span className="text-[#cdd9e5]">{totalVotes}</span> 票
           <span className="ml-1">（支持 {summary.supportCount} / 反对 {summary.opposeCount} / 弃权 {summary.abstainCount}）</span>
         </div>
       </div>
 
       {/* 投票操作 */}
       {eligible && (
-        <div className="border border-[#1a1a1a] bg-[#050505] p-4 space-y-3">
-          <div className="text-[10px] font-mono text-[#4b5563]">
+        <div className="border border-[#21262d] bg-[#161b22] p-4 space-y-3">
+          <div className="text-[10px] font-mono text-[#3d444d]">
             你的投票权重：<span className="text-[#f59e0b]">{myWeight}</span>
             {myVote && (
-              <span className="ml-3 text-[#9ca3af]">
+              <span className="ml-3 text-[#8b949e]">
                 当前：<span style={{ color: VOTE_COLOR[myVote] }}>{VOTE_LABEL[myVote]}</span>（可修改）
               </span>
             )}
@@ -162,7 +162,7 @@ export function ImpeachVotePanel({
                 className={`px-4 py-1.5 text-xs font-mono border transition-colors disabled:opacity-40 ${
                   myVote === v
                     ? `border-[${VOTE_COLOR[v]}] text-[${VOTE_COLOR[v]}]`
-                    : 'border-[#2A2A2A] text-[#4b5563] hover:border-[#374151] hover:text-[#9ca3af]'
+                    : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d] hover:text-[#8b949e]'
                 }`}
                 style={myVote === v ? { borderColor: VOTE_COLOR[v] + '80', color: VOTE_COLOR[v], background: VOTE_COLOR[v] + '12' } : {}}
               >
@@ -177,13 +177,13 @@ export function ImpeachVotePanel({
                 value={comment}
                 onChange={e => setComment(e.target.value.slice(0, 300))}
                 rows={2}
-                className="w-full px-3 py-2 bg-[#0a0c10] border border-[#2A2A2A] text-xs font-mono text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none resize-none"
+                className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none"
                 placeholder="附言（可选，最多 300 字）"
               />
               <div className="flex gap-2">
                 <button
                   onClick={() => { setShowInput(false); setPending(null); }}
-                  className="flex-1 py-1.5 text-xs font-mono border border-[#2A2A2A] text-[#4b5563] hover:border-[#374151] transition-colors"
+                  className="flex-1 py-1.5 text-xs font-mono border border-[#30363d] text-[#3d444d] hover:border-[#30363d] transition-colors"
                 >
                   取消
                 </button>
@@ -202,7 +202,7 @@ export function ImpeachVotePanel({
       )}
 
       {!userId && isOpen && (
-        <div className="text-xs font-mono text-[#4b5563] border border-[#1a1a1a] px-4 py-3">
+        <div className="text-xs font-mono text-[#3d444d] border border-[#21262d] px-4 py-3">
           <button onClick={() => (window as any).__openLogin?.()} className="text-[#00FF41] hover:underline">
             登录
           </button>
@@ -212,13 +212,13 @@ export function ImpeachVotePanel({
 
       {/* 投票列表 */}
       <div>
-        <div className="text-[10px] font-mono text-[#374151] mb-3">— 投票记录 —</div>
+        <div className="text-[10px] font-mono text-[#6e7681] mb-3">— 投票记录 —</div>
         {votes.length === 0 ? (
-          <div className="text-[10px] font-mono text-[#2A2A2A] py-4 text-center">// 暂无投票</div>
+          <div className="text-[10px] font-mono text-[#3d444d] py-4 text-center">// 暂无投票</div>
         ) : (
           <div className="space-y-2">
             {votes.map(v => (
-              <div key={v.id} className="border border-[#1a1a1a] px-4 py-3 flex items-start gap-3">
+              <div key={v.id} className="border border-[#21262d] px-4 py-3 flex items-start gap-3">
                 <span
                   className="text-[10px] font-mono border px-1.5 py-0.5 flex-shrink-0 mt-0.5"
                   style={{ color: VOTE_COLOR[v.vote], borderColor: VOTE_COLOR[v.vote] + '40' }}
@@ -229,20 +229,20 @@ export function ImpeachVotePanel({
                   <div className="flex items-center gap-2 flex-wrap">
                     <a
                       href={`/user/${v.voter.id}`}
-                      className="text-xs font-mono text-[#9ca3af] hover:text-[#00FF41] transition-colors"
+                      className="text-xs font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors"
                     >
                       @{v.voter.nickname ?? v.voter.username}
                     </a>
-                    <span className="text-[10px] font-mono text-[#374151]">
+                    <span className="text-[10px] font-mono text-[#6e7681]">
                       {v.voter.isFounder ? 'FOUNDER' : v.voter.role}
                     </span>
-                    <span className="text-[10px] font-mono text-[#2A2A2A]">×{v.weight}</span>
-                    <span className="text-[10px] font-mono text-[#2A2A2A] ml-auto">
+                    <span className="text-[10px] font-mono text-[#3d444d]">×{v.weight}</span>
+                    <span className="text-[10px] font-mono text-[#3d444d] ml-auto">
                       {new Date(v.createdAt).toLocaleDateString('zh-CN')}
                     </span>
                   </div>
                   {v.comment && (
-                    <p className="text-[11px] font-mono text-[#4b5563] mt-1 leading-relaxed">{v.comment}</p>
+                    <p className="text-[11px] font-mono text-[#3d444d] mt-1 leading-relaxed">{v.comment}</p>
                   )}
                 </div>
               </div>

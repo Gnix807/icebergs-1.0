@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
-import { marked } from 'marked';
+import { renderMarkdownWithMath } from '../../lib/markdown';
 import { SocialBar } from '../../components/iceberg/SocialBar';
 import { ExportButton } from '../../components/iceberg/ExportButton';
 import { CommentSection } from '../../components/iceberg/CommentSection';
@@ -74,13 +74,13 @@ try {
       }
 
       if (iceberg.description) {
-        iceberg.description = marked.parse(iceberg.description) as string;
+        iceberg.description = renderMarkdownWithMath(iceberg.description);
       }
 
       for (const tier of iceberg.tiers) {
         for (const item of tier.items) {
           if (item.desc) {
-            (item as any)._descHtml = marked.parse(item.desc) as string;
+            (item as any)._descHtml = renderMarkdownWithMath(item.desc);
           }
           // Parse labels JSON array
           try {
@@ -165,7 +165,7 @@ for (const lbl of allLabels) {
 <Layout title={`${iceberg?.title || '冰山图'} | 冰山图宇宙`}>
   <main class="max-w-5xl mx-auto px-4 py-12">
     {error ? (
-      <div class="p-8 bg-[#121212] border border-[#2A2A2A] text-center boot-animate">
+      <div class="p-8 bg-[#161b22] border border-[#30363d] text-center reveal">
         <p class="text-red-500 font-mono">{error}</p>
         <a href="/iceberg/list" class="text-[#00FF41] hover:underline mt-4 inline-block font-mono text-sm">
           ← 返回列表
@@ -174,11 +174,11 @@ for (const lbl of allLabels) {
     ) : (
       <>
         {/* ── Header ─────────────────────────────────────── */}
-        <header class="mb-10 boot-animate">
-          <div class="text-xs text-[#4b5563] font-mono mb-3 flex items-center gap-2">
+        <header class="mb-10 reveal">
+          <div class="text-xs text-[#8b949e] font-mono mb-3 flex items-center gap-2">
             <a href="/iceberg/list" class="hover:text-[#00FF41] transition-colors">冰山图列表</a>
-            <span class="text-[#2A2A2A]">/</span>
-            <span class={iceberg.status === 'PUBLISHED' ? 'text-[#22c55e]' : 'text-[#6b7280]'}>
+            <span class="text-[#3d444d]">/</span>
+            <span class={iceberg.status === 'PUBLISHED' ? 'text-[#22c55e]' : 'text-[#8b949e]'}>
               {iceberg.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT'}
             </span>
           </div>
@@ -188,21 +188,21 @@ for (const lbl of allLabels) {
           </h1>
 
           {iceberg.description && (
-            <div class="mt-4 text-[#9ca3af] markdown-content text-sm leading-relaxed border-l-2 border-[#2A2A2A] pl-4" set:html={iceberg.description} />
+            <div class="mt-4 text-[#8b949e] markdown-content text-sm leading-relaxed border-l-2 border-[#30363d] pl-4" set:html={iceberg.description} />
           )}
 
-          <div class="iceberg-meta mt-5 flex flex-wrap items-center justify-between gap-4 text-xs text-[#6b7280] font-mono">
+          <div class="iceberg-meta mt-5 flex flex-wrap items-center justify-between gap-4 text-xs text-[#8b949e] font-mono">
             <div class="flex flex-wrap items-center gap-4">
-              <span class="text-[#374151]">
-                <span class="text-[#6b7280]">{iceberg.tiers.length}</span> 层 ·
-                <span class="text-[#6b7280] ml-1">{allItemsFlat.length}</span> 词条
+              <span class="text-[#6e7681]">
+                <span class="text-[#8b949e]">{iceberg.tiers.length}</span> 层 ·
+                <span class="text-[#8b949e] ml-1">{allItemsFlat.length}</span> 词条
               </span>
-              <span class="text-[#374151]">
-                <span class="text-[#6b7280]">{iceberg.viewCount}</span> 次探索
+              <span class="text-[#6e7681]">
+                <span class="text-[#8b949e]">{iceberg.viewCount}</span> 次探索
               </span>
               <span>
                 作者:
-                <a href={`/user/${iceberg.author?.id}`} class="text-[#9ca3af] hover:text-[#00FF41] transition-colors ml-1">
+                <a href={`/user/${iceberg.author?.id}`} class="text-[#8b949e] hover:text-[#00FF41] transition-colors ml-1">
                   {iceberg.author?.nickname || iceberg.author?.username || '匿名'}
                 </a>
               </span>
@@ -211,7 +211,12 @@ for (const lbl of allLabels) {
             {iceberg.status === 'PUBLISHED' && (
               <ExportButton
                 client:load
-                targetId="iceberg-export-content"
+                icebergTitle={iceberg.title}
+                tiers={iceberg.tiers.map((tier: any, ti: number) => ({
+                  name: tier.name,
+                  color: tierColors[ti % 6],
+                  items: tier.items.map((item: any) => ({ title: item.title })),
+                }))}
                 icebergUrl={`${Astro.url.origin}/iceberg/${iceberg.slug}`}
               />
             )}
@@ -220,10 +225,10 @@ for (const lbl of allLabels) {
 
         {/* ── Filter Bar ──────────────────────────────────── */}
         {(iceberg.tiers.length > 1 || allLabels.length > 0) && (
-          <div id="filter-bar" class="mb-6 border border-[#1f2937] bg-[#06060a] px-4 py-3 space-y-2.5">
+          <div id="filter-bar" class="mb-6 border border-[#21262d] bg-[#0d1117] px-4 py-3 space-y-2.5">
             {iceberg.tiers.length > 1 && (
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-[10px] font-mono text-[#374151] tracking-widest w-8 shrink-0">层级</span>
+                <span class="text-[10px] font-mono text-[#6e7681] tracking-widest w-8 shrink-0">层级</span>
                 <button
                   data-tier-filter="all"
                   class="filter-btn text-[10px] font-mono px-2 py-1 border transition-colors"
@@ -242,7 +247,7 @@ for (const lbl of allLabels) {
             )}
             {allLabels.length > 0 && (
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-[10px] font-mono text-[#374151] tracking-widest w-8 shrink-0">标签</span>
+                <span class="text-[10px] font-mono text-[#6e7681] tracking-widest w-8 shrink-0">标签</span>
                 {allLabels.map((label: string) => (
                   <button
                     data-label-filter={label}
@@ -255,8 +260,8 @@ for (const lbl of allLabels) {
               </div>
             )}
             <div class="flex items-center justify-between min-h-[1rem]">
-              <span id="filter-count" class="text-[10px] font-mono text-[#4b5563]"></span>
-              <button id="filter-reset" class="hidden text-[10px] font-mono text-[#4b5563] hover:text-[#00FF41] transition-colors">
+              <span id="filter-count" class="text-[10px] font-mono text-[#6e7681]"></span>
+              <button id="filter-reset" class="hidden text-[10px] font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors">
                 × 清除筛选
               </button>
             </div>
@@ -271,7 +276,7 @@ for (const lbl of allLabels) {
             const color = tierColors[ti % 6];
             const bg = tierBg[ti % 6];
             return (
-              <div class="boot-animate tier-section" data-tier-idx={String(ti)} style={`animation-delay: ${100 + ti * 60}ms`}>
+              <div class="reveal tier-section" data-tier-idx={String(ti)}>
                 {/* Tier header */}
                 <div
                   class="tier-header border-l-4 px-4 py-2.5"
@@ -281,36 +286,36 @@ for (const lbl of allLabels) {
                     <h3 class="font-mono text-sm font-semibold" style={`color: ${color}`}>
                       {tier.name}
                     </h3>
-                    <span class="tier-count font-mono text-[10px] text-[#4b5563] border border-[#2A2A2A] px-1.5 py-0.5">
+                    <span class="tier-count font-mono text-[10px] text-[#6e7681] border border-[#30363d] px-1.5 py-0.5">
                       {tier.items.length} 词条
                     </span>
                   </div>
                   {tier.desc && (
-                    <p class="mt-0.5 font-mono text-[11px] text-[#4b5563]">{tier.desc}</p>
+                    <p class="mt-0.5 font-mono text-[11px] text-[#8b949e]">{tier.desc}</p>
                   )}
                 </div>
 
                 {/* Items as chips */}
                 <div
-                  class="tier-body border-l-4 border-b border-r border-[#1f2937] p-4"
+                  class="tier-body border-l-4 border-b border-r border-[#21262d] p-4"
                   style={`border-left-color: ${color}44`}
                 >
                   {tier.items.length === 0 ? (
-                    <p class="text-xs text-[#374151] font-mono">暂无词条</p>
+                    <p class="text-xs text-[#6e7681] font-mono">暂无词条</p>
                   ) : (
                     <div class="flex flex-wrap gap-2">
                       {tier.items.map((item: any, ii: number) => {
                         const idx = startIdx + ii;
                         return (
                           <button
-                            class="item-chip group flex items-center gap-1.5 px-3 py-1.5 bg-[#0d0d0d] border border-[#2A2A2A]
-                                   hover:border-current hover:bg-[#111827] transition-all text-left cursor-pointer"
+                            class="item-chip group flex items-center gap-1.5 px-3 py-1.5 bg-[#161b22] border border-[#30363d]
+                                   hover:border-current hover:bg-[#1c2128] transition-all text-left cursor-pointer"
                             style={`--chip-color: ${color}`}
                             data-index={idx}
                             data-id={item.id}
                             data-labels={JSON.stringify((item as any)._labels ?? [])}
                           >
-                            <span class="chip-title font-mono text-xs text-[#c9d1d9] group-hover:text-white transition-colors">
+                            <span class="chip-title font-mono text-xs text-[#cdd9e5] group-hover:text-white transition-colors">
                               {item.title}
                             </span>
                             {(item as any)._labels?.length > 0 && (
@@ -337,16 +342,16 @@ for (const lbl of allLabels) {
         </div>
 
         {/* ── Footer Actions ─────────────────────────────── */}
-        <div class="mt-10 flex flex-wrap justify-between items-center gap-4 border-t border-[#1f2937] pt-6">
+        <div class="mt-10 flex flex-wrap justify-between items-center gap-4 border-t border-[#21262d] pt-6">
           <a
             href={`/feedback?id=${iceberg.id}&title=${encodeURIComponent(iceberg.title)}`}
-            class="px-4 py-2 border border-[#374151] text-xs font-mono text-[#6b7280] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
+            class="px-4 py-2 border border-[#30363d] text-xs font-mono text-[#8b949e] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
           >
             ! 提交反馈
           </a>
           <a
             href="/iceberg/list"
-            class="px-5 py-2 border border-[#2A2A2A] font-mono text-sm text-[#6b7280] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+            class="px-5 py-2 border border-[#30363d] font-mono text-sm text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
           >
             ← 返回列表
           </a>
@@ -376,19 +381,19 @@ for (const lbl of allLabels) {
   {/* ── Drawer Panel ──────────────────────────────────────── */}
   <div
     id="drawer"
-    class="fixed top-0 right-0 h-full w-full md:w-[520px] bg-[#080a0f] border-l border-[#1f2937]
+    class="fixed top-0 right-0 h-full w-full md:w-[520px] bg-[#0d1117] border-l border-[#21262d]
            shadow-[-20px_0_60px_rgba(0,0,0,0.7)] z-50
            transform translate-x-full transition-transform duration-300 flex flex-col"
   >
     {/* Drawer Header */}
-    <div class="flex items-start justify-between px-6 py-4 border-b border-[#1f2937] bg-[#050508] shrink-0">
+    <div class="flex items-start justify-between px-6 py-4 border-b border-[#21262d] bg-[#0d1117] shrink-0">
       <div class="flex-1 min-w-0 mr-4">
         <div id="drawer-tier" class="text-[10px] font-mono mb-1.5 tracking-widest"></div>
-        <h2 id="drawer-title" class="text-lg font-mono text-[#e5e5e5] leading-snug"></h2>
+        <h2 id="drawer-title" class="text-lg font-mono text-[#cdd9e5] leading-snug"></h2>
       </div>
       <button
         onclick="closeDrawer()"
-        class="shrink-0 mt-0.5 text-[#6b7280] hover:text-[#e5e5e5] border border-[#1f2937] hover:border-[#374151]
+        class="shrink-0 mt-0.5 text-[#8b949e] hover:text-[#cdd9e5] border border-[#21262d] hover:border-[#30363d]
                px-2.5 py-1.5 text-xs font-mono transition-all"
       >
         ✕
@@ -396,43 +401,43 @@ for (const lbl of allLabels) {
     </div>
 
     {/* Navigation bar */}
-    <div id="drawer-nav" class="flex items-center justify-between px-6 py-2.5 border-b border-[#1f2937] bg-[#060609] shrink-0">
+    <div id="drawer-nav" class="flex items-center justify-between px-6 py-2.5 border-b border-[#21262d] bg-[#0d1117] shrink-0">
       <button
         id="drawer-prev"
         onclick="navigateDrawer(-1)"
-        class="font-mono text-xs text-[#6b7280] hover:text-[#00FF41] disabled:opacity-30 disabled:cursor-not-allowed
-               border border-[#1f2937] hover:border-[#00FF41] px-2.5 py-1 transition-all"
+        class="font-mono text-xs text-[#8b949e] hover:text-[#00FF41] disabled:opacity-30 disabled:cursor-not-allowed
+               border border-[#21262d] hover:border-[#00FF41] px-2.5 py-1 transition-all"
       >
         ← 上一个
       </button>
-      <span id="drawer-count" class="font-mono text-[10px] text-[#374151] tracking-widest"></span>
+      <span id="drawer-count" class="font-mono text-[10px] text-[#6e7681] tracking-widest"></span>
       <button
         id="drawer-next"
         onclick="navigateDrawer(1)"
-        class="font-mono text-xs text-[#6b7280] hover:text-[#00FF41] disabled:opacity-30 disabled:cursor-not-allowed
-               border border-[#1f2937] hover:border-[#00FF41] px-2.5 py-1 transition-all"
+        class="font-mono text-xs text-[#8b949e] hover:text-[#00FF41] disabled:opacity-30 disabled:cursor-not-allowed
+               border border-[#21262d] hover:border-[#00FF41] px-2.5 py-1 transition-all"
       >
         下一个 →
       </button>
     </div>
 
     {/* Labels */}
-    <div id="drawer-labels-row" class="px-6 py-2.5 border-b border-[#1f2937] shrink-0 hidden">
+    <div id="drawer-labels-row" class="px-6 py-2.5 border-b border-[#21262d] shrink-0 hidden">
       <div id="drawer-labels" class="flex flex-wrap gap-1.5"></div>
     </div>
 
     {/* Content */}
     <div id="drawer-body" class="flex-1 overflow-y-auto p-6">
-      <div id="drawer-content" class="markdown-content text-sm text-[#9ca3af] leading-relaxed"></div>
+      <div id="drawer-content" class="markdown-content text-sm text-[#8b949e] leading-relaxed"></div>
     </div>
 
     {/* Footer */}
-    <div class="px-6 py-3 border-t border-[#1f2937] shrink-0 bg-[#050508] flex items-center justify-between">
-      <span class="text-[10px] font-mono text-[#2A2A2A] truncate">{iceberg?.title}</span>
+    <div class="px-6 py-3 border-t border-[#21262d] shrink-0 bg-[#0d1117] flex items-center justify-between">
+      <span class="text-[10px] font-mono text-[#21262d] truncate">{iceberg?.title}</span>
       <a
         id="drawer-feedback-link"
         href="#"
-        class="text-[10px] font-mono text-[#374151] hover:text-[#ef4444] transition-colors whitespace-nowrap ml-4"
+        class="text-[10px] font-mono text-[#6e7681] hover:text-[#ef4444] transition-colors whitespace-nowrap ml-4"
       >
         ! 反馈
       </a>
@@ -494,16 +499,22 @@ for (const lbl of allLabels) {
 
     // Labels
     if (item.labels && item.labels.length > 0) {
-      drawerLabels.innerHTML = item.labels.map(l =>
-        `<span class="text-[10px] font-mono px-2 py-0.5 border" style="color:${item.tierColor};border-color:${item.tierColor}44">${l}</span>`
-      ).join('');
+      drawerLabels.textContent = '';
+      item.labels.forEach(function (label) {
+        var tag = document.createElement('span');
+        tag.className = 'text-[10px] font-mono px-2 py-0.5 border';
+        tag.style.color = item.tierColor;
+        tag.style.borderColor = item.tierColor + '44';
+        tag.textContent = label;
+        drawerLabels.appendChild(tag);
+      });
       drawerLabelsRow.classList.remove('hidden');
     } else {
       drawerLabelsRow.classList.add('hidden');
     }
 
     // Content
-    drawerContent.innerHTML = item.descHtml || '<p class="text-[#4b5563]">暂无描述</p>';
+    drawerContent.innerHTML = item.descHtml || '<p class="text-[#3d444d]">暂无描述</p>';
 
     // Feedback link
     if (drawerFeedback) {
@@ -710,13 +721,13 @@ for (const lbl of allLabels) {
 <style>
   /* ── Filter bar ── */
   .filter-btn {
-    border-color: #374151;
-    color: #6b7280;
+    border-color: #30363d;
+    color: #8b949e;
     background-color: transparent;
   }
   .filter-btn:hover {
-    border-color: #6b7280;
-    color: #9ca3af;
+    border-color: #8b949e;
+    color: #adbac7;
   }
   html.light #filter-bar {
     background-color: #f8fafc;
@@ -733,8 +744,8 @@ for (const lbl of allLabels) {
 
   /* ── Label filter buttons (per-label color via --lc var) ── */
   .label-filter-btn {
-    border-color: color-mix(in srgb, var(--lc) 22%, #2A2A2A);
-    color: color-mix(in srgb, var(--lc) 48%, #4b5563);
+    border-color: color-mix(in srgb, var(--lc) 22%, #30363d);
+    color: color-mix(in srgb, var(--lc) 48%, #6e7681);
     background-color: transparent;
   }
   .label-filter-btn:hover {
@@ -777,7 +788,7 @@ for (const lbl of allLabels) {
 
   /* ── Item chips ── */
   .item-chip {
-    border-color: #2A2A2A;
+    border-color: #30363d;
   }
   .item-chip:hover {
     border-color: var(--chip-color);
@@ -785,14 +796,14 @@ for (const lbl of allLabels) {
   }
   .item-chip.chip-active {
     border-color: var(--chip-color);
-    background-color: color-mix(in srgb, var(--chip-color) 10%, #080a0f);
+    background-color: color-mix(in srgb, var(--chip-color) 10%, #0d1117);
     box-shadow: 0 0 12px color-mix(in srgb, var(--chip-color) 25%, transparent);
   }
   #drawer-content :global(h1),
   #drawer-content :global(h2),
   #drawer-content :global(h3) {
-    color: #e5e5e5;
-    font-family: 'JetBrains Mono', monospace;
+    color: #cdd9e5;
+    font-family: 'IBM Plex Mono', monospace;
     margin: 1.25rem 0 0.5rem;
   }
   #drawer-content :global(p) {
@@ -804,28 +815,50 @@ for (const lbl of allLabels) {
     text-decoration: underline;
   }
   #drawer-content :global(blockquote) {
-    border-left: 3px solid #374151;
+    border-left: 3px solid #30363d;
     padding-left: 1rem;
-    color: #6b7280;
+    color: #8b949e;
     margin: 1rem 0;
   }
   #drawer-content :global(code) {
-    background: #1f2937;
+    background: #1c2128;
     padding: 0.1em 0.3em;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'IBM Plex Mono', monospace;
     font-size: 0.85em;
   }
   #drawer-content :global(hr) {
-    border-color: #1f2937;
+    border-color: #21262d;
     margin: 1.5rem 0;
+  }
+  #drawer-content :global(ul) {
+    list-style-type: disc;
+    padding-left: 1.5em;
+    margin: 0.75rem 0;
+    color: #8b949e;
+  }
+  #drawer-content :global(ol) {
+    list-style-type: decimal;
+    padding-left: 1.5em;
+    margin: 0.75rem 0;
+    color: #8b949e;
+  }
+  #drawer-content :global(li) {
+    margin-bottom: 0.25rem;
+    line-height: 1.75;
+  }
+  /* 块级公式居中 */
+  :global(.katex-display-block) {
+    text-align: center;
+    margin: 1rem 0;
+    overflow-x: auto;
   }
   /* Scrollbar */
   #drawer-body {
     scrollbar-width: thin;
-    scrollbar-color: #374151 #080a0f;
+    scrollbar-color: #30363d #0d1117;
   }
   #drawer-body::-webkit-scrollbar { width: 5px; }
-  #drawer-body::-webkit-scrollbar-track { background: #080a0f; }
-  #drawer-body::-webkit-scrollbar-thumb { background: #374151; }
-  #drawer-body::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+  #drawer-body::-webkit-scrollbar-track { background: #0d1117; }
+  #drawer-body::-webkit-scrollbar-thumb { background: #30363d; }
+  #drawer-body::-webkit-scrollbar-thumb:hover { background: #484f58; }
 </style>

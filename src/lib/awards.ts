@@ -54,9 +54,24 @@ export function getAwardDef(id: string) {
 }
 
 // 用户框预设库
+export const USERBOX_MAX_SLOTS = 6;
+export const USERBOX_BASE_SLOTS = 3;
+
+export type UserboxDef = {
+  id: string;
+  leftBg: string;
+  leftFg: string;
+  leftText: string;
+  text: string;
+  /** 需要持有此社区成就 ID 才能选用 */
+  requires?: string;
+  /** 解锁提示文案 */
+  requiresLabel?: string;
+};
+
 export const USERBOX_LIBRARY: Array<{
   category: string;
-  boxes: Array<{ id: string; leftBg: string; leftFg: string; leftText: string; text: string }>;
+  boxes: UserboxDef[];
 }> = [
   {
     category: '内容兴趣',
@@ -74,8 +89,10 @@ export const USERBOX_LIBRARY: Array<{
   {
     category: '贡献风格',
     boxes: [
-      { id: 'style_creator',    leftBg: '#003300', leftFg: '#00FF41', leftText: 'CRT',  text: '该用户是活跃的冰山图创作者' },
-      { id: 'style_researcher', leftBg: '#002233', leftFg: '#38bdf8', leftText: 'RSC',  text: '该用户注重深度研究与引证' },
+      { id: 'style_creator',    leftBg: '#003300', leftFg: '#00FF41', leftText: 'CRT',  text: '该用户是活跃的冰山图创作者',
+        requires: 'pioneer',  requiresLabel: '探路者成就（发布首篇冰山图）' },
+      { id: 'style_researcher', leftBg: '#002233', leftFg: '#38bdf8', leftText: 'RSC',  text: '该用户注重深度研究与引证',
+        requires: 'analyst',  requiresLabel: '分析师成就（质量分达到 100）' },
       { id: 'style_explorer',   leftBg: '#1f2a00', leftFg: '#bef264', leftText: 'EXP',  text: '该用户广泛探索各类冰山图' },
       { id: 'style_editor',     leftBg: '#330033', leftFg: '#f0abfc', leftText: 'EDT',  text: '该用户致力于内容质量审核' },
       { id: 'style_voter',      leftBg: '#330011', leftFg: '#fda4af', leftText: 'VOT',  text: '该用户积极参与内容投票' },
@@ -84,11 +101,12 @@ export const USERBOX_LIBRARY: Array<{
   {
     category: '个性标签',
     boxes: [
-      { id: 'persona_nightowl',     leftBg: '#0d0d2b', leftFg: '#818cf8', leftText: '🌙', text: '该用户是夜猫子' },
-      { id: 'persona_perfectionist',leftBg: '#1f1a00', leftFg: '#fbbf24', leftText: '◎',  text: '该用户追求完美' },
-      { id: 'persona_wikifan',      leftBg: '#1a1a1a', leftFg: '#9ca3af', leftText: 'WK', text: '该用户是百科全书爱好者' },
-      { id: 'persona_deepdiver',    leftBg: '#001a33', leftFg: '#7dd3fc', leftText: '▼',  text: '该用户喜欢深度挖掘冷知识' },
-      { id: 'persona_veteran',      leftBg: '#1a0d00', leftFg: '#fb923c', leftText: 'VET', text: '该用户是本站资深成员' },
+      { id: 'persona_nightowl',      leftBg: '#0d0d2b', leftFg: '#818cf8', leftText: '🌙', text: '该用户是夜猫子' },
+      { id: 'persona_perfectionist', leftBg: '#1f1a00', leftFg: '#fbbf24', leftText: '◎',  text: '该用户追求完美' },
+      { id: 'persona_wikifan',       leftBg: '#1a1a1a', leftFg: '#9ca3af', leftText: 'WK', text: '该用户是百科全书爱好者' },
+      { id: 'persona_deepdiver',     leftBg: '#001a33', leftFg: '#7dd3fc', leftText: '▼',  text: '该用户喜欢深度挖掘冷知识' },
+      { id: 'persona_veteran',       leftBg: '#1a0d00', leftFg: '#fb923c', leftText: 'VET', text: '该用户是本站资深成员',
+        requires: 'veteran', requiresLabel: '资深者成就（注册满 180 天）' },
     ],
   },
 ];

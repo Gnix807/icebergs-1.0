@@ -166,7 +166,7 @@ export function AdminElections() {
     <div className="space-y-4">
       {/* 顶部工具栏 */}
       <div className="flex items-center justify-between">
-        <div className="text-[10px] font-mono text-[#374151]">// 站长选举管理</div>
+        <div className="text-[10px] font-mono text-[#6e7681]">// 站长选举管理</div>
         <button
           onClick={() => setShowForm(v => !v)}
           className="px-3 py-1.5 text-xs font-mono border border-[#00FF4140] text-[#00FF41] hover:bg-[#00FF4115] transition-colors"
@@ -177,39 +177,39 @@ export function AdminElections() {
 
       {/* 新建表单 */}
       {showForm && (
-        <div className="border border-[#2A2A2A] bg-[#0a0c10] p-4 space-y-3">
-          <div className="text-xs font-mono text-[#9ca3af] mb-2">发起新一届选举</div>
+        <div className="border border-[#30363d] bg-[#161b22] p-4 space-y-3">
+          <div className="text-xs font-mono text-[#8b949e] mb-2">发起新一届选举</div>
           <div>
-            <div className="text-[10px] text-[#4b5563] mb-1">选举标题（留空则用默认）</div>
+            <div className="text-[10px] text-[#3d444d] mb-1">选举标题（留空则用默认）</div>
             <input
               value={form.title}
               onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               placeholder="站长选举"
-              className="w-full px-3 py-1.5 bg-[#050505] border border-[#2A2A2A] text-xs font-mono text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none"
+              className="w-full px-3 py-1.5 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none"
             />
           </div>
           <div>
-            <div className="text-[10px] text-[#4b5563] mb-1">选举说明（可选）</div>
+            <div className="text-[10px] text-[#3d444d] mb-1">选举说明（可选）</div>
             <textarea
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               rows={2}
-              className="w-full px-3 py-2 bg-[#050505] border border-[#2A2A2A] text-xs font-mono text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none resize-none"
+              className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none"
             />
           </div>
           <div className="flex gap-3">
             <div className="flex-1">
-              <div className="text-[10px] text-[#4b5563] mb-1">报名期（天）</div>
+              <div className="text-[10px] text-[#3d444d] mb-1">报名期（天）</div>
               <input type="number" min={1} value={form.applyDays}
                 onChange={e => setForm(f => ({ ...f, applyDays: e.target.value }))}
-                className="w-full px-3 py-1.5 bg-[#050505] border border-[#2A2A2A] text-xs font-mono text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none"
+                className="w-full px-3 py-1.5 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none"
               />
             </div>
             <div className="flex-1">
-              <div className="text-[10px] text-[#4b5563] mb-1">投票期（天）</div>
+              <div className="text-[10px] text-[#3d444d] mb-1">投票期（天）</div>
               <input type="number" min={1} value={form.voteDays}
                 onChange={e => setForm(f => ({ ...f, voteDays: e.target.value }))}
-                className="w-full px-3 py-1.5 bg-[#050505] border border-[#2A2A2A] text-xs font-mono text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none"
+                className="w-full px-3 py-1.5 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none"
               />
             </div>
           </div>
@@ -226,11 +226,11 @@ export function AdminElections() {
       {loading ? (
         <AdminListSkeleton rows={2} />
       ) : elections.length === 0 ? (
-        <div className="text-[#374151] font-mono text-sm py-8 text-center">// 暂无选举记录</div>
+        <div className="text-[#6e7681] font-mono text-sm py-8 text-center">// 暂无选举记录</div>
       ) : (
         <div className="space-y-2">
           {elections.map(e => (
-            <div key={e.id} className="border border-[#1a1a1a] bg-[#0a0c10]">
+            <div key={e.id} className="border border-[#21262d] bg-[#161b22]">
               {/* 选举头部 */}
               <div
                 onClick={() => toggle(e.id)}
@@ -242,21 +242,21 @@ export function AdminElections() {
                 >
                   {STATUS_LABEL[e.status] ?? e.status}
                 </span>
-                <span className="flex-1 font-mono text-sm text-[#e5e5e5] truncate">{e.title}</span>
-                <span className="text-[10px] font-mono text-[#374151] flex-shrink-0">
+                <span className="flex-1 font-mono text-sm text-[#cdd9e5] truncate">{e.title}</span>
+                <span className="text-[10px] font-mono text-[#6e7681] flex-shrink-0">
                   {e._count.candidates} 候选 · {e._count.votes} 票
                 </span>
-                <span className="text-[10px] font-mono text-[#2A2A2A] flex-shrink-0">
+                <span className="text-[10px] font-mono text-[#3d444d] flex-shrink-0">
                   {new Date(e.createdAt).toLocaleDateString('zh-CN')}
                 </span>
-                <span className="text-[#374151] font-mono">{expanded === e.id ? '▲' : '▼'}</span>
+                <span className="text-[#6e7681] font-mono">{expanded === e.id ? '▲' : '▼'}</span>
               </div>
 
               {/* 展开详情 */}
               {expanded === e.id && (
-                <div className="border-t border-[#1a1a1a] px-4 py-3 space-y-3">
+                <div className="border-t border-[#21262d] px-4 py-3 space-y-3">
                   {/* 时间线 */}
-                  <div className="text-[10px] font-mono text-[#374151] space-y-0.5">
+                  <div className="text-[10px] font-mono text-[#6e7681] space-y-0.5">
                     <div>报名截止：{new Date(e.applyDeadline).toLocaleString('zh-CN')}</div>
                     <div>投票截止：{new Date(e.voteDeadline).toLocaleString('zh-CN')}</div>
                     {e.confirmedAt && <div>确认时间：{new Date(e.confirmedAt).toLocaleString('zh-CN')}</div>}
@@ -264,9 +264,9 @@ export function AdminElections() {
 
                   {/* 候选人列表 */}
                   <div>
-                    <div className="text-[10px] font-mono text-[#4b5563] mb-1.5">候选人</div>
+                    <div className="text-[10px] font-mono text-[#3d444d] mb-1.5">候选人</div>
                     {(candidates[e.id] ?? []).length === 0 ? (
-                      <div className="text-[10px] font-mono text-[#2A2A2A]">暂无候选人</div>
+                      <div className="text-[10px] font-mono text-[#3d444d]">暂无候选人</div>
                     ) : (
                       <div className="space-y-1">
                         {(candidates[e.id] ?? []).map(c => (
@@ -276,12 +276,12 @@ export function AdminElections() {
                               c.status === 'ELECTED' ? 'bg-[#8b5cf6]' :
                               c.status === 'DEFEATED' ? 'bg-[#374151]' : 'bg-[#ef4444]'
                             }`} />
-                            <span className="text-[#e5e5e5]">@{c.nickname ?? c.username}</span>
-                            <span className="text-[#374151]">{c.role}</span>
+                            <span className="text-[#cdd9e5]">@{c.nickname ?? c.username}</span>
+                            <span className="text-[#6e7681]">{c.role}</span>
                             {c.votes !== null && (
                               <span className="text-[#f59e0b] ml-auto">{c.votes} 票</span>
                             )}
-                            <span className="text-[#2A2A2A]">{c.status}</span>
+                            <span className="text-[#3d444d]">{c.status}</span>
                           </div>
                         ))}
                       </div>
@@ -292,7 +292,7 @@ export function AdminElections() {
                   <div className="flex gap-2 pt-1">
                     <a
                       href={`/elections/${e.id}`}
-                      className="px-3 py-1.5 text-[10px] font-mono border border-[#2A2A2A] text-[#4b5563] hover:border-[#374151] hover:text-[#9ca3af] transition-colors"
+                      className="px-3 py-1.5 text-[10px] font-mono border border-[#30363d] text-[#3d444d] hover:border-[#30363d] hover:text-[#8b949e] transition-colors"
                     >
                       公开页面 ↗
                     </a>
@@ -334,16 +334,16 @@ export function AdminElections() {
       {/* 确认胜者模态框 */}
       {confirmMounted && confirmModal && (
         <div className={`${confirmLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${confirmLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#2A2A2A] w-full max-w-sm p-5 font-mono`}>
-            <div className="text-sm text-[#e5e5e5] mb-1">确认选举结果</div>
-            <div className="text-[10px] text-[#4b5563] mb-4">选择胜者（留空则自动取票数最高者）</div>
+          <div className={`${confirmLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-sm p-5 font-mono`}>
+            <div className="text-sm text-[#cdd9e5] mb-1">确认选举结果</div>
+            <div className="text-[10px] text-[#3d444d] mb-4">选择胜者（留空则自动取票数最高者）</div>
             <div className="space-y-1.5 mb-4">
               <button
                 onClick={() => setSelectedWinner('')}
                 className={`w-full py-2 text-xs border transition-colors text-left px-3 ${
                   !selectedWinner
                     ? 'border-[#8b5cf6] text-[#8b5cf6] bg-[#8b5cf610]'
-                    : 'border-[#2A2A2A] text-[#4b5563] hover:border-[#374151]'
+                    : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d]'
                 }`}
               >
                 自动（票数最高者）
@@ -355,7 +355,7 @@ export function AdminElections() {
                   className={`w-full py-2 text-xs border transition-colors text-left px-3 ${
                     selectedWinner === c.userId
                       ? 'border-[#8b5cf6] text-[#8b5cf6] bg-[#8b5cf610]'
-                      : 'border-[#2A2A2A] text-[#4b5563] hover:border-[#374151]'
+                      : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d]'
                   }`}
                 >
                   @{c.nickname ?? c.username}
@@ -366,7 +366,7 @@ export function AdminElections() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmModal(null)}
-                className="btn-ghost flex-1 py-2 border border-[#2A2A2A] text-xs hover:border-[#374151] transition-colors"
+                className="btn-ghost flex-1 py-2 border border-[#30363d] text-xs hover:border-[#30363d] transition-colors"
               >
                 取消
               </button>

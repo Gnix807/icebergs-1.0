@@ -90,34 +90,34 @@ const STATUS_COLOR: Record<string, string> = {
 ---
 
 <Layout title={`${electionRaw.title} — 选举详情`}>
-  <main class="max-w-2xl mx-auto px-4 py-8 boot-animate">
+  <main class="max-w-2xl mx-auto px-4 py-8 reveal">
 
     <!-- 面包屑 -->
-    <div class="text-[10px] font-mono text-[#374151] mb-6">
-      <a href="/org" class="hover:text-[#9ca3af] transition-colors">机构</a>
+    <div class="text-[10px] font-mono text-[#30363d] mb-6">
+      <a href="/org" class="hover:text-[#8b949e] transition-colors">机构</a>
       <span class="mx-2">›</span>
       <span>选举详情</span>
     </div>
 
     <!-- 选举头部 -->
-    <div class="border border-[#1a1a1a] bg-[#0a0c10] p-5 mb-6">
+    <div class="border border-[#1a1a1a] bg-[#161b22] p-5 mb-6">
       <div class="flex items-center gap-3 flex-wrap mb-2">
-        <h1 class="font-mono text-lg text-[#e5e5e5]">{electionRaw.title}</h1>
+        <h1 class="font-mono text-lg text-[#cdd9e5]">{electionRaw.title}</h1>
         <span class="text-[10px] font-mono border px-1.5 py-0.5"
           style={`color:${STATUS_COLOR[status]};border-color:${STATUS_COLOR[status]}40`}>
           {STATUS_LABEL[status] ?? status}
         </span>
       </div>
       {electionRaw.description && (
-        <p class="text-xs font-mono text-[#4b5563] mb-3">{electionRaw.description}</p>
+        <p class="text-xs font-mono text-[#3d444d] mb-3">{electionRaw.description}</p>
       )}
-      <div class="text-[10px] font-mono text-[#374151] space-y-0.5">
+      <div class="text-[10px] font-mono text-[#30363d] space-y-0.5">
         <div>报名截止：{new Date(electionRaw.applyDeadline).toLocaleString('zh-CN')}</div>
         <div>投票截止：{new Date(electionRaw.voteDeadline).toLocaleString('zh-CN')}</div>
         {electionRaw.confirmedAt && (
           <div>确认时间：{new Date(electionRaw.confirmedAt).toLocaleString('zh-CN')}</div>
         )}
-        <div class="pt-1 text-[#2A2A2A]">
+        <div class="pt-1 text-[#3d444d]">
           {electionRaw.votes.length} 票已投 · {candidates.filter(c => c.status !== 'WITHDRAWN').length} 位候选人
         </div>
       </div>
@@ -127,7 +127,7 @@ const STATUS_COLOR: Record<string, string> = {
     {status === 'CONFIRMED' && winner && (
       <div class="border border-[#8b5cf640] bg-[#8b5cf608] p-4 mb-6 font-mono">
         <div class="text-[10px] text-[#8b5cf6] mb-1 tracking-wider">// 选举结果</div>
-        <div class="text-sm text-[#e5e5e5]">
+        <div class="text-sm text-[#cdd9e5]">
           <span class="text-[#8b5cf6]">★</span> 当选者：
           <a href={`/user/${winner.id}`} class="text-[#8b5cf6] hover:underline">
             @{winner.nickname ?? winner.username}
@@ -139,7 +139,7 @@ const STATUS_COLOR: Record<string, string> = {
 
     <!-- 未登录提示 -->
     {!session && (status === 'OPEN_APPLY' || status === 'VOTING') && (
-      <div class="border border-[#2A2A2A] bg-[#0a0c10] p-3 mb-4 text-[11px] font-mono text-[#374151]">
+      <div class="border border-[#30363d] bg-[#161b22] p-3 mb-4 text-[11px] font-mono text-[#30363d]">
         <a href="/login" class="text-[#00FF41] hover:underline">登录</a> 后可参与投票{status === 'OPEN_APPLY' ? '或报名参选' : ''}
       </div>
     )}
@@ -161,7 +161,7 @@ const STATUS_COLOR: Record<string, string> = {
 
     <!-- 无候选人且已结束 -->
     {(status === 'CLOSED' || status === 'CONFIRMED') && candidates.filter(c => c.status !== 'WITHDRAWN').length === 0 && (
-      <div class="text-xs font-mono text-[#374151] text-center py-8">// 本次选举无有效候选人</div>
+      <div class="text-xs font-mono text-[#30363d] text-center py-8">// 本次选举无有效候选人</div>
     )}
 
   </main>

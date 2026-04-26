@@ -6,7 +6,7 @@ import { getSessionById } from '../lib/auth';
 const sessionId = Astro.cookies.get('session')?.value;
 const session   = await getSessionById(sessionId);
 
-const db = prisma as any;
+const db = prisma;
 
 // 拉取全部组织成员
 const [founders, admins, moderators, editors] = await Promise.all([
@@ -89,35 +89,35 @@ const STATUS_COLOR: Record<string, string> = {
   <main class="bg-grid max-w-3xl mx-auto px-4 md:px-6 py-12 relative z-10">
 
     <!-- 页面标题 -->
-    <header class="mb-10 boot-animate" style="animation-delay:0ms">
-      <div class="text-xs font-mono text-[#374151] mb-3 tracking-widest">[ ORG SYSTEM ]</div>
+    <header class="mb-10 reveal" style="">
+      <div class="text-xs font-mono text-[#30363d] mb-3 tracking-widest">[ ORG SYSTEM ]</div>
       <h1 class="text-3xl font-mono font-semibold glitch-hover cursor-default">
         <span class="text-[#f59e0b]">#</span> 组织架构
       </h1>
-      <p class="mt-2 text-sm text-[#6b7280] font-mono">公开透明的治理体系 · 所有权限基于角色制度运行</p>
+      <p class="mt-2 text-sm text-[#8b949e] font-mono">公开透明的治理体系 · 所有权限基于角色制度运行</p>
     </header>
 
     <!-- 治理说明 -->
-    <div class="border border-[#1f2937] border-l-4 border-l-[#f59e0b] bg-[#0a0c10] p-5 mb-10 boot-animate" style="animation-delay:30ms">
-      <div class="text-[10px] font-mono text-[#374151] tracking-widest mb-3">// ROLE HIERARCHY</div>
+    <div class="border border-[#21262d] border-l-4 border-l-[#f59e0b] bg-[#161b22] p-5 mb-10 reveal" style="">
+      <div class="text-[10px] font-mono text-[#30363d] tracking-widest mb-3">// ROLE HIERARCHY</div>
       <div class="space-y-2 text-[11px] font-mono">
         <div class="flex items-start gap-2">
           <span class="text-[#f59e0b] flex-shrink-0">◆</span>
-          <span><span class="text-[#f59e0b] font-semibold">FOUNDER</span> <span class="text-[#4b5563]">— 平台创始人，永久免疫所有操作，不参与换届</span></span>
+          <span><span class="text-[#f59e0b] font-semibold">FOUNDER</span> <span class="text-[#3d444d]">— 平台创始人，永久免疫所有操作，不参与换届</span></span>
         </div>
         <div class="flex items-start gap-2">
           <span class="text-[#f59e0b] flex-shrink-0">★</span>
-          <span><span class="text-[#f59e0b]">ADMIN</span> <span class="text-[#4b5563]">— 管理员，由选举产生或由 FOUNDER 任命，负责平台日常治理</span></span>
+          <span><span class="text-[#f59e0b]">ADMIN</span> <span class="text-[#3d444d]">— 管理员，由选举产生或由 FOUNDER 任命，负责平台日常治理</span></span>
         </div>
         <div class="flex items-start gap-2">
           <span class="text-[#3b82f6] flex-shrink-0">▲</span>
-          <span><span class="text-[#3b82f6]">MODERATOR</span> <span class="text-[#4b5563]">— 版主，由管理员任命，协助内容审核与社区维护</span></span>
+          <span><span class="text-[#3b82f6]">MODERATOR</span> <span class="text-[#3d444d]">— 版主，由管理员任命，协助内容审核与社区维护</span></span>
         </div>
         <div class="flex items-start gap-2">
           <span class="text-[#22c55e] flex-shrink-0">●</span>
-          <span><span class="text-[#22c55e]">EDITOR</span> <span class="text-[#4b5563]">— 编辑，审核冰山图，可申请晋升版主</span></span>
+          <span><span class="text-[#22c55e]">EDITOR</span> <span class="text-[#3d444d]">— 编辑，审核冰山图，可申请晋升版主</span></span>
         </div>
-        <div class="pt-2 border-t border-[#1a1a1a] text-[#374151]">
+        <div class="pt-2 border-t border-[#1a1a1a] text-[#30363d]">
           晋升路径：USER → CONTRIBUTOR → EDITOR（申请制）→ MODERATOR（任命）→ ADMIN（选举）
         </div>
       </div>
@@ -125,16 +125,16 @@ const STATUS_COLOR: Record<string, string> = {
 
     <!-- 进行中的选举 -->
     {activeElection && (
-      <div class="border border-[#22c55e40] border-l-4 border-l-[#22c55e] bg-[#22c55e08] p-5 mb-10 boot-animate" style="animation-delay:60ms">
+      <div class="border border-[#22c55e40] border-l-4 border-l-[#22c55e] bg-[#22c55e08] p-5 mb-10 reveal" style="">
         <div class="text-[10px] font-mono text-[#22c55e] mb-3 tracking-widest">[ ACTIVE ELECTION ]</div>
         <div class="flex items-center gap-3 flex-wrap mb-3">
-          <span class="text-base font-mono font-semibold text-[#e5e5e5]">{activeElection.title}</span>
+          <span class="text-base font-mono font-semibold text-[#cdd9e5]">{activeElection.title}</span>
           <span class="text-[10px] font-mono border px-1.5 py-0.5"
             style={`color:${STATUS_COLOR[activeElection.status]};border-color:${STATUS_COLOR[activeElection.status]}40`}>
             {STATUS_LABEL[activeElection.status]}
           </span>
         </div>
-        <div class="text-[11px] font-mono text-[#4b5563] space-y-0.5 mb-4">
+        <div class="text-[11px] font-mono text-[#3d444d] space-y-0.5 mb-4">
           {activeElection.status === 'OPEN_APPLY' && (
             <div>报名截止：{new Date(activeElection.applyDeadline).toLocaleString('zh-CN')}</div>
           )}
@@ -151,13 +151,13 @@ const STATUS_COLOR: Record<string, string> = {
     )}
 
     <!-- 进行中的 RfA -->
-    <section class="mb-10 boot-animate" style="animation-delay:60ms">
+    <section class="mb-10 reveal" style="">
       <div class="flex items-center gap-3 mb-4">
         <span class="text-xs font-mono text-[#22c55e] tracking-widest">// 编辑资格申请（RfA）</span>
         <div class="flex-1 border-t border-[#22c55e15]"></div>
         {openRfas.length > 0
-          ? <span class="text-[10px] font-mono text-[#374151]">{openRfas.length} 项进行中</span>
-          : <a href="/rfa" class="text-[10px] font-mono text-[#374151] hover:text-[#9ca3af] transition-colors">查看记录 →</a>
+          ? <span class="text-[10px] font-mono text-[#30363d]">{openRfas.length} 项进行中</span>
+          : <a href="/rfa" class="text-[10px] font-mono text-[#30363d] hover:text-[#8b949e] transition-colors">查看记录 →</a>
         }
       </div>
       {openRfas.length > 0 && (
@@ -169,12 +169,12 @@ const STATUS_COLOR: Record<string, string> = {
                 class="flex items-center gap-3 px-4 py-3 border border-[#22c55e20] bg-[#22c55e05] hover:bg-[#22c55e0d] transition-colors group">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-mono text-sm text-[#e5e5e5] group-hover:text-[#22c55e] transition-colors">
+                    <span class="font-mono text-sm text-[#cdd9e5] group-hover:text-[#22c55e] transition-colors">
                       @{rfa.user.nickname ?? rfa.user.username}
                     </span>
-                    <span class="text-[10px] font-mono text-[#4b5563]">申请编辑资格</span>
+                    <span class="text-[10px] font-mono text-[#3d444d]">申请编辑资格</span>
                   </div>
-                  <div class="text-[10px] font-mono text-[#374151] mt-0.5">
+                  <div class="text-[10px] font-mono text-[#30363d] mt-0.5">
                     {rfa._count.votes} 票已投 · 剩余 {daysLeft} 天
                   </div>
                 </div>
@@ -188,7 +188,7 @@ const STATUS_COLOR: Record<string, string> = {
       )}
       {openRfas.length > 0 && (
         <div class="mt-2 text-right">
-          <a href="/rfa" class="text-[10px] font-mono text-[#374151] hover:text-[#9ca3af] transition-colors">
+          <a href="/rfa" class="text-[10px] font-mono text-[#30363d] hover:text-[#8b949e] transition-colors">
             查看全部 RfA 记录 →
           </a>
         </div>
@@ -197,11 +197,11 @@ const STATUS_COLOR: Record<string, string> = {
 
     <!-- 进行中的弹劾案 -->
     {openImpeachments.length > 0 && (
-      <section class="mb-10 boot-animate" style="animation-delay:75ms">
+      <section class="mb-10 reveal" style="">
         <div class="flex items-center gap-3 mb-4">
           <span class="text-xs font-mono text-[#ef4444] tracking-widest">// 弹劾案（进行中）</span>
           <div class="flex-1 border-t border-[#ef444415]"></div>
-          <span class="text-[10px] font-mono text-[#374151]">{openImpeachments.length} 项</span>
+          <span class="text-[10px] font-mono text-[#30363d]">{openImpeachments.length} 项</span>
         </div>
         <div class="space-y-1.5">
           {openImpeachments.map((req: any) => {
@@ -213,11 +213,11 @@ const STATUS_COLOR: Record<string, string> = {
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-[10px] font-mono border px-1.5 py-0.5"
                       style="color:#ef4444;border-color:#ef444440">弹劾 {req.targetRole}</span>
-                    <span class="font-mono text-sm text-[#e5e5e5] group-hover:text-[#ef4444] transition-colors">
+                    <span class="font-mono text-sm text-[#cdd9e5] group-hover:text-[#ef4444] transition-colors">
                       @{req.target.nickname ?? req.target.username}
                     </span>
                   </div>
-                  <div class="text-[10px] font-mono text-[#374151] mt-0.5">
+                  <div class="text-[10px] font-mono text-[#30363d] mt-0.5">
                     {req._count.votes} 票 · 剩余 {daysLeft} 天
                   </div>
                 </div>
@@ -229,7 +229,7 @@ const STATUS_COLOR: Record<string, string> = {
           })}
         </div>
         <div class="mt-2 text-right">
-          <a href="/impeach" class="text-[10px] font-mono text-[#374151] hover:text-[#9ca3af] transition-colors">
+          <a href="/impeach" class="text-[10px] font-mono text-[#30363d] hover:text-[#8b949e] transition-colors">
             查看全部弹劾记录 →
           </a>
         </div>
@@ -237,14 +237,14 @@ const STATUS_COLOR: Record<string, string> = {
     )}
 
     <!-- FOUNDER -->
-    <section class="mb-10 boot-animate" style="animation-delay:90ms">
+    <section class="mb-10 reveal" style="">
       <div class="flex items-center gap-3 mb-4">
         <span class="text-xs font-mono font-semibold text-[#f59e0b] tracking-widest">◆ FOUNDER</span>
-        <div class="flex-1 border-t border-[#2A2A2A]"></div>
-        <span class="text-[10px] font-mono text-[#6b7280] px-2">永久席位</span>
+        <div class="flex-1 border-t border-[#30363d]"></div>
+        <span class="text-[10px] font-mono text-[#8b949e] px-2">永久席位</span>
       </div>
       {founders.length === 0 ? (
-        <p class="text-[10px] font-mono text-[#2A2A2A]">// 暂无</p>
+        <p class="text-[10px] font-mono text-[#3d444d]">// 暂无</p>
       ) : (
         <div class="space-y-2">
           {founders.map(u => (
@@ -252,15 +252,15 @@ const STATUS_COLOR: Record<string, string> = {
               class="org-founder-card flex items-center gap-4 px-5 py-4 border border-[#f59e0b30] border-l-4 border-l-[#f59e0b] transition-all group">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-3 flex-wrap mb-0.5">
-                  <span class="font-mono text-base font-semibold text-[#e5e5e5] group-hover:text-[#f59e0b] transition-colors">
+                  <span class="font-mono text-base font-semibold text-[#cdd9e5] group-hover:text-[#f59e0b] transition-colors">
                     @{u.nickname ?? u.username}
                   </span>
                 </div>
-                {u.bio && <p class="text-xs font-mono text-[#9ca3af] truncate">{u.bio}</p>}
+                {u.bio && <p class="text-xs font-mono text-[#8b949e] truncate">{u.bio}</p>}
               </div>
               <div class="flex-shrink-0 text-right">
                 <div class="text-sm font-mono font-semibold text-[#f59e0b]">{u.qualityScore.toLocaleString()}</div>
-                <div class="text-[10px] font-mono text-[#6b7280]">pts</div>
+                <div class="text-[10px] font-mono text-[#8b949e]">pts</div>
               </div>
             </a>
           ))}
@@ -269,14 +269,14 @@ const STATUS_COLOR: Record<string, string> = {
     </section>
 
     <!-- ADMIN -->
-    <section class="mb-10 boot-animate" style="animation-delay:120ms">
+    <section class="mb-10 reveal" style="">
       <div class="flex items-center gap-3 mb-4">
         <span class="text-xs font-mono font-semibold text-[#f59e0b] tracking-widest">★ ADMIN</span>
-        <div class="flex-1 border-t border-[#2A2A2A]"></div>
-        <span class="text-[10px] font-mono text-[#6b7280] px-2">选举产生</span>
+        <div class="flex-1 border-t border-[#30363d]"></div>
+        <span class="text-[10px] font-mono text-[#8b949e] px-2">选举产生</span>
       </div>
       {admins.length === 0 ? (
-        <p class="text-[11px] font-mono text-[#374151]">// 暂无专任管理员（由 FOUNDER 代行职责）</p>
+        <p class="text-[11px] font-mono text-[#30363d]">// 暂无专任管理员（由 FOUNDER 代行职责）</p>
       ) : (
         <div class="space-y-2">
           {admins.map(u => (
@@ -284,14 +284,14 @@ const STATUS_COLOR: Record<string, string> = {
               <a href={`/user/${u.id}`}
                 class="org-admin-card flex-1 flex items-center gap-4 px-5 py-3.5 border border-[#f59e0b20] border-l-4 border-l-[#f59e0b60] transition-all group">
                 <div class="flex-1 min-w-0">
-                  <span class="font-mono text-sm font-medium text-[#e5e5e5] group-hover:text-[#f59e0b] transition-colors">
+                  <span class="font-mono text-sm font-medium text-[#cdd9e5] group-hover:text-[#f59e0b] transition-colors">
                     @{u.nickname ?? u.username}
                   </span>
-                  {u.bio && <p class="text-[10px] font-mono text-[#4b5563] mt-0.5 truncate">{u.bio}</p>}
+                  {u.bio && <p class="text-[10px] font-mono text-[#3d444d] mt-0.5 truncate">{u.bio}</p>}
                 </div>
                 <div class="flex-shrink-0 text-right">
-                  <div class="text-sm font-mono text-[#9ca3af]">{u.qualityScore.toLocaleString()}</div>
-                  <div class="text-[10px] font-mono text-[#6b7280]">pts</div>
+                  <div class="text-sm font-mono text-[#8b949e]">{u.qualityScore.toLocaleString()}</div>
+                  <div class="text-[10px] font-mono text-[#8b949e]">pts</div>
                 </div>
               </a>
               {session?.isFounder && (
@@ -307,26 +307,26 @@ const STATUS_COLOR: Record<string, string> = {
     </section>
 
     <!-- MODERATOR -->
-    <section class="mb-10 boot-animate" style="animation-delay:150ms">
+    <section class="mb-10 reveal" style="">
       <div class="flex items-center gap-3 mb-4">
         <span class="text-xs font-mono text-[#3b82f6] tracking-widest">▲ MODERATOR</span>
-        <div class="flex-1 border-t border-[#2A2A2A]"></div>
-        <span class="text-[10px] font-mono text-[#6b7280]">{moderators.length} 人</span>
+        <div class="flex-1 border-t border-[#30363d]"></div>
+        <span class="text-[10px] font-mono text-[#8b949e]">{moderators.length} 人</span>
       </div>
       {moderators.length === 0 ? (
-        <p class="text-[10px] font-mono text-[#2A2A2A]">// 暂无</p>
+        <p class="text-[10px] font-mono text-[#3d444d]">// 暂无</p>
       ) : (
         <div class="space-y-1.5">
           {moderators.map(u => (
             <div class="flex items-center gap-2">
               <a href={`/user/${u.id}`}
-                class="org-mod-card flex-1 flex items-center gap-3 px-4 py-3 border border-[#1f2937] bg-[#0a0c10] hover:border-[#3b82f640] transition-all group">
+                class="org-mod-card flex-1 flex items-center gap-3 px-4 py-3 border border-[#21262d] bg-[#161b22] hover:border-[#3b82f640] transition-all group">
                 <div class="flex-1 min-w-0">
-                  <span class="font-mono text-sm text-[#e5e5e5] group-hover:text-[#3b82f6] transition-colors">
+                  <span class="font-mono text-sm text-[#cdd9e5] group-hover:text-[#3b82f6] transition-colors">
                     @{u.nickname ?? u.username}
                   </span>
                 </div>
-                <span class="text-[10px] font-mono text-[#6b7280]">{u.qualityScore.toLocaleString()} pts</span>
+                <span class="text-[10px] font-mono text-[#8b949e]">{u.qualityScore.toLocaleString()} pts</span>
               </a>
               {(session?.isFounder || session?.role === 'ADMIN') && (
                 <a href={`/impeach/new?target=${u.id}`}
@@ -341,23 +341,23 @@ const STATUS_COLOR: Record<string, string> = {
     </section>
 
     <!-- EDITOR -->
-    <section class="mb-10 boot-animate" style="animation-delay:180ms">
+    <section class="mb-10 reveal" style="">
       <div class="flex items-center gap-3 mb-4">
         <span class="text-xs font-mono text-[#22c55e] tracking-widest">● EDITOR</span>
-        <div class="flex-1 border-t border-[#2A2A2A]"></div>
-        <span class="text-[10px] font-mono text-[#6b7280]">{editors.length} 人</span>
+        <div class="flex-1 border-t border-[#30363d]"></div>
+        <span class="text-[10px] font-mono text-[#8b949e]">{editors.length} 人</span>
       </div>
       {editors.length === 0 ? (
-        <p class="text-[10px] font-mono text-[#2A2A2A]">// 暂无</p>
+        <p class="text-[10px] font-mono text-[#3d444d]">// 暂无</p>
       ) : (
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
           {editors.map(u => (
             <a href={`/user/${u.id}`}
-              class="org-editor-card px-3 py-2.5 border border-[#1f2937] bg-[#0a0c10] hover:border-[#22c55e30] transition-all group">
-              <span class="font-mono text-xs text-[#9ca3af] group-hover:text-[#22c55e] transition-colors block truncate">
+              class="org-editor-card px-3 py-2.5 border border-[#21262d] bg-[#161b22] hover:border-[#22c55e30] transition-all group">
+              <span class="font-mono text-xs text-[#8b949e] group-hover:text-[#22c55e] transition-colors block truncate">
                 @{u.nickname ?? u.username}
               </span>
-              <span class="text-[10px] font-mono text-[#2A2A2A]">{u.qualityScore} pts</span>
+              <span class="text-[10px] font-mono text-[#3d444d]">{u.qualityScore} pts</span>
             </a>
           ))}
         </div>
@@ -365,29 +365,29 @@ const STATUS_COLOR: Record<string, string> = {
     </section>
 
     <!-- 选举历史 -->
-    <section class="boot-animate" style="animation-delay:210ms">
+    <section class="reveal" style="">
       <div class="flex items-center gap-3 mb-4">
-        <span class="text-xs font-mono text-[#6b7280] tracking-widest">// 选举历史</span>
-        <div class="flex-1 border-t border-[#2A2A2A]"></div>
+        <span class="text-xs font-mono text-[#8b949e] tracking-widest">// 选举历史</span>
+        <div class="flex-1 border-t border-[#30363d]"></div>
       </div>
       {elections.length === 0 ? (
-        <p class="text-[10px] font-mono text-[#2A2A2A]">// 暂无选举记录</p>
+        <p class="text-[10px] font-mono text-[#3d444d]">// 暂无选举记录</p>
       ) : (
         <div class="space-y-1.5">
           {elections.map(e => (
             <a href={`/elections/${e.id}`}
-              class="flex items-center gap-3 px-4 py-3 border border-[#1f2937] bg-[#0a0c10] hover:border-[#2A2A2A] transition-colors group">
+              class="flex items-center gap-3 px-4 py-3 border border-[#21262d] bg-[#161b22] hover:border-[#30363d] transition-colors group">
               <span class="text-[10px] font-mono border px-1.5 py-0.5 flex-shrink-0"
                 style={`color:${STATUS_COLOR[e.status]};border-color:${STATUS_COLOR[e.status]}40`}>
                 {STATUS_LABEL[e.status] ?? e.status}
               </span>
-              <span class="flex-1 font-mono text-xs text-[#9ca3af] group-hover:text-[#e5e5e5] transition-colors truncate">
+              <span class="flex-1 font-mono text-xs text-[#8b949e] group-hover:text-[#cdd9e5] transition-colors truncate">
                 {e.title}
               </span>
-              <span class="text-[10px] font-mono text-[#374151] flex-shrink-0">
+              <span class="text-[10px] font-mono text-[#30363d] flex-shrink-0">
                 {e._count.candidates} 候选 · {e._count.votes} 票
               </span>
-              <span class="text-[10px] font-mono text-[#2A2A2A] flex-shrink-0">
+              <span class="text-[10px] font-mono text-[#3d444d] flex-shrink-0">
                 {new Date(e.createdAt).toLocaleDateString('zh-CN')}
               </span>
             </a>
@@ -402,25 +402,25 @@ const STATUS_COLOR: Record<string, string> = {
 <style>
   /* 深色模式 */
   .org-founder-card {
-    background: color-mix(in srgb, #f59e0b 5%, #0a0c10);
+    background: color-mix(in srgb, #f59e0b 5%, #0d1117);
   }
   .org-founder-card:hover {
-    background: color-mix(in srgb, #f59e0b 9%, #0a0c10);
+    background: color-mix(in srgb, #f59e0b 9%, #0d1117);
     box-shadow: -4px 0 20px rgba(245, 158, 11, 0.15);
   }
   .org-admin-card {
-    background: color-mix(in srgb, #f59e0b 2%, #0a0c10);
+    background: color-mix(in srgb, #f59e0b 2%, #0d1117);
   }
   .org-admin-card:hover {
-    background: color-mix(in srgb, #f59e0b 5%, #0a0c10);
+    background: color-mix(in srgb, #f59e0b 5%, #0d1117);
     border-color: rgba(245, 158, 11, 0.22);
     box-shadow: -3px 0 12px rgba(245, 158, 11, 0.10);
   }
   .org-mod-card:hover {
-    background: color-mix(in srgb, #3b82f6 3%, #0a0c10);
+    background: color-mix(in srgb, #3b82f6 3%, #0d1117);
   }
   .org-editor-card:hover {
-    background: color-mix(in srgb, #22c55e 3%, #0a0c10);
+    background: color-mix(in srgb, #22c55e 3%, #0d1117);
   }
 
   /* 浅色模式覆盖 */

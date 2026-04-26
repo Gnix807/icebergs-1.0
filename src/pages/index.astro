@@ -6,6 +6,7 @@ let recentIcebergs: any[] = [];
 let topDeep: any[] = [];
 let trendingIcebergs: any[] = [];
 let featuredIcebergs: any[] = [];
+let latestAnnouncements: any[] = [];
 let stats = { total: 0, totalViews: 0, totalItems: 0 };
 
 const ICEBERG_SELECT = {
@@ -34,7 +35,7 @@ const ICEBERG_SELECT = {
 try {
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const [icebergs, deep, aggregate, itemCount, trendGroups, featured] = await Promise.all([
+  const [icebergs, deep, aggregate, itemCount, trendGroups, featured, annList] = await Promise.all([
     prisma.iceberg.findMany({
       where: { status: 'PUBLISHED' },
       orderBy: { createdAt: 'desc' },
@@ -71,11 +72,17 @@ try {
       take: 6,
       select: ICEBERG_SELECT,
     }),
+    prisma.announcement.findMany({
+      orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
+      take: 3,
+      select: { id: true, title: true, type: true, pinned: true, createdAt: true },
+    }),
   ]);
 
   recentIcebergs = icebergs;
   topDeep = deep;
   featuredIcebergs = featured;
+  latestAnnouncements = annList;
   stats = {
     total: aggregate._count.id,
     totalViews: aggregate._sum.viewCount ?? 0,
@@ -102,10 +109,25 @@ try {
 
 function formatDate(date: Date | string) {
   const d = new Date(date);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return '今天';
+  if (diffDays === 1) return '昨天';
+  if (diffDays < 7) return `${diffDays} 天前`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} 周前`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)} 个月前`;
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
+
+const ANN_TYPE_COLOR: Record<string, string> = {
+  info: '#3b82f6', update: '#22c55e', warning: '#f59e0b', maintenance: '#ef4444',
+};
+const ANN_TYPE_LABEL: Record<string, string> = {
+  info: '公告', update: '更新', warning: '注意', maintenance: '维护',
+};
 ---
 
 <Layout title="冰山图宇宙 | 首页">
@@ -113,49 +135,110 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
 
   <main class="bg-grid max-w-7xl mx-auto px-4 md:px-6 py-12 relative z-10">
 
+    <!-- 右侧公告浮栏（xl+ 显示，绝对定位于 hero 右侧空白处） -->
+    {latestAnnouncements.length > 0 && (
+      <aside class="hidden xl:block absolute right-4 md:right-6 top-12 w-64 z-20">
+        <div class="border border-[#21262d] bg-[#0d1117]">
+          <div class="flex items-center justify-between px-3 py-2 border-b border-[#21262d]">
+            <span class="font-mono text-[9px] text-[#6e7681] tracking-widest">// 最新公告</span>
+            <a href="/announcements" class="font-mono text-[9px] text-[#6e7681] hover:text-[#00FF41] transition-colors">全部 →</a>
+          </div>
+          <ul>
+            {latestAnnouncements.map((ann: any, i: number) => {
+              const color = ANN_TYPE_COLOR[ann.type] ?? '#3b82f6';
+              const label = ANN_TYPE_LABEL[ann.type] ?? '公告';
+              const isLast = i === latestAnnouncements.length - 1;
+              return (
+                <li class={`px-3 py-2.5 hover:bg-[#161b22] transition-colors ${!isLast ? 'border-b border-[#21262d]' : ''}`}>
+                  <div class="flex items-center gap-1.5 mb-1">
+                    {ann.pinned && <span class="text-[9px] flex-shrink-0">📌</span>}
+                    <span
+                      class="font-mono text-[9px] px-1 py-0.5 border flex-shrink-0"
+                      style={`color:${color};border-color:${color}30`}
+                    >{label}</span>
+                    <span class="font-mono text-[10px] text-[#3d444d] ml-auto flex-shrink-0">{formatDate(ann.createdAt)}</span>
+                  </div>
+                  <a
+                    href={`/announcements/${ann.id}`}
+                    class="font-mono text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors line-clamp-2 leading-snug block"
+                  >{ann.title}</a>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </aside>
+    )}
+
     <!-- Hero -->
-    <header class="text-center mb-10 boot-animate" style="animation-delay: 0ms">
-      <div class="inline-block font-mono text-xs text-[#374151] mb-5 tracking-widest border border-[#1f2937] px-3 py-1">
-        ICEBERG DATABASE v1.0
+    <header class="text-center mb-10 reveal relative">
+      <!-- 冰山 SVG 背景装饰 -->
+      <div class="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden" aria-hidden="true">
+        <svg viewBox="0 0 280 380" class="iceberg-float w-48 md:w-64 opacity-[0.055]" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- 水线 -->
+          <line x1="0" y1="148" x2="280" y2="148" stroke="#00FF41" stroke-width="0.8" stroke-dasharray="5 4"/>
+          <!-- 水面以上：小三角 -->
+          <polygon points="140,12 176,148 104,148" stroke="#00FF41" stroke-width="1.5" fill="rgba(0,255,65,0.04)"/>
+          <!-- 水面以下：大不规则体 -->
+          <path d="M104,148 L72,210 L48,278 L74,348 L130,368 L160,368 L206,348 L232,278 L208,210 L176,148 Z"
+                stroke="#00FF41" stroke-width="1" fill="rgba(0,255,65,0.025)"/>
+          <!-- 深度水平线 -->
+          <line x1="80" y1="192" x2="200" y2="192" stroke="#00FF41" stroke-width="0.6" stroke-dasharray="4 5" opacity="0.5"/>
+          <line x1="60" y1="238" x2="220" y2="238" stroke="#00FF41" stroke-width="0.6" stroke-dasharray="4 6" opacity="0.35"/>
+          <line x1="50" y1="284" x2="230" y2="284" stroke="#00FF41" stroke-width="0.6" stroke-dasharray="4 7" opacity="0.2"/>
+          <!-- 顶部菱形装饰 -->
+          <circle cx="140" cy="12" r="2.5" fill="#00FF41" opacity="0.8"/>
+          <!-- 水线标注 -->
+          <text x="4" y="144" fill="#00FF41" font-size="7" font-family="monospace" opacity="0.6">SURFACE</text>
+          <text x="4" y="196" fill="#00FF41" font-size="6" font-family="monospace" opacity="0.35">-1F</text>
+          <text x="4" y="242" fill="#00FF41" font-size="6" font-family="monospace" opacity="0.25">-2F</text>
+          <text x="4" y="288" fill="#00FF41" font-size="6" font-family="monospace" opacity="0.16">-3F</text>
+        </svg>
       </div>
-      <h1 class="text-4xl md:text-5xl font-mono font-semibold terminal-glow glitch-hover mb-5 cursor-default">
-        <span class="text-[#00FF41]">冰山图</span>宇宙
-      </h1>
-      <p class="text-base text-[#9ca3af] max-w-md mx-auto font-mono leading-loose">
-        任何话题的表面之下，都藏着冰山。<br />
-        <span class="text-[#6b7280]">在这里，探索被隐藏的 99%。</span>
-      </p>
+      <!-- 前景文字 -->
+      <div class="relative z-10">
+        <div class="inline-block font-mono text-xs text-[#6e7681] mb-5 tracking-widest border border-[#21262d] px-3 py-1">
+          ICEBERG DATABASE v1.0
+        </div>
+        <h1 class="text-4xl md:text-5xl font-mono font-semibold terminal-glow glitch-hover mb-5 cursor-default">
+          <span class="text-[#00FF41]">冰山图</span>宇宙
+        </h1>
+        <p class="text-base text-[#adbac7] max-w-md mx-auto font-mono leading-loose">
+          任何话题的表面之下，都藏着冰山。<br />
+          <span class="text-[#8b949e]">在这里，探索被隐藏的 99%。</span>
+        </p>
+      </div>
     </header>
 
     <!-- Stats Bar -->
-    <div class="flex justify-center gap-8 md:gap-16 mb-8 font-mono boot-animate" style="animation-delay: 80ms">
+    <div class="flex justify-center gap-8 md:gap-16 mb-8 font-mono reveal">
       <div class="text-center">
         <div
-          class="text-3xl md:text-4xl font-bold text-[#00FF41] tabular-nums"
+          class="text-3xl md:text-4xl font-bold text-[#00FF41] tabular-nums stat-glow"
           data-countup={stats.total}
         >{stats.total}</div>
-        <div class="text-xs text-[#6b7280] mt-1 tracking-widest">张图</div>
+        <div class="text-xs text-[#8b949e] mt-1 tracking-widest">张图</div>
       </div>
-      <div class="w-px bg-[#1f2937]"></div>
+      <div class="stats-divider self-stretch"></div>
       <div class="text-center">
         <div
-          class="text-3xl md:text-4xl font-bold text-[#00FF41] tabular-nums"
+          class="text-3xl md:text-4xl font-bold text-[#00FF41] tabular-nums stat-glow"
           data-countup={stats.totalViews}
         >{stats.totalViews.toLocaleString()}</div>
-        <div class="text-xs text-[#6b7280] mt-1 tracking-widest">次探索</div>
+        <div class="text-xs text-[#8b949e] mt-1 tracking-widest">次探索</div>
       </div>
-      <div class="w-px bg-[#1f2937]"></div>
+      <div class="stats-divider self-stretch"></div>
       <div class="text-center">
         <div
-          class="text-3xl md:text-4xl font-bold text-[#00FF41] tabular-nums"
+          class="text-3xl md:text-4xl font-bold text-[#00FF41] tabular-nums stat-glow"
           data-countup={stats.totalItems}
         >{stats.totalItems.toLocaleString()}</div>
-        <div class="text-xs text-[#6b7280] mt-1 tracking-widest">个词条</div>
+        <div class="text-xs text-[#8b949e] mt-1 tracking-widest">个词条</div>
       </div>
     </div>
 
     <!-- Actions -->
-    <div class="flex justify-center flex-wrap gap-3 mb-4 boot-animate" style="animation-delay: 140ms">
+    <div class="flex justify-center flex-wrap gap-3 mb-4 reveal">
       <a
         href="/iceberg/new"
         class="px-6 py-2.5 bg-[#00FF41] text-[#0A0A0A] font-mono font-semibold text-sm hover:bg-[#00CC33] transition-colors"
@@ -170,34 +253,35 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
       </a>
       <a
         href="/iceberg/list"
-        class="px-6 py-2.5 border border-[#2A2A2A] text-[#6b7280] font-mono text-sm hover:border-[#374151] hover:text-[#9ca3af] transition-all"
+        class="px-6 py-2.5 border border-[#30363d] text-[#8b949e] font-mono text-sm hover:border-[#484f58] hover:text-[#adbac7] transition-all"
       >
         浏览全部
       </a>
     </div>
 
     <!-- Ctrl+K hint -->
-    <div class="text-center mb-14 boot-animate" style="animation-delay: 160ms">
-      <span class="text-xs font-mono text-[#2A2A2A]">// 按</span>
-      <kbd class="mx-1 text-xs font-mono text-[#374151] bg-[#111] border border-[#2A2A2A] px-1.5 py-0.5">Ctrl+K</kbd>
-      <span class="text-xs font-mono text-[#2A2A2A]">快速搜索</span>
+    <div class="text-center mb-14 reveal">
+      <span class="text-xs font-mono text-[#6e7681]">// 按</span>
+      <kbd class="mx-1 text-xs font-mono text-[#8b949e] bg-[#161b22] border border-[#30363d] px-1.5 py-0.5">Ctrl+K</kbd>
+      <span class="text-xs font-mono text-[#6e7681]">快速搜索</span>
     </div>
+
 
     <!-- 编辑精选（有数据才显示）-->
     {featuredIcebergs.length > 0 && (
-      <section class="mb-10 boot-animate" style="animation-delay: 180ms">
+      <section class="mb-10 reveal">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-sm font-mono text-[#f59e0b]">
-            <span class="text-[#374151]">// </span>编辑精选
-            <span class="ml-2 text-[10px] text-[#374151] border border-[#374151] px-1">FEATURED</span>
+            <span class="text-[#3d444d]">// </span>编辑精选
+            <span class="ml-2 text-[10px] text-[#6e7681] border border-[#30363d] px-1">FEATURED</span>
           </h2>
         </div>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {featuredIcebergs.map((iceberg: any, index: number) => (
             <a
               href={`/iceberg/${iceberg.slug || iceberg.id}`}
-              class="archive-card group relative block p-5 border-[#f59e0b30]"
-              style={`animation-delay: ${200 + index * 30}ms`}
+              class="archive-card reveal-grid group relative block p-5 border-[#f59e0b30]"
+              data-reveal-delay={`${index * 60}`}
             >
               <div class="flex gap-px mb-3 h-3 opacity-50 group-hover:opacity-90 transition-opacity duration-200">
                 {Array.from({ length: Math.max(iceberg._count.tiers, 1) }).map((_, i: number) => (
@@ -205,13 +289,13 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
                 ))}
               </div>
               <div class="text-[10px] font-mono text-[#f59e0b80] mb-1 tracking-widest">★ FEATURED</div>
-              <h3 class="font-mono text-sm font-semibold text-[#e5e5e5] group-hover:text-[#f59e0b] transition-colors mb-2 line-clamp-1">
-                <span class="text-[#374151] mr-1">#</span>{iceberg.title}
+              <h3 class="font-mono text-sm font-semibold text-[#cdd9e5] group-hover:text-[#f59e0b] transition-colors mb-2 line-clamp-1">
+                <span class="text-[#3d444d] mr-1">#</span>{iceberg.title}
               </h3>
               {iceberg.description && (
-                <p class="text-xs text-[#6b7280] mb-3 line-clamp-2 leading-relaxed">{iceberg.description}</p>
+                <p class="text-xs text-[#8b949e] mb-3 line-clamp-2 leading-relaxed">{iceberg.description}</p>
               )}
-              <div class="flex items-center justify-between text-xs text-[#4b5563] font-mono">
+              <div class="flex items-center justify-between text-xs text-[#8b949e] font-mono">
                 <span>{iceberg._count.tiers} 层</span>
                 <span class="flex items-center gap-1">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -228,49 +312,53 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
     <div class="grid lg:grid-cols-3 gap-8 items-start">
 
       <!-- Recent icebergs (2/3) -->
-      <section class="lg:col-span-2 boot-animate" style="animation-delay: 200ms">
+      <section class="lg:col-span-2 reveal">
         <div class="flex items-center justify-between mb-5">
           <h2 class="text-sm font-mono text-[#00FF41]">
-            <span class="text-[#374151]">// </span>最新发布
+            <span class="text-[#3d444d]">// </span>最新发布
           </h2>
           {recentIcebergs.length > 0 && (
-            <a href="/iceberg/list" class="text-xs font-mono text-[#6b7280] hover:text-[#00FF41] transition-colors">
+            <a href="/iceberg/list" class="text-xs font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors">
               查看更多 →
             </a>
           )}
         </div>
 
         {recentIcebergs.length === 0 ? (
-          <div class="py-20 text-center border border-dashed border-[#2A2A2A]">
-            <p class="text-[#6b7280] font-mono text-sm mb-4">还没有冰山图，成为第一个创建者</p>
-            <a href="/iceberg/new" class="text-[#00FF41] font-mono text-sm hover:underline">立即创建 →</a>
+          <div class="py-20 text-center border border-dashed border-[#21262d] bg-[#161b22]/30">
+            <div class="font-mono text-[#484f58] text-3xl mb-4 leading-none select-none">∅</div>
+            <p class="text-[#8b949e] font-mono text-sm mb-1">// 还没有冰山图</p>
+            <p class="text-[#6e7681] font-mono text-xs mb-5">成为第一个探索者</p>
+            <a href="/iceberg/new" class="inline-block px-4 py-1.5 border border-[#00FF41] text-[#00FF41] font-mono text-xs hover:bg-[#00FF41]/10 transition-colors">
+              + 创建冰山图
+            </a>
           </div>
         ) : (
           <div class="grid gap-3 sm:grid-cols-2">
             {recentIcebergs.map((iceberg, index) => (
               <a
                 href={`/iceberg/${iceberg.slug || iceberg.id}`}
-                class="archive-card group relative block p-5"
-                style={`animation-delay: ${220 + index * 40}ms`}
+                class="archive-card reveal-grid group relative block p-5"
+                data-reveal-delay={`${index * 55}`}
               >
                 <!-- Tier color strip -->
-                <div class="flex gap-px mb-3 h-3 opacity-50 group-hover:opacity-90 transition-opacity duration-200">
+                <div class="flex gap-px mb-3 tier-strip opacity-50 group-hover:opacity-95 transition-all duration-250">
                   {Array.from({ length: Math.max(iceberg._count.tiers, 1) }).map((_, i) => (
                     <div class="flex-1" style={`background-color: ${tierColors[i % 6]}`} />
                   ))}
                 </div>
 
-                <h3 class="font-mono text-sm font-semibold text-[#e5e5e5] group-hover:text-[#00FF41] transition-colors mb-2 line-clamp-1">
-                  <span class="text-[#374151] mr-1">#</span>{iceberg.title}
+                <h3 class="font-mono text-sm font-semibold text-[#cdd9e5] group-hover:text-[#00FF41] transition-colors mb-2 line-clamp-1">
+                  <span class="text-[#3d444d] mr-1">#</span>{iceberg.title}
                 </h3>
 
                 {iceberg.description && (
-                  <p class="text-xs text-[#6b7280] mb-3 line-clamp-2 leading-relaxed">
+                  <p class="text-xs text-[#8b949e] mb-3 line-clamp-2 leading-relaxed">
                     {iceberg.description}
                   </p>
                 )}
 
-                <div class="flex items-center justify-between text-xs text-[#4b5563] font-mono">
+                <div class="flex items-center justify-between text-xs text-[#8b949e] font-mono">
                   <div class="flex items-center gap-3">
                     <span>{iceberg._count.tiers} 层</span>
                     <span class="flex items-center gap-1">
@@ -278,11 +366,11 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
                       {iceberg.viewCount}
                     </span>
                   </div>
-                  <span class="text-[#2A2A2A]">{formatDate(iceberg.createdAt)}</span>
+                  <span class="text-[#6e7681]">{formatDate(iceberg.createdAt)}</span>
                 </div>
 
                 {iceberg.author && (
-                  <div class="mt-2 pt-2 border-t border-[#1f2937] text-xs text-[#374151] font-mono">
+                  <div class="mt-2 pt-2 border-t border-[#21262d] text-xs text-[#6e7681] font-mono">
                     @{iceberg.author.nickname || iceberg.author.username}
                   </div>
                 )}
@@ -290,15 +378,15 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
                 <!-- Hover preview -->
                 {iceberg.tiers[0]?.items?.length > 0 && (
                   <div class="card-preview absolute left-0 right-0 top-full mt-px z-50
-                              bg-[#050505] border border-[#00FF41]/20 px-3 py-2.5
+                              bg-[#0d1117] border border-[#00FF41]/20 px-3 py-2.5
                               opacity-0 pointer-events-none group-hover:opacity-100
                               transition-opacity duration-150">
-                    <div class="text-[10px] font-mono text-[#374151] mb-1.5 uppercase tracking-widest truncate">
+                    <div class="text-[10px] font-mono text-[#6e7681] mb-1.5 uppercase tracking-widest truncate">
                       {iceberg.tiers[0].name}
                     </div>
                     {iceberg.tiers[0].items.map((item: any) => (
-                      <div class="text-xs font-mono text-[#4b5563] py-0.5 truncate">
-                        <span class="text-[#2A2A2A] mr-1.5">›</span>{item.title}
+                      <div class="text-xs font-mono text-[#8b949e] py-0.5 truncate">
+                        <span class="text-[#6e7681] mr-1.5">›</span>{item.title}
                       </div>
                     ))}
                   </div>
@@ -310,35 +398,44 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
       </section>
 
       <!-- Sidebar (1/3) -->
-      <aside class="space-y-8 boot-animate" style="animation-delay: 260ms">
+      <aside class="space-y-8 reveal" data-reveal-delay="80">
 
         <!-- 最深探索 TOP5 -->
         <section>
-          <h2 class="text-xs font-mono text-[#374151] mb-3 tracking-widest uppercase">
+          <h2 class="text-xs font-mono text-[#6e7681] mb-3 tracking-widest uppercase">
             // 最深探索
           </h2>
           {topDeep.length === 0 ? (
-            <p class="text-xs text-[#2A2A2A] font-mono py-4 text-center border border-dashed border-[#1f2937]">
+            <p class="text-xs text-[#8b949e] font-mono py-4 text-center border border-dashed border-[#21262d]">
               暂无数据
             </p>
           ) : (
             <div class="space-y-px">
-              {topDeep.map((iceberg, i) => (
-                <a
-                  href={`/iceberg/${iceberg.slug || iceberg.id}`}
-                  class="flex items-center gap-2 px-2 py-2 group hover:bg-[#0a0c10] transition-colors"
-                >
-                  <span class="font-mono text-[10px] text-[#2A2A2A] w-5 flex-shrink-0 text-right">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span class="font-mono text-xs text-[#6b7280] group-hover:text-[#00FF41] transition-colors flex-1 truncate">
-                    {iceberg.title}
-                  </span>
-                  <span class="font-mono text-[10px] text-[#374151] flex-shrink-0 border border-[#1f2937] px-1">
-                    {iceberg._count.tiers}F
-                  </span>
-                </a>
-              ))}
+              {topDeep.map((iceberg, i) => {
+                const medal = [
+                  { color: '#FFD700', bg: 'rgba(255,215,0,0.08)', label: '01' },
+                  { color: '#C0C0C0', bg: 'rgba(192,192,192,0.06)', label: '02' },
+                  { color: '#CD7F32', bg: 'rgba(205,127,50,0.08)', label: '03' },
+                ][i];
+                return (
+                  <a
+                    href={`/iceberg/${iceberg.slug || iceberg.id}`}
+                    class="flex items-center gap-2 px-2 py-2.5 group transition-colors hover:bg-[#1c2128]"
+                    style={medal ? `background: ${medal.bg}` : ''}
+                  >
+                    <span class="font-mono text-[10px] w-5 flex-shrink-0 text-right font-bold"
+                          style={medal ? `color: ${medal.color}` : 'color: #484f58'}>
+                      {medal ? medal.label : String(i + 1).padStart(2, '0')}
+                    </span>
+                    <span class="font-mono text-xs text-[#8b949e] group-hover:text-[#00FF41] transition-colors flex-1 truncate">
+                      {iceberg.title}
+                    </span>
+                    <span class="font-mono text-[10px] text-[#6e7681] flex-shrink-0 border border-[#21262d] px-1">
+                      {iceberg._count.tiers}F
+                    </span>
+                  </a>
+                );
+              })}
             </div>
           )}
         </section>
@@ -346,41 +443,50 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
         <!-- 本周趋势 TOP5 -->
         <section>
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-xs font-mono text-[#374151] tracking-widest uppercase">
+            <h2 class="text-xs font-mono text-[#6e7681] tracking-widest uppercase">
               // 本周趋势
             </h2>
-            <a href="/leaderboard" class="text-[10px] font-mono text-[#374151] hover:text-[#00FF41] transition-colors">
+            <a href="/leaderboard" class="text-[10px] font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors">
               完整榜单 →
             </a>
           </div>
           {trendingIcebergs.length === 0 ? (
-            <p class="text-xs text-[#2A2A2A] font-mono py-4 text-center border border-dashed border-[#1f2937]">
+            <p class="text-xs text-[#484f58] font-mono py-4 text-center border border-dashed border-[#21262d]">
               // 本周暂无数据
             </p>
           ) : (
             <div class="space-y-px">
-              {trendingIcebergs.map((iceberg: any, i: number) => (
-                <a
-                  href={`/iceberg/${iceberg.slug || iceberg.id}`}
-                  class="flex items-center gap-2 px-2 py-2 group hover:bg-[#0a0c10] transition-colors"
-                >
-                  <span class="font-mono text-[10px] text-[#2A2A2A] w-5 flex-shrink-0 text-right">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span class="font-mono text-xs text-[#6b7280] group-hover:text-[#00FF41] transition-colors flex-1 truncate">
-                    {iceberg.title}
-                  </span>
-                  <span class="font-mono text-[10px] text-[#22c55e] flex-shrink-0 border border-[#22c55e20] px-1">
-                    +{iceberg.weekViews}
-                  </span>
-                </a>
-              ))}
+              {trendingIcebergs.map((iceberg: any, i: number) => {
+                const medal = [
+                  { color: '#FFD700', bg: 'rgba(255,215,0,0.08)' },
+                  { color: '#C0C0C0', bg: 'rgba(192,192,192,0.06)' },
+                  { color: '#CD7F32', bg: 'rgba(205,127,50,0.08)' },
+                ][i];
+                return (
+                  <a
+                    href={`/iceberg/${iceberg.slug || iceberg.id}`}
+                    class="flex items-center gap-2 px-2 py-2.5 group transition-colors hover:bg-[#1c2128]"
+                    style={medal ? `background: ${medal.bg}` : ''}
+                  >
+                    <span class="font-mono text-[10px] w-5 flex-shrink-0 text-right font-bold"
+                          style={medal ? `color: ${medal.color}` : 'color: #484f58'}>
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <span class="font-mono text-xs text-[#8b949e] group-hover:text-[#00FF41] transition-colors flex-1 truncate">
+                      {iceberg.title}
+                    </span>
+                    <span class="font-mono text-[10px] text-[#22c55e] flex-shrink-0 border border-[#22c55e20] px-1">
+                      +{iceberg.weekViews}
+                    </span>
+                  </a>
+                );
+              })}
             </div>
           )}
         </section>
 
         <!-- Quick nav -->
-        <section class="border-t border-[#1f2937] pt-6">
+        <section class="border-t border-[#21262d] pt-6">
           <div class="space-y-1">
             {[
               { href: '/leaderboard', label: '浏览量排行榜', icon: '▲' },
@@ -389,12 +495,12 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
             ].map(({ href, label, icon }) => (
               <a
                 href={href}
-                class="flex items-center gap-2 px-2 py-1.5 group hover:bg-[#0a0c10] transition-colors"
+                class="flex items-center gap-2 px-2 py-1.5 group hover:bg-[#161b22] transition-colors"
               >
-                <span class="font-mono text-xs text-[#2A2A2A] group-hover:text-[#00FF41] transition-colors w-4 text-center">
+                <span class="font-mono text-xs text-[#6e7681] group-hover:text-[#00FF41] transition-colors w-4 text-center">
                   {icon}
                 </span>
-                <span class="font-mono text-xs text-[#4b5563] group-hover:text-[#9ca3af] transition-colors">
+                <span class="font-mono text-xs text-[#8b949e] group-hover:text-[#adbac7] transition-colors">
                   {label}
                 </span>
               </a>
@@ -409,17 +515,14 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
 </Layout>
 
 <script>
-  // Count-up animation triggered after boot-animate (~500ms)
-  function countUp(el: HTMLElement, target: number, duration = 1400) {
+  function countUp(el: HTMLElement, target: number, duration = 1600) {
     if (target === 0) return;
     const start = performance.now();
     const fmt = target > 999
       ? (n: number) => Math.floor(n).toLocaleString()
       : (n: number) => String(Math.floor(n));
-
     const tick = (now: number) => {
       const t = Math.min((now - start) / duration, 1);
-      // ease-out cubic
       const eased = 1 - Math.pow(1 - t, 3);
       el.textContent = fmt(eased * target);
       if (t < 1) requestAnimationFrame(tick);
@@ -428,18 +531,60 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
     requestAnimationFrame(tick);
   }
 
-  setTimeout(() => {
-    document.querySelectorAll<HTMLElement>('[data-countup]').forEach(el => {
-      const target = parseInt(el.dataset.countup ?? '0', 10);
-      countUp(el, target);
-    });
-  }, 500);
+  function initCountUp() {
+    // 用 IntersectionObserver 在 stats bar 进入视口时触发，而不是定时器
+    const statsEls = document.querySelectorAll<HTMLElement>('[data-countup]');
+    if (!statsEls.length) return;
+
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target as HTMLElement;
+        const target = parseInt(el.dataset.countup ?? '0', 10);
+        // 小延迟让 reveal 动画先完成
+        setTimeout(() => countUp(el, target), 200);
+        obs.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+
+    statsEls.forEach(el => obs.observe(el));
+  }
+
+  document.addEventListener('astro:page-load', initCountUp);
 </script>
 
 <style>
-  /* 悬停预览面板不受卡片 overflow 影响 */
+  /* 层色条：hover 时高度从 4px 扩展到 8px */
+  .tier-strip {
+    height: 4px;
+    transition: height 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                opacity 0.2s ease;
+  }
+  .group:hover .tier-strip { height: 8px; }
+
+  /* 悬停预览面板：带滑入动画 */
   .card-preview {
-    /* 阻止父级 transform 产生的 stacking context 裁剪 */
     position: absolute;
+    transform: translateY(4px);
+    transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .group:hover .card-preview {
+    opacity: 1 !important;
+    transform: translateY(0);
+  }
+
+  /* CTA 主按钮光晕 */
+  a[href="/iceberg/new"] {
+    position: relative;
+    transition: background-color 0.2s ease, box-shadow 0.25s ease;
+  }
+  a[href="/iceberg/new"]:hover {
+    box-shadow: 0 0 0 1px rgba(0,255,65,0.4), 0 0 24px rgba(0,255,65,0.2);
+  }
+
+  /* Stats 分隔符 */
+  .stats-divider {
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, #30363d 30%, #30363d 70%, transparent);
   }
 </style>

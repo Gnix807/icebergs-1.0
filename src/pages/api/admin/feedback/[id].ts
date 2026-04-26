@@ -4,6 +4,7 @@
 import type { APIEvent } from '@astrojs/node';
 import { getSession } from '../../../../lib/auth/index';
 import { prisma } from '../../../../lib/prisma';
+import { notify } from '../../../../lib/notify';
 
 export async function PATCH(event: APIEvent) {
   const session = await getSession(event);
@@ -27,6 +28,8 @@ export async function PATCH(event: APIEvent) {
     );
   }
 
+  const feedback = await prisma.feedback.findUnique({ where: { id }, select: { userId: true } });
+
   const updated = await prisma.feedback.update({
     where: { id },
     data: {
@@ -35,6 +38,17 @@ export async function PATCH(event: APIEvent) {
       resolvedAt: body.status !== 'pending' ? new Date() : null,
     },
   });
+
+  if (feedback?.userId && body.status !== 'pending') {
+    const statusText = body.status === 'resolved' ? '已解决' : '暂不处理';
+    const noteText = body.resolvedNote?.trim() ? `：${body.resolvedNote.trim()}` : '';
+    notify(
+      feedback.userId,
+      'feedback_resolved',
+      '你的反馈已被处理',
+      `处理结果：${statusText}${noteText}`,
+    );
+  }
 
   return new Response(
     JSON.stringify({ success: true, data: updated }),

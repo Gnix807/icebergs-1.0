@@ -5,6 +5,7 @@ import { getSession } from '../../../../lib/auth/index';
 import { checkAchievements, updateDailyStreak } from '../../../../lib/achievementService';
 import { awardNewVoteScore } from '../../../../lib/activityScore';
 import { logScore } from '../../../../lib/scoreLog';
+import { notifyAggregated } from '../../../../lib/notify';
 
 // POST /api/icebergs/:id/vote  body: { value: 1 | -1 }
 // Toggle: if same value exists → delete (un-vote); else upsert
@@ -76,6 +77,16 @@ export async function POST(event: APIEvent) {
         data: { qualityScore: { increment: scoreDelta } },
       }).catch(() => {});
       logScore(iceberg.authorId, scoreDelta, 'iceberg_voted');
+      // 仅新 upvote 时通知（换票/取消/downvote 不打扰作者）
+      if (!existing && value === 1) {
+        notifyAggregated(
+          iceberg.authorId,
+          'iceberg_voted',
+          `iceberg:${iceberg.id}`,
+          n => n === 1 ? '有人赞了你的冰山图' : `${n} 人赞了你的冰山图`,
+          `/iceberg/${iceberg.id}`,
+        );
+      }
     }
 
     // Return new score

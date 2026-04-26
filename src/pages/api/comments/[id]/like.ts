@@ -3,6 +3,7 @@ import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { awardCommentLikeScore } from '../../../../lib/activityScore';
+import { notifyAggregated } from '../../../../lib/notify';
 
 // POST /api/comments/[id]/like — 点赞/取消点赞
 export async function POST(event: APIEvent) {
@@ -36,9 +37,14 @@ export async function POST(event: APIEvent) {
     });
   } else {
     await prisma.commentLike.create({ data: { commentId, userId: session.userId } });
-    // 给评论作者加活跃分（不能给自己的评论点赞获分）
     if (comment.userId !== session.userId) {
       awardCommentLikeScore(comment.userId);
+      notifyAggregated(
+        comment.userId,
+        'comment_liked',
+        `comment:${commentId}`,
+        n => n === 1 ? '有人点赞了你的评论' : `${n} 人点赞了你的评论`,
+      );
     }
     return new Response(JSON.stringify(success({ liked: true })), {
       status: 200, headers: { 'Content-Type': 'application/json' },

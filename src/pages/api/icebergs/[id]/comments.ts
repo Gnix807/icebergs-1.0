@@ -2,9 +2,29 @@ import type { APIEvent } from '@astrojs/node';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../../lib/api';
-import { notify } from '../../../../lib/notify';
+import { notifyAggregated } from '../../../../lib/notify';
 import { awardCommentScore } from '../../../../lib/activityScore';
 
+// 游客 IP 频率限制：每 IP 每小时最多 5 条
+const guestLog = new Map<string, number[]>();
+const GUEST_LIMIT = 5;
+const GUEST_WINDOW = 60 * 60 * 1000;
+
+function checkGuestRate(ip: string): boolean {
+  const now = Date.now();
+  const times = (guestLog.get(ip) ?? []).filter(t => now - t < GUEST_WINDOW);
+  if (times.length >= GUEST_LIMIT) return false;
+  guestLog.set(ip, [...times, now]);
+  return true;
+}
+
+function getIp(event: APIEvent): string {
+  return (
+    event.request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+    event.request.headers.get('x-real-ip') ??
+    'unknown'
+  );
+}
 
 // GET /api/icebergs/[id]/comments?sort=time|hot
 export async function GET(event: APIEvent) {
@@ -27,17 +47,17 @@ export async function GET(event: APIEvent) {
     ? [{ likes: { _count: 'desc' } }, { createdAt: 'desc' }]
     : [{ createdAt: 'asc' }];
 
-  const topLevel = await prisma.comment.findMany({
+  const topLevel = await (prisma.comment as any).findMany({
     where: { icebergId: iceberg.id, parentId: null },
     orderBy,
     select: {
-      id: true, content: true, createdAt: true,
+      id: true, content: true, createdAt: true, guestName: true,
       user: { select: { id: true, username: true, nickname: true } },
       _count: { select: { likes: true } },
       replies: {
         orderBy: { createdAt: 'asc' },
         select: {
-          id: true, content: true, createdAt: true,
+          id: true, content: true, createdAt: true, guestName: true,
           user: { select: { id: true, username: true, nickname: true } },
           _count: { select: { likes: true } },
         },
@@ -45,7 +65,6 @@ export async function GET(event: APIEvent) {
     },
   });
 
-  // 收集所有评论 ID，批量查询当前用户的点赞状态
   const allIds: string[] = [];
   for (const c of topLevel) {
     allIds.push(c.id);
@@ -66,6 +85,7 @@ export async function GET(event: APIEvent) {
     content: c.content,
     createdAt: c.createdAt,
     user: c.user,
+    guestName: c.guestName ?? null,
     likeCount: c._count.likes,
     isLikedByMe: likedSet.has(c.id),
     replies: c.replies.map((r: any) => ({
@@ -73,6 +93,7 @@ export async function GET(event: APIEvent) {
       content: r.content,
       createdAt: r.createdAt,
       user: r.user,
+      guestName: r.guestName ?? null,
       likeCount: r._count.likes,
       isLikedByMe: likedSet.has(r.id),
     })),
@@ -86,12 +107,9 @@ export async function GET(event: APIEvent) {
 // POST /api/icebergs/[id]/comments
 export async function POST(event: APIEvent) {
   const session = await getSession(event);
-  if (!session) {
-    return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
-      status: 401, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-  if (['READ_ONLY', 'TEMP_BANNED', 'PERM_BANNED'].includes(session.status)) {
+
+  // 已登录用户：检查封禁状态
+  if (session && ['READ_ONLY', 'TEMP_BANNED', 'PERM_BANNED'].includes(session.status)) {
     return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '当前账号无法发布评论')), {
       status: 403, headers: { 'Content-Type': 'application/json' },
     });
@@ -101,6 +119,28 @@ export async function POST(event: APIEvent) {
   const body = await event.request.json().catch(() => ({}));
   const content: string = typeof body.content === 'string' ? body.content.trim() : '';
   const parentId: string | null = typeof body.parentId === 'string' ? body.parentId : null;
+
+  // 游客：校验昵称 + 频率限制；不允许回复（只能发顶层评论）
+  let guestName: string | null = null;
+  if (!session) {
+    const rawName: string = typeof body.guestName === 'string' ? body.guestName.trim() : '';
+    if (rawName.length < 2 || rawName.length > 20) {
+      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '游客昵称须为 2–20 个字符')), {
+        status: 400, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (parentId) {
+      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '游客暂不支持回复，请登录后参与')), {
+        status: 403, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (!checkGuestRate(getIp(event))) {
+      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '评论太频繁，请稍后再试')), {
+        status: 429, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    guestName = rawName;
+  }
 
   if (!content) {
     return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '评论内容不能为空')), {
@@ -123,7 +163,7 @@ export async function POST(event: APIEvent) {
     });
   }
 
-  // 校验 parentId：必须存在、属于同一冰山、且本身是顶层（禁止多级嵌套）
+  // 校验 parentId
   let parentAuthorId: string | null = null;
   if (parentId) {
     const parent = await prisma.comment.findUnique({
@@ -143,26 +183,32 @@ export async function POST(event: APIEvent) {
     parentAuthorId = parent.userId;
   }
 
-  const comment = await prisma.comment.create({
-    data: { icebergId: iceberg.id, userId: session.userId, content, parentId },
+  const comment = await (prisma.comment as any).create({
+    data: {
+      icebergId: iceberg.id,
+      userId: session?.userId ?? null,
+      guestName,
+      content,
+      parentId,
+    },
     select: {
-      id: true, content: true, createdAt: true, parentId: true,
+      id: true, content: true, createdAt: true, parentId: true, guestName: true,
       user: { select: { id: true, username: true, nickname: true } },
     },
   });
 
-  // 活跃质量分（fire-and-forget）
-  awardCommentScore(session.userId);
-
-  // 回复通知（不通知自己）
-  if (parentAuthorId && parentAuthorId !== session.userId) {
-    notify(
-      parentAuthorId,
-      'comment_reply',
-      '有人回复了你的评论',
-      content.slice(0, 80),
-      `/iceberg/${iceberg.slug}`,
-    );
+  // 已登录用户：活跃质量分 + 回复通知
+  if (session) {
+    awardCommentScore(session.userId);
+    if (parentAuthorId && parentAuthorId !== session.userId) {
+      notifyAggregated(
+        parentAuthorId,
+        'comment_reply',
+        `comment:${parentId}`,
+        n => n === 1 ? '有人回复了你的评论' : `${n} 人回复了你的评论`,
+        `/iceberg/${iceberg.slug}`,
+      );
+    }
   }
 
   return new Response(JSON.stringify(success({

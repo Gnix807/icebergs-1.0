@@ -27,13 +27,13 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
 ---
 
 <Layout title="平台规则 — 冰山图宇宙">
-  <main class="max-w-3xl mx-auto px-4 py-8 boot-animate">
+  <main class="max-w-3xl mx-auto px-4 py-8 reveal">
 
     <!-- 标题 -->
     <div class="mb-10">
-      <div class="text-[10px] font-mono text-[#374151] tracking-widest mb-2">// RULES · 平台规则</div>
-      <h1 class="text-2xl font-mono text-[#e5e5e5] mb-2">冰山图宇宙 · 平台规则</h1>
-      <p class="text-xs font-mono text-[#4b5563]">
+      <div class="text-[10px] font-mono text-[#30363d] tracking-widest mb-2">// RULES · 平台规则</div>
+      <h1 class="text-2xl font-mono text-[#cdd9e5] mb-2">冰山图宇宙 · 平台规则</h1>
+      <p class="text-xs font-mono text-[#3d444d]">
         本页说明角色体系、晋升路径、RfA 制度与社区行为准则。所有数值均从当前系统设置动态读取。
       </p>
     </div>
@@ -50,69 +50,69 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
         <div class="border border-[#f59e0b20] bg-[#f59e0b05] p-4">
           <div class="flex items-center gap-2 mb-1">
             <span class="font-mono text-sm" style="color:#f59e0b">◆ FOUNDER</span>
-            <span class="text-[10px] font-mono text-[#374151]">平台创始人 · 永久席位</span>
+            <span class="text-[10px] font-mono text-[#30363d]">平台创始人 · 永久席位</span>
           </div>
-          <p class="text-[11px] font-mono text-[#4b5563] leading-relaxed">
+          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">
             对平台拥有最终权力。永久免疫封禁、警告等操作，不参与换届选举。
             可以任命 ADMIN，可以直接提升或降级任意用户。
           </p>
         </div>
 
         <!-- ADMIN -->
-        <div class="border border-[#f59e0b15] bg-[#0a0c10] p-4">
+        <div class="border border-[#f59e0b15] bg-[#161b22] p-4">
           <div class="flex items-center gap-2 mb-1">
             <span class="font-mono text-sm" style="color:#f59e0b">★ ADMIN</span>
-            <span class="text-[10px] font-mono text-[#374151]">管理员 · 上限 {c('admin_max','3')} 席</span>
+            <span class="text-[10px] font-mono text-[#30363d]">管理员 · 上限 {c('admin_max','3')} 席</span>
           </div>
-          <p class="text-[11px] font-mono text-[#4b5563] leading-relaxed">
+          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">
             由 FOUNDER 任命或通过全站选举产生。负责平台日常治理：审批版主任命、处理申诉、管理选举。
             任期无硬性限制，可通过新一轮选举更换。
           </p>
         </div>
 
         <!-- MODERATOR -->
-        <div class="border border-[#3b82f620] bg-[#0a0c10] p-4">
+        <div class="border border-[#3b82f620] bg-[#161b22] p-4">
           <div class="flex items-center gap-2 mb-1">
             <span class="font-mono text-sm" style="color:#3b82f6">▲ MODERATOR</span>
-            <span class="text-[10px] font-mono text-[#374151]">版主 · 上限 {c('moderator_max','5')} 席</span>
+            <span class="text-[10px] font-mono text-[#30363d]">版主 · 上限 {c('moderator_max','5')} 席</span>
           </div>
-          <p class="text-[11px] font-mono text-[#4b5563] leading-relaxed">
+          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">
             由 ADMIN 任命，协助内容审核与社区维护。可警告用户、处理举报。
             晋升门槛：质量分 ≥ {c('moderator_min_score','300')} · 注册 ≥ {c('moderator_min_days','60')} 天。
           </p>
         </div>
 
         <!-- EDITOR -->
-        <div class="border border-[#22c55e20] bg-[#0a0c10] p-4">
+        <div class="border border-[#22c55e20] bg-[#161b22] p-4">
           <div class="flex items-center gap-2 mb-1">
             <span class="font-mono text-sm" style="color:#22c55e">● EDITOR</span>
-            <span class="text-[10px] font-mono text-[#374151]">编辑 · 申请制（RfA）</span>
+            <span class="text-[10px] font-mono text-[#30363d]">编辑 · 申请制（RfA）</span>
           </div>
-          <p class="text-[11px] font-mono text-[#4b5563] leading-relaxed">
+          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">
             由 CONTRIBUTOR 通过公开 RfA 投票晋升。负责审核冰山图、管理词条内容。
             申请门槛：质量分 ≥ {c('editor_min_score','100')} · 注册 ≥ {c('editor_min_days','30')} 天。
           </p>
         </div>
 
         <!-- CONTRIBUTOR -->
-        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4">
+        <div class="border border-[#1a1a1a] bg-[#161b22] p-4">
           <div class="flex items-center gap-2 mb-1">
-            <span class="font-mono text-sm text-[#9ca3af]">◎ CONTRIBUTOR</span>
-            <span class="text-[10px] font-mono text-[#374151]">贡献者 · 自动晋升</span>
+            <span class="font-mono text-sm text-[#8b949e]">◎ CONTRIBUTOR</span>
+            <span class="text-[10px] font-mono text-[#30363d]">贡献者 · 自动晋升</span>
           </div>
-          <p class="text-[11px] font-mono text-[#4b5563] leading-relaxed">
+          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">
             注册后满足条件自动晋升：质量分 ≥ {c('contributor_min_score','20')} · 冰山图 ≥ {c('contributor_min_icebergs','2')} 篇 · 注册 ≥ {c('contributor_min_days','7')} 天。
             可发布冰山图、投 RfA 票（权重 1）。
           </p>
         </div>
 
         <!-- USER -->
-        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4">
+        <div class="border border-[#1a1a1a] bg-[#161b22] p-4">
           <div class="flex items-center gap-2 mb-1">
-            <span class="font-mono text-sm text-[#6b7280]">○ USER</span>
-            <span class="text-[10px] font-mono text-[#374151]">普通用户 · 初始角色</span>
+            <span class="font-mono text-sm text-[#8b949e]">○ USER</span>
+            <span class="text-[10px] font-mono text-[#30363d]">普通用户 · 初始角色</span>
           </div>
-          <p class="text-[11px] font-mono text-[#4b5563] leading-relaxed">
+          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">
             注册后默认角色。可浏览内容、收藏冰山图、发表评论、为冰山图点赞。
           </p>
         </div>
@@ -126,34 +126,34 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
         <div class="flex-1 border-t border-[#1a1a1a]"></div>
       </div>
 
-      <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4 font-mono text-[11px] space-y-3">
+      <div class="border border-[#1a1a1a] bg-[#161b22] p-4 font-mono text-[11px] space-y-3">
         <div class="flex items-center gap-3 flex-wrap">
-          <span class="text-[#6b7280]">USER</span>
-          <span class="text-[#2A2A2A]">──申请──▶</span>
-          <span class="text-[#9ca3af]">CONTRIBUTOR</span>
-          <span class="text-[10px] text-[#374151]">分 ≥{c('contributor_min_score','20')} · 图 ≥{c('contributor_min_icebergs','2')} · 天 ≥{c('contributor_min_days','7')}</span>
+          <span class="text-[#8b949e]">USER</span>
+          <span class="text-[#3d444d]">──申请──▶</span>
+          <span class="text-[#8b949e]">CONTRIBUTOR</span>
+          <span class="text-[10px] text-[#30363d]">分 ≥{c('contributor_min_score','20')} · 图 ≥{c('contributor_min_icebergs','2')} · 天 ≥{c('contributor_min_days','7')}</span>
         </div>
         <div class="flex items-center gap-3 flex-wrap">
-          <span class="text-[#9ca3af]">CONTRIBUTOR</span>
-          <span class="text-[#2A2A2A]">──RfA──▶</span>
+          <span class="text-[#8b949e]">CONTRIBUTOR</span>
+          <span class="text-[#3d444d]">──RfA──▶</span>
           <span class="text-[#22c55e]">EDITOR</span>
-          <span class="text-[10px] text-[#374151]">分 ≥{c('editor_min_score','100')} · 天 ≥{c('editor_min_days','30')} · 公开投票</span>
+          <span class="text-[10px] text-[#30363d]">分 ≥{c('editor_min_score','100')} · 天 ≥{c('editor_min_days','30')} · 公开投票</span>
         </div>
         <div class="flex items-center gap-3 flex-wrap">
           <span class="text-[#22c55e]">EDITOR</span>
-          <span class="text-[#2A2A2A]">──任命──▶</span>
+          <span class="text-[#3d444d]">──任命──▶</span>
           <span class="text-[#3b82f6]">MODERATOR</span>
-          <span class="text-[10px] text-[#374151]">分 ≥{c('moderator_min_score','300')} · 天 ≥{c('moderator_min_days','60')} · 由 ADMIN 任命</span>
+          <span class="text-[10px] text-[#30363d]">分 ≥{c('moderator_min_score','300')} · 天 ≥{c('moderator_min_days','60')} · 由 ADMIN 任命</span>
         </div>
         <div class="flex items-center gap-3 flex-wrap">
           <span class="text-[#3b82f6]">MODERATOR</span>
-          <span class="text-[#2A2A2A]">──选举──▶</span>
+          <span class="text-[#3d444d]">──选举──▶</span>
           <span class="text-[#f59e0b]">ADMIN</span>
-          <span class="text-[10px] text-[#374151]">全站选举，{c('election_apply_days','7')} 天报名 + {c('election_vote_days','14')} 天投票</span>
+          <span class="text-[10px] text-[#30363d]">全站选举，{c('election_apply_days','7')} 天报名 + {c('election_vote_days','14')} 天投票</span>
         </div>
       </div>
 
-      <div class="mt-3 text-[10px] font-mono text-[#374151] border border-[#1a1a1a] px-3 py-2">
+      <div class="mt-3 text-[10px] font-mono text-[#30363d] border border-[#1a1a1a] px-3 py-2">
         投票权重：CONTRIBUTOR×1 · EDITOR×2 · MODERATOR×3 · ADMIN×5 · FOUNDER×7
       </div>
     </section>
@@ -165,32 +165,32 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
         <div class="flex-1 border-t border-[#1a1a1a]"></div>
       </div>
 
-      <div class="space-y-3 text-[11px] font-mono text-[#4b5563] leading-relaxed">
-        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4">
-          <div class="text-[#9ca3af] mb-2">流程</div>
+      <div class="space-y-3 text-[11px] font-mono text-[#3d444d] leading-relaxed">
+        <div class="border border-[#1a1a1a] bg-[#161b22] p-4">
+          <div class="text-[#8b949e] mb-2">流程</div>
           <ol class="space-y-1.5 list-none">
-            <li class="before:content-['1.'] before:text-[#374151] before:mr-2">CONTRIBUTOR 在个人主页或 <a href="/rfa" class="text-[#00FF41] hover:underline">/rfa</a> 页提交申请，可附 500 字陈述</li>
-            <li class="before:content-['2.'] before:text-[#374151] before:mr-2">申请进入 {c('rfa_vote_days','7')} 天公开投票，CONTRIBUTOR 及以上均可投支持/反对/弃权</li>
-            <li class="before:content-['3.'] before:text-[#374151] before:mr-2">投票期结束后自动结算</li>
-            <li class="before:content-['4.'] before:text-[#374151] before:mr-2">通过则立即晋升为 EDITOR；未通过需等待 {c('rfa_cooldown_days','15')} 天冷却期</li>
+            <li class="before:content-['1.'] before:text-[#30363d] before:mr-2">CONTRIBUTOR 在个人主页或 <a href="/rfa" class="text-[#00FF41] hover:underline">/rfa</a> 页提交申请，可附 500 字陈述</li>
+            <li class="before:content-['2.'] before:text-[#30363d] before:mr-2">申请进入 {c('rfa_vote_days','7')} 天公开投票，CONTRIBUTOR 及以上均可投支持/反对/弃权</li>
+            <li class="before:content-['3.'] before:text-[#30363d] before:mr-2">投票期结束后自动结算</li>
+            <li class="before:content-['4.'] before:text-[#30363d] before:mr-2">通过则立即晋升为 EDITOR；未通过需等待 {c('rfa_cooldown_days','15')} 天冷却期</li>
           </ol>
         </div>
 
-        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4">
-          <div class="text-[#9ca3af] mb-2">通过条件（同时满足）</div>
+        <div class="border border-[#1a1a1a] bg-[#161b22] p-4">
+          <div class="text-[#8b949e] mb-2">通过条件（同时满足）</div>
           <ul class="space-y-1">
-            <li class="before:content-['·'] before:text-[#22c55e] before:mr-2">获得至少 <strong class="text-[#e5e5e5]">{c('rfa_min_votes','5')}</strong> 张有效支持票（原始票数，不加权）</li>
-            <li class="before:content-['·'] before:text-[#22c55e] before:mr-2">加权支持票 ÷ 加权总票数 ≥ <strong class="text-[#e5e5e5]">{passRatioPct}%</strong>（弃权票不计入）</li>
+            <li class="before:content-['·'] before:text-[#22c55e] before:mr-2">获得至少 <strong class="text-[#cdd9e5]">{c('rfa_min_votes','5')}</strong> 张有效支持票（原始票数，不加权）</li>
+            <li class="before:content-['·'] before:text-[#22c55e] before:mr-2">加权支持票 ÷ 加权总票数 ≥ <strong class="text-[#cdd9e5]">{passRatioPct}%</strong>（弃权票不计入）</li>
           </ul>
         </div>
 
-        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4">
-          <div class="text-[#9ca3af] mb-2">注意事项</div>
+        <div class="border border-[#1a1a1a] bg-[#161b22] p-4">
+          <div class="text-[#8b949e] mb-2">注意事项</div>
           <ul class="space-y-1">
-            <li class="before:content-['·'] before:text-[#374151] before:mr-2">同一时刻只能有一个进行中的 RfA</li>
-            <li class="before:content-['·'] before:text-[#374151] before:mr-2">申请人不能给自己投票</li>
-            <li class="before:content-['·'] before:text-[#374151] before:mr-2">可在投票结束前撤销申请（撤销后无冷却期）</li>
-            <li class="before:content-['·'] before:text-[#374151] before:mr-2">账号处于 READ_ONLY / TEMP_BANNED / PERM_BANNED / WARNED_2 状态时不可申请</li>
+            <li class="before:content-['·'] before:text-[#30363d] before:mr-2">同一时刻只能有一个进行中的 RfA</li>
+            <li class="before:content-['·'] before:text-[#30363d] before:mr-2">申请人不能给自己投票</li>
+            <li class="before:content-['·'] before:text-[#30363d] before:mr-2">可在投票结束前撤销申请（撤销后无冷却期）</li>
+            <li class="before:content-['·'] before:text-[#30363d] before:mr-2">账号处于 READ_ONLY / TEMP_BANNED / PERM_BANNED / WARNED_2 状态时不可申请</li>
           </ul>
         </div>
       </div>
@@ -203,8 +203,8 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
         <div class="flex-1 border-t border-[#1a1a1a]"></div>
       </div>
 
-      <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4 text-[11px] font-mono text-[#4b5563] space-y-2">
-        <div class="text-[#9ca3af] mb-2">冰山图内容要求</div>
+      <div class="border border-[#1a1a1a] bg-[#161b22] p-4 text-[11px] font-mono text-[#3d444d] space-y-2">
+        <div class="text-[#8b949e] mb-2">冰山图内容要求</div>
         <ul class="space-y-1.5">
           <li class="before:content-['✓'] before:text-[#22c55e] before:mr-2">内容应有据可查，鼓励引用来源</li>
           <li class="before:content-['✓'] before:text-[#22c55e] before:mr-2">层级结构应体现"冰山"逻辑：越深越冷门、越离奇</li>
@@ -223,9 +223,9 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
         <div class="flex-1 border-t border-[#1a1a1a]"></div>
       </div>
 
-      <div class="space-y-3 text-[11px] font-mono text-[#4b5563]">
-        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4">
-          <div class="text-[#9ca3af] mb-2">账号状态说明</div>
+      <div class="space-y-3 text-[11px] font-mono text-[#3d444d]">
+        <div class="border border-[#1a1a1a] bg-[#161b22] p-4">
+          <div class="text-[#8b949e] mb-2">账号状态说明</div>
           <ul class="space-y-1">
             <li><span class="text-[#22c55e]">ACTIVE</span> — 正常账号</li>
             <li><span class="text-[#f97316]">WARNED_1</span> — 第一次警告，正常使用，90 天后自动清除</li>
@@ -236,13 +236,13 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
           </ul>
         </div>
 
-        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4">
-          <div class="text-[#9ca3af] mb-2">违规处理</div>
+        <div class="border border-[#1a1a1a] bg-[#161b22] p-4">
+          <div class="text-[#8b949e] mb-2">违规处理</div>
           <ul class="space-y-1">
-            <li class="before:content-['·'] before:text-[#374151] before:mr-2">违规内容由 MODERATOR+ 处理</li>
-            <li class="before:content-['·'] before:text-[#374151] before:mr-2">封禁 / 限制操作需 ADMIN+</li>
-            <li class="before:content-['·'] before:text-[#374151] before:mr-2">处罚决定均有通知，可在个人中心查看申诉入口</li>
-            <li class="before:content-['·'] before:text-[#374151] before:mr-2">FOUNDER 的决定为最终裁决</li>
+            <li class="before:content-['·'] before:text-[#30363d] before:mr-2">违规内容由 MODERATOR+ 处理</li>
+            <li class="before:content-['·'] before:text-[#30363d] before:mr-2">封禁 / 限制操作需 ADMIN+</li>
+            <li class="before:content-['·'] before:text-[#30363d] before:mr-2">处罚决定均有通知，可在个人中心查看申诉入口</li>
+            <li class="before:content-['·'] before:text-[#30363d] before:mr-2">FOUNDER 的决定为最终裁决</li>
           </ul>
         </div>
       </div>
@@ -255,15 +255,15 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
         <div class="flex-1 border-t border-[#1a1a1a]"></div>
       </div>
 
-      <p class="text-[11px] font-mono text-[#4b5563] mb-4">
+      <p class="text-[11px] font-mono text-[#3d444d] mb-4">
         质量分决定晋升资格与 RfA 申请门槛，通过以下行为积累。所有数值均由管理员动态配置。
       </p>
 
-      <div class="space-y-3 text-[11px] font-mono text-[#4b5563]">
+      <div class="space-y-3 text-[11px] font-mono text-[#3d444d]">
 
         <!-- 内容创作 -->
-        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4">
-          <div class="text-[#9ca3af] mb-3">内容创作</div>
+        <div class="border border-[#1a1a1a] bg-[#161b22] p-4">
+          <div class="text-[#8b949e] mb-3">内容创作</div>
           <div class="space-y-2">
             <div class="flex items-start justify-between gap-4">
               <span>创建冰山图草稿</span>
@@ -272,7 +272,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
             <div class="flex items-start justify-between gap-4">
               <span>
                 发表评论
-                <span class="text-[#374151]">（每日最多 {c('activity_comment_daily_cap','5')} 条计分）</span>
+                <span class="text-[#30363d]">（每日最多 {c('activity_comment_daily_cap','5')} 条计分）</span>
               </span>
               <span class="text-[#22c55e] flex-shrink-0">+{c('activity_comment_score','1')} / 条</span>
             </div>
@@ -280,20 +280,20 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
         </div>
 
         <!-- 社区互动 -->
-        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4">
-          <div class="text-[#9ca3af] mb-3">社区互动</div>
+        <div class="border border-[#1a1a1a] bg-[#161b22] p-4">
+          <div class="text-[#8b949e] mb-3">社区互动</div>
           <div class="space-y-2">
             <div class="flex items-start justify-between gap-4">
               <span>
                 首次给冰山图投赞/踩
-                <span class="text-[#374151]">（改票/撤票不计；每日最多 {c('activity_vote_daily_cap','3')} 次计分）</span>
+                <span class="text-[#30363d]">（改票/撤票不计；每日最多 {c('activity_vote_daily_cap','3')} 次计分）</span>
               </span>
               <span class="text-[#22c55e] flex-shrink-0">+{c('activity_vote_score','1')} / 次</span>
             </div>
             <div class="flex items-start justify-between gap-4">
               <span>
                 评论被他人点赞
-                <span class="text-[#374151]">（给评论作者；无每日上限）</span>
+                <span class="text-[#30363d]">（给评论作者；无每日上限）</span>
               </span>
               <span class="text-[#22c55e] flex-shrink-0">+{c('activity_like_score','1')} / 次</span>
             </div>
@@ -301,8 +301,8 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
         </div>
 
         <!-- 晋升奖励 -->
-        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4">
-          <div class="text-[#9ca3af] mb-3">晋升奖励</div>
+        <div class="border border-[#1a1a1a] bg-[#161b22] p-4">
+          <div class="text-[#8b949e] mb-3">晋升奖励</div>
           <div class="space-y-2">
             <div class="flex items-start justify-between gap-4">
               <span>晋升至 CONTRIBUTOR（审核通过）</span>
@@ -313,7 +313,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
 
         <!-- 周活跃奖励 -->
         <div class="border border-[#22c55e20] bg-[#22c55e05] p-4">
-          <div class="text-[#9ca3af] mb-3">
+          <div class="text-[#8b949e] mb-3">
             周活跃奖励
             <span class="ml-2 text-[10px] border border-[#22c55e40] text-[#22c55e] px-1.5 py-0.5">每 7 天一次</span>
           </div>
@@ -324,15 +324,15 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
               </span>
               <span class="text-[#22c55e] flex-shrink-0">+{c('activity_weekly_bonus','5')}</span>
             </div>
-            <div class="text-[10px] text-[#374151] mt-1">
+            <div class="text-[10px] text-[#30363d] mt-1">
               · 由系统每日自动检测，达标即发放，同一周期内不重复计算
             </div>
           </div>
         </div>
 
         <!-- 扣分 -->
-        <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4">
-          <div class="text-[#9ca3af] mb-3">扣分</div>
+        <div class="border border-[#1a1a1a] bg-[#161b22] p-4">
+          <div class="text-[#8b949e] mb-3">扣分</div>
           <div class="space-y-2">
             <div class="flex items-start justify-between gap-4">
               <span>冰山图被他人踩</span>
@@ -355,20 +355,20 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
         <div class="flex-1 border-t border-[#1a1a1a]"></div>
       </div>
 
-      <div class="border border-[#1a1a1a] bg-[#0a0c10] p-4 text-[11px] font-mono text-[#4b5563] space-y-2">
+      <div class="border border-[#1a1a1a] bg-[#161b22] p-4 text-[11px] font-mono text-[#3d444d] space-y-2">
         <ul class="space-y-1.5">
-          <li class="before:content-['·'] before:text-[#374151] before:mr-2">ADMIN 席位最多 {c('admin_max','3')} 席，由选举填补空缺</li>
-          <li class="before:content-['·'] before:text-[#374151] before:mr-2">候选人资格：MODERATOR + 账号正常</li>
-          <li class="before:content-['·'] before:text-[#374151] before:mr-2">报名期 {c('election_apply_days','7')} 天，投票期 {c('election_vote_days','14')} 天</li>
-          <li class="before:content-['·'] before:text-[#374151] before:mr-2">USER 及以上均可投票（一人一票，加权）</li>
-          <li class="before:content-['·'] before:text-[#374151] before:mr-2">得票最高者当选，由 ADMIN/FOUNDER 确认生效</li>
-          <li class="before:content-['·'] before:text-[#374151] before:mr-2">选举历史公开透明，可在 <a href="/org" class="text-[#00FF41] hover:underline">组织架构页</a> 查看</li>
+          <li class="before:content-['·'] before:text-[#30363d] before:mr-2">ADMIN 席位最多 {c('admin_max','3')} 席，由选举填补空缺</li>
+          <li class="before:content-['·'] before:text-[#30363d] before:mr-2">候选人资格：MODERATOR + 账号正常</li>
+          <li class="before:content-['·'] before:text-[#30363d] before:mr-2">报名期 {c('election_apply_days','7')} 天，投票期 {c('election_vote_days','14')} 天</li>
+          <li class="before:content-['·'] before:text-[#30363d] before:mr-2">USER 及以上均可投票（一人一票，加权）</li>
+          <li class="before:content-['·'] before:text-[#30363d] before:mr-2">得票最高者当选，由 ADMIN/FOUNDER 确认生效</li>
+          <li class="before:content-['·'] before:text-[#30363d] before:mr-2">选举历史公开透明，可在 <a href="/org" class="text-[#00FF41] hover:underline">组织架构页</a> 查看</li>
         </ul>
       </div>
     </section>
 
     <div class="text-center mt-8">
-      <a href="/org" class="text-[10px] font-mono text-[#374151] hover:text-[#9ca3af] transition-colors">
+      <a href="/org" class="text-[10px] font-mono text-[#30363d] hover:text-[#8b949e] transition-colors">
         查看组织架构 →
       </a>
     </div>

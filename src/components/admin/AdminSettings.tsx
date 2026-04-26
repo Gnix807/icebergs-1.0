@@ -92,27 +92,27 @@ export function AdminSettings() {
 
   const isDirty = settings.some(s => edits[s.key] !== s.value);
 
-  if (loading) return <div className="text-[#4b5563] font-mono text-sm py-8 text-center">// 加载中...</div>;
+  if (loading) return <div className="text-[#3d444d] font-mono text-sm py-8 text-center">// 加载中...</div>;
 
   return (
     <div className="space-y-3">
-      <div className="text-[10px] font-mono text-[#374151] mb-4">
+      <div className="text-[10px] font-mono text-[#6e7681] mb-4">
         // 治理参数配置 · 修改后立即生效（懒加载计算）
       </div>
 
       {settings.map(s => {
         const meta = SETTING_META[s.key];
         return (
-          <div key={s.key} className="border border-[#1a1a1a] bg-[#0a0c10] p-4">
+          <div key={s.key} className="border border-[#21262d] bg-[#161b22] p-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-mono text-[#e5e5e5] mb-0.5">
+                <div className="text-xs font-mono text-[#cdd9e5] mb-0.5">
                   {meta?.label ?? s.key}
                 </div>
-                <div className="text-[10px] font-mono text-[#374151]">
+                <div className="text-[10px] font-mono text-[#6e7681]">
                   {meta?.hint ?? s.key}
                 </div>
-                <div className="text-[10px] font-mono text-[#2A2A2A] mt-1">
+                <div className="text-[10px] font-mono text-[#3d444d] mt-1">
                   key: {s.key} · 更新于 {new Date(s.updatedAt).toLocaleDateString('zh-CN')}
                 </div>
               </div>
@@ -120,10 +120,10 @@ export function AdminSettings() {
                 type="text"
                 value={edits[s.key] ?? s.value}
                 onChange={e => setEdits(v => ({ ...v, [s.key]: e.target.value }))}
-                className={`w-24 px-2 py-1.5 text-xs font-mono text-right bg-[#050505] border focus:outline-none transition-colors ${
+                className={`w-24 px-2 py-1.5 text-xs font-mono text-right bg-[#161b22] border focus:outline-none transition-colors ${
                   edits[s.key] !== s.value
                     ? 'border-[#f59e0b] text-[#f59e0b]'
-                    : 'border-[#2A2A2A] text-[#9ca3af] focus:border-[#00FF41]'
+                    : 'border-[#30363d] text-[#8b949e] focus:border-[#00FF41]'
                 }`}
               />
             </div>

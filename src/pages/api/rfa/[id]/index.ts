@@ -7,7 +7,7 @@ import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 
-const db = prisma as any;
+const db = prisma;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

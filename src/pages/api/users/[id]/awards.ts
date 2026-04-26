@@ -5,7 +5,7 @@ import { success, error, ErrorCodes } from '../../../../lib/api';
 import { notify } from '../../../../lib/notify';
 import { AWARD_TYPES } from '../../../../lib/awards';
 
-const db = prisma as any;
+const db = prisma;
 
 function json(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {

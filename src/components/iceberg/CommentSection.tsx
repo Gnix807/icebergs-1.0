@@ -14,16 +14,11 @@ interface ReplyItem {
   createdAt: string;
   likeCount: number;
   isLikedByMe: boolean;
-  user: CommentUser;
+  user: CommentUser | null;
+  guestName: string | null;
 }
 
-interface CommentItem {
-  id: string;
-  content: string;
-  createdAt: string;
-  likeCount: number;
-  isLikedByMe: boolean;
-  user: CommentUser;
+interface CommentItem extends ReplyItem {
   replies: ReplyItem[];
 }
 
@@ -56,10 +51,19 @@ function canModerate(role: string | null, isFounder: boolean) {
   return (ROLE_RANK[role ?? ''] ?? -1) >= ROLE_RANK['EDITOR'];
 }
 
-function Avatar({ name }: { name: string }) {
+function getDisplayName(c: ReplyItem): string {
+  if (c.user) return c.user.nickname ?? c.user.username;
+  return c.guestName ?? '匿名游客';
+}
+
+function Avatar({ name, isGuest }: { name: string; isGuest: boolean }) {
   return (
-    <div className="shrink-0 w-7 h-7 border border-[#2A2A2A] bg-[#0a0c10] flex items-center justify-center">
-      <span className="text-[10px] font-mono text-[#4b5563]">{name.charAt(0).toUpperCase()}</span>
+    <div className={`shrink-0 w-7 h-7 border flex items-center justify-center ${
+      isGuest ? 'border-[#3d444d] bg-[#0d1117]' : 'border-[#30363d] bg-[#161b22]'
+    }`}>
+      <span className={`text-[10px] font-mono ${isGuest ? 'text-[#6e7681]' : 'text-[#3d444d]'}`}>
+        {isGuest ? '游' : name.charAt(0).toUpperCase()}
+      </span>
     </div>
   );
 }
@@ -70,10 +74,10 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
   const [sort, setSort] = useState<Sort>('time');
 
   const [draft, setDraft] = useState('');
+  const [guestName, setGuestName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // 回复状态：{ commentId → draft }
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyDraft, setReplyDraft] = useState('');
   const [replySubmitting, setReplySubmitting] = useState(false);
@@ -95,24 +99,32 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
 
   useEffect(() => { load(sort); }, [load, sort]);
 
-  // 切换排序
-  const changeSort = (s: Sort) => { if (s !== sort) { setSort(s); } };
+  const changeSort = (s: Sort) => { if (s !== sort) setSort(s); };
 
   // 发顶层评论
   const submit = async () => {
     const content = draft.trim();
     if (!content || submitting) return;
+
+    if (!currentUserId) {
+      const name = guestName.trim();
+      if (name.length < 2) { toast('游客昵称至少 2 个字符', 'error'); return; }
+      if (name.length > 20) { toast('游客昵称不能超过 20 个字符', 'error'); return; }
+    }
+
     setSubmitting(true);
     try {
+      const body: Record<string, string> = { content };
+      if (!currentUserId) body.guestName = guestName.trim();
+
       const res = await fetch(`/api/icebergs/${icebergId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (data.success) {
         setDraft('');
-        // 重新拉取以保证排序一致
         await load(sort);
         textareaRef.current?.focus();
       } else {
@@ -123,7 +135,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
     }
   };
 
-  // 发回复
+  // 发回复（仅登录用户）
   const submitReply = async (parentId: string) => {
     const content = replyDraft.trim();
     if (!content || replySubmitting) return;
@@ -147,14 +159,12 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
     }
   };
 
-  // 打开回复框
   const openReply = (id: string) => {
     setReplyingTo(prev => prev === id ? null : id);
     setReplyDraft('');
     setTimeout(() => replyRef.current?.focus(), 50);
   };
 
-  // 点赞
   const toggleLike = async (commentId: string, isReply: boolean, parentId?: string) => {
     if (!currentUserId) { (window as any).__openLogin?.(); return; }
     if (likingId) return;
@@ -165,19 +175,14 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
       if (data.success) {
         const liked: boolean = data.data.liked;
         setComments(prev => prev.map(c => {
-          if (!isReply && c.id === commentId) {
+          if (!isReply && c.id === commentId)
             return { ...c, likeCount: c.likeCount + (liked ? 1 : -1), isLikedByMe: liked };
-          }
-          if (isReply && c.id === parentId) {
-            return {
-              ...c,
-              replies: c.replies.map(r =>
-                r.id === commentId
-                  ? { ...r, likeCount: r.likeCount + (liked ? 1 : -1), isLikedByMe: liked }
-                  : r
-              ),
-            };
-          }
+          if (isReply && c.id === parentId)
+            return { ...c, replies: c.replies.map(r =>
+              r.id === commentId
+                ? { ...r, likeCount: r.likeCount + (liked ? 1 : -1), isLikedByMe: liked }
+                : r
+            )};
           return c;
         }));
       }
@@ -186,7 +191,6 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
     }
   };
 
-  // 删除
   const remove = async (commentId: string, isReply: boolean, parentId?: string) => {
     if (deletingId) return;
     setDeletingId(commentId);
@@ -210,8 +214,9 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
     }
   };
 
-  const canDel = (userId: string) =>
-    currentUserId === userId || canModerate(currentUserRole, isFounder);
+  // 游客评论只有管理员/作者可删；注册用户可删自己的
+  const canDel = (c: ReplyItem) =>
+    (c.user && currentUserId === c.user.id) || canModerate(currentUserRole, isFounder);
 
   const handleKey = (e: React.KeyboardEvent, fn: () => void) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); fn(); }
@@ -220,28 +225,28 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
   const totalCount = comments.reduce((s, c) => s + 1 + c.replies.length, 0);
 
   return (
-    <section className="mt-10 border-t border-[#1f2937] pt-8">
+    <section className="mt-10 border-t border-[#21262d] pt-8">
       {/* 标题栏 + 排序 */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <MessageSquare size={14} strokeWidth={1.5} className="text-[#00FF41]" />
-          <span className="text-xs font-mono text-[#6b7280] tracking-widest">
+          <span className="text-xs font-mono text-[#8b949e] tracking-widest">
             COMMENTS · {loading ? '…' : totalCount}
           </span>
         </div>
-        <div className="flex border border-[#2A2A2A]">
+        <div className="flex border border-[#30363d]">
           <button
             onClick={() => changeSort('time')}
             className={`flex items-center gap-1 px-3 py-1 text-[10px] font-mono transition-colors ${
-              sort === 'time' ? 'bg-[#00FF4115] text-[#00FF41]' : 'text-[#4b5563] hover:text-[#9ca3af]'
+              sort === 'time' ? 'bg-[#00FF4115] text-[#00FF41]' : 'text-[#3d444d] hover:text-[#8b949e]'
             }`}
           >
             <Clock size={10} strokeWidth={1.5} /> 时间
           </button>
           <button
             onClick={() => changeSort('hot')}
-            className={`flex items-center gap-1 px-3 py-1 text-[10px] font-mono border-l border-[#2A2A2A] transition-colors ${
-              sort === 'hot' ? 'bg-[#f59e0b15] text-[#f59e0b]' : 'text-[#4b5563] hover:text-[#9ca3af]'
+            className={`flex items-center gap-1 px-3 py-1 text-[10px] font-mono border-l border-[#30363d] transition-colors ${
+              sort === 'hot' ? 'bg-[#f59e0b15] text-[#f59e0b]' : 'text-[#3d444d] hover:text-[#8b949e]'
             }`}
           >
             <Flame size={10} strokeWidth={1.5} /> 热度
@@ -249,47 +254,57 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
         </div>
       </div>
 
-      {/* 顶层输入框 */}
-      {currentUserId ? (
-        <div className="mb-8">
-          <textarea
-            ref={textareaRef}
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onKeyDown={e => handleKey(e, submit)}
-            rows={3}
-            maxLength={1000}
-            placeholder="写下你的想法... (Ctrl+Enter 发送)"
-            className="w-full px-3 py-2.5 bg-[#0a0c10] border border-[#2A2A2A] text-sm font-mono text-[#e5e5e5]
-                       placeholder-[#374151] focus:border-[#00FF41] focus:outline-none resize-none transition-colors"
+      {/* 输入框：登录用户 / 游客 */}
+      <div className="mb-8">
+        {!currentUserId && (
+          <input
+            type="text"
+            value={guestName}
+            onChange={e => setGuestName(e.target.value)}
+            maxLength={20}
+            placeholder="游客昵称（2–20 字符）"
+            className="w-full mb-2 px-3 py-2 bg-[#161b22] border border-[#30363d] text-sm font-mono
+                       text-[#cdd9e5] placeholder-[#3d444d] focus:border-[#00FF41] focus:outline-none transition-colors"
           />
-          <div className="flex items-center justify-between mt-2">
-            <span className="text-[10px] font-mono text-[#374151]">{draft.length} / 1000</span>
-            <button
-              onClick={submit}
-              disabled={submitting || !draft.trim()}
-              className="btn-primary flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono
-                         bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41]
-                         hover:bg-[#00FF4125] transition-colors disabled:opacity-40"
-            >
-              <Send size={11} strokeWidth={1.5} />
-              {submitting ? '发送中...' : '发送'}
-            </button>
-          </div>
+        )}
+        <textarea
+          ref={textareaRef}
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => handleKey(e, submit)}
+          rows={3}
+          maxLength={1000}
+          placeholder="写下你的想法... (Ctrl+Enter 发送)"
+          className="w-full px-3 py-2.5 bg-[#161b22] border border-[#30363d] text-sm font-mono text-[#cdd9e5]
+                     placeholder-[#3d444d] focus:border-[#00FF41] focus:outline-none resize-none transition-colors"
+        />
+        <div className="flex items-center justify-between mt-2">
+          {!currentUserId ? (
+            <span className="text-[10px] font-mono text-[#6e7681]">
+              游客评论 ·{' '}
+              <a href="#" className="text-[#00FF41] hover:underline"
+                onClick={e => { e.preventDefault(); (window as any).__openLogin?.(); }}>
+                登录
+              </a>
+              {' '}后可回复 / 点赞
+            </span>
+          ) : (
+            <span className="text-[10px] font-mono text-[#6e7681]">{draft.length} / 1000</span>
+          )}
+          <button
+            onClick={submit}
+            disabled={submitting || !draft.trim()}
+            className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono
+                       bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41]
+                       hover:bg-[#00FF4125] transition-colors disabled:opacity-40"
+          >
+            <Send size={11} strokeWidth={1.5} />
+            {submitting ? '发送中...' : '发送'}
+          </button>
         </div>
-      ) : (
-        <div className="mb-8 px-4 py-3 border border-dashed border-[#2A2A2A] text-center">
-          <span className="text-xs font-mono text-[#4b5563]">
-            <a href="#" className="text-[#00FF41] hover:underline"
-              onClick={e => { e.preventDefault(); (window as any).__openLogin?.(); }}>
-              登录
-            </a>
-            {' '}后参与讨论
-          </span>
-        </div>
-      )}
+      </div>
 
-      {/* 列表 */}
+      {/* 评论列表 */}
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map(i => (
@@ -303,142 +318,155 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
           ))}
         </div>
       ) : comments.length === 0 ? (
-        <div className="py-8 text-center border border-dashed border-[#1f2937]">
-          <p className="text-xs font-mono text-[#374151]">// 暂无评论，成为第一个</p>
+        <div className="py-8 text-center border border-dashed border-[#21262d]">
+          <p className="text-xs font-mono text-[#6e7681]">// 暂无评论，成为第一个</p>
         </div>
       ) : (
         <div className="space-y-6">
-          {comments.map(comment => (
-            <div key={comment.id}>
-              {/* 顶层评论 */}
-              <div className="flex gap-3 group">
-                <Avatar name={comment.user.nickname ?? comment.user.username} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-mono text-[#9ca3af]">
-                      {comment.user.nickname ?? comment.user.username}
-                    </span>
-                    <span className="text-[10px] font-mono text-[#374151]">{formatDate(comment.createdAt)}</span>
-                  </div>
-                  <p className="text-sm text-[#c9d1d9] leading-relaxed whitespace-pre-wrap break-words mb-2">
-                    {comment.content}
-                  </p>
-                  {/* 操作栏 */}
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => toggleLike(comment.id, false)}
-                      disabled={likingId === comment.id}
-                      className={`flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-40 ${
-                        comment.isLikedByMe ? 'text-[#00FF41]' : 'text-[#374151] hover:text-[#9ca3af]'
-                      }`}
-                    >
-                      <ThumbsUp size={11} strokeWidth={1.5} />
-                      {comment.likeCount > 0 && <span>{comment.likeCount}</span>}
-                    </button>
-                    {currentUserId && (
+          {comments.map(comment => {
+            const isGuestComment = !comment.user;
+            const displayName = getDisplayName(comment);
+            return (
+              <div key={comment.id}>
+                {/* 顶层评论 */}
+                <div className="flex gap-3 group">
+                  <Avatar name={displayName} isGuest={isGuestComment} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs font-mono ${isGuestComment ? 'text-[#6e7681]' : 'text-[#8b949e]'}`}>
+                        {displayName}
+                      </span>
+                      {isGuestComment && (
+                        <span className="text-[9px] font-mono text-[#3d444d] border border-[#21262d] px-1">游客</span>
+                      )}
+                      <span className="text-[10px] font-mono text-[#6e7681]">{formatDate(comment.createdAt)}</span>
+                    </div>
+                    <p className="text-sm text-[#c9d1d9] leading-relaxed whitespace-pre-wrap break-words mb-2">
+                      {comment.content}
+                    </p>
+                    <div className="flex items-center gap-3">
                       <button
-                        onClick={() => openReply(comment.id)}
-                        className={`flex items-center gap-1 text-[10px] font-mono transition-colors ${
-                          replyingTo === comment.id ? 'text-[#00FF41]' : 'text-[#374151] hover:text-[#9ca3af]'
+                        onClick={() => toggleLike(comment.id, false)}
+                        disabled={likingId === comment.id}
+                        className={`flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-40 ${
+                          comment.isLikedByMe ? 'text-[#00FF41]' : 'text-[#6e7681] hover:text-[#8b949e]'
                         }`}
                       >
-                        <CornerDownRight size={11} strokeWidth={1.5} /> 回复
+                        <ThumbsUp size={11} strokeWidth={1.5} />
+                        {comment.likeCount > 0 && <span>{comment.likeCount}</span>}
                       </button>
-                    )}
-                    {canDel(comment.user.id) && (
-                      <button
-                        onClick={() => remove(comment.id, false)}
-                        disabled={deletingId === comment.id}
-                        className="btn-danger opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-[10px] font-mono
-                                   text-[#ef4444] transition-all disabled:opacity-40"
-                      >
-                        <Trash2 size={10} strokeWidth={1.5} />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* 回复输入框 */}
-              {replyingTo === comment.id && currentUserId && (
-                <div className="ml-10 mt-3 pl-3 border-l-2 border-[#2A2A2A]">
-                  <textarea
-                    ref={replyRef}
-                    value={replyDraft}
-                    onChange={e => setReplyDraft(e.target.value)}
-                    onKeyDown={e => handleKey(e, () => submitReply(comment.id))}
-                    rows={2}
-                    maxLength={500}
-                    placeholder={`回复 @${comment.user.nickname ?? comment.user.username}... (Ctrl+Enter)`}
-                    className="w-full px-3 py-2 bg-[#0a0c10] border border-[#2A2A2A] text-xs font-mono text-[#e5e5e5]
-                               placeholder-[#374151] focus:border-[#00FF41] focus:outline-none resize-none transition-colors"
-                  />
-                  <div className="flex justify-end gap-2 mt-1.5">
-                    <button
-                      onClick={() => { setReplyingTo(null); setReplyDraft(''); }}
-                      className="px-3 py-1 text-[10px] font-mono text-[#4b5563] hover:text-[#9ca3af] transition-colors"
-                    >
-                      取消
-                    </button>
-                    <button
-                      onClick={() => submitReply(comment.id)}
-                      disabled={replySubmitting || !replyDraft.trim()}
-                      className="btn-primary flex items-center gap-1 px-3 py-1 text-[10px] font-mono
-                                 bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41]
-                                 hover:bg-[#00FF4125] transition-colors disabled:opacity-40"
-                    >
-                      <Send size={9} strokeWidth={1.5} />
-                      {replySubmitting ? '发送...' : '发送'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* 楼中楼回复 */}
-              {comment.replies.length > 0 && (
-                <div className="ml-10 mt-3 space-y-3 pl-3 border-l-2 border-[#1f2937]">
-                  {comment.replies.map(reply => (
-                    <div key={reply.id} className="flex gap-2.5 group">
-                      <Avatar name={reply.user.nickname ?? reply.user.username} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-xs font-mono text-[#9ca3af]">
-                            {reply.user.nickname ?? reply.user.username}
-                          </span>
-                          <span className="text-[10px] font-mono text-[#374151]">{formatDate(reply.createdAt)}</span>
-                        </div>
-                        <p className="text-sm text-[#c9d1d9] leading-relaxed whitespace-pre-wrap break-words mb-1.5">
-                          {reply.content}
-                        </p>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => toggleLike(reply.id, true, comment.id)}
-                            disabled={likingId === reply.id}
-                            className={`flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-40 ${
-                              reply.isLikedByMe ? 'text-[#00FF41]' : 'text-[#374151] hover:text-[#9ca3af]'
-                            }`}
-                          >
-                            <ThumbsUp size={10} strokeWidth={1.5} />
-                            {reply.likeCount > 0 && <span>{reply.likeCount}</span>}
-                          </button>
-                          {canDel(reply.user.id) && (
-                            <button
-                              onClick={() => remove(reply.id, true, comment.id)}
-                              disabled={deletingId === reply.id}
-                              className="btn-danger opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-[10px] font-mono
-                                         text-[#ef4444] transition-all disabled:opacity-40"
-                            >
-                              <Trash2 size={10} strokeWidth={1.5} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
+                      {currentUserId && (
+                        <button
+                          onClick={() => openReply(comment.id)}
+                          className={`flex items-center gap-1 text-[10px] font-mono transition-colors ${
+                            replyingTo === comment.id ? 'text-[#00FF41]' : 'text-[#6e7681] hover:text-[#8b949e]'
+                          }`}
+                        >
+                          <CornerDownRight size={11} strokeWidth={1.5} /> 回复
+                        </button>
+                      )}
+                      {canDel(comment) && (
+                        <button
+                          onClick={() => remove(comment.id, false)}
+                          disabled={deletingId === comment.id}
+                          className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-[10px] font-mono
+                                     text-[#ef4444] transition-all disabled:opacity-40"
+                        >
+                          <Trash2 size={10} strokeWidth={1.5} />
+                        </button>
+                      )}
                     </div>
-                  ))}
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {/* 回复输入框（仅登录用户） */}
+                {replyingTo === comment.id && currentUserId && (
+                  <div className="ml-10 mt-3 pl-3 border-l-2 border-[#30363d]">
+                    <textarea
+                      ref={replyRef}
+                      value={replyDraft}
+                      onChange={e => setReplyDraft(e.target.value)}
+                      onKeyDown={e => handleKey(e, () => submitReply(comment.id))}
+                      rows={2}
+                      maxLength={500}
+                      placeholder={`回复 @${displayName}... (Ctrl+Enter)`}
+                      className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#cdd9e5]
+                                 placeholder-[#3d444d] focus:border-[#00FF41] focus:outline-none resize-none transition-colors"
+                    />
+                    <div className="flex justify-end gap-2 mt-1.5">
+                      <button
+                        onClick={() => { setReplyingTo(null); setReplyDraft(''); }}
+                        className="px-3 py-1 text-[10px] font-mono text-[#3d444d] hover:text-[#8b949e] transition-colors"
+                      >
+                        取消
+                      </button>
+                      <button
+                        onClick={() => submitReply(comment.id)}
+                        disabled={replySubmitting || !replyDraft.trim()}
+                        className="flex items-center gap-1 px-3 py-1 text-[10px] font-mono
+                                   bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41]
+                                   hover:bg-[#00FF4125] transition-colors disabled:opacity-40"
+                      >
+                        <Send size={9} strokeWidth={1.5} />
+                        {replySubmitting ? '发送...' : '发送'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 楼中楼回复 */}
+                {comment.replies.length > 0 && (
+                  <div className="ml-10 mt-3 space-y-3 pl-3 border-l-2 border-[#21262d]">
+                    {comment.replies.map(reply => {
+                      const isGuestReply = !reply.user;
+                      const replyName = getDisplayName(reply);
+                      return (
+                        <div key={reply.id} className="flex gap-2.5 group">
+                          <Avatar name={replyName} isGuest={isGuestReply} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className={`text-xs font-mono ${isGuestReply ? 'text-[#6e7681]' : 'text-[#8b949e]'}`}>
+                                {replyName}
+                              </span>
+                              {isGuestReply && (
+                                <span className="text-[9px] font-mono text-[#3d444d] border border-[#21262d] px-1">游客</span>
+                              )}
+                              <span className="text-[10px] font-mono text-[#6e7681]">{formatDate(reply.createdAt)}</span>
+                            </div>
+                            <p className="text-sm text-[#c9d1d9] leading-relaxed whitespace-pre-wrap break-words mb-1.5">
+                              {reply.content}
+                            </p>
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => toggleLike(reply.id, true, comment.id)}
+                                disabled={likingId === reply.id}
+                                className={`flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-40 ${
+                                  reply.isLikedByMe ? 'text-[#00FF41]' : 'text-[#6e7681] hover:text-[#8b949e]'
+                                }`}
+                              >
+                                <ThumbsUp size={10} strokeWidth={1.5} />
+                                {reply.likeCount > 0 && <span>{reply.likeCount}</span>}
+                              </button>
+                              {canDel(reply) && (
+                                <button
+                                  onClick={() => remove(reply.id, true, comment.id)}
+                                  disabled={deletingId === reply.id}
+                                  className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-[10px] font-mono
+                                             text-[#ef4444] transition-all disabled:opacity-40"
+                                >
+                                  <Trash2 size={10} strokeWidth={1.5} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </section>

@@ -1,0 +1,48 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+import { getSessionById } from '../../lib/auth';
+import { can } from '../../lib/permissions';
+import { AnnouncementManager } from '../../components/AnnouncementManager';
+
+const session = await getSessionById(Astro.cookies.get('session')?.value);
+const isAdmin = session ? can(session, 'user:ban') : false;
+
+const announcements = await prisma.announcement.findMany({
+  orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
+  select: {
+    id: true, title: true, content: true, type: true,
+    pinned: true, banner: true, createdAt: true, updatedAt: true,
+    author: { select: { id: true, username: true, nickname: true } },
+  },
+});
+
+const initialList = announcements.map((a: any) => ({
+  ...a,
+  createdAt: a.createdAt.toISOString(),
+  updatedAt: a.updatedAt.toISOString(),
+}));
+---
+
+<Layout title="公告 — 冰山图宇宙">
+  <main class="max-w-3xl mx-auto px-4 py-8 reveal">
+
+    <div class="mb-8">
+      <div class="text-[10px] font-mono text-[#6e7681] tracking-widest mb-2">// ANNOUNCEMENTS · 公告</div>
+      <h1 class="text-2xl font-mono text-[#cdd9e5] mb-2">站点公告</h1>
+      <p class="text-xs font-mono text-[#8b949e]">平台更新、规则变动与重要通知。</p>
+    </div>
+
+    <AnnouncementManager
+      client:load
+      isAdmin={isAdmin}
+      initialList={initialList}
+    />
+
+  </main>
+</Layout>
+
+<script>
+  // 访问公告列表页时标记已读
+  localStorage.setItem('ann_seen', new Date().toISOString());
+</script>

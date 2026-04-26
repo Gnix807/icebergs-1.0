@@ -1,7 +1,10 @@
 ---
 import { NavBar } from '../components/NavBar';
+import { AnnouncementBanner } from '../components/AnnouncementBanner';
 import { Toast } from '../components/ui/Toast';
 import { AchievementToast } from '../components/ui/AchievementToast';
+import { ViewTransitions } from 'astro:transitions';
+import { prisma } from '../lib/prisma';
 
 interface Props {
   title: string;
@@ -9,6 +12,14 @@ interface Props {
 }
 
 const { title, description = '冰山图宇宙 - 探索知识的深层' } = Astro.props;
+
+// 全站横幅：取最新一条 banner=true 的公告
+const bannerAnn = await prisma.announcement.findFirst({
+  where: { banner: true },
+  orderBy: { createdAt: 'desc' },
+  select: { id: true, title: true, type: true, createdAt: true },
+}).then((a: any) => a ? { ...a, createdAt: a.createdAt.toISOString() } : null)
+  .catch(() => null);
 ---
 
 <!doctype html>
@@ -20,17 +31,25 @@ const { title, description = '冰山图宇宙 - 探索知识的深层' } = Astro
     <title>{title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" />
+    <ViewTransitions />
   </head>
-  <body class="bg-[#0A0A0A] text-[#e5e5e5] font-sans antialiased">
+  <body class="bg-[#0d1117] text-[#cdd9e5] font-sans antialiased">
     <!-- 导航栏 -->
     <NavBar client:load />
 
-    <!-- 主内容区域 -->
+    <!-- 主内容区域（pt-14 抵消固定导航栏高度） -->
     <div class="pt-14 pb-16 md:pb-0">
+      <!-- 全站横幅公告（必须在 pt-14 容器内，否则被固定导航栏遮盖） -->
+      <AnnouncementBanner client:load initial={bannerAnn} />
       <slot />
     </div>
 
+    <!-- 噪点纹理叠加层 -->
+    <div class="noise-overlay pointer-events-none fixed inset-0 z-[9996]"></div>
+    <!-- 自定义光标追随点（仅桌面端） -->
+    <div id="cursor-dot" class="pointer-events-none fixed z-[99999] hidden" aria-hidden="true"></div>
     <!-- CRT 扫描线叠加层 -->
     <div class="crt-scanlines pointer-events-none fixed inset-0 z-[9999]"></div>
 
@@ -41,13 +60,19 @@ const { title, description = '冰山图宇宙 - 探索知识的深层' } = Astro
 
     <style is:global>
       :root {
-        --bg-base: #0A0A0A;
-        --bg-elevated: #121212;
-        --bg-surface: #1A1A1A;
-        --border: #2A2A2A;
+        --bg-base: #0d1117;
+        --bg-elevated: #161b22;
+        --bg-surface: #21262d;
+        --bg-hover: #1c2128;
+        --border: #30363d;
+        --border-muted: #21262d;
+        --text-primary: #cdd9e5;
+        --text-secondary: #8b949e;
+        --text-muted: #6e7681;
+        --text-dim: #3d444d;
         --terminal-green: #00FF41;
         --terminal-green-dim: #00CC33;
-        --terminal-green-glow: rgba(0, 255, 65, 0.15);
+        --terminal-green-glow: rgba(0, 255, 65, 0.12);
       }
 
       * {
@@ -55,18 +80,27 @@ const { title, description = '冰山图宇宙 - 探索知识的深层' } = Astro
       }
 
       html {
-        font-family: 'Inter', system-ui, sans-serif;
+        font-family: 'IBM Plex Sans', 'Noto Serif SC', system-ui, sans-serif;
+        font-weight: 400;
         scroll-behavior: smooth;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      /* 中文衬线体字重加深：IBM Plex Sans 无中文字形，中文字符自动回落至 Noto Serif SC */
+      p, li, td, th, blockquote,
+      h1, h2, h3, h4, h5, h6 {
+        font-weight: 500;
       }
 
       body {
         min-height: 100vh;
         background-color: var(--bg-base);
+        transition: background-color 0.3s ease;
       }
 
       /* 等宽字体：标题、层级编号、标签 */
       .font-mono {
-        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
       }
 
       /* CRT 扫描线效果 */
@@ -243,8 +277,14 @@ const { title, description = '冰山图宇宙 - 探索知识的深层' } = Astro
       .markdown-content a:hover {
         background-color: rgba(0, 255, 65, 0.1);
       }
-      .markdown-content ul,
+      .markdown-content ul {
+        list-style-type: disc;
+        padding-left: 1.5em;
+        margin-bottom: 0.8em;
+        color: #6b7280;
+      }
       .markdown-content ol {
+        list-style-type: decimal;
         padding-left: 1.5em;
         margin-bottom: 0.8em;
         color: #6b7280;
@@ -282,28 +322,28 @@ const { title, description = '冰山图宇宙 - 探索知识的深层' } = Astro
          档案卡片 - 左边框 + hover右移
          ============================================ */
       .archive-card {
-        background: #0a0c10;
-        border: 1px solid #1f2937;
-        border-left: 4px solid #374151;
-        transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-muted);
+        border-left: 4px solid var(--border);
+        transition: all 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
       }
       .archive-card:hover {
-        border-left-color: #00FF41;
-        background: #0f131a;
+        border-left-color: var(--terminal-green);
+        background: var(--bg-hover);
         transform: translateX(4px);
-        box-shadow: -4px 0 15px rgba(0, 255, 65, 0.1);
+        box-shadow: -4px 0 20px var(--terminal-green-glow);
         z-index: 10;
       }
 
       /* 金银铜 rank 卡片 */
-      .rank-card { border-left: 4px solid #374151; }
-      .rank-card.top-1 { border-left-color: #FFD700; background: color-mix(in srgb, #FFD700 4%, #0a0c10); }
-      .rank-card.top-2 { border-left-color: #C0C0C0; background: color-mix(in srgb, #C0C0C0 3%, #0a0c10); }
-      .rank-card.top-3 { border-left-color: #CD7F32; background: color-mix(in srgb, #CD7F32 4%, #0a0c10); }
+      .rank-card { border-left: 4px solid var(--border); }
+      .rank-card.top-1 { border-left-color: #FFD700; background: color-mix(in srgb, #FFD700 5%, var(--bg-elevated)); }
+      .rank-card.top-2 { border-left-color: #C0C0C0; background: color-mix(in srgb, #C0C0C0 4%, var(--bg-elevated)); }
+      .rank-card.top-3 { border-left-color: #CD7F32; background: color-mix(in srgb, #CD7F32 5%, var(--bg-elevated)); }
       .rank-card:hover { transform: translateX(4px); box-shadow: -4px 0 12px rgba(0,0,0,0.4); }
-      .rank-card.top-1:hover { box-shadow: -4px 0 16px rgba(255,215,0,0.12); }
-      .rank-card.top-2:hover { box-shadow: -4px 0 16px rgba(192,192,192,0.10); }
-      .rank-card.top-3:hover { box-shadow: -4px 0 16px rgba(205,127,50,0.12); }
+      .rank-card.top-1:hover { box-shadow: -4px 0 18px rgba(255,215,0,0.15); }
+      .rank-card.top-2:hover { box-shadow: -4px 0 18px rgba(192,192,192,0.12); }
+      .rank-card.top-3:hover { box-shadow: -4px 0 18px rgba(205,127,50,0.15); }
 
       /* 浏览量进度条 */
       .view-bar {
@@ -360,11 +400,20 @@ const { title, description = '冰山图宇宙 - 探索知识的深层' } = Astro
          浅色主题 (html.light)
          ============================================ */
       html.light {
-        background-color: #f8fafc;
+        background-color: #f6f8fa;
       }
       html.light body {
-        background-color: #f8fafc;
-        color: #334155;
+        background-color: #f6f8fa;
+        color: #1c2128;
+      }
+      /* 浅色模式下正文段落文字强制深色，确保宋体衬线在白底有足够对比度 */
+      html.light p,
+      html.light li,
+      html.light td,
+      html.light th,
+      html.light blockquote {
+        color: #1c2128;
+        font-weight: 500;
       }
 
       /* 导航栏 */
@@ -373,49 +422,92 @@ const { title, description = '冰山图宇宙 - 探索知识的深层' } = Astro
         border-color: #e2e8f0 !important;
       }
 
-      /* 背景色 */
-      html.light .bg-\[\#050505\],
-      html.light .bg-\[\#0A0A0A\],
-      html.light .bg-\[\#0d0d0d\] {
+      /* ── 背景色：新调色盘 (GitHub Dark → Light) ── */
+      html.light .bg-\[\#0d1117\],
+      html.light .bg-\[\#030506\],
+      html.light .bg-\[\#050608\],
+      html.light .bg-\[\#0d0f14\],
+      html.light .bg-\[\#0d1017\] {
         background-color: #f8fafc !important;
       }
+      html.light .bg-\[\#161b22\],
       html.light .bg-\[\#121212\],
-      html.light .bg-\[\#0a0c10\],
-      html.light .bg-\[\#111\] {
+      html.light .bg-\[\#0A0A0A\],
+      html.light .bg-\[\#050505\],
+      html.light .bg-\[\#0d0d0d\],
+      html.light .bg-\[\#0a0c10\] {
         background-color: #ffffff !important;
       }
+      html.light .bg-\[\#1c2128\],
       html.light .bg-\[\#1A1A1A\],
-      html.light .bg-\[\#1a1a1a\],
-      html.light .bg-\[\#111827\] {
+      html.light .bg-\[\#1a1a1a\] {
         background-color: #f1f5f9 !important;
       }
 
-      /* 边框色 */
+      /* hover 背景色 */
+      html.light .hover\:bg-\[\#1c2128\]:hover,
+      html.light .hover\:bg-\[\#0d1117\]:hover,
+      html.light .hover\:bg-\[\#0d1017\]:hover {
+        background-color: #f0f4f8 !important;
+      }
+
+      /* ── 边框色：新调色盘 ── */
+      html.light .border-\[\#21262d\],
+      html.light .border-\[\#30363d\],
       html.light .border-\[\#1f2937\],
       html.light .border-\[\#2A2A2A\],
-      html.light .border-\[\#374151\] {
+      html.light .border-\[\#374151\],
+      html.light .border-\[\#111518\],
+      html.light .border-\[\#1a1f2a\] {
+        border-color: #e2e8f0 !important;
+      }
+      html.light .divide-\[\#0d0f14\] > * + * {
         border-color: #e2e8f0 !important;
       }
 
-      /* 文字色 */
+      /* ── 文字色：新调色盘 ── */
+      /* 最亮文字 → 近黑 */
+      html.light .text-\[\#cdd9e5\],
       html.light .text-\[\#e5e5e5\],
       html.light .text-\[\#e5e7eb\] {
         color: #0f172a !important;
       }
+      /* 次亮文字 → 深灰 */
+      html.light .text-\[\#adbac7\],
       html.light .text-\[\#9ca3af\] {
+        color: #374151 !important;
+      }
+      /* 中灰文字 → 中深灰 */
+      html.light .text-\[\#8b949e\],
+      html.light .text-\[\#6b7280\] {
+        color: #4b5563 !important;
+      }
+      /* 偏暗中灰 → 灰蓝 */
+      html.light .text-\[\#6e7681\],
+      html.light .text-\[\#4b5563\] {
         color: #64748b !important;
       }
-      html.light .text-\[\#6b7280\] {
-        color: #475569 !important;
-      }
-      html.light .text-\[\#4b5563\] {
+      /* 最暗灰（极弱提示文字） → 浅灰 */
+      html.light .text-\[\#3d444d\],
+      html.light .text-\[\#374151\],
+      html.light .text-\[\#484f58\],
+      html.light .text-\[\#1f2937\] {
         color: #94a3b8 !important;
       }
-      html.light .text-\[\#374151\] {
-        color: #94a3b8 !important;
+      html.light .text-\[\#21262d\] {
+        color: #cbd5e1 !important;
       }
 
-      /* 终端绿 → 蓝色 */
+      /* hover 文字色 */
+      html.light .hover\:text-\[\#cdd9e5\]:hover,
+      html.light .hover\:text-\[\#adbac7\]:hover {
+        color: #1e293b !important;
+      }
+      html.light .hover\:text-\[\#8b949e\]:hover {
+        color: #374151 !important;
+      }
+
+      /* ── 终端绿 → 蓝色 ── */
       html.light .text-\[\#00FF41\] {
         color: #2563eb !important;
       }
@@ -503,6 +595,15 @@ const { title, description = '冰山图宇宙 - 探索知识的深层' } = Astro
       html.light .iceberg-meta { color: #4b5563 !important; }
       html.light .iceberg-meta span { color: #1f2937 !important; }
 
+      /* ── drawer 浅色模式 ── */
+      html.light #drawer {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+      }
+      html.light #drawer-overlay {
+        background: rgba(0,0,0,0.3) !important;
+      }
+
       /* 隐藏滚动条工具类 */
       .scrollbar-none { scrollbar-width: none; }
       .scrollbar-none::-webkit-scrollbar { display: none; }
@@ -534,6 +635,83 @@ const { title, description = '冰山图宇宙 - 探索知识的深层' } = Astro
         }
       }
 
+      /* ── 自定义光标 ─────────────────────────────────────── */
+      #cursor-dot {
+        width: 5px;
+        height: 5px;
+        background: var(--terminal-green);
+        opacity: 0.72;
+        will-change: transform;
+        mix-blend-mode: screen;
+        transition: width 0.18s ease, height 0.18s ease, opacity 0.2s ease, border-radius 0.18s ease;
+      }
+      #cursor-dot.cursor-link {
+        width: 18px;
+        height: 18px;
+        background: transparent;
+        border: 1.5px solid var(--terminal-green);
+        opacity: 0.55;
+        border-radius: 0;
+      }
+      html.light #cursor-dot { background: #2563eb; }
+      html.light #cursor-dot.cursor-link { border-color: #2563eb; }
+      @media (pointer: coarse) { #cursor-dot { display: none !important; } }
+
+      /* ── Skeleton shimmer ────────────────────────────────── */
+      @keyframes shimmer {
+        0%   { background-position: -200% 0; }
+        100% { background-position:  200% 0; }
+      }
+      .skeleton-shimmer {
+        background: linear-gradient(90deg, #21262d 25%, #2d333b 50%, #21262d 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.6s ease infinite;
+      }
+
+      /* ── Stats 数字辉光 ─────────────────────────────────── */
+      @keyframes statGlow {
+        0%,100% { text-shadow: 0 0 8px rgba(0,255,65,0.15); }
+        50%     { text-shadow: 0 0 18px rgba(0,255,65,0.35), 0 0 35px rgba(0,255,65,0.1); }
+      }
+      .stat-glow { animation: statGlow 4s ease-in-out infinite; }
+
+      /* ── 冰山浮动动画 ───────────────────────────────────── */
+      @keyframes icebergFloat {
+        0%,100% { transform: translateY(0px) rotate(0deg); }
+        35%     { transform: translateY(-8px) rotate(0.4deg); }
+        65%     { transform: translateY(4px) rotate(-0.3deg); }
+      }
+      .iceberg-float { animation: icebergFloat 10s ease-in-out infinite; }
+
+      /* ── 噪点纹理覆盖层 ──────────────────────────────────── */
+      .noise-overlay {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+        opacity: 0.032;
+        mix-blend-mode: overlay;
+      }
+      html.light .noise-overlay { opacity: 0.016; }
+
+      /* ── 滚动触发进场动画 ────────────────────────────────── */
+      .reveal {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal.revealed {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* 网格子项交错进场 */
+      .reveal-grid {
+        opacity: 0;
+        transform: translateY(18px);
+        transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .reveal-grid.revealed { opacity: 1; transform: translateY(0); }
+
       /* ── 移动端输入框字号（防 iOS 自动缩放至 16px 以下） ── */
       @media (max-width: 767px) {
         input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
@@ -551,6 +729,18 @@ const { title, description = '冰山图宇宙 - 探索知识的深层' } = Astro
       .mobile-menu-animate {
         animation: mobileMenuSlide 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
+
+      /* ── 导航栏下拉菜单动画 ──────────────────────────────── */
+      @keyframes navDropdownIn {
+        from { opacity: 0; transform: translateY(-8px) scaleY(0.95); transform-origin: top; }
+        to   { opacity: 1; transform: translateY(0)   scaleY(1);    transform-origin: top; }
+      }
+      @keyframes navDropdownOut {
+        from { opacity: 1; transform: translateY(0)   scaleY(1);    transform-origin: top; }
+        to   { opacity: 0; transform: translateY(-8px) scaleY(0.95); transform-origin: top; }
+      }
+      .nav-dropdown-in  { animation: navDropdownIn  0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+      .nav-dropdown-out { animation: navDropdownOut 0.18s ease forwards; }
 
       /* ── 移动端底部导航栏 ───────────────────────────────── */
       .mobile-bottom-nav {
@@ -780,5 +970,69 @@ const { title, description = '冰山图宇宙 - 探索知识的深层' } = Astro
         box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08) !important;
       }
     </style>
+
+    <script>
+      // ── 自定义光标追随点 ────────────────────────────────────
+      function initCursor() {
+        const dotEl = document.getElementById('cursor-dot') as HTMLElement | null;
+        if (!dotEl || !window.matchMedia('(pointer: fine)').matches) return;
+        const dot = dotEl;
+
+        let tx = -20, ty = -20, cx = -20, cy = -20;
+        let raf: number;
+        let visible = false;
+
+        function tick() {
+          cx += (tx - cx) * 0.2;
+          cy += (ty - cy) * 0.2;
+          dot.style.transform = `translate(${cx - dot.offsetWidth / 2}px, ${cy - dot.offsetHeight / 2}px)`;
+          raf = requestAnimationFrame(tick);
+        }
+
+        document.addEventListener('mousemove', (e) => {
+          tx = e.clientX; ty = e.clientY;
+          if (!visible) {
+            dot.classList.remove('hidden');
+            visible = true;
+          }
+        });
+        document.addEventListener('mouseleave', () => { dot.style.opacity = '0'; });
+        document.addEventListener('mouseenter', () => { dot.style.opacity = '0.72'; });
+
+        document.addEventListener('mouseover', (e) => {
+          const t = e.target as Element;
+          if (t.closest('a, button, [role="button"], label, select')) {
+            dot.classList.add('cursor-link');
+          } else {
+            dot.classList.remove('cursor-link');
+          }
+        });
+
+        tick();
+      }
+
+      // ── 滚动触发进场动画（IntersectionObserver） ──────────────
+      function initReveal() {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            const el = entry.target as HTMLElement;
+            const delay = parseInt(el.dataset.revealDelay ?? '0', 10);
+            setTimeout(() => {
+              el.classList.add('revealed');
+              observer.unobserve(el);
+            }, delay);
+          });
+        }, { threshold: 0.07, rootMargin: '0px 0px -32px 0px' });
+
+        document.querySelectorAll<HTMLElement>('.reveal, .reveal-grid').forEach(el => {
+          observer.observe(el);
+        });
+      }
+
+      // Astro ViewTransitions 每次导航后重新初始化
+      document.addEventListener('astro:page-load', initReveal);
+      document.addEventListener('astro:page-load', initCursor);
+    </script>
   </body>
 </html>

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from '../ui/Toast';
-import { useModalAnimation } from '../../hooks/useModalAnimation';
-import { Trash2 } from 'lucide-react';
+import { Trash2, ChevronDown } from 'lucide-react';
 import type { Condition, BlockCondition, ConditionOp } from '../../lib/types';
 
 // ── 积木定义 ─────────────────────────────────────────────
@@ -87,108 +86,72 @@ const BLOCK_CATEGORIES: { label: string; blocks: BlockDef[] }[] = [
 
 const ALL_BLOCKS = BLOCK_CATEGORIES.flatMap(c => c.blocks);
 const BLOCK_BY_KEY = Object.fromEntries(ALL_BLOCKS.map(b => [b.key, b]));
-
 const VAR_OPTIONS = [
   'totalRead','searchCount','randomCount','nightReadCount',
   'visitedIcebergCount','consecutiveDays','totalVotesCast','currentIcebergReadCount',
 ];
-
 const DAY_OPTIONS = ['周日','周一','周二','周三','周四','周五','周六'];
 const MONTH_OPTIONS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 
 // ── 单条积木编辑器 ────────────────────────────────────────
 
-function BlockRow({
-  cond, onChange, onRemove,
-}: {
-  cond: BlockCondition;
-  onChange: (c: BlockCondition) => void;
-  onRemove: () => void;
+function BlockRow({ cond, onChange, onRemove }: {
+  cond: BlockCondition; onChange: (c: BlockCondition) => void; onRemove: () => void;
 }) {
   const def = BLOCK_BY_KEY[cond.block];
-
   const renderValueInput = () => {
     if (!def) return null;
     switch (def.valueType) {
       case 'boolean':
         return (
-          <select
-            value={String(cond.value)}
-            onChange={e => onChange({ ...cond, value: e.target.value === 'true' })}
-            className="bg-[#0a0a0a] border border-[#374151] text-[#e5e7eb] text-xs px-2 py-1 font-mono w-20"
-          >
-            <option value="true">是</option>
-            <option value="false">否</option>
+          <select value={String(cond.value)} onChange={e => onChange({ ...cond, value: e.target.value === 'true' })}
+            className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono w-20">
+            <option value="true">是</option><option value="false">否</option>
           </select>
         );
       case 'dayOfWeek':
         return (
-          <select
-            value={Number(cond.value)}
-            onChange={e => onChange({ ...cond, value: Number(e.target.value) })}
-            className="bg-[#0a0a0a] border border-[#374151] text-[#e5e7eb] text-xs px-2 py-1 font-mono"
-          >
+          <select value={Number(cond.value)} onChange={e => onChange({ ...cond, value: Number(e.target.value) })}
+            className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono">
             {DAY_OPTIONS.map((d, i) => <option key={i} value={i}>{d}</option>)}
           </select>
         );
       case 'month':
         return (
-          <select
-            value={Number(cond.value)}
-            onChange={e => onChange({ ...cond, value: Number(e.target.value) })}
-            className="bg-[#0a0a0a] border border-[#374151] text-[#e5e7eb] text-xs px-2 py-1 font-mono"
-          >
+          <select value={Number(cond.value)} onChange={e => onChange({ ...cond, value: Number(e.target.value) })}
+            className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono">
             {MONTH_OPTIONS.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
           </select>
         );
       case 'triggerType':
         return (
-          <select
-            value={String(cond.value)}
-            onChange={e => onChange({ ...cond, value: e.target.value })}
-            className="bg-[#0a0a0a] border border-[#374151] text-[#e5e7eb] text-xs px-2 py-1 font-mono"
-          >
-            {['read','search','random','vote','visit'].map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
+          <select value={String(cond.value)} onChange={e => onChange({ ...cond, value: e.target.value })}
+            className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono">
+            {['read','search','random','vote','visit'].map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         );
       case 'varPair':
         return (
           <>
-            <select
-              value={cond.varA ?? ''}
-              onChange={e => onChange({ ...cond, varA: e.target.value })}
-              className="bg-[#0a0a0a] border border-[#374151] text-[#e5e7eb] text-xs px-2 py-1 font-mono"
-            >
+            <select value={cond.varA ?? ''} onChange={e => onChange({ ...cond, varA: e.target.value })}
+              className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono">
               <option value="">变量A</option>
               {VAR_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
             </select>
             {cond.block === 'varDiff' && (
               <>
-                <select
-                  value={cond.varB ?? ''}
-                  onChange={e => onChange({ ...cond, varB: e.target.value })}
-                  className="bg-[#0a0a0a] border border-[#374151] text-[#e5e7eb] text-xs px-2 py-1 font-mono"
-                >
+                <select value={cond.varB ?? ''} onChange={e => onChange({ ...cond, varB: e.target.value })}
+                  className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono">
                   <option value="">变量B</option>
                   {VAR_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
-                <input
-                  type="number"
-                  value={Number(cond.value)}
-                  onChange={e => onChange({ ...cond, value: Number(e.target.value) })}
-                  className="bg-[#0a0a0a] border border-[#374151] text-[#e5e7eb] text-xs px-2 py-1 font-mono w-16"
-                  placeholder="阈值"
-                />
+                <input type="number" value={Number(cond.value)} onChange={e => onChange({ ...cond, value: Number(e.target.value) })}
+                  className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono w-16" placeholder="阈值" />
               </>
             )}
             {cond.block === 'varEqual' && (
-              <select
-                value={cond.varB ?? ''}
-                onChange={e => onChange({ ...cond, varB: e.target.value })}
-                className="bg-[#0a0a0a] border border-[#374151] text-[#e5e7eb] text-xs px-2 py-1 font-mono"
-              >
+              <select value={cond.varB ?? ''} onChange={e => onChange({ ...cond, varB: e.target.value })}
+                className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono">
                 <option value="">变量B</option>
                 {VAR_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
               </select>
@@ -197,69 +160,38 @@ function BlockRow({
         );
       case 'text':
         return (
-          <input
-            type="text"
-            value={String(cond.value)}
-            onChange={e => onChange({ ...cond, value: e.target.value })}
-            className="bg-[#0a0a0a] border border-[#374151] text-[#e5e7eb] text-xs px-2 py-1 font-mono w-32"
-            placeholder="文字"
-          />
+          <input type="text" value={String(cond.value)} onChange={e => onChange({ ...cond, value: e.target.value })}
+            className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono w-32" placeholder="文字" />
         );
       default:
         return (
-          <input
-            type="number"
-            value={Number(cond.value)}
-            onChange={e => onChange({ ...cond, value: Number(e.target.value) })}
-            className="bg-[#0a0a0a] border border-[#374151] text-[#e5e7eb] text-xs px-2 py-1 font-mono w-20"
-          />
+          <input type="number" value={Number(cond.value)} onChange={e => onChange({ ...cond, value: Number(e.target.value) })}
+            className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono w-20" />
         );
     }
   };
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {/* 积木选择 */}
-      <select
-        value={cond.block}
-        onChange={e => {
-          const newDef = BLOCK_BY_KEY[e.target.value];
-          onChange({
-            block: e.target.value,
-            op: newDef?.ops[0] ?? '==',
-            value: newDef?.valueType === 'boolean' ? true : newDef?.valueType === 'text' ? '' : 0,
-          });
-        }}
-        className="bg-[#0a0a0a] border border-[#00FF41]/40 text-[#00FF41] text-xs px-2 py-1 font-mono"
-      >
+      <select value={cond.block} onChange={e => {
+        const newDef = BLOCK_BY_KEY[e.target.value];
+        onChange({ block: e.target.value, op: newDef?.ops[0] ?? '==',
+          value: newDef?.valueType === 'boolean' ? true : newDef?.valueType === 'text' ? '' : 0 });
+      }} className="bg-[#0d1117] border border-[#00FF41]/40 text-[#00FF41] text-xs px-2 py-1 font-mono">
         {BLOCK_CATEGORIES.map(cat => (
           <optgroup key={cat.label} label={cat.label}>
-            {cat.blocks.map(b => (
-              <option key={b.key} value={b.key}>{b.label}</option>
-            ))}
+            {cat.blocks.map(b => <option key={b.key} value={b.key}>{b.label}</option>)}
           </optgroup>
         ))}
       </select>
-
-      {/* 运算符（varEqual / isPrime / isDivisibleBy / all_clear 不显示）*/}
       {def && !['varEqual','isPrime','all_clear'].includes(cond.block) && (
-        <select
-          value={cond.op}
-          onChange={e => onChange({ ...cond, op: e.target.value as ConditionOp })}
-          className="bg-[#0a0a0a] border border-[#374151] text-[#9ca3af] text-xs px-2 py-1 font-mono"
-        >
+        <select value={cond.op} onChange={e => onChange({ ...cond, op: e.target.value as ConditionOp })}
+          className="bg-[#0d1117] border border-[#30363d] text-[#8b949e] text-xs px-2 py-1 font-mono">
           {def.ops.map(o => <option key={o} value={o}>{o}</option>)}
         </select>
       )}
-
-      {/* 值输入 */}
       {renderValueInput()}
-
-      {/* 删除 */}
-      <button
-        onClick={onRemove}
-        className="text-[#4b5563] hover:text-[#ef4444] text-xs px-1 font-mono transition-colors"
-      >
+      <button onClick={onRemove} className="text-[#3d444d] hover:text-[#ef4444] text-xs px-1 font-mono transition-colors">
         <Trash2 size={13} strokeWidth={1.5} />
       </button>
     </div>
@@ -277,33 +209,22 @@ function ConditionPreview({ conditions }: { conditions: Condition[] }) {
       const def = BLOCK_BY_KEY[c.block];
       const label = def?.label ?? c.block;
       const opLabel = c.op === 'contains' ? '包含' : c.op;
-      if (['isPrime','all_clear'].includes(c.block)) {
-        parts.push(`「${label}」`);
-      } else if (c.block === 'varEqual') {
-        parts.push(`「${c.varA} 等于 ${c.varB}」`);
-      } else if (c.block === 'varDiff') {
-        parts.push(`「|${c.varA} - ${c.varB}| ${opLabel} ${c.value}」`);
-      } else {
-        parts.push(`「${label} ${opLabel} ${c.value}」`);
-      }
+      if (['isPrime','all_clear'].includes(c.block)) parts.push(`「${label}」`);
+      else if (c.block === 'varEqual') parts.push(`「${c.varA} 等于 ${c.varB}」`);
+      else if (c.block === 'varDiff') parts.push(`「|${c.varA} - ${c.varB}| ${opLabel} ${c.value}」`);
+      else parts.push(`「${label} ${opLabel} ${c.value}」`);
     }
   }
-  if (parts.length === 0) return <span className="text-[#4b5563] text-xs">（未设置条件）</span>;
-  return <span className="text-[#9ca3af] text-xs font-mono">当 {parts.join(' ')} 时解锁</span>;
+  if (parts.length === 0) return <span className="text-[#3d444d] text-xs">（未设置条件）</span>;
+  return <span className="text-[#8b949e] text-xs font-mono">当 {parts.join(' ')} 时解锁</span>;
 }
 
 // ── 条件积木编辑器 ────────────────────────────────────────
 
-function ConditionBuilder({
-  conditions, onChange,
-}: {
-  conditions: Condition[];
-  onChange: (c: Condition[]) => void;
-}) {
+function ConditionBuilder({ conditions, onChange }: { conditions: Condition[]; onChange: (c: Condition[]) => void }) {
   const blocks = conditions.filter((c): c is BlockCondition => !('logic' in c));
   const logics = conditions.filter((c): c is { logic: 'AND' | 'OR' } => 'logic' in c);
 
-  // 重建完整 conditions 数组（block logic block logic block ...）
   const rebuild = (newBlocks: BlockCondition[], newLogics: { logic: 'AND' | 'OR' }[]) => {
     const result: Condition[] = [];
     for (let i = 0; i < newBlocks.length; i++) {
@@ -313,65 +234,126 @@ function ConditionBuilder({
     onChange(result);
   };
 
-  const addBlock = () => {
-    const newBlock: BlockCondition = { block: 'totalRead', op: '>=', value: 1 };
-    const newBlocks = [...blocks, newBlock];
-    const newLogics = [...logics, { logic: 'AND' as const }];
-    rebuild(newBlocks, newLogics);
-  };
-
-  const updateBlock = (i: number, updated: BlockCondition) => {
-    const newBlocks = blocks.map((b, idx) => idx === i ? updated : b);
-    rebuild(newBlocks, logics);
-  };
-
-  const removeBlock = (i: number) => {
-    const newBlocks = blocks.filter((_, idx) => idx !== i);
-    const newLogics = logics.filter((_, idx) => idx !== i);
-    rebuild(newBlocks, newLogics);
-  };
-
-  const toggleLogic = (i: number) => {
-    const newLogics = logics.map((l, idx) =>
-      idx === i ? { logic: l.logic === 'AND' ? 'OR' as const : 'AND' as const } : l,
-    );
-    rebuild(blocks, newLogics);
-  };
-
   return (
     <div className="space-y-2">
       {blocks.map((block, i) => (
         <div key={i}>
-          <BlockRow
-            cond={block}
-            onChange={updated => updateBlock(i, updated)}
-            onRemove={() => removeBlock(i)}
-          />
+          <BlockRow cond={block} onChange={u => rebuild(blocks.map((b, idx) => idx === i ? u : b), logics)}
+            onRemove={() => rebuild(blocks.filter((_, idx) => idx !== i), logics.filter((_, idx) => idx !== i))} />
           {i < blocks.length - 1 && (
-            <button
-              onClick={() => toggleLogic(i)}
-              className="mt-1 text-[10px] font-mono px-2 py-0.5 border transition-colors
-                border-[#374151] text-[#6b7280] hover:border-[#00FF41] hover:text-[#00FF41]"
-            >
+            <button onClick={() => rebuild(blocks, logics.map((l, idx) =>
+              idx === i ? { logic: l.logic === 'AND' ? 'OR' as const : 'AND' as const } : l))}
+              className="mt-1 text-[10px] font-mono px-2 py-0.5 border transition-colors border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41]">
               {logics[i]?.logic ?? 'AND'} ▼
             </button>
           )}
         </div>
       ))}
-
-      <button
-        onClick={addBlock}
-        className="text-xs font-mono text-[#6b7280] border border-dashed border-[#374151]
-          hover:border-[#00FF41] hover:text-[#00FF41] px-3 py-1 transition-colors"
-      >
+      <button onClick={() => rebuild([...blocks, { block: 'totalRead', op: '>=', value: 1 }], [...logics, { logic: 'AND' }])}
+        className="text-xs font-mono text-[#8b949e] border border-dashed border-[#30363d] hover:border-[#00FF41] hover:text-[#00FF41] px-3 py-1 transition-colors">
         + 添加积木
       </button>
-
       {conditions.length > 0 && (
-        <div className="mt-2 px-2 py-1.5 bg-[#0a0a0a] border border-[#1f2937]">
+        <div className="mt-2 px-2 py-1.5 bg-[#0d1117] border border-[#21262d]">
           <ConditionPreview conditions={conditions} />
         </div>
       )}
+    </div>
+  );
+}
+
+// ── 行内编辑表单 ──────────────────────────────────────────
+
+const EMPTY_FORM = {
+  key: '', icon: '', label: '', labelZh: '', desc: '',
+  color: '#6b7280', triggerType: 'manual', triggerTarget: 0,
+  sortOrder: 0, isHidden: false, conditions: '[]',
+};
+
+function InlineForm({ editId, initialForm, initialConditions, onSave, onCancel }: {
+  editId: string | null;
+  initialForm: typeof EMPTY_FORM;
+  initialConditions: Condition[];
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const [form, setForm]             = useState({ ...initialForm });
+  const [conditions, setConditions] = useState<Condition[]>(initialConditions);
+  const [busy, setBusy]             = useState(false);
+
+  // 切换编辑目标时同步数据
+  useEffect(() => { setForm({ ...initialForm }); setConditions(initialConditions); },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [editId]);
+
+  const submit = async () => {
+    if (!form.key.trim() || !form.icon.trim() || !form.labelZh.trim() || !form.desc.trim()) {
+      toast('请填写所有必填字段', 'error'); return;
+    }
+    setBusy(true);
+    try {
+      const url    = editId ? `/api/admin/achievements/${editId}` : '/api/admin/achievements';
+      const method = editId ? 'PUT' : 'POST';
+      const payload = { ...form, label: form.label || form.labelZh, conditions: JSON.stringify(conditions) };
+      const res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (data.success) { toast(editId ? '成就已更新' : '成就已创建'); onSave(); }
+      else toast(data.error?.message ?? '操作失败', 'error');
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="border-t border-[#21262d] bg-[#0d1117] px-4 py-4 space-y-3">
+      {[
+        { label: '唯一Key *', field: 'key', disabled: !!editId },
+        { label: '图标(emoji) *', field: 'icon' },
+        { label: '中文标题 *', field: 'labelZh' },
+        { label: '英文标题', field: 'label' },
+        { label: '描述 *', field: 'desc' },
+      ].map(({ label, field, disabled }) => (
+        <div key={field}>
+          <div className="text-[10px] font-mono text-[#8b949e] mb-1">{label}</div>
+          <input value={(form as any)[field]}
+            onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
+            disabled={disabled}
+            className="w-full bg-[#161b22] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1.5 font-mono disabled:opacity-50" />
+        </div>
+      ))}
+
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <div className="text-[10px] font-mono text-[#8b949e] mb-1">颜色</div>
+          <input type="color" value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
+            className="w-full h-8 bg-[#161b22] border border-[#30363d] cursor-pointer" />
+        </div>
+        <div className="flex-1">
+          <div className="text-[10px] font-mono text-[#8b949e] mb-1">排序</div>
+          <input type="number" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: Number(e.target.value) }))}
+            className="w-full bg-[#161b22] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1.5 font-mono" />
+        </div>
+        <div className="flex items-end pb-1.5">
+          <label className="flex items-center gap-1 text-xs font-mono text-[#8b949e] cursor-pointer">
+            <input type="checkbox" checked={form.isHidden} onChange={e => setForm(f => ({ ...f, isHidden: e.target.checked }))} />
+            隐藏成就
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <div className="text-[10px] font-mono text-[#8b949e] mb-2 border-b border-[#21262d] pb-1">触发条件积木</div>
+        <ConditionBuilder conditions={conditions} onChange={setConditions} />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-1">
+        <button onClick={onCancel}
+          className="px-3 py-1.5 text-xs font-mono border border-[#30363d] text-[#8b949e] hover:border-[#8b949e] transition-colors">
+          取消
+        </button>
+        <button onClick={submit} disabled={busy}
+          className="px-3 py-1.5 text-xs font-mono bg-[#00FF41] text-[#0A0A0A] font-bold hover:bg-[#00CC33] disabled:opacity-50 transition-colors">
+          {busy ? '保存中...' : (editId ? '更新' : '创建')}
+        </button>
+      </div>
     </div>
   );
 }
@@ -384,21 +366,11 @@ interface AchievementDef {
   sortOrder: number; isHidden: boolean; conditions: string; createdAt: string;
 }
 
-const EMPTY_FORM = {
-  key: '', icon: '', label: '', labelZh: '', desc: '',
-  color: '#6b7280', triggerType: 'manual', triggerTarget: 0,
-  sortOrder: 0, isHidden: false, conditions: '[]',
-};
-
 export function AdminAchievements() {
   const [achievements, setAchievements] = useState<AchievementDef[]>([]);
   const [loading, setLoading]           = useState(true);
-  const [showForm, setShowForm]         = useState(false);
-  const { mounted: formMounted, isLeaving: formLeaving } = useModalAnimation(showForm);
-  const [editId, setEditId]             = useState<string | null>(null);
-  const [form, setForm]                 = useState({ ...EMPTY_FORM });
-  const [conditions, setConditions]     = useState<Condition[]>([]);
-  const [busy, setBusy]                 = useState(false);
+  /** 当前展开的条目：'new' = 新建表单，ach.id = 编辑该条目 */
+  const [expandedId, setExpandedId]     = useState<string | null>(null);
   const [deleting, setDeleting]         = useState<string | null>(null);
 
   const load = async () => {
@@ -412,45 +384,8 @@ export function AdminAchievements() {
 
   useEffect(() => { load(); }, []);
 
-  const openCreate = () => {
-    setForm({ ...EMPTY_FORM });
-    setConditions([]);
-    setEditId(null);
-    setShowForm(true);
-  };
-
-  const openEdit = (ach: AchievementDef) => {
-    setForm({
-      key: ach.key, icon: ach.icon, label: ach.label, labelZh: ach.labelZh,
-      desc: ach.desc, color: ach.color, triggerType: ach.triggerType,
-      triggerTarget: ach.triggerTarget, sortOrder: ach.sortOrder,
-      isHidden: ach.isHidden, conditions: ach.conditions,
-    });
-    try { setConditions(JSON.parse(ach.conditions || '[]')); }
-    catch { setConditions([]); }
-    setEditId(ach.id);
-    setShowForm(true);
-  };
-
-  const closeForm = () => {
-    setShowForm(false); setEditId(null);
-    setForm({ ...EMPTY_FORM }); setConditions([]);
-  };
-
-  const submit = async () => {
-    if (!form.key.trim() || !form.icon.trim() || !form.labelZh.trim() || !form.desc.trim()) {
-      toast('请填写所有必填字段', 'error'); return;
-    }
-    setBusy(true);
-    try {
-      const url    = editId ? `/api/admin/achievements/${editId}` : '/api/admin/achievements';
-      const method = editId ? 'PUT' : 'POST';
-      const payload = { ...form, label: form.label || form.labelZh, conditions: JSON.stringify(conditions) };
-      const res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      const data = await res.json();
-      if (data.success) { toast(editId ? '成就已更新' : '成就已创建'); closeForm(); load(); }
-      else toast(data.error?.message ?? '操作失败', 'error');
-    } finally { setBusy(false); }
+  const toggle = (id: string, ach?: AchievementDef) => {
+    setExpandedId(prev => prev === id ? null : id);
   };
 
   const deleteAch = async (ach: AchievementDef) => {
@@ -459,148 +394,123 @@ export function AdminAchievements() {
     try {
       const res  = await fetch(`/api/admin/achievements/${ach.id}`, { method: 'DELETE' });
       const data = await res.json();
-      if (data.success) { toast('已删除'); load(); }
+      if (data.success) { toast('已删除'); if (expandedId === ach.id) setExpandedId(null); load(); }
       else toast(data.error?.message ?? '删除失败', 'error');
     } finally { setDeleting(null); }
+  };
+
+  const getFormData = (ach?: AchievementDef) => {
+    if (!ach) return { form: { ...EMPTY_FORM }, conditions: [] as Condition[] };
+    let conditions: Condition[] = [];
+    try { conditions = JSON.parse(ach.conditions || '[]'); } catch { /* ignore */ }
+    return {
+      form: {
+        key: ach.key, icon: ach.icon, label: ach.label, labelZh: ach.labelZh,
+        desc: ach.desc, color: ach.color, triggerType: ach.triggerType,
+        triggerTarget: ach.triggerTarget, sortOrder: ach.sortOrder,
+        isHidden: ach.isHidden, conditions: ach.conditions,
+      },
+      conditions,
+    };
   };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <div className="text-sm font-mono text-[#6b7280]">
+        <div className="text-sm font-mono text-[#8b949e]">
           探索成就定义 — <span className="text-[#00FF41]">{achievements.length}</span> 条
         </div>
-        <button onClick={openCreate}
-          className="px-3 py-1.5 text-xs font-mono border border-[#374151] text-[#6b7280]
-            hover:border-[#00FF41] hover:text-[#00FF41] transition-colors">
-          + 新建成就
+        <button
+          onClick={() => toggle('new')}
+          className={`px-3 py-1.5 text-xs font-mono border transition-colors ${
+            expandedId === 'new'
+              ? 'border-[#00FF41] text-[#00FF41]'
+              : 'border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41]'
+          }`}
+        >
+          {expandedId === 'new' ? '▲ 收起' : '+ 新建成就'}
         </button>
+      </div>
+
+      {/* 新建表单（行内展开，在列表上方） */}
+      <div style={{ display: 'grid', gridTemplateRows: expandedId === 'new' ? '1fr' : '0fr', transition: 'grid-template-rows 0.25s ease' }}>
+        <div style={{ overflow: 'hidden' }}>
+          <div className="border border-[#00FF41]/30 bg-[#161b22] mb-4">
+            <div className="px-4 py-2.5 border-b border-[#21262d] flex items-center justify-between">
+              <span className="text-xs font-mono text-[#00FF41]">// 新建成就</span>
+            </div>
+            <InlineForm
+              editId={null}
+              initialForm={{ ...EMPTY_FORM }}
+              initialConditions={[]}
+              onSave={() => { setExpandedId(null); load(); }}
+              onCancel={() => setExpandedId(null)}
+            />
+          </div>
+        </div>
       </div>
 
       {/* 成就列表 */}
       {loading ? (
-        <div className="text-xs text-[#4b5563] font-mono">加载中...</div>
+        <div className="text-xs text-[#3d444d] font-mono">加载中...</div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {achievements.map(ach => {
+            const isOpen = expandedId === ach.id;
             let preview: string[] = [];
             try {
               const conds: Condition[] = JSON.parse(ach.conditions || '[]');
               preview = conds.filter((c): c is BlockCondition => !('logic' in c))
                 .slice(0, 2).map(c => BLOCK_BY_KEY[c.block]?.label ?? c.block);
             } catch { /* ignore */ }
+            const { form, conditions } = getFormData(ach);
 
             return (
-              <div key={ach.id}
-                className="flex items-start gap-3 px-3 py-2 border border-[#1f2937] bg-[#050505]
-                  hover:border-[#374151] transition-colors"
+              <div key={ach.id} className={`border transition-colors ${isOpen ? 'border-[#30363d]' : 'border-[#21262d]'} bg-[#161b22]`}
                 style={{ borderLeftColor: ach.color, borderLeftWidth: '3px' }}>
-                <span className="text-xl mt-0.5">{ach.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-[#e5e7eb]">{ach.labelZh}</span>
-                    {ach.isHidden && (
-                      <span className="text-[10px] text-[#6b7280] border border-[#374151] px-1">隐藏</span>
-                    )}
+                {/* 条目行 */}
+                <div className="flex items-center gap-3 px-3 py-2">
+                  <span className="text-xl flex-shrink-0">{ach.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-[#cdd9e5]">{ach.labelZh}</span>
+                      {ach.isHidden && <span className="text-[10px] text-[#8b949e] border border-[#30363d] px-1">隐藏</span>}
+                    </div>
+                    <div className="text-[10px] text-[#3d444d] font-mono mt-0.5">
+                      {preview.length > 0 ? preview.join(' + ') : ach.triggerType}
+                    </div>
                   </div>
-                  <div className="text-[10px] text-[#4b5563] font-mono mt-0.5">
-                    {preview.length > 0 ? preview.join(' + ') : ach.triggerType}
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <button
+                      onClick={() => toggle(ach.id, ach)}
+                      className={`flex items-center gap-1 text-[10px] font-mono transition-colors ${isOpen ? 'text-[#00FF41]' : 'text-[#8b949e] hover:text-[#00FF41]'}`}
+                    >
+                      编辑
+                      <ChevronDown size={12} strokeWidth={2}
+                        style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+                    </button>
+                    <button onClick={() => deleteAch(ach)} disabled={deleting === ach.id}
+                      className="text-[10px] font-mono text-[#8b949e] hover:text-[#ef4444] transition-colors">
+                      {deleting === ach.id ? '...' : '删除'}
+                    </button>
                   </div>
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  <button onClick={() => openEdit(ach)}
-                    className="text-[10px] font-mono text-[#6b7280] hover:text-[#00FF41] transition-colors">
-                    编辑
-                  </button>
-                  <button onClick={() => deleteAch(ach)} disabled={deleting === ach.id}
-                    className="text-[10px] font-mono text-[#6b7280] hover:text-[#ef4444] transition-colors">
-                    {deleting === ach.id ? '...' : '删除'}
-                  </button>
+
+                {/* 行内展开表单 */}
+                <div style={{ display: 'grid', gridTemplateRows: isOpen ? '1fr' : '0fr', transition: 'grid-template-rows 0.25s ease' }}>
+                  <div style={{ overflow: 'hidden' }}>
+                    <InlineForm
+                      editId={ach.id}
+                      initialForm={form}
+                      initialConditions={conditions}
+                      onSave={() => { setExpandedId(null); load(); }}
+                      onCancel={() => setExpandedId(null)}
+                    />
+                  </div>
                 </div>
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* 表单弹窗 */}
-      {formMounted && (
-        <div className={`${formLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/80 z-50 flex items-start justify-center pt-12 px-4`}>
-          <div className={`${formLeaving ? 'modal-content-out' : 'modal-content'} bg-[#050505] border border-[#374151] w-full max-w-2xl max-h-[85vh] overflow-y-auto`}>
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#1f2937]">
-              <span className="text-xs font-mono text-[#00FF41]">
-                {editId ? '编辑成就' : '新建成就'}
-              </span>
-              <button onClick={closeForm} className="text-[#6b7280] hover:text-[#ef4444] text-xs font-mono">
-                [ 关闭 X ]
-              </button>
-            </div>
-
-            <div className="px-4 py-4 space-y-3">
-              {/* 基础字段 */}
-              {[
-                { label: '唯一Key *', field: 'key', disabled: !!editId },
-                { label: '图标(emoji) *', field: 'icon' },
-                { label: '中文标题 *', field: 'labelZh' },
-                { label: '英文标题', field: 'label' },
-                { label: '描述 *', field: 'desc' },
-              ].map(({ label, field, disabled }) => (
-                <div key={field}>
-                  <div className="text-[10px] font-mono text-[#6b7280] mb-1">{label}</div>
-                  <input
-                    value={(form as any)[field]}
-                    onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
-                    disabled={disabled}
-                    className="w-full bg-[#0a0a0a] border border-[#374151] text-[#e5e7eb] text-xs
-                      px-2 py-1.5 font-mono disabled:opacity-50"
-                  />
-                </div>
-              ))}
-
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <div className="text-[10px] font-mono text-[#6b7280] mb-1">颜色</div>
-                  <input type="color" value={form.color}
-                    onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
-                    className="w-full h-8 bg-[#0a0a0a] border border-[#374151] cursor-pointer" />
-                </div>
-                <div className="flex-1">
-                  <div className="text-[10px] font-mono text-[#6b7280] mb-1">排序</div>
-                  <input type="number" value={form.sortOrder}
-                    onChange={e => setForm(f => ({ ...f, sortOrder: Number(e.target.value) }))}
-                    className="w-full bg-[#0a0a0a] border border-[#374151] text-[#e5e7eb] text-xs px-2 py-1.5 font-mono" />
-                </div>
-                <div className="flex items-end pb-1.5">
-                  <label className="flex items-center gap-1 text-xs font-mono text-[#6b7280] cursor-pointer">
-                    <input type="checkbox" checked={form.isHidden}
-                      onChange={e => setForm(f => ({ ...f, isHidden: e.target.checked }))} />
-                    隐藏成就
-                  </label>
-                </div>
-              </div>
-
-              {/* 条件积木 */}
-              <div>
-                <div className="text-[10px] font-mono text-[#6b7280] mb-2 border-b border-[#1f2937] pb-1">
-                  触发条件积木
-                </div>
-                <ConditionBuilder conditions={conditions} onChange={setConditions} />
-              </div>
-            </div>
-
-            <div className="px-4 py-3 border-t border-[#1f2937] flex justify-end gap-2">
-              <button onClick={closeForm}
-                className="px-3 py-1.5 text-xs font-mono border border-[#374151] text-[#6b7280]
-                  hover:border-[#6b7280] transition-colors">
-                取消
-              </button>
-              <button onClick={submit} disabled={busy}
-                className="px-3 py-1.5 text-xs font-mono bg-[#00FF41] text-[#0A0A0A]
-                  font-bold hover:bg-[#00CC33] disabled:opacity-50 transition-colors">
-                {busy ? '保存中...' : (editId ? '更新' : '创建')}
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>

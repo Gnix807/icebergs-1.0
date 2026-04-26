@@ -5,7 +5,7 @@
  */
 
 // User role (stored as String in DB)
-export type Role = 'USER' | 'CONTRIBUTOR' | 'EDITOR' | 'ADMIN';
+export type Role = 'USER' | 'CONTRIBUTOR' | 'EDITOR' | 'MODERATOR' | 'ADMIN';
 
 // Account status (stored as String in DB)
 export type AccountStatus =
@@ -42,8 +42,8 @@ export type ReportStatus = 'PENDING' | 'RESOLVED_ACTION' | 'RESOLVED_DISMISSED';
 // ── Permission helpers ──────────────────────────────────────
 
 /** Returns true if the role can perform editorial actions */
-export function isEditor(role: string): role is 'EDITOR' | 'ADMIN' {
-  return role === 'EDITOR' || role === 'ADMIN';
+export function isEditor(role: string): role is 'EDITOR' | 'MODERATOR' | 'ADMIN' {
+  return role === 'EDITOR' || role === 'MODERATOR' || role === 'ADMIN';
 }
 
 /** Returns true if the role is ADMIN */

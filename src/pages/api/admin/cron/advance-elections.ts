@@ -14,6 +14,7 @@
 import type { APIEvent } from '@astrojs/node';
 import { prisma } from '../../../../lib/prisma';
 import { success, error } from '../../../../lib/api';
+import { notify } from '../../../../lib/notify';
 
 export async function POST(event: APIEvent) {
   // 鉴权
@@ -52,6 +53,20 @@ export async function POST(event: APIEvent) {
         data: { status: newStatus },
       });
       results.push({ id: election.id, from: election.status, to: newStatus });
+
+      // 通知所有 RUNNING 候选人阶段变化
+      const candidates = await prisma.electionCandidate.findMany({
+        where: { electionId: election.id, status: 'RUNNING' },
+        select: { userId: true },
+      });
+      const link = `/elections/${election.id}`;
+      for (const c of candidates) {
+        if (newStatus === 'VOTING') {
+          notify(c.userId, 'election_phase_changed', '选举进入投票阶段', '报名期已结束，投票现已开放，请关注选举进度。', link);
+        } else if (newStatus === 'CLOSED') {
+          notify(c.userId, 'election_phase_changed', '选举投票已结束', '投票期已结束，等待管理员确认最终结果。', link);
+        }
+      }
     }
   }
 

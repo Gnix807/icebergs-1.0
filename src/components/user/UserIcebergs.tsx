@@ -21,8 +21,8 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
 
   if (icebergs.length === 0) {
     return (
-      <div className="py-16 text-center border border-dashed border-[#2A2A2A]">
-        <p className="text-[#6b7280] font-mono text-sm mb-3">暂无冰山图</p>
+      <div className="py-16 text-center border border-dashed border-[#30363d]">
+        <p className="text-[#8b949e] font-mono text-sm mb-3">暂无冰山图</p>
         {isOwner && (
           <a href="/iceberg/new" className="text-[#00FF41] font-mono text-sm hover:underline">
             立即创建 →
@@ -37,7 +37,7 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
     return (
       <div className="mb-6">
         {label && (
-          <div className="text-xs font-mono text-[#374151] mb-2 tracking-widest">{label}</div>
+          <div className="text-xs font-mono text-[#6e7681] mb-2 tracking-widest">{label}</div>
         )}
         <div className="space-y-2">
           {items.map(iceberg => (
@@ -47,13 +47,13 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
               className="archive-card group flex items-start gap-4 p-4 block"
             >
               <div className="flex-1 min-w-0">
-                <h3 className="font-mono text-sm text-[#e5e5e5] group-hover:text-[#00FF41] transition-colors truncate">
-                  <span className="text-[#374151] mr-1">#</span>{iceberg.title}
+                <h3 className="font-mono text-sm text-[#cdd9e5] group-hover:text-[#00FF41] transition-colors truncate">
+                  <span className="text-[#6e7681] mr-1">#</span>{iceberg.title}
                 </h3>
                 {iceberg.description && (
-                  <p className="text-xs text-[#6b7280] mt-1 truncate">{iceberg.description}</p>
+                  <p className="text-xs text-[#8b949e] mt-1 truncate">{iceberg.description}</p>
                 )}
-                <div className="flex gap-3 mt-2 text-xs text-[#4b5563] font-mono">
+                <div className="flex gap-3 mt-2 text-xs text-[#3d444d] font-mono">
                   <span>{iceberg._count.tiers} 层</span>
                   <span className="flex items-center gap-1">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -66,19 +66,19 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
                   iceberg.status === 'PUBLISHED'
                     ? 'text-[#22c55e] border border-[#22c55e]/30'
                     : iceberg.status === 'ARCHIVED'
-                    ? 'text-[#6b7280] border border-[#6b7280]/30'
+                    ? 'text-[#8b949e] border border-[#6b7280]/30'
                     : 'text-[#f59e0b] border border-[#f59e0b]/30'
                 }`}>
                   {iceberg.status === 'PUBLISHED' ? 'published' : iceberg.status === 'ARCHIVED' ? 'archived' : 'draft'}
                 </span>
-                <div className="text-xs text-[#374151] font-mono mt-1">
+                <div className="text-xs text-[#6e7681] font-mono mt-1">
                   {new Date(iceberg.createdAt).toLocaleDateString('zh-CN')}
                 </div>
                 {isOwner && (
                   <a
                     href={`/iceberg/edit/${iceberg.id}`}
                     onClick={e => e.stopPropagation()}
-                    className="block text-xs text-[#4b5563] hover:text-[#00FF41] font-mono mt-1 transition-colors"
+                    className="block text-xs text-[#3d444d] hover:text-[#00FF41] font-mono mt-1 transition-colors"
                   >
                     编辑
                   </a>
@@ -100,7 +100,7 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
       {renderList(published, published.length > 0 && (drafts.length > 0 || archived.length > 0) ? '// 已发布' : undefined)}
       {renderList(drafts, '// 草稿')}
       {renderList(archived, '// 已归档')}
-      <div className="mt-4 pt-4 border-t border-[#1f2937]">
+      <div className="mt-4 pt-4 border-t border-[#21262d]">
         <a href="/iceberg/new" className="text-xs text-[#00FF41] font-mono hover:underline">
           + 新建冰山图
         </a>

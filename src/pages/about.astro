@@ -1,0 +1,332 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { prisma } from '../lib/prisma';
+
+const [icebergCount, userCount, items] = await Promise.all([
+  prisma.iceberg.count({ where: { status: 'PUBLISHED' } }),
+  prisma.user.count(),
+  prisma.item.findMany({
+    where: { tier: { iceberg: { status: 'PUBLISHED' } } },
+    select: { labels: true },
+  }),
+]);
+
+// 聚合标签云
+const tagCount: Record<string, number> = {};
+for (const item of items) {
+  try {
+    const tags = JSON.parse(item.labels) as string[];
+    for (const tag of tags.filter(Boolean)) {
+      tagCount[tag] = (tagCount[tag] ?? 0) + 1;
+    }
+  } catch {}
+}
+const topTags = Object.entries(tagCount)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 40);
+const maxCount = topTags[0]?.[1] ?? 1;
+---
+
+<Layout title="关于 — 冰山图宇宙">
+  <main class="max-w-3xl mx-auto px-4 py-8 reveal">
+
+    <!-- 标题 -->
+    <div class="mb-10">
+      <div class="text-[10px] font-mono text-[#6e7681] tracking-widest mb-2">// ABOUT · 关于本站</div>
+      <h1 class="text-2xl font-mono text-[#cdd9e5] mb-3">冰山图宇宙</h1>
+      <p class="text-sm font-mono text-[#8b949e] leading-relaxed">
+        一个以"冰山图"为核心的知识整理与分享社区。把你知道的一切，按深度分层。
+        <br />
+        <a href="/guide#what" class="text-[#00FF41] hover:underline">什么是冰山图？→</a>
+      </p>
+    </div>
+
+    <!-- 数据概览 -->
+    <div class="grid grid-cols-2 gap-3 mb-10">
+      <div class="border border-[#21262d] bg-[#161b22] p-4 text-center">
+        <div class="font-mono text-2xl text-[#00FF41] mb-1">{icebergCount}</div>
+        <div class="text-[10px] font-mono text-[#6e7681] tracking-widest">已发布冰山图</div>
+      </div>
+      <div class="border border-[#21262d] bg-[#161b22] p-4 text-center">
+        <div class="font-mono text-2xl text-[#00FF41] mb-1">{userCount}</div>
+        <div class="text-[10px] font-mono text-[#6e7681] tracking-widest">注册用户</div>
+      </div>
+    </div>
+
+    <!-- 01 · 平台理念 -->
+    <section class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#00FF41] tracking-widest">01 · 平台理念</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="border border-[#21262d] bg-[#161b22] p-5 font-mono text-[11px] text-[#8b949e] leading-relaxed space-y-4">
+        <p>
+          我们相信，知识的乐趣不在于广度，而在于深度。
+          表层的常识每个人都知道；而那些藏在水面之下的内容——
+          冷僻的细节、反直觉的事实、只有真正深入才能触及的层次——
+          才是真正令人着迷的地方。
+        </p>
+        <p>
+          冰山图宇宙不是百科全书，也不是论坛。
+          它是一个让人把某个主题"刨到底"的地方。
+          每张冰山图都是一次邀请：跟我一起，从你已知的开始，
+          一层一层往下探。
+        </p>
+        <p class="text-[#6e7681]">
+          // 内容由社区创作，质量由社区维护，规则由社区共同决定。
+        </p>
+      </div>
+    </section>
+
+    <!-- 02 · 为什么是冰山格式 -->
+    <section class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#3b82f6] tracking-widest">02 · 为什么是冰山格式</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="space-y-2 text-[11px] font-mono">
+
+        <div class="border border-[#21262d] bg-[#161b22] p-4">
+          <div class="text-[#cdd9e5] mb-1.5">vs. 百科全书</div>
+          <p class="text-[#8b949e] leading-relaxed">
+            百科全书假设所有内容同等重要，读者自己决定深度。
+            冰山图把"认知门槛"本身变成了结构——你能直观看到一条知识"有多深"。
+          </p>
+        </div>
+
+        <div class="border border-[#21262d] bg-[#161b22] p-4">
+          <div class="text-[#cdd9e5] mb-1.5">vs. 博客 / 长文</div>
+          <p class="text-[#8b949e] leading-relaxed">
+            长文是线性的，你必须从头读到尾。冰山图是空间的：
+            你可以先扫一眼表层，再按自己的节奏钻进感兴趣的某一层，
+            随时停下，随时继续。
+          </p>
+        </div>
+
+        <div class="border border-[#21262d] bg-[#161b22] p-4">
+          <div class="text-[#cdd9e5] mb-1.5">vs. 视频 / 播客</div>
+          <p class="text-[#8b949e] leading-relaxed">
+            视频说"你应该对这个感到惊讶"。
+            冰山图让你自己滑动到第五层，亲眼看到那个词条标题，
+            然后自己决定要不要打开。那种瞬间是属于你的。
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 03 · 怎么参与 -->
+    <section class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#f59e0b] tracking-widest">03 · 怎么参与</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="space-y-3">
+
+        <div class="border border-[#21262d] bg-[#161b22] p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="font-mono text-xs text-[#cdd9e5]">游客</span>
+            <span class="text-[10px] font-mono text-[#6e7681]">· 无需注册</span>
+          </div>
+          <ul class="text-[11px] font-mono text-[#8b949e] space-y-1">
+            <li class="before:content-['·'] before:text-[#3d444d] before:mr-2">浏览所有已发布冰山图、阅读词条详情</li>
+            <li class="before:content-['·'] before:text-[#3d444d] before:mr-2">以游客身份发表顶层评论</li>
+          </ul>
+        </div>
+
+        <div class="border border-[#21262d] bg-[#161b22] p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="font-mono text-xs text-[#cdd9e5]">USER</span>
+            <span class="text-[10px] font-mono text-[#6e7681]">· 注册后自动获得</span>
+          </div>
+          <ul class="text-[11px] font-mono text-[#8b949e] space-y-1">
+            <li class="before:content-['·'] before:text-[#3d444d] before:mr-2">点赞 / 踩冰山图、收藏、回复评论</li>
+            <li class="before:content-['·'] before:text-[#3d444d] before:mr-2">积累质量分，申请晋升为 CONTRIBUTOR</li>
+          </ul>
+        </div>
+
+        <div class="border border-[#21262d] bg-[#161b22] p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="font-mono text-xs text-[#22c55e]">CONTRIBUTOR</span>
+            <span class="text-[10px] font-mono text-[#6e7681]">· 满足门槛后申请晋升</span>
+          </div>
+          <ul class="text-[11px] font-mono text-[#8b949e] space-y-1">
+            <li class="before:content-['·'] before:text-[#3d444d] before:mr-2">创建并发布自己的冰山图</li>
+            <li class="before:content-['·'] before:text-[#3d444d] before:mr-2">参与编辑资格（RfA）投票</li>
+          </ul>
+        </div>
+
+        <div class="border border-[#22c55e20] bg-[#22c55e05] p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="font-mono text-xs text-[#22c55e]">EDITOR+</span>
+            <span class="text-[10px] font-mono text-[#6e7681]">· 社区骨干</span>
+          </div>
+          <ul class="text-[11px] font-mono text-[#8b949e] space-y-1">
+            <li class="before:content-['·'] before:text-[#3d444d] before:mr-2">审核他人提交的冰山图，维护社区秩序</li>
+            <li class="before:content-['·'] before:text-[#3d444d] before:mr-2">参与平台治理与选举</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="mt-3 text-[10px] font-mono text-[#6e7681] border border-[#1a1a1a] px-3 py-2">
+        详细晋升条件、质量分规则、RfA 制度见 <a href="/rules" class="text-[#00FF41] hover:underline">/rules</a>
+      </div>
+    </section>
+
+    <!-- 04 · 话题标签云 -->
+    <section class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#22c55e] tracking-widest">04 · 话题标签</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      {topTags.length > 0 ? (
+        <div class="border border-[#21262d] bg-[#161b22] p-5">
+          <div class="flex flex-wrap gap-x-4 gap-y-2.5 items-baseline">
+            {topTags.map(([tag, count]) => {
+              const ratio = count / maxCount;
+              const size = ratio > 0.7 ? '14px' : ratio > 0.4 ? '12px' : '11px';
+              const opacity = ratio > 0.7 ? '1' : ratio > 0.3 ? '0.75' : '0.5';
+              return (
+                <span
+                  class="font-mono text-[#8b949e] cursor-default hover:text-[#00FF41] transition-colors"
+                  style={`font-size:${size};opacity:${opacity}`}
+                  title={`${count} 个词条`}
+                >
+                  {tag}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div class="border border-[#21262d] bg-[#161b22] p-5 text-center">
+          <p class="text-[11px] font-mono text-[#3d444d]">// 暂无标签数据 · 发布第一张冰山图后这里会出现内容</p>
+        </div>
+      )}
+    </section>
+
+    <!-- 05 · 隐私与数据 -->
+    <section class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#8b5cf6] tracking-widest">05 · 隐私与数据</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="space-y-2 font-mono text-[11px]">
+        <div class="border border-[#21262d] bg-[#161b22] p-4">
+          <div class="text-[#8b949e] mb-3">我们存储什么</div>
+          <ul class="space-y-1.5 text-[#6e7681]">
+            <li class="flex gap-3">
+              <span class="text-[#22c55e] flex-shrink-0">✓</span>
+              <span>账号信息：用户名、邮箱（仅用于登录，不对外展示）、加密后的密码哈希</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="text-[#22c55e] flex-shrink-0">✓</span>
+              <span>会话 token：存储在数据库中，用于保持登录状态，过期自动清除</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="text-[#22c55e] flex-shrink-0">✓</span>
+              <span>你创建的内容：冰山图、评论、投票记录</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="border border-[#21262d] bg-[#161b22] p-4">
+          <div class="text-[#8b949e] mb-3">我们不做什么</div>
+          <ul class="space-y-1.5 text-[#6e7681]">
+            <li class="flex gap-3">
+              <span class="text-[#ef4444] flex-shrink-0">✕</span>
+              <span>不追踪跨站行为，不植入第三方广告 SDK</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="text-[#ef4444] flex-shrink-0">✕</span>
+              <span>不出售或共享用户数据给任何第三方</span>
+            </li>
+            <li class="flex gap-3">
+              <span class="text-[#ef4444] flex-shrink-0">✕</span>
+              <span>不以明文存储密码（使用 PBKDF2 哈希）</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="border border-[#21262d] bg-[#161b22] p-4">
+          <div class="text-[#8b949e] mb-2">内容可见性</div>
+          <p class="text-[#6e7681] leading-relaxed">
+            已发布的冰山图内容默认公开，任何人无需登录即可阅读。
+            如需删除账号或内容，请通过反馈页联系管理员。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 · 技术栈 -->
+    <section class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#6e7681] tracking-widest">06 · 技术栈</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="border border-[#21262d] bg-[#161b22] p-4 font-mono text-[11px] text-[#8b949e]">
+        <div class="grid grid-cols-2 gap-x-8 gap-y-1.5">
+          <div class="flex justify-between">
+            <span class="text-[#6e7681]">框架</span>
+            <span>Astro 5 + React 19</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[#6e7681]">数据库</span>
+            <span>SQLite + Prisma</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[#6e7681]">认证</span>
+            <span>GitHub / Google OAuth</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-[#6e7681]">部署</span>
+            <span>Node.js SSR</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 快速导航 -->
+    <section class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#6e7681] tracking-widest">// 快速导航</span>
+        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 font-mono text-xs">
+        <a href="/iceberg/list"
+          class="border border-[#21262d] bg-[#161b22] px-3 py-2.5 text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors">
+          冰山广场 →
+        </a>
+        <a href="/leaderboard"
+          class="border border-[#21262d] bg-[#161b22] px-3 py-2.5 text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors">
+          排行榜 →
+        </a>
+        <a href="/org"
+          class="border border-[#21262d] bg-[#161b22] px-3 py-2.5 text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors">
+          组织架构 →
+        </a>
+        <a href="/guide"
+          class="border border-[#21262d] bg-[#161b22] px-3 py-2.5 text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors">
+          使用指南 →
+        </a>
+        <a href="/rules"
+          class="border border-[#21262d] bg-[#161b22] px-3 py-2.5 text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors">
+          平台规则 →
+        </a>
+        <a href="/feedback"
+          class="border border-[#21262d] bg-[#161b22] px-3 py-2.5 text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors">
+          提交反馈 →
+        </a>
+      </div>
+    </section>
+
+  </main>
+</Layout>

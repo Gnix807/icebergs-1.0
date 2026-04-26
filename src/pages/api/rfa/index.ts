@@ -9,7 +9,7 @@ import { success, error, ErrorCodes } from '../../../lib/api';
 import { getRfaSettings, getRfaWeight } from '../../../lib/rfa';
 import { notify } from '../../../lib/notify';
 
-const db = prisma as any;
+const db = prisma;
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

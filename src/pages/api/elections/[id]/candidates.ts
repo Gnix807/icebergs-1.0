@@ -7,6 +7,7 @@ import type { APIEvent } from '@astrojs/node';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
+import { notify } from '../../../../lib/notify';
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -69,6 +70,14 @@ export async function POST(event: APIEvent) {
     data: { electionId: electionId!, userId: session.userId, statement },
   });
 
+  notify(
+    session.userId,
+    'election_candidate_registered',
+    '报名参选成功',
+    '你已成功报名参选，等待报名期结束后进入投票阶段。',
+    `/elections/${electionId}`,
+  );
+
   return json(success({ candidate }), 201);
 }
 
@@ -98,6 +107,14 @@ export async function DELETE(event: APIEvent) {
     where: { id: candidate.id },
     data: { status: 'WITHDRAWN' },
   });
+
+  notify(
+    targetUserId,
+    'election_candidate_withdrawn',
+    '参选已撤回',
+    '你已撤回本次选举的参选资格。',
+    `/elections/${electionId}`,
+  );
 
   return json(success({ message: '已撤回参选' }));
 }

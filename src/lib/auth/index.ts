@@ -1,4 +1,4 @@
-import { GitHub } from 'arctic';
+import { GitHub, Google } from 'arctic';
 import type { APIEvent } from '@astrojs/node';
 import { prisma } from '../prisma';
 import type { Role, AccountStatus } from '../types';
@@ -6,11 +6,22 @@ import 'dotenv/config';
 
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || '';
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || '';
-
-const REDIRECT_URI = process.env.REDIRECT_URI || 'http://localhost:4321/api/auth/callback';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '';
+const REDIRECT_URI = process.env.REDIRECT_URI
+  || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:4321/api/auth/callback');
+if (!REDIRECT_URI) {
+  throw new Error('Missing REDIRECT_URI in production environment');
+}
 export const github = new GitHub(GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, REDIRECT_URI);
+export const google = new Google(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, REDIRECT_URI);
 
-export type OAuthProvider = 'github';
+export type OAuthProvider = 'github' | 'google';
+
+export const oauthProviderEnabled: Record<OAuthProvider, boolean> = {
+  github: Boolean(GITHUB_CLIENT_ID && GITHUB_CLIENT_SECRET),
+  google: Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET),
+};
 
 export interface GitHubUser {
   id: number;

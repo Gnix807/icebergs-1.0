@@ -126,12 +126,12 @@ export function AdminUsers() {
           value={q}
           onChange={e => { setQ(e.target.value); setPage(1); }}
           placeholder="// 搜索用户名 / 邮箱"
-          className="flex-1 min-w-[160px] px-3 py-1.5 bg-[#0a0c10] border border-[#2A2A2A] text-xs font-mono text-[#9ca3af] focus:border-[#00FF41] focus:outline-none"
+          className="flex-1 min-w-[160px] px-3 py-1.5 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#8b949e] focus:border-[#00FF41] focus:outline-none"
         />
         <select
           value={roleFilter}
           onChange={e => { setRoleFilter(e.target.value); setPage(1); }}
-          className="px-3 py-1.5 bg-[#0a0c10] border border-[#2A2A2A] text-xs font-mono text-[#9ca3af] focus:outline-none"
+          className="px-3 py-1.5 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#8b949e] focus:outline-none"
         >
           <option value="">全部角色</option>
           <option value="USER">USER</option>
@@ -142,7 +142,7 @@ export function AdminUsers() {
         <select
           value={statusFilter}
           onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-          className="px-3 py-1.5 bg-[#0a0c10] border border-[#2A2A2A] text-xs font-mono text-[#9ca3af] focus:outline-none"
+          className="px-3 py-1.5 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#8b949e] focus:outline-none"
         >
           <option value="">全部状态</option>
           <option value="ACTIVE">ACTIVE</option>
@@ -158,14 +158,14 @@ export function AdminUsers() {
         <AdminListSkeleton rows={5} />
       ) : (
         <>
-          <div className="text-[10px] font-mono text-[#374151] mb-2">// {total} 个用户</div>
+          <div className="text-[10px] font-mono text-[#6e7681] mb-2">// {total} 个用户</div>
 
           <div className="space-y-1.5">
             {users.map(u => (
-              <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 bg-[#0a0c10] border border-[#1a1a1a] hover:border-[#2A2A2A] transition-colors">
+              <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 bg-[#161b22] border border-[#21262d] hover:border-[#30363d] transition-colors">
                 <a href={`/user/${u.id}`} className="flex-1 min-w-0 group">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-sm text-[#e5e5e5] group-hover:text-[#00FF41] transition-colors">
+                    <span className="font-mono text-sm text-[#cdd9e5] group-hover:text-[#00FF41] transition-colors">
                       @{u.nickname ?? u.username}
                     </span>
                     {u.isFounder && (
@@ -187,7 +187,7 @@ export function AdminUsers() {
                       {u.status}
                     </span>
                   </div>
-                  <div className="text-[10px] font-mono text-[#374151] mt-0.5">
+                  <div className="text-[10px] font-mono text-[#6e7681] mt-0.5">
                     {u.qualityScore} pts · {u._count.icebergs} 冰山图 · {new Date(u.createdAt).toLocaleDateString('zh-CN')}
                     {u.banUntil && <span className="text-[#ef4444] ml-2">封至 {new Date(u.banUntil).toLocaleDateString('zh-CN')}</span>}
                   </div>
@@ -250,7 +250,7 @@ export function AdminUsers() {
                   className={`px-2.5 py-1 text-xs font-mono border transition-colors ${
                     page === p
                       ? 'border-[#00FF41] text-[#00FF41]'
-                      : 'border-[#2A2A2A] text-[#4b5563] hover:border-[#374151]'
+                      : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d]'
                   }`}
                 >
                   {p}
@@ -264,9 +264,9 @@ export function AdminUsers() {
       {/* 操作模态框 */}
       {modalMounted && modal && (
         <div className={`${modalLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#2A2A2A] w-full max-w-sm p-5 font-mono`}>
-            <div className="text-xs text-[#4b5563] mb-1">对象：@{modal.user.nickname ?? modal.user.username}</div>
-            <div className="text-sm text-[#e5e5e5] mb-4">
+          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-sm p-5 font-mono`}>
+            <div className="text-xs text-[#3d444d] mb-1">对象：@{modal.user.nickname ?? modal.user.username}</div>
+            <div className="text-sm text-[#cdd9e5] mb-4">
               {modal.type === 'warn' && '发出警告'}
               {modal.type === 'restrict' && '设为只读'}
               {modal.type === 'ban' && '封禁用户'}
@@ -276,7 +276,7 @@ export function AdminUsers() {
 
             {modal.type === 'role' && (
               <div className="mb-3">
-                <div className="text-[10px] text-[#4b5563] mb-1">目标角色</div>
+                <div className="text-[10px] text-[#3d444d] mb-1">目标角色</div>
                 <div className="grid grid-cols-2 gap-1.5">
                   {APPOINT_ROLES.map(r => (
                     <button
@@ -285,7 +285,7 @@ export function AdminUsers() {
                       className={`py-1.5 text-xs font-mono border transition-colors ${
                         formData.role === r
                           ? 'border-[#8b5cf6] text-[#8b5cf6] bg-[#8b5cf610]'
-                          : 'border-[#2A2A2A] text-[#4b5563] hover:border-[#374151]'
+                          : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d]'
                       }`}
                     >
                       {r}
@@ -297,7 +297,7 @@ export function AdminUsers() {
 
             {modal.type === 'warn' && (
               <div className="mb-3">
-                <div className="text-[10px] text-[#4b5563] mb-1">警告等级</div>
+                <div className="text-[10px] text-[#3d444d] mb-1">警告等级</div>
                 <div className="flex gap-2">
                   {(['1', '2'] as const).map(l => (
                     <button
@@ -306,7 +306,7 @@ export function AdminUsers() {
                       className={`flex-1 py-1.5 text-xs border transition-colors ${
                         formData.level === l
                           ? 'border-[#f59e0b] text-[#f59e0b]'
-                          : 'border-[#2A2A2A] text-[#4b5563] hover:border-[#374151]'
+                          : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d]'
                       }`}
                     >
                       WARNED_{l}
@@ -326,7 +326,7 @@ export function AdminUsers() {
                       className={`flex-1 py-1.5 text-xs border transition-colors ${
                         formData.banType === t
                           ? 'border-[#ef4444] text-[#ef4444]'
-                          : 'border-[#2A2A2A] text-[#4b5563] hover:border-[#374151]'
+                          : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d]'
                       }`}
                     >
                       {t === 'TEMP' ? '临时封禁' : '永久封禁'}
@@ -335,13 +335,13 @@ export function AdminUsers() {
                 </div>
                 {formData.banType !== 'PERM' && (
                   <div>
-                    <div className="text-[10px] text-[#4b5563] mb-1">天数</div>
+                    <div className="text-[10px] text-[#3d444d] mb-1">天数</div>
                     <input
                       type="number"
                       min={1}
                       value={formData.days ?? '7'}
                       onChange={e => setFormData(f => ({ ...f, days: e.target.value }))}
-                      className="w-full px-3 py-1.5 bg-[#0a0c10] border border-[#2A2A2A] text-xs text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none"
+                      className="w-full px-3 py-1.5 bg-[#161b22] border border-[#30363d] text-xs text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none"
                     />
                   </div>
                 )}
@@ -350,14 +350,14 @@ export function AdminUsers() {
 
             {(modal.type !== 'unban') && (
               <div className="mb-4">
-                <div className="text-[10px] text-[#4b5563] mb-1">
+                <div className="text-[10px] text-[#3d444d] mb-1">
                   {modal.type === 'role' ? '备注（可选）' : '理由'}
                 </div>
                 <textarea
                   value={formData.reason ?? ''}
                   onChange={e => setFormData(f => ({ ...f, reason: e.target.value }))}
                   rows={2}
-                  className="w-full px-3 py-2 bg-[#0a0c10] border border-[#2A2A2A] text-xs text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none resize-none"
+                  className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none"
                   placeholder={modal.type === 'role' ? '备注原因（可选）' : '理由（至少 5 字）'}
                 />
               </div>
@@ -366,7 +366,7 @@ export function AdminUsers() {
             <div className="flex gap-3">
               <button
                 onClick={() => { setModal(null); setFormData({}); }}
-                className="btn-ghost flex-1 py-2 border border-[#2A2A2A] text-xs hover:border-[#374151] transition-colors"
+                className="btn-ghost flex-1 py-2 border border-[#30363d] text-xs hover:border-[#30363d] transition-colors"
               >
                 取消
               </button>

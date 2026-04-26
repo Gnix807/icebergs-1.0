@@ -11,7 +11,7 @@ import { getRfaWeight } from '../../../../lib/rfa';
 import { hasRole } from '../../../../lib/permissions';
 import { notify } from '../../../../lib/notify';
 
-const db = prisma as any;
+const db = prisma;
 
 const VALID_VOTES = new Set(['APPROVE', 'OPPOSE', 'ABSTAIN']);
 

@@ -2,9 +2,14 @@ import type { APIEvent } from '@astrojs/node';
 import { getSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../../lib/api';
-import { USERBOX_LIBRARY } from '../../../../lib/awards';
+import { USERBOX_LIBRARY, USERBOX_BASE_SLOTS, USERBOX_MAX_SLOTS } from '../../../../lib/awards';
 
-const ALL_BOX_IDS = new Set(USERBOX_LIBRARY.flatMap(c => c.boxes.map(b => b.id)));
+const ALL_BOXES = USERBOX_LIBRARY.flatMap(c => c.boxes);
+const ALL_BOX_IDS = new Set(ALL_BOXES.map(b => b.id));
+/** 需要特定成就才能使用的 id → 所需成就 id */
+const REQUIRES_MAP = new Map(
+  ALL_BOXES.filter(b => b.requires).map(b => [b.id, b.requires!])
+);
 
 function json(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
@@ -23,9 +28,31 @@ export async function PUT(event: APIEvent) {
 
   if (!Array.isArray(body.ids)) return json(error(ErrorCodes.BAD_REQUEST, 'ids 必须是数组'), 400);
 
-  const ids = (body.ids as unknown[])
-    .filter((x): x is string => typeof x === 'string' && ALL_BOX_IDS.has(x))
-    .slice(0, 20);
+  // 获取用户信息（isFounder）及社区成就
+  const [userRow, achievements] = await Promise.all([
+    prisma.user.findUnique({ where: { id: session.userId }, select: { isFounder: true } }),
+    prisma.userAchievement.findMany({ where: { userId: session.userId }, select: { achievementId: true } }),
+  ]);
+  const isFounder   = userRow?.isFounder ?? false;
+  const unlockedIds = new Set(achievements.map(a => a.achievementId));
+
+  let ids: string[];
+  if (isFounder) {
+    // 站长：仅过滤不存在的 id，不限槽位和成就
+    ids = (body.ids as unknown[]).filter((x): x is string => typeof x === 'string' && ALL_BOX_IDS.has(x));
+  } else {
+    // 普通用户：按槽位 + 成就门槛过滤
+    const COMMUNITY_IDS = new Set(['pioneer', 'prolific', 'popular', 'analyst', 'veteran', 'scholar']);
+    const communityCount = [...unlockedIds].filter(id => COMMUNITY_IDS.has(id)).length;
+    const maxSlots = Math.min(USERBOX_BASE_SLOTS + communityCount, USERBOX_MAX_SLOTS);
+    ids = (body.ids as unknown[])
+      .filter((x): x is string => {
+        if (typeof x !== 'string' || !ALL_BOX_IDS.has(x)) return false;
+        const required = REQUIRES_MAP.get(x);
+        return !required || unlockedIds.has(required);
+      })
+      .slice(0, maxSlots);
+  }
 
   await prisma.user.update({
     where: { id: session.userId },

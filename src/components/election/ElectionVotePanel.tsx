@@ -148,23 +148,23 @@ export function ElectionVotePanel({
       )}
 
       {showApplyForm && (
-        <div className="border border-[#2A2A2A] bg-[#0a0c10] p-4 space-y-3">
-          <div className="text-xs font-mono text-[#9ca3af]">提交参选申请</div>
+        <div className="border border-[#30363d] bg-[#161b22] p-4 space-y-3">
+          <div className="text-xs font-mono text-[#8b949e]">提交参选申请</div>
           <div>
-            <div className="text-[10px] text-[#4b5563] mb-1">竞选宣言（可选，最多 500 字）</div>
+            <div className="text-[10px] text-[#3d444d] mb-1">竞选宣言（可选，最多 500 字）</div>
             <textarea
               value={statement}
               onChange={e => setStatement(e.target.value.slice(0, 500))}
               rows={4}
-              className="w-full px-3 py-2 bg-[#050505] border border-[#2A2A2A] text-xs font-mono text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none resize-none"
+              className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none"
               placeholder="介绍你的参选理由和治理理念..."
             />
-            <div className="text-right text-[10px] font-mono text-[#2A2A2A]">{statement.length}/500</div>
+            <div className="text-right text-[10px] font-mono text-[#3d444d]">{statement.length}/500</div>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setShowApplyForm(false)}
-              className="btn-ghost flex-1 py-1.5 text-xs font-mono border border-[#2A2A2A] text-[#4b5563] hover:border-[#374151] transition-colors"
+              className="btn-ghost flex-1 py-1.5 text-xs font-mono border border-[#30363d] text-[#3d444d] hover:border-[#30363d] transition-colors"
             >
               取消
             </button>
@@ -191,7 +191,7 @@ export function ElectionVotePanel({
 
       {/* 投票权重提示 */}
       {canVote && userRole && (
-        <div className="text-[10px] font-mono text-[#374151] border border-[#1a1a1a] px-3 py-2">
+        <div className="text-[10px] font-mono text-[#6e7681] border border-[#21262d] px-3 py-2">
           你的投票权重：<span className="text-[#f59e0b]">{VOTE_WEIGHT[userRole] ?? 1}</span>
           <span className="ml-1">（{ROLE_LABEL[userRole]}）</span>
           {myVote && <span className="ml-3 text-[#22c55e]">✓ 已投票（可换票）</span>}
@@ -201,7 +201,7 @@ export function ElectionVotePanel({
       {/* 候选人列表 */}
       <div className="space-y-3">
         {candidates.filter(c => c.status !== 'WITHDRAWN').length === 0 ? (
-          <div className="text-[10px] font-mono text-[#2A2A2A] py-4 text-center">// 暂无候选人</div>
+          <div className="text-[10px] font-mono text-[#3d444d] py-4 text-center">// 暂无候选人</div>
         ) : (
           candidates
             .filter(c => c.status !== 'WITHDRAWN')
@@ -215,19 +215,19 @@ export function ElectionVotePanel({
                   key={c.id}
                   className={`border p-4 transition-colors ${
                     isElected  ? 'border-[#8b5cf6] bg-[#8b5cf608]' :
-                    isDefeated ? 'border-[#1a1a1a] bg-[#050505] opacity-60' :
+                    isDefeated ? 'border-[#21262d] bg-[#161b22] opacity-60' :
                     isMyVoteTarget ? 'border-[#3b82f6] bg-[#3b82f608]' :
-                    'border-[#1a1a1a] bg-[#0a0c10]'
+                    'border-[#21262d] bg-[#161b22]'
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <a href={`/user/${c.userId}`}
-                          className="font-mono text-sm text-[#e5e5e5] hover:text-[#00FF41] transition-colors">
+                          className="font-mono text-sm text-[#cdd9e5] hover:text-[#00FF41] transition-colors">
                           @{c.nickname ?? c.username}
                         </a>
-                        <span className="text-[10px] font-mono text-[#374151]">{c.role}</span>
+                        <span className="text-[10px] font-mono text-[#6e7681]">{c.role}</span>
                         {isElected && (
                           <span className="text-[10px] font-mono border px-1 text-[#8b5cf6] border-[#8b5cf640]">
                             ★ 当选
@@ -238,7 +238,7 @@ export function ElectionVotePanel({
                         )}
                       </div>
                       {c.statement && (
-                        <p className="text-[11px] font-mono text-[#4b5563] leading-relaxed">
+                        <p className="text-[11px] font-mono text-[#3d444d] leading-relaxed">
                           {c.statement}
                         </p>
                       )}
@@ -255,7 +255,7 @@ export function ElectionVotePanel({
                           className={`px-3 py-1.5 text-[10px] font-mono border transition-colors disabled:opacity-40 ${
                             isMyVoteTarget
                               ? 'btn-info border-[#3b82f6] text-[#3b82f6] bg-[#3b82f615]'
-                              : 'btn-ghost border-[#2A2A2A] text-[#4b5563] hover:border-[#374151] hover:text-[#9ca3af]'
+                              : 'btn-ghost border-[#30363d] text-[#3d444d] hover:border-[#30363d] hover:text-[#8b949e]'
                           }`}
                         >
                           {isMyVoteTarget ? '换票' : '投票'}

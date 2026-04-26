@@ -100,20 +100,20 @@ const canCancel = session && status === 'OPEN' &&
 ---
 
 <Layout title={`弹劾 @${targetDisplay} — 冰山图宇宙`}>
-  <main class="max-w-2xl mx-auto px-4 py-8 boot-animate">
+  <main class="max-w-2xl mx-auto px-4 py-8 reveal">
 
-    <div class="text-[10px] font-mono text-[#374151] mb-6">
-      <a href="/org" class="hover:text-[#9ca3af] transition-colors">机构</a>
+    <div class="text-[10px] font-mono text-[#30363d] mb-6">
+      <a href="/org" class="hover:text-[#8b949e] transition-colors">机构</a>
       <span class="mx-2">›</span>
-      <a href="/impeach" class="hover:text-[#9ca3af] transition-colors">弹劾案</a>
+      <a href="/impeach" class="hover:text-[#8b949e] transition-colors">弹劾案</a>
       <span class="mx-2">›</span>
       <span>详情</span>
     </div>
 
     <!-- 头部 -->
-    <div class="border border-[#1a1a1a] bg-[#0a0c10] p-5 mb-6">
+    <div class="border border-[#1a1a1a] bg-[#161b22] p-5 mb-6">
       <div class="flex items-center gap-3 flex-wrap mb-3">
-        <h1 class="font-mono text-base text-[#e5e5e5]">弹劾案</h1>
+        <h1 class="font-mono text-base text-[#cdd9e5]">弹劾案</h1>
         <span class="text-[10px] font-mono border px-1.5 py-0.5"
           style={`color:${STATUS_COLOR[status]};border-color:${STATUS_COLOR[status]}40`}>
           {STATUS_LABEL[status] ?? status}
@@ -122,9 +122,9 @@ const canCancel = session && status === 'OPEN' &&
 
       <!-- 被弹劾人 -->
       <div class="flex items-center gap-2 mb-2">
-        <span class="text-[10px] font-mono text-[#374151]">被弹劾：</span>
+        <span class="text-[10px] font-mono text-[#30363d]">被弹劾：</span>
         <a href={`/user/${reqRaw.target.id}`}
-          class="text-sm font-mono text-[#e5e5e5] hover:text-[#ef4444] transition-colors">
+          class="text-sm font-mono text-[#cdd9e5] hover:text-[#ef4444] transition-colors">
           @{targetDisplay}
         </a>
         <span class="text-[10px] font-mono border px-1 py-0.5"
@@ -135,20 +135,20 @@ const canCancel = session && status === 'OPEN' &&
 
       <!-- 发起人 -->
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-[#374151]">发起人：</span>
+        <span class="text-[10px] font-mono text-[#30363d]">发起人：</span>
         <a href={`/user/${reqRaw.initiator.id}`}
-          class="text-xs font-mono text-[#9ca3af] hover:text-[#00FF41] transition-colors">
+          class="text-xs font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors">
           @{initiatorDisplay}
         </a>
       </div>
 
       <!-- 理由 -->
       <div class="border border-[#1a1a1a] bg-[#050505] px-4 py-3 mb-4">
-        <div class="text-[10px] font-mono text-[#374151] mb-1">弹劾理由</div>
-        <p class="text-xs font-mono text-[#9ca3af] leading-relaxed whitespace-pre-wrap">{reqRaw.reason}</p>
+        <div class="text-[10px] font-mono text-[#30363d] mb-1">弹劾理由</div>
+        <p class="text-xs font-mono text-[#8b949e] leading-relaxed whitespace-pre-wrap">{reqRaw.reason}</p>
       </div>
 
-      <div class="text-[10px] font-mono text-[#374151] space-y-0.5">
+      <div class="text-[10px] font-mono text-[#30363d] space-y-0.5">
         <div>发起时间：{new Date(reqRaw.createdAt).toLocaleString('zh-CN')}</div>
         <div>投票截止：{new Date(reqRaw.closesAt).toLocaleString('zh-CN')}</div>
         {reqRaw.resolvedAt && (
@@ -161,7 +161,7 @@ const canCancel = session && status === 'OPEN' &&
     {status === 'PASSED' && (
       <div class="border border-[#8b5cf640] bg-[#8b5cf608] p-4 mb-6 font-mono">
         <div class="text-[10px] text-[#8b5cf6] mb-1 tracking-wider">// 弹劾结果</div>
-        <div class="text-sm text-[#e5e5e5]">
+        <div class="text-sm text-[#cdd9e5]">
           弹劾通过，
           <a href={`/user/${reqRaw.target.id}`} class="text-[#8b5cf6] hover:underline">
             @{targetDisplay}
@@ -173,7 +173,7 @@ const canCancel = session && status === 'OPEN' &&
     {status === 'REJECTED' && (
       <div class="border border-[#22c55e30] bg-[#22c55e08] p-4 mb-6 font-mono">
         <div class="text-[10px] text-[#22c55e] mb-1 tracking-wider">// 弹劾结果</div>
-        <div class="text-sm text-[#9ca3af]">弹劾票数未达通过门槛，已驳回。</div>
+        <div class="text-sm text-[#8b949e]">弹劾票数未达通过门槛，已驳回。</div>
       </div>
     )}
 
@@ -183,7 +183,7 @@ const canCancel = session && status === 'OPEN' &&
         <button
           id="cancel-impeach-btn"
           data-impeach-id={id}
-          class="text-[10px] font-mono border border-[#6b728030] text-[#6b7280] px-3 py-1.5 hover:bg-[#6b728015] transition-colors"
+          class="text-[10px] font-mono border border-[#6b728030] text-[#8b949e] px-3 py-1.5 hover:bg-[#6b728015] transition-colors"
         >
           撤销弹劾案
         </button>

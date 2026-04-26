@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -41,6 +41,14 @@ export function TierCard({
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [editDesc, setEditDesc] = useState(tier.desc ?? '');
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isLight, setIsLight] = useState(false);
+  useEffect(() => {
+    const update = () => setIsLight(document.documentElement.classList.contains('light'));
+    update();
+    const obs = new MutationObserver(update);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
 
   const { setNodeRef, isOver } = useDroppable({
     id: tier.id,
@@ -70,108 +78,97 @@ export function TierCard({
     onAddItem(tier.id, newItem);
   };
 
+  const tierNum = String(tierIndex + 1).padStart(2, '0');
+
   return (
     <div
       ref={setNodeRef}
-      className={`border-l-4 rounded-r bg-[#121212] transition-colors ${
-        isOver ? 'bg-[#1a2a1a]' : ''
-      }`}
-      style={{ borderLeftColor: tierColor }}
+      className={`border border-[#21262d] bg-[#0d1117] transition-colors ${isOver ? 'border-[#00FF41]/30' : ''}`}
+      style={{ borderLeftColor: tierColor, borderLeftWidth: '3px' }}
     >
-      {/* Tier Header */}
-      <div className="px-4 py-3 border-b border-[#2A2A2A]">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="text-[#6b7280] hover:text-[#e5e5e5]"
-            >
-              {isCollapsed ? '▶' : '▼'}
-            </button>
-
-            {isEditing ? (
-              <input
-                type="text"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                onBlur={handleSaveName}
-                onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-                className="px-2 py-1 bg-[#0A0A0A] border border-[#2A2A2A] rounded font-mono text-sm focus:border-[#00FF41] focus:outline-none"
-                autoFocus
-              />
-            ) : (
-              <h3
-                className="font-mono text-sm cursor-pointer hover:text-[#00FF41]"
-                onClick={() => setIsEditing(true)}
-                title="点击编辑层级名称"
-              >
-                {tier.name}
-              </h3>
-            )}
-
-            <span className="text-xs text-[#6b7280] font-mono">
-              [{tier.items.length} 词条]
-            </span>
-          </div>
-
-          <button
-            onClick={() => onDeleteTier(tier.id)}
-            className="btn-danger text-xs text-[#6b7280] hover:text-[#ef4444]"
-          >
-            删除层级
+      {/* ── Tier 标题栏 ── */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[#21262d]"
+           style={{ background: `linear-gradient(90deg, ${tierColor}0d 0%, transparent 60%)` }}>
+        <div className="flex items-center gap-2 min-w-0">
+          <button onClick={() => setIsCollapsed(!isCollapsed)}
+            className="font-mono text-xs transition-colors flex-shrink-0"
+            style={{ color: tierColor }}>
+            {isCollapsed ? '▶' : '▼'}
           </button>
-        </div>
 
-        {/* 层级描述 */}
-        <div className="mt-1.5 ml-6">
-          {isEditingDesc ? (
+          <span className="text-[10px] font-mono flex-shrink-0" style={{ color: `${tierColor}99` }}>
+            TIER-{tierNum}
+          </span>
+
+          <span className="text-[#21262d] flex-shrink-0 font-mono text-xs">//</span>
+
+          {isEditing ? (
             <input
               type="text"
-              value={editDesc}
-              onChange={(e) => setEditDesc(e.target.value)}
-              onBlur={handleSaveDesc}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSaveDesc(); if (e.key === 'Escape') setIsEditingDesc(false); }}
-              className="w-full px-2 py-1 bg-[#0A0A0A] border border-[#2A2A2A] font-mono text-xs text-[#9ca3af] focus:border-[#00FF41] focus:outline-none"
-              placeholder="添加层级描述（可选）"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onBlur={handleSaveName}
+              onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+              className="bg-transparent border-b border-[#00FF41] font-mono text-sm text-[#cdd9e5] focus:outline-none min-w-0 flex-1"
               autoFocus
             />
           ) : (
-            <button
-              onClick={() => setIsEditingDesc(true)}
-              className="text-xs font-mono text-left w-full transition-colors"
-              style={{ color: editDesc ? '#6b7280' : '#2A2A2A' }}
-              title="点击编辑层级描述"
-            >
-              {editDesc || '+ 添加描述'}
-            </button>
+            <h3 className="font-mono text-sm text-[#cdd9e5] cursor-pointer hover:text-[#00FF41] transition-colors truncate"
+              onClick={() => setIsEditing(true)} title="点击编辑层级名称">
+              {tier.name}
+            </h3>
           )}
+
+          <span className="text-[10px] font-mono text-[#3d444d] flex-shrink-0">
+            [{tier.items.length}]
+          </span>
         </div>
+
+        <button onClick={() => onDeleteTier(tier.id)}
+          className="text-[10px] font-mono text-[#3d444d] hover:text-[#ef4444] transition-colors flex-shrink-0 ml-3 border border-transparent hover:border-[#ef444440] px-1.5 py-0.5">
+          DEL
+        </button>
       </div>
 
-      {/* Items */}
+      {/* ── 层级描述 ── */}
+      <div className="px-4 py-1.5 border-b border-[#21262d]/50">
+        {isEditingDesc ? (
+          <input
+            type="text"
+            value={editDesc}
+            onChange={(e) => setEditDesc(e.target.value)}
+            onBlur={handleSaveDesc}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSaveDesc(); if (e.key === 'Escape') setIsEditingDesc(false); }}
+            className="w-full bg-transparent border-b border-[#00FF41]/40 font-mono text-xs text-[#8b949e] focus:outline-none placeholder:text-[#3d444d]"
+            placeholder="// 层级描述…"
+            autoFocus
+          />
+        ) : (
+          <button onClick={() => setIsEditingDesc(true)}
+            className="text-xs font-mono text-left w-full transition-colors"
+            style={{ color: editDesc ? '#6b7280' : (isLight ? '#c9d1d9' : '#2d333b') }}>
+            {editDesc ? `// ${editDesc}` : '// 点击添加层级描述…'}
+          </button>
+        )}
+      </div>
+
+      {/* ── Items ── */}
       {!isCollapsed && (
-        <div className="p-4">
-          <SortableContext
-            items={tier.items.map((i) => i.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="grid grid-cols-2 gap-3">
+        <div className="p-3">
+          <SortableContext items={tier.items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
               {tier.items.map((item) => (
-                <ItemCard
-                  key={item.id}
-                  item={item}
-                  onUpdate={onUpdateItem}
-                  onDelete={onDeleteItem}
-                />
+                <ItemCard key={item.id} item={item} onUpdate={onUpdateItem} onDelete={onDeleteItem} />
               ))}
             </div>
           </SortableContext>
 
-          <button
-            onClick={handleAddItem}
-            className="btn-primary mt-4 w-full py-2 border border-dashed border-[#2A2A2A] rounded text-sm text-[#6b7280] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
-          >
-            + 添加词条
+          <button onClick={handleAddItem}
+            className="mt-3 w-full py-2 border border-dashed font-mono text-xs transition-colors"
+            style={{ borderColor: `${tierColor}40`, color: `${tierColor}80` }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = tierColor; (e.currentTarget as HTMLButtonElement).style.color = tierColor; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = `${tierColor}40`; (e.currentTarget as HTMLButtonElement).style.color = `${tierColor}80`; }}>
+            + 新建词条
           </button>
         </div>
       )}

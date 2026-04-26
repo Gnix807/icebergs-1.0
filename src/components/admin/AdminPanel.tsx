@@ -65,20 +65,20 @@ export function AdminPanel({ role, isFounder }: Props) {
   return (
     <div>
       {/* 顶部状态栏 */}
-      <div className="border border-[#1f2937] bg-[#050505] px-4 py-2 mb-4 flex items-center justify-between">
-        <span className="text-[10px] font-mono text-[#374151] tracking-widest">
+      <div className="border border-[#21262d] bg-[#161b22] px-4 py-2 mb-4 flex items-center justify-between">
+        <span className="text-[10px] font-mono text-[#6e7681] tracking-widest">
           ADMIN CONSOLE — {role}
         </span>
         <span className="text-[10px] font-mono text-[#22c55e]">● SECURE</span>
       </div>
 
       {/* Tab 导航 */}
-      <div className="relative flex items-end border-b border-[#1f2937] mb-6">
+      <div className="relative flex items-end border-b border-[#21262d] mb-6">
         {/* 左箭头 */}
         {canScrollLeft && (
           <button
             onClick={() => scrollBy(-160)}
-            className="flex-shrink-0 px-2 pb-2.5 text-[#4b5563] hover:text-[#9ca3af] font-mono text-xs transition-colors"
+            className="flex-shrink-0 px-2 pb-2.5 text-[#3d444d] hover:text-[#8b949e] font-mono text-xs transition-colors"
             aria-label="向左滚动"
           >
             ‹
@@ -93,7 +93,7 @@ export function AdminPanel({ role, isFounder }: Props) {
               className={`flex-shrink-0 whitespace-nowrap px-4 py-2.5 text-xs font-mono transition-colors border-b-2 -mb-px ${
                 activeTab === tab.id
                   ? 'border-[#00FF41] text-[#00FF41]'
-                  : 'border-transparent text-[#4b5563] hover:text-[#9ca3af]'
+                  : 'border-transparent text-[#3d444d] hover:text-[#8b949e]'
               }`}
             >
               {tab.label}
@@ -106,7 +106,7 @@ export function AdminPanel({ role, isFounder }: Props) {
         {canScrollRight && (
           <button
             onClick={() => scrollBy(160)}
-            className="flex-shrink-0 px-2 pb-2.5 text-[#4b5563] hover:text-[#9ca3af] font-mono text-xs transition-colors"
+            className="flex-shrink-0 px-2 pb-2.5 text-[#3d444d] hover:text-[#8b949e] font-mono text-xs transition-colors"
             aria-label="向右滚动"
           >
             ›

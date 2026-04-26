@@ -1,7 +1,6 @@
 /**
  * 质量分流水记录工具
  * fire-and-forget，不阻塞业务逻辑。
- * 使用 (prisma as any) 因为 prisma generate 需要停服后单独运行。
  */
 import { prisma } from './prisma';
 

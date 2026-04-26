@@ -90,11 +90,11 @@ export function AchievementToast() {
       }}
     >
       <div
-        className="bg-[#050505] border border-[#1f2937] overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.8)]"
+        className="bg-[#161b22] border border-[#21262d] overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.8)]"
         style={{ borderLeftColor: current.color, borderLeftWidth: '4px' }}
       >
         {/* 顶部标签 */}
-        <div className="px-3 py-1.5 bg-[#0a0a0a] border-b border-[#1f2937]">
+        <div className="px-3 py-1.5 bg-[#161b22] border-b border-[#21262d]">
           <span className="text-[10px] font-mono text-[#00FF41] tracking-widest animate-pulse">
             ▶ 隐藏权限已解锁 // ACHIEVEMENT UNLOCKED
           </span>
@@ -106,7 +106,7 @@ export function AchievementToast() {
             <div className="text-sm font-bold text-[#e5e7eb] font-mono truncate">
               {current.labelZh}
             </div>
-            <div className="text-xs text-[#6b7280] mt-0.5 leading-relaxed line-clamp-2">
+            <div className="text-xs text-[#8b949e] mt-0.5 leading-relaxed line-clamp-2">
               {current.desc}
             </div>
           </div>

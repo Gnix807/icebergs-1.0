@@ -75,7 +75,7 @@ export function AdminFeedback() {
   }
 
   if (loading) {
-    return <div className="py-10 text-center font-mono text-sm text-[#374151] animate-pulse">// 加载中...</div>;
+    return <div className="py-10 text-center font-mono text-sm text-[#6e7681] animate-pulse">// 加载中...</div>;
   }
 
   const pendingCount  = list.filter(f => f.status === 'pending').length;
@@ -86,7 +86,7 @@ export function AdminFeedback() {
     <div>
       {/* 类型筛选 */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
-        <span className="text-xs font-mono text-[#374151] mr-1">类型</span>
+        <span className="text-xs font-mono text-[#6e7681] mr-1">类型</span>
         {(['all', 'error', 'bug', 'feature', 'other'] as const).map(t => {
           const tc = t === 'all' ? { label: '全部', color: '#9ca3af' } : (TYPE_MAP[t] ?? { label: t, color: '#6b7280' });
           const count = t === 'all' ? list.length : list.filter(f => f.type === t).length;
@@ -94,7 +94,7 @@ export function AdminFeedback() {
             <button key={t} onClick={() => setTypeFilter(t)}
               className="text-xs font-mono px-2 py-1 border transition-colors"
               style={{
-                borderColor: typeFilter === t ? tc.color : '#374151',
+                borderColor: typeFilter === t ? tc.color : '#30363d',
                 color:       typeFilter === t ? tc.color : '#6b7280',
                 background:  typeFilter === t ? `${tc.color}10` : 'transparent',
               }}>
@@ -106,7 +106,7 @@ export function AdminFeedback() {
 
       {/* 状态筛选 */}
       <div className="flex flex-wrap items-center gap-2 mb-5">
-        <span className="text-xs font-mono text-[#374151] mr-1">状态</span>
+        <span className="text-xs font-mono text-[#6e7681] mr-1">状态</span>
         {[
           { key: 'all',      label: '全部',   color: '#9ca3af', count: list.length },
           { key: 'pending',  label: '待处理', color: '#f59e0b', count: pendingCount },
@@ -116,7 +116,7 @@ export function AdminFeedback() {
           <button key={s.key} onClick={() => setStatusFilter(s.key)}
             className="text-xs font-mono px-2 py-1 border transition-colors"
             style={{
-              borderColor: statusFilter === s.key ? s.color : '#374151',
+              borderColor: statusFilter === s.key ? s.color : '#30363d',
               color:       statusFilter === s.key ? s.color : '#6b7280',
               background:  statusFilter === s.key ? `${s.color}10` : 'transparent',
             }}>
@@ -126,7 +126,7 @@ export function AdminFeedback() {
       </div>
 
       {shown.length === 0 ? (
-        <div className="py-12 text-center text-[#2A2A2A] font-mono text-sm">// 暂无反馈</div>
+        <div className="py-12 text-center text-[#3d444d] font-mono text-sm">// 暂无反馈</div>
       ) : (
         <div className="space-y-3">
           {shown.map(fb => {
@@ -135,8 +135,8 @@ export function AdminFeedback() {
             const isResolvingThis = resolving === fb.id;
             return (
               <div key={fb.id}
-                className="border bg-[#0a0c10] p-4 space-y-2"
-                style={{ borderColor: fb.status === 'pending' ? '#1f2937' : `${sc.color}30` }}>
+                className="border bg-[#161b22] p-4 space-y-2"
+                style={{ borderColor: fb.status === 'pending' ? '#21262d' : `${sc.color}30` }}>
 
                 {/* 元信息行 */}
                 <div className="flex flex-wrap items-center gap-2">
@@ -150,29 +150,29 @@ export function AdminFeedback() {
                   </span>
                   {fb.icebergId && (
                     <a href={`/iceberg/${fb.icebergId}`}
-                      className="text-xs font-mono text-[#4b5563] hover:text-[#9ca3af] transition-colors" target="_blank">
+                      className="text-xs font-mono text-[#3d444d] hover:text-[#8b949e] transition-colors" target="_blank">
                       图谱: {fb.icebergId.slice(-8)}
                     </a>
                   )}
                   {fb.itemName && (
                     <span className="text-xs font-mono text-[#ef4444]">词条: {fb.itemName}</span>
                   )}
-                  <span className="ml-auto text-[10px] font-mono text-[#374151]">{timeStr(fb.createdAt)}</span>
+                  <span className="ml-auto text-[10px] font-mono text-[#6e7681]">{timeStr(fb.createdAt)}</span>
                 </div>
 
                 {/* 内容 */}
-                <p className="text-sm font-mono text-[#9ca3af] leading-relaxed whitespace-pre-wrap">{fb.content}</p>
+                <p className="text-sm font-mono text-[#8b949e] leading-relaxed whitespace-pre-wrap">{fb.content}</p>
 
                 {/* 联系方式 */}
                 {fb.contact && (
-                  <div className="text-xs font-mono text-[#4b5563]">
-                    联系: <span className="text-[#6b7280]">{fb.contact}</span>
+                  <div className="text-xs font-mono text-[#3d444d]">
+                    联系: <span className="text-[#8b949e]">{fb.contact}</span>
                   </div>
                 )}
 
                 {/* 已有备注 */}
                 {fb.resolvedNote && !isResolvingThis && (
-                  <div className="text-xs font-mono text-[#4b5563] border-l-2 border-[#374151] pl-2">
+                  <div className="text-xs font-mono text-[#3d444d] border-l-2 border-[#30363d] pl-2">
                     备注: {fb.resolvedNote}
                   </div>
                 )}
@@ -185,7 +185,7 @@ export function AdminFeedback() {
                       rows={2}
                       value={noteMap[fb.id] ?? ''}
                       onChange={e => setNoteMap(prev => ({ ...prev, [fb.id]: e.target.value }))}
-                      className="w-full px-2 py-1.5 bg-[#050608] border border-[#2A2A2A] text-xs font-mono text-[#9ca3af] resize-none focus:border-[#00FF41] focus:outline-none"
+                      className="w-full px-2 py-1.5 bg-[#050608] border border-[#30363d] text-xs font-mono text-[#8b949e] resize-none focus:border-[#00FF41] focus:outline-none"
                     />
                     <div className="flex gap-2">
                       <button onClick={() => updateStatus(fb.id, 'resolved')} disabled={saving === fb.id}
@@ -193,11 +193,11 @@ export function AdminFeedback() {
                         ✓ 标记已处理
                       </button>
                       <button onClick={() => updateStatus(fb.id, 'wontfix')} disabled={saving === fb.id}
-                        className="text-xs font-mono px-3 py-1 border border-[#6b7280] text-[#6b7280] hover:bg-[#6b728020] transition-colors disabled:opacity-50">
+                        className="text-xs font-mono px-3 py-1 border border-[#6b7280] text-[#8b949e] hover:bg-[#8b949e20] transition-colors disabled:opacity-50">
                         ⊘ 不处理
                       </button>
                       <button onClick={() => setResolving(null)}
-                        className="text-xs font-mono px-3 py-1 border border-[#374151] text-[#4b5563] hover:text-[#9ca3af] transition-colors">
+                        className="text-xs font-mono px-3 py-1 border border-[#30363d] text-[#3d444d] hover:text-[#8b949e] transition-colors">
                         取消
                       </button>
                     </div>
@@ -206,12 +206,12 @@ export function AdminFeedback() {
                   <div className="flex gap-2 pt-1">
                     {fb.status !== 'pending' ? (
                       <button onClick={() => updateStatus(fb.id, 'pending')} disabled={saving === fb.id}
-                        className="text-xs font-mono px-3 py-1 border border-[#374151] text-[#4b5563] hover:border-[#f59e0b] hover:text-[#f59e0b] transition-colors disabled:opacity-50">
+                        className="text-xs font-mono px-3 py-1 border border-[#30363d] text-[#3d444d] hover:border-[#f59e0b] hover:text-[#f59e0b] transition-colors disabled:opacity-50">
                         ↩ 重新开放
                       </button>
                     ) : (
                       <button onClick={() => setResolving(fb.id)}
-                        className="text-xs font-mono px-3 py-1 border border-[#374151] text-[#4b5563] hover:border-[#22c55e] hover:text-[#22c55e] transition-colors">
+                        className="text-xs font-mono px-3 py-1 border border-[#30363d] text-[#3d444d] hover:border-[#22c55e] hover:text-[#22c55e] transition-colors">
                         → 处理
                       </button>
                     )}

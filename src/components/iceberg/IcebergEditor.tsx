@@ -56,6 +56,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
   const [showRecovery, setShowRecovery] = useState(false);
   const [draftToRecover, setDraftToRecover] = useState<Iceberg | null>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -638,24 +639,24 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-[#6b7280]">加载中...</div>
+      <div className="flex items-center justify-center h-64 font-mono">
+        <span className="text-[#00FF41] animate-pulse">// 加载中...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-red-500">{error}</div>
+      <div className="flex items-center justify-center h-64 font-mono">
+        <span className="text-[#ef4444]">! 错误：{error}</span>
       </div>
     );
   }
 
   if (!iceberg) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-[#6b7280]">初始化中...</div>
+      <div className="flex items-center justify-center h-64 font-mono">
+        <span className="text-[#3d444d] animate-pulse">// 初始化中...</span>
       </div>
     );
   }
@@ -663,30 +664,32 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   // 草稿恢复提示
   if (showRecovery && draftToRecover) {
     return (
-      <div className="max-w-4xl mx-auto">
-        <div className="p-8 bg-[#121212] border border-[#f59e0b] rounded">
-          <h2 className="text-xl font-mono mb-4">
-            <span className="text-[#f59e0b]">!</span> 发现未保存的草稿
-          </h2>
-          <p className="text-[#9ca3af] mb-2">
-            标题: <span className="text-[#e5e5e5]">{draftToRecover.title}</span>
-          </p>
-          <p className="text-[#6b7280] text-sm mb-6">
-            上次保存: {draftToRecover.savedAt ? new Date(draftToRecover.savedAt).toLocaleString() : '未知'}
-          </p>
-          <div className="flex gap-4">
-            <button
-              onClick={handleRecoverDraft}
-              className="px-6 py-3 bg-[#00FF41] text-[#0A0A0A] font-medium rounded hover:bg-[#00CC33] transition-colors"
-            >
-              恢复草稿
-            </button>
-            <button
-              onClick={handleDiscardDraft}
-              className="px-6 py-3 border border-[#2A2A2A] rounded hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
-            >
-              丢弃草稿
-            </button>
+      <div className="max-w-5xl mx-auto px-2 font-mono">
+        <div className="border border-[#f59e0b40] bg-[#0d1117]">
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-[#f59e0b30] bg-[#f59e0b08]">
+            <span className="text-[#f59e0b] text-xs">!</span>
+            <span className="text-xs text-[#f59e0b]">草稿::恢复</span>
+          </div>
+          <div className="p-6">
+            <p className="text-xs text-[#6e7681] mb-1">// 标题</p>
+            <p className="text-sm text-[#cdd9e5] mb-4 px-3 py-2 bg-[#161b22] border border-[#21262d]">{draftToRecover.title}</p>
+            <p className="text-xs text-[#3d444d] mb-6">
+              // 上次保存：{draftToRecover.savedAt ? new Date(draftToRecover.savedAt).toLocaleString() : '未知'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleRecoverDraft}
+                className="px-5 py-2 bg-[#00FF41] text-[#0A0A0A] text-xs font-bold hover:bg-[#00CC33] transition-colors"
+              >
+                [ 恢复草稿 ]
+              </button>
+              <button
+                onClick={handleDiscardDraft}
+                className="px-5 py-2 border border-[#30363d] text-xs text-[#6e7681] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
+              >
+                [ 丢弃草稿 ]
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -694,86 +697,106 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <header className="mb-8 p-6 bg-[#121212] border border-[#2A2A2A] rounded">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-mono">
-            <span className="text-[#00FF41]">#</span> 冰山图编辑器
-          </h1>
-          <div className="text-xs text-[#6b7280]">
-            {isSaving ? (
-              <span className="text-[#3b82f6]">● 保存中...</span>
-            ) : isDirty ? (
-              <span className="text-[#f59e0b]">● 未保存</span>
-            ) : (
-              <span className="text-[#22c55e]">● 已保存</span>
-            )}
-            {lastSaved && <span className="ml-2">{lastSaved.toLocaleTimeString()}</span>}
-          </div>
-        </div>
-        <input
-          type="text"
-          value={iceberg.title}
-          onChange={(e) => {
-            updateTitle(e.target.value);
-            // 标题变化时，若 ID 还未手动输入过，自动建议
-            if (!slugTouched.current) {
-              const suggested = e.target.value
-                .toLowerCase()
-                .replace(/\s+/g, '-')
-                .replace(/[^a-z0-9_-]/g, '')
-                .replace(/-+/g, '-')
-                .replace(/^-|-$/g, '')
-                .substring(0, 60);
-              setCustomSlug(suggested);
-              setSlugError(suggested ? validateSlug(suggested) : null);
-            }
-          }}
-          className="w-full px-4 py-3 bg-[#0A0A0A] border border-[#2A2A2A] rounded font-mono text-xl focus:border-[#00FF41] focus:outline-none"
-          placeholder="冰山图标题"
-        />
-
-        {/* 冰山图 ID */}
-        <div className="mt-3">
+    <div className="max-w-5xl mx-auto px-2">
+      {/* ── 编辑器头部 ── */}
+      <header className="mb-6 border border-[#21262d] bg-[#0d1117]">
+        {/* 标题栏 */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-[#21262d] bg-[#161b22]">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-[#4b5563] flex-shrink-0">ID</span>
-            <span className="text-xs font-mono text-[#2A2A2A] flex-shrink-0">/iceberg/</span>
-            {iceberg.id.startsWith('temp_') ? (
-              <input
-                type="text"
-                value={customSlug}
-                onChange={(e) => {
-                  slugTouched.current = true;
-                  handleSlugChange(e.target.value);
-                }}
-                className={`flex-1 px-3 py-1.5 bg-[#0A0A0A] border font-mono text-sm focus:outline-none transition-colors ${
-                  slugError ? 'border-[#ef4444] focus:border-[#ef4444]' : 'border-[#2A2A2A] focus:border-[#00FF41]'
-                }`}
-                placeholder="my-iceberg-id"
-                spellCheck={false}
-              />
+            <span className="text-[#00FF41] font-mono text-xs">▶</span>
+            <span className="font-mono text-xs text-[#cdd9e5] tracking-widest">冰山图::编辑器</span>
+          </div>
+          <div className="font-mono text-[11px]">
+            {isSaving ? (
+              <span className="text-[#3b82f6]">[ ● 保存中... ]</span>
+            ) : isDirty ? (
+              <span className="text-[#f59e0b]">[ ● 未保存 ]</span>
             ) : (
-              <span className="flex-1 px-3 py-1.5 font-mono text-sm text-[#6b7280] bg-[#050608] border border-[#1f2937]">
-                {iceberg.slug || iceberg.id}
+              <span className="text-[#22c55e]">
+                [ ● 已保存{lastSaved ? ` ${lastSaved.toLocaleTimeString()}` : ''} ]
               </span>
             )}
           </div>
-          {iceberg.id.startsWith('temp_') && (
-            <p className={`mt-1 ml-[calc(1rem+4.5rem)] text-[11px] font-mono ${slugError ? 'text-[#ef4444]' : 'text-[#374151]'}`}>
-              {slugError ?? '字母、数字、连字符(-)或下划线(_)，创建后不可修改'}
-            </p>
-          )}
         </div>
 
-        <textarea
-          value={iceberg.description || ''}
-          onChange={(e) => updateDescription(e.target.value)}
-          className="w-full mt-4 px-4 py-3 bg-[#0A0A0A] border border-[#2A2A2A] rounded focus:border-[#00FF41] focus:outline-none resize-none"
-          rows={2}
-          placeholder="简短描述 (可选)"
-        />
+        <div className="p-4 space-y-4">
+          {/* METADATA 区 */}
+          <div>
+            <p className="text-[10px] font-mono text-[#3d444d] mb-1.5">// 元数据</p>
+            <div className="flex items-center border border-[#21262d] bg-[#0A0A0A] focus-within:border-[#00FF41] transition-colors">
+              <span className="px-3 text-[#00FF41] font-mono text-sm select-none flex-shrink-0">›</span>
+              <input
+                type="text"
+                value={iceberg.title}
+                onChange={(e) => {
+                  updateTitle(e.target.value);
+                  if (!slugTouched.current) {
+                    const suggested = e.target.value
+                      .toLowerCase()
+                      .replace(/\s+/g, '-')
+                      .replace(/[^a-z0-9_-]/g, '')
+                      .replace(/-+/g, '-')
+                      .replace(/^-|-$/g, '')
+                      .substring(0, 60);
+                    setCustomSlug(suggested);
+                    setSlugError(suggested ? validateSlug(suggested) : null);
+                  }
+                }}
+                className="flex-1 pr-4 py-3 bg-transparent font-mono text-lg focus:outline-none text-[#cdd9e5] placeholder:text-[#2d333b]"
+                placeholder="冰山图标题"
+              />
+            </div>
+          </div>
+
+          {/* SLUG 区 */}
+          <div>
+            <p className="text-[10px] font-mono text-[#3d444d] mb-1.5">// 地址</p>
+            <div className="flex items-center gap-0">
+              <span className="px-2 py-2 text-[11px] font-mono text-[#3d444d] bg-[#161b22] border border-[#21262d] border-r-0 flex-shrink-0 select-none">
+                /iceberg/
+              </span>
+              {iceberg.id.startsWith('temp_') ? (
+                <input
+                  type="text"
+                  value={customSlug}
+                  onChange={(e) => {
+                    slugTouched.current = true;
+                    handleSlugChange(e.target.value);
+                  }}
+                  className={`flex-1 px-3 py-2 bg-[#0A0A0A] border font-mono text-sm focus:outline-none transition-colors ${
+                    slugError ? 'border-[#ef4444] focus:border-[#ef4444] text-[#ef4444]' : 'border-[#21262d] focus:border-[#00FF41] text-[#cdd9e5]'
+                  }`}
+                  placeholder="my-iceberg-id"
+                  spellCheck={false}
+                />
+              ) : (
+                <span className="flex-1 px-3 py-2 font-mono text-sm text-[#6e7681] bg-[#050608] border border-[#21262d]">
+                  {iceberg.slug || iceberg.id}
+                </span>
+              )}
+            </div>
+            {iceberg.id.startsWith('temp_') && (
+              <p className={`mt-1 text-[11px] font-mono ${slugError ? 'text-[#ef4444]' : 'text-[#3d444d]'}`}>
+                // {slugError ?? '字母、数字、连字符(-)或下划线(_)，创建后不可修改'}
+              </p>
+            )}
+          </div>
+
+          {/* DESCRIPTION 区 */}
+          <div>
+            <p className="text-[10px] font-mono text-[#3d444d] mb-1.5">// 简介</p>
+            <textarea
+              value={iceberg.description || ''}
+              onChange={(e) => updateDescription(e.target.value)}
+              className="w-full px-4 py-3 bg-[#0A0A0A] border border-[#21262d] focus:border-[#00FF41] focus:outline-none resize-none font-mono text-sm text-[#cdd9e5] placeholder:text-[#2d333b] transition-colors"
+              rows={3}
+              placeholder="// 冰山图简介（可选，支持 Markdown）"
+            />
+          </div>
+        </div>
       </header>
 
+      {/* ── 层级列表 ── */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -784,7 +807,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           items={iceberg.tiers.map((t) => t.id)}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-6">
+          <div className="space-y-4">
             {iceberg.tiers.map((tier, index) => (
               <TierCard
                 key={tier.id}
@@ -801,163 +824,201 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
         </SortableContext>
       </DndContext>
 
+      {/* ── 添加层级 ── */}
       <button
         onClick={handleAddTier}
-        className="btn-primary mt-6 w-full py-4 border-2 border-dashed border-[#2A2A2A] rounded font-mono text-[#6b7280] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+        className="mt-4 w-full py-3 border border-dashed border-[#21262d] font-mono text-xs text-[#3d444d] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
       >
-        + 添加层级
+        [ ++ 添加层级 ]
       </button>
 
-      <div className="mt-8 flex justify-between gap-4">
-        {/* 左侧：危险操作 */}
+      {/* ── 底部操作栏 ── */}
+      <div className="mt-6 flex items-center justify-between border border-[#21262d] bg-[#0d1117] px-4 py-3">
         <div>
           {!iceberg.id.startsWith('temp_') && (
             <button
               onClick={() => { setDeleteConfirmText(''); setShowDeleteConfirm(true); }}
-              className="btn-danger px-4 py-3 border border-[#2A2A2A] font-mono text-sm text-[#4b5563] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
+              className="font-mono text-xs text-[#3d444d] border border-[#21262d] px-3 py-2 hover:border-[#ef444460] hover:text-[#ef4444] transition-colors"
             >
-              删除冰山图
+              [ 删除 ]
             </button>
           )}
         </div>
-        {/* 右侧：保存 / 提交 */}
-        <div className="flex gap-4">
+        <div className="flex gap-3">
           <button
             onClick={handleSave}
-            className="btn-primary px-6 py-3 border border-[#2A2A2A] rounded hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+            className="font-mono text-xs text-[#8b949e] border border-[#30363d] px-4 py-2 hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
           >
-            保存草稿
+            [ 保存草稿 ]
           </button>
           <button
             onClick={() => handleSubmit()}
             disabled={isSubmitting}
-            className="btn-primary px-6 py-3 bg-[#00FF41] text-[#0A0A0A] font-medium rounded hover:bg-[#00CC33] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="font-mono text-xs bg-[#00FF41] text-[#0A0A0A] font-bold px-4 py-2 hover:bg-[#00CC33] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? '提交中...' : '提交审核'}
+            {isSubmitting ? '[ 提交中... ]' : '[ 提交审核 ]'}
           </button>
         </div>
       </div>
 
-      {/* 删除确认弹窗 */}
+      {/* ── 删除确认弹窗 ── */}
       {deleteMounted && (
         <div className={`${deleteLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4`}>
-          <div className={`${deleteLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#ef444440] w-full max-w-sm p-6 font-mono`}>
-            <h2 className="text-base mb-1">
-              <span className="text-[#ef4444]">[ !</span> 删除冰山图 <span className="text-[#ef4444]">]</span>
-            </h2>
-            <p className="text-xs text-[#6b7280] mb-4 leading-relaxed">
-              此操作不可撤销。所有层级和词条将被永久删除。
-            </p>
-            <p className="text-xs text-[#9ca3af] mb-2">
-              请输入冰山图标题以确认：
-            </p>
-            <p className="text-xs text-[#e5e5e5] mb-3 px-2 py-1 bg-[#0a0c10] border border-[#2A2A2A] truncate">
-              {iceberg.title}
-            </p>
-            <input
-              type="text"
-              value={deleteConfirmText}
-              onChange={e => setDeleteConfirmText(e.target.value)}
-              placeholder="输入标题确认"
-              className="w-full px-3 py-2 mb-4 bg-[#050608] border border-[#2A2A2A] text-sm text-[#e5e5e5] focus:border-[#ef4444] focus:outline-none"
-              autoFocus
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting || deleteConfirmText !== iceberg.title}
-                className="btn-danger flex-1 py-2 border border-[#ef4444] text-[#ef4444] text-sm hover:bg-[#ef444420] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {isDeleting ? '删除中...' : '确认删除'}
-              </button>
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="btn-ghost flex-1 py-2 border border-[#2A2A2A] text-[#4b5563] text-sm hover:text-[#9ca3af] transition-colors"
-              >
-                取消
-              </button>
+          <div className={`${deleteLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d1117] border border-[#ef444440] w-full max-w-sm font-mono`}>
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-[#ef444430] bg-[#ef444408]">
+              <span className="text-[#ef4444] text-xs">!</span>
+              <span className="text-xs text-[#ef4444]">删除::冰山图</span>
+            </div>
+            <div className="p-5">
+              <p className="text-xs text-[#6e7681] mb-4 leading-relaxed">
+                // 此操作不可撤销，所有层级和词条将被永久删除
+              </p>
+              <p className="text-[11px] text-[#3d444d] mb-2">// 输入冰山图标题以确认</p>
+              <p className="text-xs text-[#cdd9e5] mb-3 px-3 py-2 bg-[#161b22] border border-[#21262d] truncate">
+                {iceberg.title}
+              </p>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={e => setDeleteConfirmText(e.target.value)}
+                placeholder="输入标题确认"
+                className="w-full px-3 py-2 mb-4 bg-[#050608] border border-[#21262d] text-sm text-[#cdd9e5] focus:border-[#ef4444] focus:outline-none placeholder:text-[#2d333b]"
+                autoFocus
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting || deleteConfirmText !== iceberg.title}
+                  className="flex-1 py-2 border border-[#ef4444] text-[#ef4444] text-xs hover:bg-[#ef444420] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  {isDeleting ? '[ 删除中... ]' : '[ 确认删除 ]'}
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 py-2 border border-[#21262d] text-[#3d444d] text-xs hover:text-[#8b949e] transition-colors"
+                >
+                  [ 取消 ]
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* 自查清单模态框 */}
+      {/* ── 固定返回按钮 ── */}
+      <div className="fixed bottom-8 left-6 z-40 flex flex-col items-start gap-2">
+        {showBackConfirm && (
+          <div className="bg-[#0d1117] border border-[#f59e0b40] font-mono text-xs p-3 shadow-xl w-44">
+            <p className="text-[#f59e0b] mb-2 leading-snug">// 有未保存的内容</p>
+            <div className="flex flex-col gap-1.5">
+              <button
+                onClick={() => { setShowBackConfirm(false); window.history.length > 1 ? history.back() : (window.location.href = '/'); }}
+                className="w-full py-1.5 border border-[#ef444460] text-[#ef4444] hover:bg-[#ef444415] transition-colors"
+              >
+                [ 确认离开 ]
+              </button>
+              <button
+                onClick={() => setShowBackConfirm(false)}
+                className="w-full py-1.5 border border-[#21262d] text-[#6e7681] hover:border-[#8b949e] hover:text-[#8b949e] transition-colors"
+              >
+                [ 继续编辑 ]
+              </button>
+            </div>
+          </div>
+        )}
+        <button
+          onClick={() => {
+            if (isDirty) {
+              setShowBackConfirm(v => !v);
+            } else {
+              window.history.length > 1 ? history.back() : (window.location.href = '/');
+            }
+          }}
+          className={`font-mono text-sm px-5 py-3 border shadow-lg transition-colors ${
+            showBackConfirm
+              ? 'border-[#f59e0b] text-[#f59e0b] bg-[#0d1117]'
+              : 'border-[#30363d] text-[#6e7681] bg-[#0d1117] hover:border-[#00FF41] hover:text-[#00FF41]'
+          }`}
+        >
+          ‹ 返回
+        </button>
+      </div>
+
+      {/* ── 自查清单模态框 ── */}
       {checklistMounted && (
         <div className={`${checklistLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${checklistLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#2A2A2A] rounded-lg w-full max-w-md p-6 font-mono`}>
-            <h2 className="text-lg mb-4">
-              <span className="text-[#00FF41]">[ </span>
-              发布前自查
-              <span className="text-[#00FF41]"> ]</span>
-            </h2>
+          <div className={`${checklistLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d1117] border border-[#30363d] w-full max-w-md font-mono`}>
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-[#21262d] bg-[#161b22]">
+              <span className="text-[#00FF41] text-xs">▶</span>
+              <span className="text-xs text-[#cdd9e5]">提交::自查清单</span>
+            </div>
+            <div className="p-5">
+              <ul className="space-y-2 mb-6">
+                {checklistItems.map(item => (
+                  <li key={item.key} className="flex items-start gap-3 text-xs">
+                    <span className={`flex-shrink-0 mt-0.5 ${item.pass ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                      {item.pass ? '✓' : '✗'}
+                    </span>
+                    <span className={item.pass ? 'text-[#6e7681]' : 'text-[#cdd9e5]'}>
+                      {item.pass ? item.label : (item.hint ?? item.label)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
 
-            <ul className="space-y-2 mb-6">
-              {checklistItems.map(item => (
-                <li key={item.key} className="flex items-start gap-3 text-sm">
-                  <span className={item.pass ? 'text-[#22c55e] mt-0.5' : 'text-[#ef4444] mt-0.5'}>
-                    {item.pass ? '✓' : '✗'}
+              {/* NSFW 确认复选框 */}
+              {checklistItems.some(i => i.key === 'nsfw' && !i.pass) && (
+                <label className="flex items-center gap-3 mb-6 cursor-pointer select-none">
+                  <span
+                    onClick={() => setNsfwConfirmed(v => !v)}
+                    className={`w-4 h-4 border flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors ${
+                      nsfwConfirmed ? 'bg-[#00FF41] border-[#00FF41]' : 'border-[#4b5563] hover:border-[#00FF41]'
+                    }`}
+                  >
+                    {nsfwConfirmed && (
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                        <path d="M1 4L3.5 6.5L9 1" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    )}
                   </span>
-                  <span className={item.pass ? 'text-[#9ca3af]' : 'text-[#e5e5e5]'}>
-                    {item.pass ? item.label : (item.hint ?? item.label)}
+                  <span className="text-xs text-[#8b949e]">
+                    // 我确认此冰山图包含 NSFW 内容，将进入专项审核队列
                   </span>
-                </li>
-              ))}
-            </ul>
+                </label>
+              )}
 
-            {/* NSFW 确认复选框（仅当有 NSFW 且未确认时显示） */}
-            {checklistItems.some(i => i.key === 'nsfw' && !i.pass) && (
-              <label className="flex items-center gap-3 mb-6 cursor-pointer select-none">
-                <span
-                  onClick={() => setNsfwConfirmed(v => !v)}
-                  className={`w-4 h-4 border rounded flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors ${
-                    nsfwConfirmed
-                      ? 'bg-[#00FF41] border-[#00FF41]'
-                      : 'border-[#4b5563] hover:border-[#00FF41]'
-                  }`}
-                >
-                  {nsfwConfirmed && (
-                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                      <path d="M1 4L3.5 6.5L9 1" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                  )}
-                </span>
-                <span className="text-sm text-[#9ca3af]">
-                  我确认此冰山图包含 NSFW 内容，将进入专项审核队列
-                </span>
-              </label>
-            )}
-
-            {checklistItems.every(i => i.pass) || (
-              checklistItems.every(i => i.pass || (i.key === 'nsfw' && nsfwConfirmed))
-            ) ? (
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowChecklist(false)}
-                  className="flex-1 py-2 border border-[#2A2A2A] rounded text-sm hover:border-[#6b7280] transition-colors"
-                >
-                  返回编辑
-                </button>
-                <button
-                  onClick={() => handleSubmit(nsfwConfirmed)}
-                  disabled={isSubmitting}
-                  className="flex-1 py-2 bg-[#00FF41] text-[#0A0A0A] rounded text-sm font-medium hover:bg-[#00CC33] transition-colors disabled:opacity-50"
-                >
-                  {isSubmitting ? '提交中...' : '确认提交'}
-                </button>
-              </div>
-            ) : (
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowChecklist(false)}
-                  className="flex-1 py-2 border border-[#2A2A2A] rounded text-sm hover:border-[#6b7280] transition-colors"
-                >
-                  返回修改
-                </button>
-                <div className="flex-1 py-2 border border-[#374151] rounded text-sm text-center text-[#6b7280] cursor-not-allowed">
-                  仍有未通过项
+              {checklistItems.every(i => i.pass) || (
+                checklistItems.every(i => i.pass || (i.key === 'nsfw' && nsfwConfirmed))
+              ) ? (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowChecklist(false)}
+                    className="flex-1 py-2 border border-[#21262d] text-xs text-[#6e7681] hover:border-[#8b949e] hover:text-[#8b949e] transition-colors"
+                  >
+                    [ 返回 ]
+                  </button>
+                  <button
+                    onClick={() => handleSubmit(nsfwConfirmed)}
+                    disabled={isSubmitting}
+                    className="flex-1 py-2 bg-[#00FF41] text-[#0A0A0A] text-xs font-bold hover:bg-[#00CC33] transition-colors disabled:opacity-50"
+                  >
+                    {isSubmitting ? '[ 提交中... ]' : '[ 确认提交 ]'}
+                  </button>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowChecklist(false)}
+                    className="flex-1 py-2 border border-[#21262d] text-xs text-[#6e7681] hover:border-[#8b949e] hover:text-[#8b949e] transition-colors"
+                  >
+                    [ 返回修改 ]
+                  </button>
+                  <div className="flex-1 py-2 border border-[#21262d] text-xs text-center text-[#3d444d] cursor-not-allowed">
+                    [ 仍有未通过项 ]
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

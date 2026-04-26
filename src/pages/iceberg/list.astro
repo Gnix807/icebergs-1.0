@@ -8,14 +8,14 @@ import { IcebergList } from '../../components/iceberg/IcebergList';
 
   <main class="bg-grid max-w-6xl mx-auto px-4 md:px-6 py-12 relative z-10">
 
-    <header class="mb-10 boot-animate" style="animation-delay:0ms">
-      <div class="text-xs font-mono text-[#374151] mb-3 tracking-widest">[ ICEBERG SQUARE ]</div>
+    <header class="mb-10 reveal">
+      <div class="text-xs font-mono text-[#6e7681] mb-3 tracking-widest">[ ICEBERG SQUARE ]</div>
       <div class="flex items-end justify-between gap-4">
         <div>
           <h1 class="text-3xl font-mono font-semibold glitch-hover cursor-default">
             <span class="text-[#00FF41]">#</span> 冰山广场
           </h1>
-          <p class="mt-2 text-sm text-[#6b7280] font-mono">探索所有已发布的冰山图</p>
+          <p class="mt-2 text-sm text-[#8b949e] font-mono">探索所有已发布的冰山图</p>
         </div>
         <a
           href="/iceberg/new"
@@ -27,7 +27,7 @@ import { IcebergList } from '../../components/iceberg/IcebergList';
     </header>
 
     <!-- 列表 -->
-    <div class="boot-animate" style="animation-delay:80ms">
+    <div class="reveal">
       <IcebergList client:only="react" />
     </div>
   </main>

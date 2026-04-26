@@ -18,3 +18,10 @@ dist/
 # Prisma 生成文件
 /generated/
 src/generated/
+
+# 项目文档（本地保留，不入库）
+CLAUDE.md
+HANDOVER.md
+REVIEW.md
+TODO.md
+docs/

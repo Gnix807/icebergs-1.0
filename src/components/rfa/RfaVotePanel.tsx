@@ -121,35 +121,35 @@ export function RfaVotePanel({
   return (
     <div className="space-y-6">
       {/* 状态栏 */}
-      <div className="border border-[#1a1a1a] bg-[#0a0c10] px-4 py-3 flex flex-wrap gap-4 text-xs font-mono">
+      <div className="border border-[#21262d] bg-[#161b22] px-4 py-3 flex flex-wrap gap-4 text-xs font-mono">
         <div>
           状态：
-          <span className={`ml-1 ${rfaStatus === 'OPEN' ? 'text-[#00FF41]' : rfaStatus === 'APPROVED' ? 'text-[#8b5cf6]' : rfaStatus === 'REJECTED' ? 'text-[#ef4444]' : 'text-[#6b7280]'}`}>
+          <span className={`ml-1 ${rfaStatus === 'OPEN' ? 'text-[#00FF41]' : rfaStatus === 'APPROVED' ? 'text-[#8b5cf6]' : rfaStatus === 'REJECTED' ? 'text-[#ef4444]' : 'text-[#8b949e]'}`}>
             {rfaStatus === 'OPEN' ? '投票进行中' : rfaStatus === 'APPROVED' ? '已通过' : rfaStatus === 'REJECTED' ? '未通过' : '已撤销'}
           </span>
         </div>
         {isOpen && (
-          <div className="text-[#4b5563]">
+          <div className="text-[#3d444d]">
             剩余 <span className="text-[#f59e0b]">{daysLeft}</span> 天
             （{closesDate.toLocaleDateString('zh-CN')} 截止）
           </div>
         )}
-        <div className="text-[#4b5563]">
+        <div className="text-[#3d444d]">
           支持权重比：<span className="text-[#22c55e]">{passRatio}%</span>
-          <span className="ml-1 text-[#2A2A2A]">（{summary.approveWeight}/{summary.totalWeight}）</span>
+          <span className="ml-1 text-[#3d444d]">（{summary.approveWeight}/{summary.totalWeight}）</span>
         </div>
-        <div className="text-[#4b5563]">
-          共 <span className="text-[#e5e5e5]">{totalVotes}</span> 票
+        <div className="text-[#3d444d]">
+          共 <span className="text-[#cdd9e5]">{totalVotes}</span> 票
           <span className="ml-1">（支持 {summary.approveCount} / 反对 {summary.opposeCount} / 弃权 {summary.abstainCount}）</span>
         </div>
       </div>
 
       {/* 投票操作 */}
       {canVote && (
-        <div className="border border-[#1a1a1a] bg-[#050505] p-4 space-y-3">
-          <div className="text-[10px] font-mono text-[#4b5563]">
+        <div className="border border-[#21262d] bg-[#161b22] p-4 space-y-3">
+          <div className="text-[10px] font-mono text-[#3d444d]">
             你的投票权重：<span className="text-[#f59e0b]">{myWeight}</span>
-            {myVote && <span className="ml-3 text-[#9ca3af]">当前：<span style={{ color: VOTE_COLOR[myVote] }}>{VOTE_LABEL[myVote]}</span>（可修改）</span>}
+            {myVote && <span className="ml-3 text-[#8b949e]">当前：<span style={{ color: VOTE_COLOR[myVote] }}>{VOTE_LABEL[myVote]}</span>（可修改）</span>}
           </div>
           <div className="flex gap-2 flex-wrap">
             {(['APPROVE', 'OPPOSE', 'ABSTAIN'] as const).map(v => (
@@ -161,8 +161,8 @@ export function RfaVotePanel({
                   myVote === v
                     ? v === 'APPROVE' ? 'border-[#22c55e] text-[#22c55e] bg-[#22c55e15]'
                     : v === 'OPPOSE'  ? 'border-[#ef4444] text-[#ef4444] bg-[#ef444415]'
-                    : 'border-[#6b7280] text-[#6b7280] bg-[#6b728015]'
-                    : 'border-[#2A2A2A] text-[#4b5563] hover:border-[#374151] hover:text-[#9ca3af]'
+                    : 'border-[#6b7280] text-[#8b949e] bg-[#8b949e15]'
+                    : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d] hover:text-[#8b949e]'
                 }`}
               >
                 {VOTE_LABEL[v]}
@@ -176,13 +176,13 @@ export function RfaVotePanel({
                 value={comment}
                 onChange={e => setComment(e.target.value.slice(0, 300))}
                 rows={2}
-                className="w-full px-3 py-2 bg-[#0a0c10] border border-[#2A2A2A] text-xs font-mono text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none resize-none"
+                className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none"
                 placeholder="附言（可选，最多 300 字）"
               />
               <div className="flex gap-2">
                 <button
                   onClick={() => { setShowCommentInput(false); setPendingVote(null); }}
-                  className="flex-1 py-1.5 text-xs font-mono border border-[#2A2A2A] text-[#4b5563] hover:border-[#374151] transition-colors"
+                  className="flex-1 py-1.5 text-xs font-mono border border-[#30363d] text-[#3d444d] hover:border-[#30363d] transition-colors"
                 >
                   取消
                 </button>
@@ -201,7 +201,7 @@ export function RfaVotePanel({
       )}
 
       {!userId && isOpen && (
-        <div className="text-xs font-mono text-[#4b5563] border border-[#1a1a1a] px-4 py-3">
+        <div className="text-xs font-mono text-[#3d444d] border border-[#21262d] px-4 py-3">
           <button
             onClick={() => (window as any).__openLogin?.()}
             className="text-[#00FF41] hover:underline"
@@ -214,13 +214,13 @@ export function RfaVotePanel({
 
       {/* 投票列表 */}
       <div>
-        <div className="text-[10px] font-mono text-[#374151] mb-3">— 投票记录 —</div>
+        <div className="text-[10px] font-mono text-[#6e7681] mb-3">— 投票记录 —</div>
         {votes.length === 0 ? (
-          <div className="text-[10px] font-mono text-[#2A2A2A] py-4 text-center">// 暂无投票</div>
+          <div className="text-[10px] font-mono text-[#3d444d] py-4 text-center">// 暂无投票</div>
         ) : (
           <div className="space-y-2">
             {votes.map(v => (
-              <div key={v.id} className="border border-[#1a1a1a] px-4 py-3 flex items-start gap-3">
+              <div key={v.id} className="border border-[#21262d] px-4 py-3 flex items-start gap-3">
                 <span
                   className="text-[10px] font-mono border px-1.5 py-0.5 flex-shrink-0 mt-0.5"
                   style={{ color: VOTE_COLOR[v.vote], borderColor: VOTE_COLOR[v.vote] + '40' }}
@@ -231,18 +231,18 @@ export function RfaVotePanel({
                   <div className="flex items-center gap-2 flex-wrap">
                     <a
                       href={`/user/${v.voter.id}`}
-                      className="text-xs font-mono text-[#9ca3af] hover:text-[#00FF41] transition-colors"
+                      className="text-xs font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors"
                     >
                       @{v.voter.nickname ?? v.voter.username}
                     </a>
-                    <span className="text-[10px] font-mono text-[#374151]">{v.voter.role}</span>
-                    <span className="text-[10px] font-mono text-[#2A2A2A]">×{v.weight}</span>
-                    <span className="text-[10px] font-mono text-[#2A2A2A] ml-auto">
+                    <span className="text-[10px] font-mono text-[#6e7681]">{v.voter.role}</span>
+                    <span className="text-[10px] font-mono text-[#3d444d]">×{v.weight}</span>
+                    <span className="text-[10px] font-mono text-[#3d444d] ml-auto">
                       {new Date(v.createdAt).toLocaleDateString('zh-CN')}
                     </span>
                   </div>
                   {v.comment && (
-                    <p className="text-[11px] font-mono text-[#4b5563] mt-1 leading-relaxed">{v.comment}</p>
+                    <p className="text-[11px] font-mono text-[#3d444d] mt-1 leading-relaxed">{v.comment}</p>
                   )}
                 </div>
               </div>

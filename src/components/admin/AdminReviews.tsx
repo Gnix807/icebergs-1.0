@@ -118,16 +118,16 @@ export function AdminReviews() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-mono text-[#4b5563]">
+        <span className="text-xs font-mono text-[#3d444d]">
           // 待审队列 · {reviews.length} 条
         </span>
-        <button onClick={load} className="text-xs font-mono text-[#374151] hover:text-[#00FF41] transition-colors">
+        <button onClick={load} className="text-xs font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors">
           [刷新]
         </button>
       </div>
 
       {reviews.length === 0 && (
-        <div className="py-12 text-center text-[#2A2A2A] font-mono text-sm border border-[#1a1a1a]">
+        <div className="py-12 text-center text-[#3d444d] font-mono text-sm border border-[#21262d]">
           // 审核队列为空
         </div>
       )}
@@ -135,7 +135,7 @@ export function AdminReviews() {
       {reviews.map(r => (
         <div
           key={r.id}
-          className={`border bg-[#0a0c10] p-4 ${r.overdue ? 'border-[#f59e0b40]' : 'border-[#1f2937]'}`}
+          className={`border bg-[#161b22] p-4 ${r.overdue ? 'border-[#f59e0b40]' : 'border-[#21262d]'}`}
         >
           <div className="flex gap-2 mb-2">
             {r.overdue && (
@@ -152,14 +152,14 @@ export function AdminReviews() {
                 href={`/iceberg/${r.iceberg.slug}`}
                 target="_blank"
                 rel="noreferrer"
-                className="font-mono text-sm text-[#e5e5e5] hover:text-[#00FF41] transition-colors"
+                className="font-mono text-sm text-[#cdd9e5] hover:text-[#00FF41] transition-colors"
               >
                 {r.iceberg.title}
               </a>
               {r.iceberg.description && (
-                <p className="text-xs text-[#4b5563] mt-1 line-clamp-2">{r.iceberg.description}</p>
+                <p className="text-xs text-[#3d444d] mt-1 line-clamp-2">{r.iceberg.description}</p>
               )}
-              <div className="flex items-center gap-3 mt-2 text-[10px] font-mono text-[#374151]">
+              <div className="flex items-center gap-3 mt-2 text-[10px] font-mono text-[#6e7681]">
                 <span>by @{r.iceberg.author.nickname ?? r.iceberg.author.username}</span>
                 <span>{r.iceberg.tiers.length} 层</span>
                 <span>{r.iceberg.tiers.reduce((s, t) => s + t._count.items, 0)} 词条</span>
@@ -202,12 +202,12 @@ export function AdminReviews() {
       {/* 退回理由模态框 */}
       {rejectMounted && (
         <div className={`${rejectLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${rejectLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#2A2A2A] rounded w-full max-w-sm p-5 font-mono`}>
-            <div className="text-sm mb-1 text-[#e5e5e5]">退回：{rejectModalRef.current?.title}</div>
-            <div className="text-xs text-[#4b5563] mb-4">填写退回理由（作者可见）</div>
+          <div className={`${rejectLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] rounded w-full max-w-sm p-5 font-mono`}>
+            <div className="text-sm mb-1 text-[#cdd9e5]">退回：{rejectModalRef.current?.title}</div>
+            <div className="text-xs text-[#3d444d] mb-4">填写退回理由（作者可见）</div>
 
             <select
-              className="w-full mb-3 px-3 py-2 bg-[#0a0c10] border border-[#2A2A2A] text-xs text-[#9ca3af] focus:border-[#00FF41] focus:outline-none"
+              className="w-full mb-3 px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs text-[#8b949e] focus:border-[#00FF41] focus:outline-none"
               onChange={e => setRejectReason(e.target.value)}
               defaultValue=""
             >
@@ -222,7 +222,7 @@ export function AdminReviews() {
             <textarea
               value={rejectReason}
               onChange={e => setRejectReason(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0a0c10] border border-[#2A2A2A] text-xs text-[#e5e5e5] focus:border-[#00FF41] focus:outline-none resize-none"
+              className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none"
               rows={3}
               placeholder="自定义理由..."
             />
@@ -230,7 +230,7 @@ export function AdminReviews() {
             <div className="flex gap-3 mt-4">
               <button
                 onClick={() => { setRejectModal(null); setRejectReason(''); }}
-                className="btn-ghost flex-1 py-2 border border-[#2A2A2A] text-xs hover:border-[#4b5563] transition-colors"
+                className="btn-ghost flex-1 py-2 border border-[#30363d] text-xs hover:border-[#3d444d] transition-colors"
               >
                 取消
               </button>
@@ -248,17 +248,17 @@ export function AdminReviews() {
       {/* Override 模态框 */}
       {overrideMounted && (
         <div className={`${overrideLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${overrideLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#2A2A2A] rounded w-full max-w-sm p-5 font-mono`}>
+          <div className={`${overrideLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] rounded w-full max-w-sm p-5 font-mono`}>
             <div className="text-sm mb-1 text-[#a855f7]">Override 直接发布</div>
-            <div className="text-xs text-[#e5e5e5] mb-1">{overrideModalRef.current?.title}</div>
-            <div className="text-xs text-[#4b5563] mb-4">
+            <div className="text-xs text-[#cdd9e5] mb-1">{overrideModalRef.current?.title}</div>
+            <div className="text-xs text-[#3d444d] mb-4">
               此操作绕过回避制度，理由将永久记录在审核日志中（至少 5 字）
             </div>
 
             <textarea
               value={overrideReason}
               onChange={e => setOverrideReason(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0a0c10] border border-[#2A2A2A] text-xs text-[#e5e5e5] focus:border-[#a855f7] focus:outline-none resize-none"
+              className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs text-[#cdd9e5] focus:border-[#a855f7] focus:outline-none resize-none"
               rows={3}
               placeholder="填写 Override 理由（如：仅我一人可审，队列清零需要）"
             />
@@ -266,7 +266,7 @@ export function AdminReviews() {
             <div className="flex gap-3 mt-4">
               <button
                 onClick={() => { setOverrideModal(null); setOverrideReason(''); }}
-                className="btn-ghost flex-1 py-2 border border-[#2A2A2A] text-xs hover:border-[#4b5563] transition-colors"
+                className="btn-ghost flex-1 py-2 border border-[#30363d] text-xs hover:border-[#3d444d] transition-colors"
               >
                 取消
               </button>

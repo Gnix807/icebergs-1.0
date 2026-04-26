@@ -113,7 +113,7 @@ try {
 
     // RfA 资格（仅本人且为 CONTRIBUTOR 角色时计算）
     if (isOwner && user?.role === 'CONTRIBUTOR') {
-      const db = prisma as any;
+      const db = prisma;
       const [openRfa, recentRejected, rfaSettings] = await Promise.all([
         db.rfaRequest.findFirst({
           where: { userId: id!, status: 'OPEN' },
@@ -166,7 +166,7 @@ try {
         prisma.vote.count({ where: { iceberg: { authorId: id }, value: 1 } }),
         prisma.achievement.findMany({ orderBy: { sortOrder: 'asc' } }),
         prisma.itemRead.count({ where: { userId: id } }),
-        (prisma as any).userAward.findMany({
+        prisma.userAward.findMany({
           where: { receiverId: id },
           orderBy: { createdAt: 'desc' },
           select: {
@@ -234,7 +234,7 @@ try {
   <div class="relative z-10">
     {error ? (
       <div class="max-w-4xl mx-auto px-4 md:px-6 py-12">
-        <div class="p-10 border border-[#2A2A2A] text-center boot-animate">
+        <div class="p-10 border border-[#30363d] text-center reveal">
           <p class="text-[#ef4444] font-mono mb-4">{error}</p>
           <a href="/" class="text-[#00FF41] hover:underline font-mono text-sm">← 返回首页</a>
         </div>

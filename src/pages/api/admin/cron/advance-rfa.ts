@@ -15,7 +15,7 @@ import { success, error } from '../../../../lib/api';
 import { getRfaSettings, evaluateRfa } from '../../../../lib/rfa';
 import { notify } from '../../../../lib/notify';
 
-const db = prisma as any;
+const db = prisma;
 
 export async function POST(event: APIEvent) {
   const secret = process.env.CRON_SECRET;

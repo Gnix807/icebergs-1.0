@@ -4,8 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'JetBrains Mono', 'monospace'],
+        sans: ['IBM Plex Sans', 'Noto Serif SC', 'system-ui', 'sans-serif'],
       },
       colors: {
         'bg-base': '#0A0A0A',

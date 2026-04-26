@@ -76,6 +76,7 @@ model User {
   impeachVotesCast     ImpeachVote[]
   receivedAwards       UserAward[]      @relation("AwardReceiver")
   givenAwards          UserAward[]      @relation("AwardGiver")
+  announcements        Announcement[]
 
   @@map("users")
 }
@@ -194,20 +195,25 @@ model Watchlist {
 
 // ── 站内通知 ─────────────────────────────────────────────
 model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  type      String   // iceberg_approved | iceberg_rejected | promotion_approved | promotion_rejected
-                     // appeal_approved | appeal_rejected | warned | restricted | banned | unbanned
-  title     String
-  body      String?
-  link      String?
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  userId       String
+  type         String   // iceberg_approved | iceberg_rejected | promotion_approved | promotion_rejected
+                        // appeal_approved | appeal_rejected | warned | restricted | banned | unbanned
+                        // comment_liked | comment_reply | iceberg_voted | iceberg_watchlisted
+  title        String
+  body         String?
+  link         String?
+  read         Boolean  @default(false)
+  count        Int      @default(1)   // 聚合计数（点赞/回复合并时递增）
+  aggregateKey String?                // 聚合键：type + targetId，相同则合并
+  updatedAt    DateTime @default(now()) @updatedAt
+  createdAt    DateTime @default(now())
 
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
   @@index([userId, createdAt])
+  @@index([userId, type, aggregateKey, read])
   @@map("notifications")
 }
 
@@ -502,13 +508,14 @@ model ElectionVote {
 model Comment {
   id        String   @id @default(cuid())
   icebergId String
-  userId    String
+  userId    String?  // null = 游客评论
+  guestName String?  // 游客昵称（userId 为 null 时使用）
   content   String
   parentId  String?  // null = 顶层评论；非 null = 回复（最多一级）
   createdAt DateTime @default(now())
 
   iceberg Iceberg      @relation(fields: [icebergId], references: [id], onDelete: Cascade)
-  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   parent  Comment?     @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies Comment[]    @relation("CommentReplies")
   likes   CommentLike[]
@@ -624,4 +631,24 @@ model ScoreLog {
 
   @@index([userId, createdAt])
   @@map("score_logs")
+}
+
+// ── 公告 ──────────────────────────────────────────────────
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   // Markdown
+  // type: "info" | "warning" | "maintenance" | "update"
+  type      String   @default("info")
+  pinned    Boolean  @default(false)
+  banner    Boolean  @default(false)  // 是否作为全站横幅展示（同时只建议开一条）
+  authorId  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author    User @relation(fields: [authorId], references: [id])
+
+  @@index([createdAt])
+  @@map("announcements")
 }

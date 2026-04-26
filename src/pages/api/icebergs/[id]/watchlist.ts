@@ -2,6 +2,7 @@ import type { APIEvent } from '@astrojs/node';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth/index';
+import { notify } from '../../../../lib/notify';
 
 // POST /api/icebergs/:id/watchlist — toggle (add if absent, remove if present)
 export async function POST(event: APIEvent) {
@@ -24,7 +25,7 @@ export async function POST(event: APIEvent) {
 
     const iceberg = await prisma.iceberg.findFirst({
       where: { OR: [{ id }, { slug: id }] },
-      select: { id: true },
+      select: { id: true, title: true, authorId: true, slug: true },
     });
     if (!iceberg) {
       return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '冰山图不存在')), {
@@ -43,6 +44,21 @@ export async function POST(event: APIEvent) {
     } else {
       await prisma.watchlist.create({ data: { userId: session.userId, icebergId: iceberg.id } });
       inWatchlist = true;
+      // 里程碑通知：1 / 5 / 10 / 50 / 100 / 每 100 的倍数
+      if (iceberg.authorId !== session.userId) {
+        const count = await prisma.watchlist.count({ where: { icebergId: iceberg.id } });
+        const milestones = [1, 5, 10, 50, 100];
+        const isMilestone = milestones.includes(count) || (count >= 100 && count % 100 === 0);
+        if (isMilestone) {
+          notify(
+            iceberg.authorId,
+            'iceberg_watchlisted',
+            `你的冰山图已被 ${count} 人收藏`,
+            `《${iceberg.title}》达成收藏里程碑 🎉`,
+            `/iceberg/${iceberg.slug ?? iceberg.id}`,
+          );
+        }
+      }
     }
 
     return new Response(JSON.stringify(success({ inWatchlist })), {

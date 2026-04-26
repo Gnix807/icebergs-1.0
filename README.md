@@ -6,7 +6,7 @@
 
 - **框架**：[Astro 5](https://astro.build/) + React 19（Islands 模式）
 - **数据库**：Prisma 5 + SQLite
-- **认证**：GitHub OAuth + 邮箱/密码
+- **认证**：GitHub OAuth + Google OAuth + 邮箱/密码 + 邮箱验证码防刷
 - **样式**：Tailwind CSS 3.4
 - **拖拽**：@dnd-kit
 - **状态**：Zustand 5（编辑器）
@@ -40,10 +40,32 @@ npm run dev
 复制 `.env.example` 为 `.env` 并填写：
 
 ```
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="file:./prisma/dev.db"
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+REDIRECT_URI=http://localhost:4321/api/auth/callback
+
+# 邮箱验证码发送：console(默认) / resend / webhook
+EMAIL_PROVIDER=console
+EMAIL_FROM=
+RESEND_API_KEY=
+EMAIL_WEBHOOK_URL=
+EMAIL_WEBHOOK_SECRET=
+EMAIL_VERIFICATION_SECRET=change-me
+EMAIL_CODE_TTL_MINUTES=10
+EMAIL_SEND_COOLDOWN_SECONDS=60
+EMAIL_MAX_SEND_PER_EMAIL_DAY=20
+EMAIL_MAX_SEND_PER_IP_DAY=60
+EMAIL_CODE_MAX_ATTEMPTS=5
+
+NODE_ENV=development
 ```
+
+说明：
+- `EMAIL_PROVIDER=console` 时不会真正发信，验证码会打印在服务端日志中，便于本地联调。
+- 生产环境建议配置 `resend` 或 `webhook`，并替换 `EMAIL_VERIFICATION_SECRET`。
 
 ## 开发命令
 
@@ -80,7 +102,7 @@ prisma/
 
 ## 生产部署
 
-部署前需将 `src/lib/auth/index.ts` 中的 OAuth 回调地址改为读取环境变量：
+部署时请在环境变量中配置 OAuth 回调地址（生产环境必填）：
 
 ```
 REDIRECT_URI=https://yourdomain.com/api/auth/callback
