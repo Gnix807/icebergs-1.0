@@ -717,24 +717,24 @@ const bannerAnn = await prisma.announcement.findFirst({
          档案卡片 - 左边框 + hover右移
          ============================================ */
       .archive-card {
-        background: var(--bg-elevated);
-        border: 1px solid var(--border-muted);
-        border-left: 4px solid var(--border);
+        background: var(--color-surface-2);
+        border: 1px solid var(--color-border-2);
+        border-left: 4px solid var(--color-border);
         transition: all 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
       }
       .archive-card:hover {
-        border-left-color: var(--terminal-green);
-        background: var(--bg-hover);
+        border-left-color: var(--color-brand);
+        background: var(--color-surface-3);
         transform: translateX(4px);
-        box-shadow: -4px 0 20px var(--terminal-green-glow);
+        box-shadow: -4px 0 20px rgba(0, 255, 65, 0.12);
         z-index: 10;
       }
 
       /* 金银铜 rank 卡片 */
-      .rank-card { border-left: 4px solid var(--border); }
-      .rank-card.top-1 { border-left-color: #FFD700; background: color-mix(in srgb, #FFD700 5%, var(--bg-elevated)); }
-      .rank-card.top-2 { border-left-color: #C0C0C0; background: color-mix(in srgb, #C0C0C0 4%, var(--bg-elevated)); }
-      .rank-card.top-3 { border-left-color: #CD7F32; background: color-mix(in srgb, #CD7F32 5%, var(--bg-elevated)); }
+      .rank-card { border-left: 4px solid var(--color-border); }
+      .rank-card.top-1 { border-left-color: var(--color-gold); background: color-mix(in srgb, #FFD700 5%, var(--color-surface-2)); }
+      .rank-card.top-2 { border-left-color: var(--color-silver); background: color-mix(in srgb, #C0C0C0 4%, var(--color-surface-2)); }
+      .rank-card.top-3 { border-left-color: var(--color-bronze); background: color-mix(in srgb, #CD7F32 5%, var(--color-surface-2)); }
       .rank-card:hover { transform: translateX(4px); box-shadow: -4px 0 12px rgba(0,0,0,0.4); }
       .rank-card.top-1:hover { box-shadow: -4px 0 18px rgba(255,215,0,0.15); }
       .rank-card.top-2:hover { box-shadow: -4px 0 18px rgba(192,192,192,0.12); }
@@ -749,7 +749,7 @@ const bannerAnn = await prisma.announcement.findFirst({
       }
       .view-bar-fill {
         height: 100%;
-        background: linear-gradient(90deg, #00FF41, #00CC33);
+        background: linear-gradient(90deg, var(--color-brand), var(--color-brand-2));
         transition: width 0.6s ease;
       }
 
@@ -846,115 +846,7 @@ const bannerAnn = await prisma.announcement.findFirst({
         border-color: transparent !important;
       }
 
-      /* ── 背景色：新调色盘 (GitHub Dark → Light) ── */
-      html.light .bg-\[\#0d1117\],
-      html.light .bg-\[\#030506\],
-      html.light .bg-\[\#050608\],
-      html.light .bg-\[\#0d0f14\],
-      html.light .bg-\[\#0d1017\] {
-        background-color: #f8fafc !important;
-      }
-      html.light .bg-\[\#161b22\],
-      html.light .bg-\[\#121212\],
-      html.light .bg-\[\#0A0A0A\],
-      html.light .bg-\[\#050505\],
-      html.light .bg-\[\#0d0d0d\],
-      html.light .bg-\[\#0a0c10\] {
-        background-color: #ffffff !important;
-      }
-      html.light .bg-\[\#1c2128\],
-      html.light .bg-\[\#1A1A1A\],
-      html.light .bg-\[\#1a1a1a\] {
-        background-color: #f1f5f9 !important;
-      }
-
-      /* hover 背景色 */
-      html.light .hover\:bg-\[\#1c2128\]:hover,
-      html.light .hover\:bg-\[\#0d1117\]:hover,
-      html.light .hover\:bg-\[\#0d1017\]:hover {
-        background-color: #f0f4f8 !important;
-      }
-
-      /* ── 边框色：新调色盘 ── */
-      html.light .border-\[\#21262d\],
-      html.light .border-\[\#30363d\],
-      html.light .border-\[\#1f2937\],
-      html.light .border-\[\#2A2A2A\],
-      html.light .border-\[\#374151\],
-      html.light .border-\[\#111518\],
-      html.light .border-\[\#1a1f2a\] {
-        border-color: #e2e8f0 !important;
-      }
-      html.light .divide-\[\#0d0f14\] > * + * {
-        border-color: #e2e8f0 !important;
-      }
-
-      /* ── 文字色：新调色盘 ── */
-      /* 最亮文字 → 近黑 */
-      html.light .text-\[\#cdd9e5\],
-      html.light .text-\[\#e5e5e5\],
-      html.light .text-\[\#e5e7eb\] {
-        color: #0f172a !important;
-      }
-      /* 次亮文字 → 深灰 */
-      html.light .text-\[\#adbac7\],
-      html.light .text-\[\#9ca3af\] {
-        color: #374151 !important;
-      }
-      /* 中灰文字 → 中深灰 */
-      html.light .text-\[\#8b949e\],
-      html.light .text-\[\#6b7280\] {
-        color: #4b5563 !important;
-      }
-      /* 偏暗中灰 → 灰蓝 */
-      html.light .text-\[\#6e7681\],
-      html.light .text-\[\#4b5563\] {
-        color: #475569 !important;
-      }
-      /* 最暗灰（极弱提示文字） → 浅灰 */
-      html.light .text-\[\#3d444d\],
-      html.light .text-\[\#374151\],
-      html.light .text-\[\#484f58\],
-      html.light .text-\[\#1f2937\] {
-        color: #64748b !important;
-      }
-      html.light .text-\[\#21262d\] {
-        color: #64748b !important;
-      }
-
-      /* hover 文字色 */
-      html.light .hover\:text-\[\#cdd9e5\]:hover,
-      html.light .hover\:text-\[\#adbac7\]:hover {
-        color: #1e293b !important;
-      }
-      html.light .hover\:text-\[\#8b949e\]:hover {
-        color: #374151 !important;
-      }
-
-      /* ── 终端绿 → 蓝色 ── */
-      html.light .text-\[\#00FF41\] {
-        color: #1d4ed8 !important;
-      }
-      html.light .border-\[\#00FF41\] {
-        border-color: #1d4ed8 !important;
-      }
-      html.light .bg-\[\#00FF41\] {
-        background-color: #1d4ed8 !important;
-        color: #ffffff !important;
-      }
-      html.light .hover\:text-\[\#00FF41\]:hover {
-        color: #1d4ed8 !important;
-      }
-      html.light .hover\:border-\[\#00FF41\]:hover {
-        border-color: #1d4ed8 !important;
-      }
-      html.light .hover\:bg-\[\#00FF41\]:hover {
-        background-color: #1d4ed8 !important;
-        color: #ffffff !important;
-      }
-      html.light .group:hover .group-hover\:text-\[\#00FF41\] {
-        color: #1d4ed8 !important;
-      }
+      /* ── 背景/文字/边框色 → 由 V2 CSS 变量自动切换，无需硬编码覆盖 ── */
 
       html.light .search-modal-overlay {
         background: rgba(148, 163, 184, 0.22);
@@ -1378,59 +1270,7 @@ const bannerAnn = await prisma.announcement.findFirst({
         caret-color: #2563eb;
       }
 
-      /* ============================================
-         浅色主题补丁 — 未覆盖的深色变体
-         ============================================ */
-
-      /* 深色背景变体（弹窗、Drawer、通知面板、管理栏） */
-      html.light .bg-\[\#030506\],
-      html.light .bg-\[\#050508\],
-      html.light .bg-\[\#060609\],
-      html.light .bg-\[\#080a0f\],
-      html.light .bg-\[\#0d0f14\] {
-        background-color: #ffffff !important;
-      }
-      html.light .bg-\[\#0d1017\],
-      html.light .bg-\[\#111518\] {
-        background-color: #f8fafc !important;
-      }
-
-      /* 带 opacity 修饰符的背景（移动导航菜单） */
-      html.light .bg-\[\#050505\]\/98 {
-        background-color: rgba(255, 255, 255, 0.98) !important;
-      }
-      html.light .bg-\[\#0A0A0A\]\/80,
-      html.light .bg-\[\#0a0a0a\]\/80 {
-        background-color: rgba(248, 250, 252, 0.8) !important;
-      }
-
-      /* 遮罩层（弹窗半透明黑底，浅色模式保留但减淡） */
-      html.light .bg-black\/60,
-      html.light .bg-black\/70,
-      html.light .bg-black\/75,
-      html.light .bg-black\/80 {
-        background-color: rgba(0, 0, 0, 0.45) !important;
-      }
-      html.light .bg-black\/90 {
-        background-color: rgba(0, 0, 0, 0.55) !important;
-      }
-
-      /* hover 背景状态 */
-      html.light .hover\:bg-\[\#0a0c10\]:hover,
-      html.light .hover\:bg-\[\#0d1017\]:hover,
-      html.light .hover\:bg-\[\#111518\]:hover {
-        background-color: #f1f5f9 !important;
-      }
-      html.light .hover\:bg-\[\#1a1a1a\]:hover {
-        background-color: #e2e8f0 !important;
-      }
-
-      /* 未覆盖的边框变体 */
-      html.light .border-\[\#111518\],
-      html.light .border-\[\#1a1f2a\],
-      html.light .border-\[\#0d0f14\] {
-        border-color: #e2e8f0 !important;
-      }
+      /* ── 以下为结构性覆盖（非 Tailwind arbitrary value，需保留） ── */
 
       /* 所有 input / textarea / select 浅色统一覆盖 */
       html.light input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
@@ -1452,27 +1292,6 @@ const bannerAnn = await prisma.announcement.findFirst({
       html.light select option {
         background-color: #ffffff;
         color: #0f172a;
-      }
-
-      /* 只读字段（如已发布冰山图 ID span） */
-      html.light .bg-\[\#050608\] {
-        background-color: #f1f5f9 !important;
-        color: #64748b !important;
-      }
-
-      /* placeholder */
-      html.light .placeholder\:text-\[\#4b5563\]::placeholder {
-        color: #94a3b8 !important;
-      }
-
-      /* focus 边框 */
-      html.light .focus\:border-\[\#00FF41\]:focus {
-        border-color: #2563eb !important;
-      }
-
-      /* text-[#2A2A2A]：原本是"几乎不可见"的装饰色；浅色下给一个可读的浅灰 */
-      html.light .text-\[\#2A2A2A\] {
-        color: #94a3b8 !important;
       }
 
       /* Drawer (slug 详情页) 专项修复 */
