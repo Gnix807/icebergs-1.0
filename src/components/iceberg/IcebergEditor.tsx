@@ -292,11 +292,9 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   // 初始化数据：新建时始终重置 store，避免残留旧冰山图
   useEffect(() => {
     if (!icebergId) {
-      // 创建新冰山图 — 强制清空 store
       const tempId = `temp_${Date.now()}`;
       setIceberg(buildEmptyIceberg(tempId));
     } else if (!iceberg) {
-      // 编辑模式但 store 为空时填充占位，等待 fetch 完成
       const tempId = `temp_${Date.now()}`;
       setIceberg(buildEmptyIceberg(tempId));
     }

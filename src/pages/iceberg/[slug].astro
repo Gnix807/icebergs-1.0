@@ -192,7 +192,7 @@ for (const lbl of allLabels) {
       <>
         {iceberg.tiers.length > 0 && (
           <div id="reading-progress-top" class="fixed top-14 inset-x-0 z-40 pointer-events-none">
-            <div id="read-progress-track" class="h-1 bg-surface-1/95 border-b border-border-subtle">
+            <div id="read-progress-track" class="h-1 border-b border-border-subtle" style="background: rgba(13, 17, 23, 0.95)">
               <div id="read-progress-fill" class="h-full bg-brand" style="width: 0%"></div>
             </div>
           </div>
@@ -853,33 +853,38 @@ for (const lbl of allLabels) {
     color: #8b949e;
   }
   .toc-link-active {
-    border-color: #00FF41 !important;
-    color: #00FF41 !important;
+    border-color: var(--color-brand) !important;
+    color: var(--color-brand) !important;
     background: rgba(0, 255, 65, 0.08);
+  }
+  html.light .toc-link-active {
+    border-color: var(--color-brand) !important;
+    color: var(--color-brand) !important;
+    background: rgba(37, 99, 235, 0.08);
   }
   #read-progress-track {
     box-shadow: inset 0 -1px 0 rgba(33, 38, 45, 0.9);
   }
+  html.light #read-progress-track {
+    background: rgba(248, 250, 252, 0.96) !important;
+    box-shadow: inset 0 -1px 0 rgba(226, 232, 240, 0.9);
+  }
   #read-progress-fill {
     transition: width 0.2s ease;
   }
-  html.light #read-progress-track {
-    background: rgba(248, 250, 252, 0.96);
-    border-color: #e2e8f0;
-  }
   html.light #read-progress-fill {
-    background: #2563eb;
+    background: var(--color-brand);
   }
 
   /* ── Filter bar ── */
   .filter-btn {
-    border-color: #30363d;
-    color: #8b949e;
+    border-color: var(--color-border);
+    color: var(--color-text-body);
     background-color: transparent;
   }
   .filter-btn:hover {
-    border-color: #8b949e;
-    color: #adbac7;
+    border-color: var(--color-text-body);
+    color: var(--color-text-hi);
   }
   html.light #filter-bar {
     background-color: #f8fafc;

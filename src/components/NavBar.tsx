@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { LoginForm } from './LoginForm';
 import { useModalAnimation } from '../hooks/useModalAnimation';
-import { User, LayoutDashboard, Plus, LogOut, Lock, Settings } from 'lucide-react';
+import { User, LayoutDashboard, LogOut, Lock, Settings } from 'lucide-react';
 import { enqueueAchievements } from './ui/AchievementToast';
 import { SearchQuickLinks } from './nav/SearchQuickLinks';
 
@@ -34,19 +34,20 @@ const navLinks = [
   { href: '/', label: '首页' },
   { href: '/iceberg/list', label: '冰山广场' },
   { href: '/leaderboard', label: '排行榜' },
-  { href: '/org', label: '机构' },
+  { href: '/iceberg/new', label: '创建' },
+  { href: '/feedback', label: '反馈' },
+  { href: '/guide', label: '指南' },
   { href: '/announcements', label: '公告' },
+  { href: '/org', label: '机构' },
+  { href: '/changelog', label: '更新日志' },
+  { href: '/rules', label: '规则' },
+  { href: '/feedback/progress', label: '进展' },
 ];
 
 const moreLinks = [
-  { href: '/changelog', label: '更新日志' },
-  { href: '/feedback', label: '反馈' },
-  { href: '/guide', label: '使用指南' },
-  { href: '/rules', label: '平台规则' },
   { href: '/terms', label: '服务条款' },
   { href: '/privacy', label: '隐私政策' },
   { href: '/about', label: '关于本站' },
-  { href: '/feedback/progress', label: '反馈进展' },
 ];
 
 // 移动端菜单仍然展示全部链接
@@ -316,6 +317,7 @@ export function NavBar() {
                 {navLinks.map(({ href, label }) => {
                   const active = isActive(href);
                   const isAnn = href === '/announcements';
+                  const isCreate = href === '/iceberg/new';
                   return (
                     <a key={href} href={href}
                       className={`relative px-2.5 xl:px-3 py-2 text-[15px] transition-all font-mono border-b-2 ${
@@ -323,6 +325,7 @@ export function NavBar() {
                           ? 'text-brand border-brand'
                           : 'text-text-hi hover:text-brand border-transparent hover:border-brand/25'
                       }`}>
+                      {isCreate && <span className="mr-0.5">+</span>}
                       {label}
                       {isAnn && hasNewAnnouncement && (
                         <span className="absolute top-1.5 right-0.5 w-1.5 h-1.5 rounded-full bg-brand" />
@@ -526,11 +529,6 @@ export function NavBar() {
                               className="flex items-center gap-2 px-4 py-2 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
                               onClick={() => setShowDropdown(false)}>
                               <Settings size={14} strokeWidth={1.5} /> 账号设置
-                            </a>
-                            <a href="/iceberg/new"
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
-                              onClick={() => setShowDropdown(false)}>
-                              <Plus size={14} strokeWidth={1.5} /> 创建冰山图
                             </a>
                           </div>
                           <div className="border-t border-border py-1">
