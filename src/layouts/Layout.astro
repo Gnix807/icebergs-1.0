@@ -976,10 +976,16 @@ const bannerAnn = await prisma.announcement.findFirst({
       html.light #drawer {
         background: #ffffff !important;
         border-color: #e2e8f0 !important;
+        box-shadow: -20px 0 60px rgba(0, 0, 0, 0.12) !important;
       }
       html.light #drawer-overlay {
-        background: rgba(0,0,0,0.3) !important;
+        background: rgba(0,0,0,0.35) !important;
       }
+      html.light #drawer-body {
+        scrollbar-color: #e2e8f0 #ffffff;
+      }
+      html.light #drawer-body::-webkit-scrollbar-track { background: #ffffff; }
+      html.light #drawer-body::-webkit-scrollbar-thumb { background: #e2e8f0; }
 
       /* 隐藏滚动条工具类 */
       .scrollbar-none { scrollbar-width: none; }
@@ -1304,52 +1310,6 @@ const bannerAnn = await prisma.announcement.findFirst({
       html.light select option {
         background-color: #ffffff;
         color: #0f172a;
-      }
-
-      /* Drawer (slug 详情页) 专项修复 */
-      html.light #drawer {
-        background-color: #ffffff !important;
-        border-color: #e2e8f0 !important;
-        box-shadow: -20px 0 60px rgba(0, 0, 0, 0.12) !important;
-      }
-      html.light #drawer-body {
-        scrollbar-color: #e2e8f0 #ffffff;
-      }
-      html.light #drawer-body::-webkit-scrollbar-track { background: #ffffff; }
-      html.light #drawer-body::-webkit-scrollbar-thumb { background: #e2e8f0; }
-      html.light #drawer-content :is(h1, h2, h3) { color: #0f172a !important; }
-      html.light #drawer-content p,
-      html.light #drawer-content li { color: #475569 !important; }
-      html.light #drawer-content a { color: #2563eb !important; }
-      html.light #drawer-content blockquote { border-color: #e2e8f0 !important; color: #64748b !important; }
-      html.light #drawer-content code { background: #f1f5f9 !important; color: #0f172a !important; }
-
-      /* 移动端底部导航栏浅色 */
-      html.light .mobile-bottom-nav {
-        background: rgba(255, 255, 255, 0.97) !important;
-        border-color: #e2e8f0 !important;
-      }
-
-      /* ── prefers-reduced-motion：尊重用户无障碍偏好 ──── */
-      @media (prefers-reduced-motion: reduce) {
-        *, *::before, *::after {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-        }
-        .crt-scanlines, .noise-overlay, .vignette {
-          display: none !important;
-        }
-        .reveal, .reveal-grid {
-          opacity: 1 !important;
-          transform: none !important;
-        }
-        .iceberg-float {
-          animation: none !important;
-        }
-        #cursor-dot {
-          display: none !important;
-        }
       }
 
       /* NavBar 通知下拉 / 用户下拉（class 已覆盖，确保 shadow 合适） */

@@ -427,7 +427,7 @@ for (const lbl of allLabels) {
   {/* ── Drawer Overlay ────────────────────────────────────── */}
   <div
     id="drawer-overlay"
-    class="fixed inset-0 bg-black/75 z-40 opacity-0 pointer-events-none transition-opacity duration-300"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 opacity-0 pointer-events-none transition-opacity duration-300"
     onclick="closeDrawer()"
   ></div>
 
@@ -438,8 +438,8 @@ for (const lbl of allLabels) {
            shadow-[-20px_0_60px_rgba(0,0,0,0.7)] z-50
            transform translate-x-full transition-transform duration-300 flex flex-col"
   >
-    {/* Drawer Header */}
-    <div class="flex items-start justify-between px-6 py-4 border-b border-border-subtle bg-surface-1 shrink-0">
+    {/* Drawer Header — sticky */}
+    <div class="sticky top-0 z-10 flex items-start justify-between px-6 py-4 border-b border-border-subtle bg-surface-1 shrink-0">
       <div class="flex-1 min-w-0 mr-4">
         <div id="drawer-tier" class="text-[10px] font-mono mb-1.5 tracking-widest"></div>
         <h2 id="drawer-title" class="text-lg font-mono text-text-hi leading-snug"></h2>
@@ -479,14 +479,36 @@ for (const lbl of allLabels) {
       <div id="drawer-labels" class="flex flex-wrap gap-1.5"></div>
     </div>
 
-    {/* Content */}
+    {/* Content — crossfade on item switch */}
     <div id="drawer-body" class="flex-1 overflow-y-auto p-6">
-      <div id="drawer-content" class="markdown-content text-sm text-text-body leading-relaxed"></div>
+      <div id="drawer-content" class="markdown-content text-sm text-text-body leading-relaxed transition-opacity duration-150"></div>
+    </div>
+
+    {/* Bottom sticky nav bar */}
+    <div class="sticky bottom-0 z-10 px-6 py-2.5 border-t border-border-subtle bg-surface-1 shrink-0 flex items-center justify-between">
+      <button
+        id="drawer-bottom-prev"
+        onclick="navigateDrawer(-1)"
+        class="font-mono text-xs text-text-body hover:text-brand disabled:opacity-30 disabled:cursor-not-allowed
+               border border-border-subtle hover:border-brand px-2.5 py-1 transition-all"
+      >
+        ← 上一个
+      </button>
+      <span id="drawer-bottom-count" class="font-mono text-[10px] text-text-mid tracking-widest tabular-nums"></span>
+      <button
+        id="drawer-bottom-next"
+        onclick="navigateDrawer(1)"
+        class="font-mono text-xs text-text-body hover:text-brand disabled:opacity-30 disabled:cursor-not-allowed
+               border border-border-subtle hover:border-brand px-2.5 py-1 transition-all"
+      >
+        下一个 →
+      </button>
+      <span class="font-mono text-[9px] text-text-lo ml-2 hidden md:inline">←→ 切换 · Esc 关闭</span>
     </div>
 
     {/* Footer */}
     <div class="px-6 py-3 border-t border-border-subtle shrink-0 bg-surface-1 flex items-center justify-between">
-      <span class="text-[10px] font-mono text-[#21262d] truncate">{iceberg?.title}</span>
+      <span class="text-[10px] font-mono text-text-lo truncate">{iceberg?.title}</span>
       <a
         id="drawer-feedback-link"
         href="#"
@@ -506,6 +528,8 @@ for (const lbl of allLabels) {
   let activeLabels = new Set();
   const progressKey = `iceberg_reader_progress_${icebergId}`;
   let scrollSaveTimer = null;
+  // 词条滚动位置记忆
+  const scrollPositions = {};
 
   // ── 探索成就上报 ──────────────────────────────────────────
   function reportRead(item) {
@@ -600,6 +624,12 @@ for (const lbl of allLabels) {
     const item = ITEMS[idx];
     if (!item) return;
 
+    // 保存当前词的滚动位置
+    if (currentIndex >= 0 && currentIndex < ITEMS.length) {
+      var bodyEl = document.getElementById('drawer-body');
+      if (bodyEl) scrollPositions[ITEMS[currentIndex].id] = bodyEl.scrollTop;
+    }
+
     currentIndex = idx;
 
     // Header
@@ -608,10 +638,17 @@ for (const lbl of allLabels) {
     drawerTitle.textContent = item.title;
     drawerTitle.style.color = item.tierColor;
 
-    // Navigation
-    drawerCount.textContent = `${idx + 1} / ${ITEMS.length}`;
+    // Navigation (top + bottom)
+    var countText = (idx + 1) + ' / ' + ITEMS.length;
+    drawerCount.textContent = countText;
     drawerPrev.disabled = idx === 0;
     drawerNext.disabled = idx === ITEMS.length - 1;
+    var bottomCount = document.getElementById('drawer-bottom-count');
+    if (bottomCount) bottomCount.textContent = countText;
+    var bottomPrev = document.getElementById('drawer-bottom-prev');
+    var bottomNext = document.getElementById('drawer-bottom-next');
+    if (bottomPrev) { bottomPrev.disabled = idx === 0; bottomPrev.style.display = ''; }
+    if (bottomNext) { bottomNext.disabled = idx === ITEMS.length - 1; bottomNext.style.display = ''; }
 
     // Labels
     if (item.labels && item.labels.length > 0) {
@@ -629,17 +666,20 @@ for (const lbl of allLabels) {
       drawerLabelsRow.classList.add('hidden');
     }
 
-    // Content
-    drawerContent.innerHTML = item.descHtml || '<p class="text-text-lo">暂无描述</p>';
+    // Content — crossfade
+    var bodyEl = document.getElementById('drawer-body');
+    drawerContent.style.opacity = '0';
+    setTimeout(function () {
+      drawerContent.innerHTML = item.descHtml || '<p class="text-text-lo">暂无描述</p>';
+      drawerContent.style.opacity = '1';
+      // 恢复滚动位置
+      if (bodyEl) bodyEl.scrollTop = scrollPositions[item.id] || 0;
+    }, 80);
 
     // Feedback link
     if (drawerFeedback) {
       drawerFeedback.href = `/feedback?id=${icebergId}&item=${encodeURIComponent(item.title)}`;
     }
-
-    // Scroll content to top
-    const body = document.getElementById('drawer-body');
-    if (body) body.scrollTop = 0;
   }
 
   function openDrawer(idx) {
@@ -652,6 +692,11 @@ for (const lbl of allLabels) {
   }
 
   window.closeDrawer = function () {
+    // 保存当前滚动位置
+    if (currentIndex >= 0 && currentIndex < ITEMS.length) {
+      var bodyEl = document.getElementById('drawer-body');
+      if (bodyEl) scrollPositions[ITEMS[currentIndex].id] = bodyEl.scrollTop;
+    }
     saveReaderState();
     overlay.classList.add('opacity-0', 'pointer-events-none');
     overlay.classList.remove('opacity-100');
@@ -959,7 +1004,7 @@ for (const lbl of allLabels) {
   #drawer-content :global(h1),
   #drawer-content :global(h2),
   #drawer-content :global(h3) {
-    color: #cdd9e5;
+    color: var(--color-text-hi);
     font-family: 'IBM Plex Mono', monospace;
     margin: 1.25rem 0 0.5rem;
   }
@@ -968,36 +1013,36 @@ for (const lbl of allLabels) {
     line-height: 1.75;
   }
   #drawer-content :global(a) {
-    color: #00FF41;
+    color: var(--color-brand);
     text-decoration: underline;
   }
   #drawer-content :global(blockquote) {
-    border-left: 3px solid #30363d;
+    border-left: 3px solid var(--color-border);
     padding-left: 1rem;
-    color: #8b949e;
+    color: var(--color-text-body);
     margin: 1rem 0;
   }
   #drawer-content :global(code) {
-    background: #1c2128;
+    background: var(--color-surface-3);
     padding: 0.1em 0.3em;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 0.85em;
   }
   #drawer-content :global(hr) {
-    border-color: #21262d;
+    border-color: var(--color-border-2);
     margin: 1.5rem 0;
   }
   #drawer-content :global(ul) {
     list-style-type: disc;
     padding-left: 1.5em;
     margin: 0.75rem 0;
-    color: #8b949e;
+    color: var(--color-text-body);
   }
   #drawer-content :global(ol) {
     list-style-type: decimal;
     padding-left: 1.5em;
     margin: 0.75rem 0;
-    color: #8b949e;
+    color: var(--color-text-body);
   }
   #drawer-content :global(li) {
     margin-bottom: 0.25rem;
