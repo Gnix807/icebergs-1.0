@@ -377,7 +377,7 @@ export function AdminUsers() {
                   (modal.type !== 'unban' && modal.type !== 'role' && (formData.reason ?? '').trim().length < 5) ||
                   (modal.type === 'role' && (!formData.role || formData.role === modal.user.role))
                 }
-                className={`flex-1 py-2 text-xs transition-colors disabled:opacity-40 ${
+                className={`flex-1 py-2 text-xs transition-colors disabled:opacity-50 ${
                   modal.type === 'role'
                     ? 'btn-purple bg-purple/20 border border-[#8b5cf650] text-purple hover:bg-purple/20'
                     : 'btn-danger bg-danger/20 border border-[#ef444450] text-danger hover:bg-danger/20'

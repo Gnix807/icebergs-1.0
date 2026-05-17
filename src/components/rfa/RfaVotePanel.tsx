@@ -157,7 +157,7 @@ export function RfaVotePanel({
                 key={v}
                 onClick={() => handleVoteClick(v)}
                 disabled={loading}
-                className={`px-4 py-1.5 text-xs font-mono border transition-colors disabled:opacity-40 ${
+                className={`px-4 py-1.5 text-xs font-mono border transition-colors disabled:opacity-50 ${
                   myVote === v
                     ? v === 'APPROVE' ? 'border-success text-success bg-success/10'
                     : v === 'OPPOSE'  ? 'border-danger text-danger bg-danger/10'
@@ -190,7 +190,7 @@ export function RfaVotePanel({
                   onClick={() => castVote(pendingVote)}
                   disabled={loading}
                   style={{ borderColor: VOTE_COLOR[pendingVote] + '60', color: VOTE_COLOR[pendingVote] }}
-                  className="flex-1 py-1.5 text-xs font-mono border bg-transparent hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className="flex-1 py-1.5 text-xs font-mono border bg-transparent hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                   {loading ? '提交中...' : `确认投 ${VOTE_LABEL[pendingVote]}`}
                 </button>

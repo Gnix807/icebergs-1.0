@@ -135,7 +135,7 @@ export function AdminSettings() {
         <button
           onClick={save}
           disabled={!isDirty || saving}
-          className="px-5 py-2 text-xs font-mono bg-brand/10 border border-brand/25 text-brand hover:bg-brand/15 transition-colors disabled:opacity-40"
+          className="px-5 py-2 text-xs font-mono bg-brand/10 border border-brand/25 text-brand hover:bg-brand/15 transition-colors disabled:opacity-50"
         >
           {saving ? '保存中...' : isDirty ? '保存修改' : '无更改'}
         </button>

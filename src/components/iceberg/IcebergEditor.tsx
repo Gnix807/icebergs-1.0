@@ -1312,7 +1312,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                 if (prev) restoreVersion(prev);
               }}
               disabled={versionHistory.length === 0}
-              className="font-mono text-[10px] border border-border px-2 py-1 text-text-body hover:border-brand hover:text-brand transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="font-mono text-[10px] border border-border px-2 py-1 text-text-body hover:border-brand hover:text-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="恢复到上一保存版本"
             >
               恢复上一版
@@ -1588,7 +1588,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           <button
             onClick={() => handleSubmit()}
             disabled={isSubmitting || !canSubmit}
-            className="font-mono text-xs bg-brand text-[#0A0A0A] font-bold px-4 py-2 hover:bg-brand-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-brand"
+            className="font-mono text-xs bg-brand text-[#0A0A0A] font-bold px-4 py-2 hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-brand"
           >
             {submitButtonText}
           </button>

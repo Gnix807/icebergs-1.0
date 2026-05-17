@@ -128,7 +128,12 @@ const bannerAnn = await prisma.announcement.findFirst({
     <!-- 自定义光标追随点（仅桌面端） -->
     <div id="cursor-dot" class="pointer-events-none fixed z-[99999] hidden" aria-hidden="true"></div>
     <!-- CRT 扫描线叠加层 -->
-    <div class="crt-scanlines pointer-events-none fixed inset-0 z-[9999]"></div>
+    <div id="crt-scanlines" class="crt-scanlines pointer-events-none fixed inset-0 z-[9999]"></div>
+
+    <!-- CRT 开关（仅桌面端） -->
+    <button id="crt-toggle" class="hidden md:flex fixed bottom-4 left-4 z-decorator items-center gap-1.5 px-2 py-1 text-[10px] font-display text-text-lo border border-border-subtle bg-surface-2/90 hover:border-brand hover:text-brand transition-colors" title="切换 CRT 扫描线效果" aria-label="切换 CRT 扫描线效果">
+      <span id="crt-toggle-icon">⊟</span> CRT
+    </button>
 
     <!-- 全局 Toast 通知 -->
     <Toast client:load />
@@ -544,6 +549,13 @@ const bannerAnn = await prisma.announcement.findFirst({
       }
       button:focus-visible {
         outline: 2px solid rgba(0, 255, 65, 0.6);
+        outline-offset: 2px;
+      }
+      /* focus-visible 扩展到链接和可交互卡片 */
+      a:focus-visible,
+      .archive-card:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 2px solid var(--color-brand);
         outline-offset: 2px;
       }
 
@@ -1465,7 +1477,28 @@ const bannerAnn = await prisma.announcement.findFirst({
       document.addEventListener('astro:page-load', initReveal);
       document.addEventListener('astro:page-load', initCursor);
       initReveal();
+      initReveal();
       initCursor();
+
+      // ── CRT 扫描线开关 ──────────────────────────────────
+      (function initCrtToggle() {
+        const scanlines = document.getElementById('crt-scanlines');
+        const toggleBtn = document.getElementById('crt-toggle');
+        const icon = document.getElementById('crt-toggle-icon');
+        if (!scanlines || !toggleBtn) return;
+
+        const stored = localStorage.getItem('crt-scanlines');
+        if (stored === 'off') {
+          scanlines.style.display = 'none';
+          if (icon) icon.textContent = '⊡';
+        }
+        toggleBtn.addEventListener('click', () => {
+          const isOff = scanlines.style.display === 'none';
+          scanlines.style.display = isOff ? '' : 'none';
+          if (icon) icon.textContent = isOff ? '⊟' : '⊡';
+          localStorage.setItem('crt-scanlines', isOff ? 'on' : 'off');
+        });
+      })();
 
       // ── ViewTransitions 页面导航进度条 ───────────────────
       (function initProgress() {

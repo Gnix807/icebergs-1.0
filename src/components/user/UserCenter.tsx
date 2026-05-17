@@ -1438,7 +1438,7 @@ export function UserCenter({
             <div className="flex gap-3">
               <button onClick={() => { setActionModal(null); setActionForm({}); }} className="flex-1 py-2.5 border border-border text-sm hover:border-border transition-colors">取消</button>
               <button onClick={execAction} disabled={actionBusy || (actionForm.reason ?? '').trim().length < 5}
-                className="flex-1 py-2.5 bg-danger/20 border border-[#ef444450] text-danger text-sm hover:bg-danger/20 transition-colors disabled:opacity-40">
+                className="flex-1 py-2.5 bg-danger/20 border border-[#ef444450] text-danger text-sm hover:bg-danger/20 transition-colors disabled:opacity-50">
                 {actionBusy ? '执行中...' : '确认'}
               </button>
             </div>
@@ -1463,7 +1463,7 @@ export function UserCenter({
             <div className="flex gap-3">
               <button onClick={() => { setShowPromotion(false); setPromotionStatement(''); }} className="flex-1 py-2.5 border border-border text-sm hover:border-border transition-colors">取消</button>
               <button onClick={submitPromotion} disabled={promotionBusy}
-                className="flex-1 py-2.5 bg-brand/10 border border-brand/25 text-brand text-sm hover:bg-brand/15 transition-colors disabled:opacity-40">
+                className="flex-1 py-2.5 bg-brand/10 border border-brand/25 text-brand text-sm hover:bg-brand/15 transition-colors disabled:opacity-50">
                 {promotionBusy ? '提交中...' : '提交申请'}
               </button>
             </div>
@@ -1498,7 +1498,7 @@ export function UserCenter({
             <div className="flex gap-3">
               <button onClick={() => { setShowAppeal(false); setAppealStatement(''); }} className="flex-1 py-2.5 border border-border text-sm hover:border-border transition-colors">取消</button>
               <button onClick={submitAppeal} disabled={appealBusy || appealStatement.trim().length < 20}
-                className="flex-1 py-2.5 bg-brand/10 border border-brand/25 text-brand text-sm hover:bg-brand/15 transition-colors disabled:opacity-40">
+                className="flex-1 py-2.5 bg-brand/10 border border-brand/25 text-brand text-sm hover:bg-brand/15 transition-colors disabled:opacity-50">
                 {appealBusy ? '提交中...' : '提交申诉'}
               </button>
             </div>
@@ -1644,7 +1644,7 @@ function AwardModal({ userId, isLeaving, onClose, existingAwards }: {
           <button onClick={onClose} className="flex-1 py-2 border border-border text-sm text-text-body hover:border-border transition-colors">取消</button>
           <button
             onClick={submit} disabled={busy || !selectedType}
-            className="flex-1 py-2 text-sm font-bold transition-colors disabled:opacity-40"
+            className="flex-1 py-2 text-sm font-bold transition-colors disabled:opacity-50"
             style={{
               background: selectedType ? `${AWARD_TYPES.find(a=>a.id===selectedType)?.color}15` : '',
               borderWidth: 1, borderStyle: 'solid',
@@ -1722,7 +1722,7 @@ function UserboxPicker({
         </div>
         <button
           onClick={save} disabled={saving}
-          className={`flex-shrink-0 px-4 py-2 text-xs font-mono border transition-colors disabled:opacity-40 ${saved ? 'border-success/25 text-success' : 'border-brand/25 text-brand hover:bg-brand/10'}`}
+          className={`flex-shrink-0 px-4 py-2 text-xs font-mono border transition-colors disabled:opacity-50 ${saved ? 'border-success/25 text-success' : 'border-brand/25 text-brand hover:bg-brand/10'}`}
         >
           {saving ? '保存中...' : saved ? '✓ 已保存' : '保存'}
         </button>

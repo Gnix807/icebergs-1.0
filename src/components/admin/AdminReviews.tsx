@@ -172,7 +172,7 @@ export function AdminReviews() {
                 <button
                   onClick={() => setOverrideModal({ id: r.id, title: r.iceberg.title })}
                   disabled={acting === r.id}
-                  className="px-3 py-1.5 text-xs font-mono bg-[#a855f7/10] border border-[#a855f7/25] text-[#a855f7] hover:bg-[#a855f7/15] transition-colors disabled:opacity-40"
+                  className="px-3 py-1.5 text-xs font-mono bg-[#a855f7/10] border border-[#a855f7/25] text-[#a855f7] hover:bg-[#a855f7/15] transition-colors disabled:opacity-50"
                 >
                   直接发布
                 </button>
@@ -181,14 +181,14 @@ export function AdminReviews() {
                   <button
                     onClick={() => approve(r.id)}
                     disabled={acting === r.id}
-                    className="btn-primary px-3 py-1.5 text-xs font-mono bg-brand/10 border border-brand/25 text-brand hover:bg-brand/15 transition-colors disabled:opacity-40"
+                    className="btn-primary px-3 py-1.5 text-xs font-mono bg-brand/10 border border-brand/25 text-brand hover:bg-brand/15 transition-colors disabled:opacity-50"
                   >
                     通过
                   </button>
                   <button
                     onClick={() => setRejectModal({ id: r.id, title: r.iceberg.title })}
                     disabled={acting === r.id}
-                    className="btn-danger px-3 py-1.5 text-xs font-mono bg-danger/10 border border-danger/25 text-danger hover:bg-danger/15 transition-colors disabled:opacity-40"
+                    className="btn-danger px-3 py-1.5 text-xs font-mono bg-danger/10 border border-danger/25 text-danger hover:bg-danger/15 transition-colors disabled:opacity-50"
                   >
                     退回
                   </button>
@@ -237,7 +237,7 @@ export function AdminReviews() {
               <button
                 onClick={reject}
                 disabled={!rejectReason.trim() || acting === rejectModalRef.current?.id}
-                className="btn-danger flex-1 py-2 bg-danger/20 border border-[#ef444450] text-danger text-xs hover:bg-danger/20 transition-colors disabled:opacity-40"
+                className="btn-danger flex-1 py-2 bg-danger/20 border border-[#ef444450] text-danger text-xs hover:bg-danger/20 transition-colors disabled:opacity-50"
               >
                 确认退回
               </button>
@@ -273,7 +273,7 @@ export function AdminReviews() {
               <button
                 onClick={override}
                 disabled={overrideReason.trim().length < 5 || acting === overrideModalRef.current?.id}
-                className="flex-1 py-2 bg-[#a855f7/20] border border-[#a855f7/30] text-[#a855f7] text-xs hover:bg-[#a855f7/20] transition-colors disabled:opacity-40"
+                className="flex-1 py-2 bg-[#a855f7/20] border border-[#a855f7/30] text-[#a855f7] text-xs hover:bg-[#a855f7/20] transition-colors disabled:opacity-50"
               >
                 确认发布
               </button>

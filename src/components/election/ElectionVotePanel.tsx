@@ -171,7 +171,7 @@ export function ElectionVotePanel({
             <button
               onClick={applyCandidate}
               disabled={loading}
-              className="btn-success flex-1 py-1.5 text-xs font-mono border border-success/25 text-success hover:bg-success/10 transition-colors disabled:opacity-40"
+              className="btn-success flex-1 py-1.5 text-xs font-mono border border-success/25 text-success hover:bg-success/10 transition-colors disabled:opacity-50"
             >
               {loading ? '提交中...' : '确认报名'}
             </button>
@@ -183,7 +183,7 @@ export function ElectionVotePanel({
         <button
           onClick={withdrawCandidate}
           disabled={loading}
-          className="btn-danger px-4 py-2 text-xs font-mono border border-[#ef444430] text-danger hover:bg-danger/10 transition-colors disabled:opacity-40"
+          className="btn-danger px-4 py-2 text-xs font-mono border border-[#ef444430] text-danger hover:bg-danger/10 transition-colors disabled:opacity-50"
         >
           撤回参选
         </button>
@@ -252,7 +252,7 @@ export function ElectionVotePanel({
                         <button
                           onClick={() => castVote(c.id)}
                           disabled={loading}
-                          className={`px-3 py-1.5 text-[10px] font-mono border transition-colors disabled:opacity-40 ${
+                          className={`px-3 py-1.5 text-[10px] font-mono border transition-colors disabled:opacity-50 ${
                             isMyVoteTarget
                               ? 'btn-info border-[#3b82f6] text-info bg-info/10'
                               : 'btn-ghost border-border text-text-lo hover:border-border hover:text-text-body'

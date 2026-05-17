@@ -158,7 +158,7 @@ export function AdminPromotions() {
               <button
                 onClick={handle}
                 disabled={acting || (modal.action === 'reject' && note.trim().length < 3)}
-                className={`flex-1 py-2 text-xs border transition-colors disabled:opacity-40 ${
+                className={`flex-1 py-2 text-xs border transition-colors disabled:opacity-50 ${
                   modal.action === 'approve'
                     ? 'btn-primary bg-brand/10 border-brand/25 text-brand hover:bg-brand/15'
                     : 'btn-danger bg-danger/10 border-danger/25 text-danger hover:bg-danger/15'

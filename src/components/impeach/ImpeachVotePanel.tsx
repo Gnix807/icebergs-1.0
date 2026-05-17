@@ -159,7 +159,7 @@ export function ImpeachVotePanel({
                 key={v}
                 onClick={() => handleClick(v)}
                 disabled={loading}
-                className={`px-4 py-1.5 text-xs font-mono border transition-colors disabled:opacity-40 ${
+                className={`px-4 py-1.5 text-xs font-mono border transition-colors disabled:opacity-50 ${
                   myVote === v
                     ? `border-[${VOTE_COLOR[v]}] text-[${VOTE_COLOR[v]}]`
                     : 'border-border text-text-lo hover:border-border hover:text-text-body'
@@ -191,7 +191,7 @@ export function ImpeachVotePanel({
                   onClick={() => castVote(pending)}
                   disabled={loading}
                   style={{ borderColor: VOTE_COLOR[pending] + '60', color: VOTE_COLOR[pending] }}
-                  className="flex-1 py-1.5 text-xs font-mono border bg-transparent hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className="flex-1 py-1.5 text-xs font-mono border bg-transparent hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
                   {loading ? '提交中...' : `确认「${VOTE_LABEL[pending]}」`}
                 </button>

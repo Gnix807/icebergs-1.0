@@ -214,7 +214,7 @@ export function AdminAppeals() {
               <button
                 onClick={handle}
                 disabled={acting || note.trim().length < 3}
-                className={`flex-1 py-2 text-xs border transition-colors disabled:opacity-40 ${
+                className={`flex-1 py-2 text-xs border transition-colors disabled:opacity-50 ${
                   modal.action === 'approve'
                     ? 'bg-success/10 border-success/25 text-success hover:bg-success/15'
                     : 'bg-danger/10 border-danger/25 text-danger hover:bg-danger/15'

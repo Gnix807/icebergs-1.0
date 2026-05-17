@@ -341,7 +341,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
             disabled={submitting || !draft.trim()}
             className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono
                        bg-brand/10 border border-brand/25 text-brand
-                       hover:bg-brand/15 transition-colors disabled:opacity-40"
+                       hover:bg-brand/15 transition-colors disabled:opacity-50"
           >
             <Send size={11} strokeWidth={1.5} />
             {submitting ? '发送中...' : '发送'}
@@ -407,7 +407,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                       <button
                         onClick={() => toggleLike(comment.id, false)}
                         disabled={likingId === comment.id}
-                        className={`flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-40 ${
+                        className={`flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-50 ${
                           comment.isLikedByMe ? 'text-brand' : 'text-text-mid hover:text-text-body'
                         }`}
                       >
@@ -429,7 +429,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                           onClick={() => remove(comment.id, false)}
                           disabled={deletingId === comment.id}
                           className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-[10px] font-mono
-                                     text-danger transition-all disabled:opacity-40"
+                                     text-danger transition-all disabled:opacity-50"
                         >
                           <Trash2 size={10} strokeWidth={1.5} />
                         </button>
@@ -464,7 +464,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                         disabled={replySubmitting || !replyDraft.trim()}
                         className="flex items-center gap-1 px-3 py-1 text-[10px] font-mono
                                    bg-brand/10 border border-brand/25 text-brand
-                                   hover:bg-brand/15 transition-colors disabled:opacity-40"
+                                   hover:bg-brand/15 transition-colors disabled:opacity-50"
                       >
                         <Send size={9} strokeWidth={1.5} />
                         {replySubmitting ? '发送...' : '发送'}
@@ -513,7 +513,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                               <button
                                 onClick={() => toggleLike(reply.id, true, comment.id)}
                                 disabled={likingId === reply.id}
-                                className={`flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-40 ${
+                                className={`flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-50 ${
                                   reply.isLikedByMe ? 'text-brand' : 'text-text-mid hover:text-text-body'
                                 }`}
                               >
@@ -525,7 +525,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                                   onClick={() => remove(reply.id, true, comment.id)}
                                   disabled={deletingId === reply.id}
                                   className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-[10px] font-mono
-                                             text-danger transition-all disabled:opacity-40"
+                                             text-danger transition-all disabled:opacity-50"
                                 >
                                   <Trash2 size={10} strokeWidth={1.5} />
                                 </button>

@@ -216,7 +216,7 @@ export function AdminElections() {
           <button
             onClick={createElection}
             disabled={acting}
-            className="w-full py-2 text-xs font-mono bg-brand/10 border border-brand/25 text-brand hover:bg-brand/15 transition-colors disabled:opacity-40"
+            className="w-full py-2 text-xs font-mono bg-brand/10 border border-brand/25 text-brand hover:bg-brand/15 transition-colors disabled:opacity-50"
           >
             {acting ? '发起中...' : '确认发起'}
           </button>
@@ -300,7 +300,7 @@ export function AdminElections() {
                       <button
                         onClick={() => advanceStatus(e, 'start_voting')}
                         disabled={acting}
-                        className="btn-info px-3 py-1.5 text-[10px] font-mono border border-[#3b82f630] text-info hover:bg-info/10 transition-colors disabled:opacity-40"
+                        className="btn-info px-3 py-1.5 text-[10px] font-mono border border-[#3b82f630] text-info hover:bg-info/10 transition-colors disabled:opacity-50"
                       >
                         提前开始投票
                       </button>
@@ -309,7 +309,7 @@ export function AdminElections() {
                       <button
                         onClick={() => advanceStatus(e, 'close')}
                         disabled={acting}
-                        className="btn-warn px-3 py-1.5 text-[10px] font-mono border border-warning/20 text-warning hover:bg-warning/10 transition-colors disabled:opacity-40"
+                        className="btn-warn px-3 py-1.5 text-[10px] font-mono border border-warning/20 text-warning hover:bg-warning/10 transition-colors disabled:opacity-50"
                       >
                         提前关闭投票
                       </button>
@@ -318,7 +318,7 @@ export function AdminElections() {
                       <button
                         onClick={() => openConfirm(e)}
                         disabled={acting}
-                        className="btn-purple px-3 py-1.5 text-[10px] font-mono border border-[#8b5cf630] text-purple hover:bg-purple/10 transition-colors disabled:opacity-40"
+                        className="btn-purple px-3 py-1.5 text-[10px] font-mono border border-[#8b5cf630] text-purple hover:bg-purple/10 transition-colors disabled:opacity-50"
                       >
                         确认结果并晋升
                       </button>
@@ -373,7 +373,7 @@ export function AdminElections() {
               <button
                 onClick={confirmWinner}
                 disabled={acting}
-                className="btn-purple flex-1 py-2 bg-purple/20 border border-[#8b5cf650] text-purple text-xs hover:bg-purple/20 transition-colors disabled:opacity-40"
+                className="btn-purple flex-1 py-2 bg-purple/20 border border-[#8b5cf650] text-purple text-xs hover:bg-purple/20 transition-colors disabled:opacity-50"
               >
                 {acting ? '处理中...' : '确认晋升'}
               </button>

@@ -261,7 +261,7 @@ export function AdminReports() {
               setBatchResolution('');
             }}
             disabled={selectedIds.length === 0}
-            className="px-2.5 py-1 text-xs font-mono border border-danger/25 text-danger hover:bg-danger/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-2.5 py-1 text-xs font-mono border border-danger/25 text-danger hover:bg-danger/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             批量采取行动
           </button>
@@ -271,7 +271,7 @@ export function AdminReports() {
               setBatchResolution('');
             }}
             disabled={selectedIds.length === 0}
-            className="px-2.5 py-1 text-xs font-mono border border-border text-text-body hover:border-[#8b949e] hover:text-text-hi transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-2.5 py-1 text-xs font-mono border border-border text-text-body hover:border-[#8b949e] hover:text-text-hi transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             批量驳回
           </button>
@@ -420,7 +420,7 @@ export function AdminReports() {
               <button
                 onClick={handleSingleResolve}
                 disabled={acting || resolution.trim().length < 3}
-                className={`flex-1 py-2 text-xs border transition-colors disabled:opacity-40 ${
+                className={`flex-1 py-2 text-xs border transition-colors disabled:opacity-50 ${
                   modal.action === 'RESOLVED_ACTION'
                     ? 'bg-danger/10 border-danger/25 text-danger hover:bg-danger/15'
                     : 'bg-[#30363d15] border-border/25 text-text-body hover:bg-[#30363d25]'
@@ -477,7 +477,7 @@ export function AdminReports() {
               <button
                 onClick={handleBatchResolve}
                 disabled={batchActing || batchResolution.trim().length < 3 || selectedIds.length === 0}
-                className={`flex-1 py-2 text-xs border transition-colors disabled:opacity-40 ${
+                className={`flex-1 py-2 text-xs border transition-colors disabled:opacity-50 ${
                   batchModal.action === 'RESOLVED_ACTION'
                     ? 'bg-danger/10 border-danger/25 text-danger hover:bg-danger/15'
                     : 'bg-[#30363d15] border-border/25 text-text-body hover:bg-[#30363d25]'
