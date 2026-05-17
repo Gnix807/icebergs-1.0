@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+﻿import { useEffect, useState, useCallback, useRef } from 'react';
 import type { ChecklistItem } from '../../lib/types';
 import { useModalAnimation } from '../../hooks/useModalAnimation';
 import * as dndCore from '@dnd-kit/core';
@@ -1226,7 +1226,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 font-mono">
-        <span className="text-[#00FF41] animate-pulse">// 加载中...</span>
+        <span className="text-brand animate-pulse">// 加载中...</span>
       </div>
     );
   }
@@ -1234,7 +1234,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   if (error) {
     return (
       <div className="flex items-center justify-center h-64 font-mono">
-        <span className="text-[#ef4444]">! 错误：{error}</span>
+        <span className="text-danger">! 错误：{error}</span>
       </div>
     );
   }
@@ -1242,7 +1242,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   if (!iceberg) {
     return (
       <div className="flex items-center justify-center h-64 font-mono">
-        <span className="text-[#3d444d] animate-pulse">// 初始化中...</span>
+        <span className="text-text-lo animate-pulse">// 初始化中...</span>
       </div>
     );
   }
@@ -1251,27 +1251,27 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   if (showRecovery && draftToRecover) {
     return (
       <div className="max-w-5xl mx-auto px-2 font-mono">
-        <div className="border border-[#f59e0b40] bg-[#0d1117]">
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-[#f59e0b30] bg-[#f59e0b08]">
-            <span className="text-[#f59e0b] text-xs">!</span>
-            <span className="text-xs text-[#f59e0b]">草稿::恢复</span>
+        <div className="border border-warning/25 bg-surface-1">
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-warning/20 bg-warning/5">
+            <span className="text-warning text-xs">!</span>
+            <span className="text-xs text-warning">草稿::恢复</span>
           </div>
           <div className="p-6">
-            <p className="text-xs text-[#6e7681] mb-1">// 标题</p>
-            <p className="text-sm text-[#cdd9e5] mb-4 px-3 py-2 bg-[#161b22] border border-[#21262d]">{draftToRecover.title}</p>
-            <p className="text-xs text-[#3d444d] mb-6">
+            <p className="text-xs text-text-mid mb-1">// 标题</p>
+            <p className="text-sm text-text-hi mb-4 px-3 py-2 bg-surface-2 border border-border-subtle">{draftToRecover.title}</p>
+            <p className="text-xs text-text-lo mb-6">
               // 上次保存：{draftToRecover.savedAt ? new Date(draftToRecover.savedAt).toLocaleString() : '未知'}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={handleRecoverDraft}
-                className="px-5 py-2 bg-[#00FF41] text-[#0A0A0A] text-xs font-bold hover:bg-[#00CC33] transition-colors"
+                className="px-5 py-2 bg-brand text-[#0A0A0A] text-xs font-bold hover:bg-brand-hover transition-colors"
               >
                 [ 恢复草稿 ]
               </button>
               <button
                 onClick={handleDiscardDraft}
-                className="px-5 py-2 border border-[#30363d] text-xs text-[#6e7681] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
+                className="px-5 py-2 border border-border text-xs text-text-mid hover:border-danger hover:text-danger transition-colors"
               >
                 [ 丢弃草稿 ]
               </button>
@@ -1298,12 +1298,12 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   return (
     <div className="max-w-5xl mx-auto px-2">
       {/* ── 编辑器头部 ── */}
-      <header className="mb-6 border border-[#21262d] bg-[#0d1117]">
+      <header className="mb-6 border border-border-subtle bg-surface-1">
         {/* 标题栏 */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-[#21262d] bg-[#161b22]">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-border-subtle bg-surface-2">
           <div className="flex items-center gap-2">
-            <span className="text-[#00FF41] font-mono text-xs">▶</span>
-            <span className="font-mono text-xs text-[#cdd9e5] tracking-widest">冰山图::编辑器</span>
+            <span className="text-brand font-mono text-xs">▶</span>
+            <span className="font-mono text-xs text-text-hi tracking-widest">冰山图::编辑器</span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -1312,25 +1312,25 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                 if (prev) restoreVersion(prev);
               }}
               disabled={versionHistory.length === 0}
-              className="font-mono text-[10px] border border-[#30363d] px-2 py-1 text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="font-mono text-[10px] border border-border px-2 py-1 text-text-body hover:border-brand hover:text-brand transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               title="恢复到上一保存版本"
             >
               恢复上一版
             </button>
             <button
               onClick={() => setShowVersionHistory(true)}
-              className="font-mono text-[10px] border border-[#30363d] px-2 py-1 text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+              className="font-mono text-[10px] border border-border px-2 py-1 text-text-body hover:border-brand hover:text-brand transition-colors"
               title="查看历史版本"
             >
               版本历史 ({versionHistory.length})
             </button>
             <div className="font-mono text-[11px]">
               {isSaving ? (
-                <span className="text-[#3b82f6]">[ ● 保存中... ]</span>
+                <span className="text-info">[ ● 保存中... ]</span>
               ) : isDirty ? (
-                <span className="text-[#f59e0b]">[ ● 未保存 ]</span>
+                <span className="text-warning">[ ● 未保存 ]</span>
               ) : (
-                <span className="text-[#22c55e]">
+                <span className="text-success">
                   [ ● 已保存{lastSaved ? ` ${lastSaved.toLocaleTimeString()}` : ''} ]
                 </span>
               )}
@@ -1339,17 +1339,17 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
         </div>
 
         <div className="p-4 space-y-4">
-          <div className="flex flex-wrap items-center gap-2 border border-[#21262d] bg-[#0A0A0A] px-3 py-2">
-            <span className="font-mono text-[11px] text-[#6e7681]">// 审核状态</span>
+          <div className="flex flex-wrap items-center gap-2 border border-border-subtle bg-surface-0 px-3 py-2">
+            <span className="font-mono text-[11px] text-text-mid">// 审核状态</span>
             <span
               className={`font-mono text-[11px] px-2 py-0.5 border ${
                 iceberg.status === 'PUBLISHED'
-                  ? 'text-[#22c55e] border-[#22c55e]/40 bg-[#22c55e]/10'
+                  ? 'text-success border-success/40 bg-[#22c55e]/10'
                   : iceberg.status === 'PENDING_REVIEW'
-                    ? 'text-[#f59e0b] border-[#f59e0b]/40 bg-[#f59e0b]/10'
+                    ? 'text-warning border-warning/40 bg-[#f59e0b]/10'
                     : iceberg.status === 'REJECTED'
-                      ? 'text-[#ef4444] border-[#ef4444]/40 bg-[#ef4444]/10'
-                      : 'text-[#8b949e] border-[#30363d] bg-[#161b22]'
+                      ? 'text-danger border-danger/40 bg-[#ef4444]/10'
+                      : 'text-text-body border-border bg-surface-2'
               }`}
             >
               {iceberg.status === 'PUBLISHED'
@@ -1363,14 +1363,14 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                       : '草稿'}
             </span>
             {iceberg.status === 'PENDING_REVIEW' && (
-              <span className="font-mono text-[11px] text-[#f59e0b]">已提交，等待编辑审核</span>
+              <span className="font-mono text-[11px] text-warning">已提交，等待编辑审核</span>
             )}
           </div>
 
           {iceberg.status === 'REJECTED' && (
-            <div className="border border-[#ef444440] bg-[#ef444408] px-3 py-2">
-              <p className="font-mono text-[11px] text-[#ef4444] mb-1">// 审核反馈</p>
-              <p className="font-mono text-xs text-[#cdd9e5] leading-relaxed whitespace-pre-wrap">
+            <div className="border border-danger/25 bg-danger/5 px-3 py-2">
+              <p className="font-mono text-[11px] text-danger mb-1">// 审核反馈</p>
+              <p className="font-mono text-xs text-text-hi leading-relaxed whitespace-pre-wrap">
                 {iceberg.review?.note?.trim() || '本次驳回未附加文字说明，请根据规范调整后重新提交。'}
               </p>
             </div>
@@ -1378,9 +1378,9 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
           {/* METADATA 区 */}
           <div>
-            <p className="text-[10px] font-mono text-[#3d444d] mb-1.5">// 元数据</p>
-            <div className="flex items-center border border-[#21262d] bg-[#0A0A0A] focus-within:border-[#00FF41] transition-colors">
-              <span className="px-3 text-[#00FF41] font-mono text-sm select-none flex-shrink-0">›</span>
+            <p className="text-[10px] font-mono text-text-lo mb-1.5">// 元数据</p>
+            <div className="flex items-center border border-border-subtle bg-surface-0 focus-within:border-brand transition-colors">
+              <span className="px-3 text-brand font-mono text-sm select-none flex-shrink-0">›</span>
               <input
                 type="text"
                 value={iceberg.title}
@@ -1398,7 +1398,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                     setSlugError(suggested ? validateSlug(suggested) : null);
                   }
                 }}
-                className="flex-1 pr-4 py-3 bg-transparent font-mono text-lg focus:outline-none text-[#cdd9e5] placeholder:text-[#2d333b]"
+                className="flex-1 pr-4 py-3 bg-transparent font-mono text-lg focus:outline-none text-text-hi placeholder:text-[#2d333b]"
                 placeholder="冰山图标题"
               />
             </div>
@@ -1406,9 +1406,9 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
           {/* SLUG 区 */}
           <div>
-            <p className="text-[10px] font-mono text-[#3d444d] mb-1.5">// 地址</p>
+            <p className="text-[10px] font-mono text-text-lo mb-1.5">// 地址</p>
             <div className="flex items-center gap-0">
-              <span className="px-2 py-2 text-[11px] font-mono text-[#3d444d] bg-[#161b22] border border-[#21262d] border-r-0 flex-shrink-0 select-none">
+              <span className="px-2 py-2 text-[11px] font-mono text-text-lo bg-surface-2 border border-border-subtle border-r-0 flex-shrink-0 select-none">
                 /iceberg/
               </span>
               {iceberg.id.startsWith('temp_') ? (
@@ -1419,20 +1419,20 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                     slugTouched.current = true;
                     handleSlugChange(e.target.value);
                   }}
-                  className={`flex-1 px-3 py-2 bg-[#0A0A0A] border font-mono text-sm focus:outline-none transition-colors ${
-                    slugError ? 'border-[#ef4444] focus:border-[#ef4444] text-[#ef4444]' : 'border-[#21262d] focus:border-[#00FF41] text-[#cdd9e5]'
+                  className={`flex-1 px-3 py-2 bg-surface-0 border font-mono text-sm focus:outline-none transition-colors ${
+                    slugError ? 'border-danger focus:border-danger text-danger' : 'border-border-subtle focus:border-brand text-text-hi'
                   }`}
                   placeholder="my-iceberg-id"
                   spellCheck={false}
                 />
               ) : (
-                <span className="flex-1 px-3 py-2 font-mono text-sm text-[#6e7681] bg-[#050608] border border-[#21262d]">
+                <span className="flex-1 px-3 py-2 font-mono text-sm text-text-mid bg-surface-0 border border-border-subtle">
                   {iceberg.slug || iceberg.id}
                 </span>
               )}
             </div>
             {iceberg.id.startsWith('temp_') && (
-              <p className={`mt-1 text-[11px] font-mono ${slugError ? 'text-[#ef4444]' : 'text-[#3d444d]'}`}>
+              <p className={`mt-1 text-[11px] font-mono ${slugError ? 'text-danger' : 'text-text-lo'}`}>
                 // {slugError ?? '字母、数字、连字符(-)或下划线(_)，创建后不可修改'}
               </p>
             )}
@@ -1440,7 +1440,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
           {/* DESCRIPTION 区 */}
           <div>
-            <p className="text-[10px] font-mono text-[#3d444d] mb-1.5">// 主题分类</p>
+            <p className="text-[10px] font-mono text-text-lo mb-1.5">// 主题分类</p>
             <select
               value={useCustomTopic ? '__custom__' : normalizeIcebergTopic(iceberg.topic)}
               onChange={(e) => {
@@ -1455,7 +1455,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                 setCustomTopicInput('');
                 updateTopic(normalizeIcebergTopic(val));
               }}
-              className="w-full px-3 py-2 bg-[#0A0A0A] border border-[#21262d] focus:border-[#00FF41] focus:outline-none font-mono text-sm text-[#cdd9e5] transition-colors"
+              className="w-full px-3 py-2 bg-surface-0 border border-border-subtle focus:border-brand focus:outline-none font-mono text-sm text-text-hi transition-colors"
             >
               {ICEBERG_TOPICS.map((topic) => (
                 <option key={topic.value} value={topic.value}>
@@ -1475,20 +1475,20 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                     updateTopic(next.trim() || 'other');
                   }}
                   placeholder="例如：动漫、冷知识、互联网谜团"
-                  className="w-full px-3 py-2 bg-[#050608] border border-[#21262d] focus:border-[#00FF41] focus:outline-none font-mono text-sm text-[#cdd9e5] placeholder:text-[#3d444d] transition-colors"
+                  className="w-full px-3 py-2 bg-surface-0 border border-border-subtle focus:border-brand focus:outline-none font-mono text-sm text-text-hi placeholder:text-text-lo transition-colors"
                 />
-                <p className="mt-1 text-[11px] font-mono text-[#3d444d]">最多 24 字，保存后会作为该冰山图的主题分类</p>
+                <p className="mt-1 text-[11px] font-mono text-text-lo">最多 24 字，保存后会作为该冰山图的主题分类</p>
               </div>
             )}
           </div>
 
           {/* DESCRIPTION 区 */}
           <div>
-            <p className="text-[10px] font-mono text-[#3d444d] mb-1.5">// 简介</p>
+            <p className="text-[10px] font-mono text-text-lo mb-1.5">// 简介</p>
             <textarea
               value={iceberg.description || ''}
               onChange={(e) => updateDescription(e.target.value)}
-              className="w-full px-4 py-3 bg-[#0A0A0A] border border-[#21262d] focus:border-[#00FF41] focus:outline-none resize-none font-mono text-sm text-[#cdd9e5] placeholder:text-[#2d333b] transition-colors"
+              className="w-full px-4 py-3 bg-surface-0 border border-border-subtle focus:border-brand focus:outline-none resize-none font-mono text-sm text-text-hi placeholder:text-[#2d333b] transition-colors"
               rows={3}
               placeholder="// 冰山图简介（可选，支持 Markdown）"
             />
@@ -1561,18 +1561,18 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       {/* ── 添加层级 ── */}
       <button
         onClick={handleAddTier}
-        className="mt-4 w-full py-3 border border-dashed border-[#21262d] font-mono text-xs text-[#3d444d] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+        className="mt-4 w-full py-3 border border-dashed border-border-subtle font-mono text-xs text-text-lo hover:border-brand hover:text-brand transition-colors"
       >
         [ ++ 添加层级 ]
       </button>
 
       {/* ── 底部操作栏 ── */}
-      <div className="mt-6 flex items-center justify-between border border-[#21262d] bg-[#0d1117] px-4 py-3">
+      <div className="mt-6 flex items-center justify-between border border-border-subtle bg-surface-1 px-4 py-3">
         <div>
           {!iceberg.id.startsWith('temp_') && (
             <button
               onClick={() => { setDeleteConfirmText(''); setShowDeleteConfirm(true); }}
-              className="font-mono text-xs text-[#3d444d] border border-[#21262d] px-3 py-2 hover:border-[#ef444460] hover:text-[#ef4444] transition-colors"
+              className="font-mono text-xs text-text-lo border border-border-subtle px-3 py-2 hover:border-[#ef444460] hover:text-danger transition-colors"
             >
               [ 删除 ]
             </button>
@@ -1581,14 +1581,14 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
         <div className="flex gap-3">
           <button
             onClick={handleSave}
-            className="font-mono text-xs text-[#8b949e] border border-[#30363d] px-4 py-2 hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+            className="font-mono text-xs text-text-body border border-border px-4 py-2 hover:border-brand hover:text-brand transition-colors"
           >
             [ 保存草稿 ]
           </button>
           <button
             onClick={() => handleSubmit()}
             disabled={isSubmitting || !canSubmit}
-            className="font-mono text-xs bg-[#00FF41] text-[#0A0A0A] font-bold px-4 py-2 hover:bg-[#00CC33] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#00FF41]"
+            className="font-mono text-xs bg-brand text-[#0A0A0A] font-bold px-4 py-2 hover:bg-brand-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-brand"
           >
             {submitButtonText}
           </button>
@@ -1596,11 +1596,11 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       </div>
 
       {syncFailures.length > 0 && (
-        <section className="mt-4 border border-[#ef444440] bg-[#0d1117]">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-[#ef444430] bg-[#ef444408]">
+        <section className="mt-4 border border-danger/25 bg-surface-1">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-[#ef444430] bg-danger/5">
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs text-[#ef4444]">!</span>
-              <span className="font-mono text-xs text-[#ef4444]">
+              <span className="font-mono text-xs text-danger">!</span>
+              <span className="font-mono text-xs text-danger">
                 同步异常::{syncFailures.length}
               </span>
             </div>
@@ -1608,14 +1608,14 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
               <button
                 type="button"
                 onClick={() => void retryAllSyncFailures()}
-                className="font-mono text-[11px] px-2 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+                className="font-mono text-[11px] px-2 py-1 border border-border text-text-body hover:border-brand hover:text-brand transition-colors"
               >
                 全部重试
               </button>
               <button
                 type="button"
                 onClick={clearAllSyncFailures}
-                className="font-mono text-[11px] px-2 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
+                className="font-mono text-[11px] px-2 py-1 border border-border text-text-body hover:border-danger hover:text-danger transition-colors"
               >
                 清空记录
               </button>
@@ -1625,22 +1625,22 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
             {syncFailures.map((failure) => (
               <div
                 key={failure.key}
-                className="border border-[#21262d] bg-[#161b22] px-3 py-2"
+                className="border border-border-subtle bg-surface-2 px-3 py-2"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-mono text-xs text-[#cdd9e5] break-all">{failure.message}</p>
-                    <p className="font-mono text-[10px] text-[#6e7681] mt-1 break-all">
+                    <p className="font-mono text-xs text-text-hi break-all">{failure.message}</p>
+                    <p className="font-mono text-[10px] text-text-mid mt-1 break-all">
                       {failure.method} {failure.url}
                     </p>
-                    <p className="font-mono text-[10px] text-[#3d444d] mt-1">
+                    <p className="font-mono text-[10px] text-text-lo mt-1">
                       重试次数 {failure.attempts} · 最近 {new Date(failure.lastAt).toLocaleString()}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => void retrySyncFailure(failure.key)}
-                    className="shrink-0 font-mono text-[11px] px-2 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+                    className="shrink-0 font-mono text-[11px] px-2 py-1 border border-border text-text-body hover:border-brand hover:text-brand transition-colors"
                   >
                     重试
                   </button>
@@ -1654,22 +1654,22 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       {/* ── 版本历史 ── */}
       {historyMounted && (
         <div className={`${historyLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4`}>
-          <div className={`${historyLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d1117] border border-[#30363d] w-full max-w-xl font-mono`}>
-            <div className="flex items-center justify-between px-4 py-2 border-b border-[#21262d] bg-[#161b22]">
+          <div className={`${historyLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-1 border border-border w-full max-w-xl font-mono`}>
+            <div className="flex items-center justify-between px-4 py-2 border-b border-border-subtle bg-surface-2">
               <div className="flex items-center gap-2">
-                <span className="text-[#00FF41] text-xs">⧗</span>
-                <span className="text-xs text-[#cdd9e5]">编辑器::版本历史</span>
+                <span className="text-brand text-xs">⧗</span>
+                <span className="text-xs text-text-hi">编辑器::版本历史</span>
               </div>
               <button
                 onClick={() => setShowVersionHistory(false)}
-                className="text-xs text-[#6e7681] hover:text-[#8b949e] transition-colors"
+                className="text-xs text-text-mid hover:text-text-body transition-colors"
               >
                 [ 关闭 ]
               </button>
             </div>
             <div className="p-4">
               {versionHistory.length === 0 ? (
-                <div className="py-10 text-center border border-[#21262d] text-xs text-[#6e7681]">
+                <div className="py-10 text-center border border-border-subtle text-xs text-text-mid">
                   // 还没有历史版本，保存后会自动记录
                 </div>
               ) : (
@@ -1681,25 +1681,25 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                         ? '提交前快照'
                         : '自动保存';
                     return (
-                      <div key={entry.id} className="border border-[#21262d] bg-[#161b22] px-3 py-2.5">
+                      <div key={entry.id} className="border border-border-subtle bg-surface-2 px-3 py-2.5">
                         <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0">
-                            <div className="text-xs text-[#cdd9e5] truncate">
+                            <div className="text-xs text-text-hi truncate">
                               {entry.snapshot.title || '未命名冰山图'}
                             </div>
-                            <div className="text-[10px] text-[#6e7681] mt-1">
+                            <div className="text-[10px] text-text-mid mt-1">
                               {new Date(entry.savedAt).toLocaleString()} · {sourceText}
                             </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             {index === 0 && (
-                              <span className="text-[10px] px-2 py-0.5 border border-[#00FF4140] text-[#00FF41] bg-[#00FF4110]">
+                              <span className="text-[10px] px-2 py-0.5 border border-brand/25 text-brand bg-brand/10">
                                 最新
                               </span>
                             )}
                             <button
                               onClick={() => restoreVersion(entry)}
-                              className="text-[10px] px-2.5 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+                              className="text-[10px] px-2.5 py-1 border border-border text-text-body hover:border-brand hover:text-brand transition-colors"
                             >
                               恢复
                             </button>
@@ -1718,17 +1718,17 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       {/* ── 删除确认弹窗 ── */}
       {deleteMounted && (
         <div className={`${deleteLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4`}>
-          <div className={`${deleteLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d1117] border border-[#ef444440] w-full max-w-sm font-mono`}>
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-[#ef444430] bg-[#ef444408]">
-              <span className="text-[#ef4444] text-xs">!</span>
-              <span className="text-xs text-[#ef4444]">删除::冰山图</span>
+          <div className={`${deleteLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-1 border border-danger/25 w-full max-w-sm font-mono`}>
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-[#ef444430] bg-danger/5">
+              <span className="text-danger text-xs">!</span>
+              <span className="text-xs text-danger">删除::冰山图</span>
             </div>
             <div className="p-5">
-              <p className="text-xs text-[#6e7681] mb-4 leading-relaxed">
+              <p className="text-xs text-text-mid mb-4 leading-relaxed">
                 // 此操作不可撤销，所有层级和词条将被永久删除
               </p>
-              <p className="text-[11px] text-[#3d444d] mb-2">// 输入冰山图标题以确认</p>
-              <p className="text-xs text-[#cdd9e5] mb-3 px-3 py-2 bg-[#161b22] border border-[#21262d] truncate">
+              <p className="text-[11px] text-text-lo mb-2">// 输入冰山图标题以确认</p>
+              <p className="text-xs text-text-hi mb-3 px-3 py-2 bg-surface-2 border border-border-subtle truncate">
                 {iceberg.title}
               </p>
               <input
@@ -1736,20 +1736,20 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                 value={deleteConfirmText}
                 onChange={e => setDeleteConfirmText(e.target.value)}
                 placeholder="输入标题确认"
-                className="w-full px-3 py-2 mb-4 bg-[#050608] border border-[#21262d] text-sm text-[#cdd9e5] focus:border-[#ef4444] focus:outline-none placeholder:text-[#2d333b]"
+                className="w-full px-3 py-2 mb-4 bg-surface-0 border border-border-subtle text-sm text-text-hi focus:border-danger focus:outline-none placeholder:text-[#2d333b]"
                 autoFocus
               />
               <div className="flex gap-3">
                 <button
                   onClick={handleDelete}
                   disabled={isDeleting || deleteConfirmText !== iceberg.title}
-                  className="flex-1 py-2 border border-[#ef4444] text-[#ef4444] text-xs hover:bg-[#ef444420] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex-1 py-2 border border-danger text-danger text-xs hover:bg-danger/20 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   {isDeleting ? '[ 删除中... ]' : '[ 确认删除 ]'}
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 py-2 border border-[#21262d] text-[#3d444d] text-xs hover:text-[#8b949e] transition-colors"
+                  className="flex-1 py-2 border border-border-subtle text-text-lo text-xs hover:text-text-body transition-colors"
                 >
                   [ 取消 ]
                 </button>
@@ -1762,18 +1762,18 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       {/* ── 固定返回按钮 ── */}
       <div className="fixed bottom-8 left-6 z-40 flex flex-col items-start gap-2">
         {showBackConfirm && (
-          <div className="bg-[#0d1117] border border-[#f59e0b40] font-mono text-xs p-3 shadow-xl w-44">
-            <p className="text-[#f59e0b] mb-2 leading-snug">// 有未保存的内容</p>
+          <div className="bg-surface-1 border border-warning/25 font-mono text-xs p-3 shadow-xl w-44">
+            <p className="text-warning mb-2 leading-snug">// 有未保存的内容</p>
             <div className="flex flex-col gap-1.5">
               <button
                 onClick={() => { setShowBackConfirm(false); window.history.length > 1 ? history.back() : (window.location.href = '/'); }}
-                className="w-full py-1.5 border border-[#ef444460] text-[#ef4444] hover:bg-[#ef444415] transition-colors"
+                className="w-full py-1.5 border border-[#ef444460] text-danger hover:bg-danger/10 transition-colors"
               >
                 [ 确认离开 ]
               </button>
               <button
                 onClick={() => setShowBackConfirm(false)}
-                className="w-full py-1.5 border border-[#21262d] text-[#6e7681] hover:border-[#8b949e] hover:text-[#8b949e] transition-colors"
+                className="w-full py-1.5 border border-border-subtle text-text-mid hover:border-[#8b949e] hover:text-text-body transition-colors"
               >
                 [ 继续编辑 ]
               </button>
@@ -1790,8 +1790,8 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           }}
           className={`font-mono text-sm px-5 py-3 border shadow-lg transition-colors ${
             showBackConfirm
-              ? 'border-[#f59e0b] text-[#f59e0b] bg-[#0d1117]'
-              : 'border-[#30363d] text-[#6e7681] bg-[#0d1117] hover:border-[#00FF41] hover:text-[#00FF41]'
+              ? 'border-warning text-warning bg-surface-1'
+              : 'border-border text-text-mid bg-surface-1 hover:border-brand hover:text-brand'
           }`}
         >
           ‹ 返回
@@ -1801,19 +1801,19 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       {/* ── 自查清单模态框 ── */}
       {checklistMounted && (
         <div className={`${checklistLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${checklistLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d1117] border border-[#30363d] w-full max-w-md font-mono`}>
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-[#21262d] bg-[#161b22]">
-              <span className="text-[#00FF41] text-xs">▶</span>
-              <span className="text-xs text-[#cdd9e5]">提交::自查清单</span>
+          <div className={`${checklistLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-1 border border-border w-full max-w-md font-mono`}>
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-border-subtle bg-surface-2">
+              <span className="text-brand text-xs">▶</span>
+              <span className="text-xs text-text-hi">提交::自查清单</span>
             </div>
             <div className="p-5">
               <ul className="space-y-2 mb-6">
                 {checklistItems.map(item => (
                   <li key={item.key} className="flex items-start gap-3 text-xs">
-                    <span className={`flex-shrink-0 mt-0.5 ${item.pass ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                    <span className={`flex-shrink-0 mt-0.5 ${item.pass ? 'text-success' : 'text-danger'}`}>
                       {item.pass ? '✓' : '✗'}
                     </span>
-                    <span className={item.pass ? 'text-[#6e7681]' : 'text-[#cdd9e5]'}>
+                    <span className={item.pass ? 'text-text-mid' : 'text-text-hi'}>
                       {item.pass ? item.label : (item.hint ?? item.label)}
                     </span>
                   </li>
@@ -1826,7 +1826,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                   <span
                     onClick={() => setNsfwConfirmed(v => !v)}
                     className={`w-4 h-4 border flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors ${
-                      nsfwConfirmed ? 'bg-[#00FF41] border-[#00FF41]' : 'border-[#4b5563] hover:border-[#00FF41]'
+                      nsfwConfirmed ? 'bg-brand border-brand' : 'border-[#4b5563] hover:border-brand'
                     }`}
                   >
                     {nsfwConfirmed && (
@@ -1835,7 +1835,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                       </svg>
                     )}
                   </span>
-                  <span className="text-xs text-[#8b949e]">
+                  <span className="text-xs text-text-body">
                     // 我确认此冰山图包含 NSFW 内容，将进入专项审核队列
                   </span>
                 </label>
@@ -1847,14 +1847,14 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowChecklist(false)}
-                    className="flex-1 py-2 border border-[#21262d] text-xs text-[#6e7681] hover:border-[#8b949e] hover:text-[#8b949e] transition-colors"
+                    className="flex-1 py-2 border border-border-subtle text-xs text-text-mid hover:border-[#8b949e] hover:text-text-body transition-colors"
                   >
                     [ 返回 ]
                   </button>
                   <button
                     onClick={() => handleSubmit(nsfwConfirmed)}
                     disabled={isSubmitting}
-                    className="flex-1 py-2 bg-[#00FF41] text-[#0A0A0A] text-xs font-bold hover:bg-[#00CC33] transition-colors disabled:opacity-50"
+                    className="flex-1 py-2 bg-brand text-[#0A0A0A] text-xs font-bold hover:bg-brand-hover transition-colors disabled:opacity-50"
                   >
                     {isSubmitting ? '[ 提交中... ]' : '[ 确认提交 ]'}
                   </button>
@@ -1863,11 +1863,11 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowChecklist(false)}
-                    className="flex-1 py-2 border border-[#21262d] text-xs text-[#6e7681] hover:border-[#8b949e] hover:text-[#8b949e] transition-colors"
+                    className="flex-1 py-2 border border-border-subtle text-xs text-text-mid hover:border-[#8b949e] hover:text-text-body transition-colors"
                   >
                     [ 返回修改 ]
                   </button>
-                  <div className="flex-1 py-2 border border-[#21262d] text-xs text-center text-[#3d444d] cursor-not-allowed">
+                  <div className="flex-1 py-2 border border-border-subtle text-xs text-center text-text-lo cursor-not-allowed">
                     [ 仍有未通过项 ]
                   </div>
                 </div>

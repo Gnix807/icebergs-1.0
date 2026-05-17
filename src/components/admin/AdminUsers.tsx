@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { toast } from '../ui/Toast';
 import { useModalAnimation } from '../../hooks/useModalAnimation';
 import { AdminListSkeleton } from '../ui/Skeleton';
@@ -126,12 +126,12 @@ export function AdminUsers() {
           value={q}
           onChange={e => { setQ(e.target.value); setPage(1); }}
           placeholder="// 搜索用户名 / 邮箱"
-          className="flex-1 min-w-[160px] px-3 py-1.5 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#8b949e] focus:border-[#00FF41] focus:outline-none"
+          className="flex-1 min-w-[160px] px-3 py-1.5 bg-surface-2 border border-border text-xs font-mono text-text-body focus:border-brand focus:outline-none"
         />
         <select
           value={roleFilter}
           onChange={e => { setRoleFilter(e.target.value); setPage(1); }}
-          className="px-3 py-1.5 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#8b949e] focus:outline-none"
+          className="px-3 py-1.5 bg-surface-2 border border-border text-xs font-mono text-text-body focus:outline-none"
         >
           <option value="">全部角色</option>
           <option value="USER">USER</option>
@@ -142,7 +142,7 @@ export function AdminUsers() {
         <select
           value={statusFilter}
           onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-          className="px-3 py-1.5 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#8b949e] focus:outline-none"
+          className="px-3 py-1.5 bg-surface-2 border border-border text-xs font-mono text-text-body focus:outline-none"
         >
           <option value="">全部状态</option>
           <option value="ACTIVE">ACTIVE</option>
@@ -158,14 +158,14 @@ export function AdminUsers() {
         <AdminListSkeleton rows={5} />
       ) : (
         <>
-          <div className="text-[10px] font-mono text-[#6e7681] mb-2">// {total} 个用户</div>
+          <div className="text-[10px] font-mono text-text-mid mb-2">// {total} 个用户</div>
 
           <div className="space-y-1.5">
             {users.map(u => (
-              <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 bg-[#161b22] border border-[#21262d] hover:border-[#30363d] transition-colors">
+              <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 bg-surface-2 border border-border-subtle hover:border-border transition-colors">
                 <a href={`/user/${u.id}`} className="flex-1 min-w-0 group">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-sm text-[#cdd9e5] group-hover:text-[#00FF41] transition-colors">
+                    <span className="font-mono text-sm text-text-hi group-hover:text-brand transition-colors">
                       @{u.nickname ?? u.username}
                     </span>
                     {u.isFounder && (
@@ -187,9 +187,9 @@ export function AdminUsers() {
                       {u.status}
                     </span>
                   </div>
-                  <div className="text-[10px] font-mono text-[#6e7681] mt-0.5">
+                  <div className="text-[10px] font-mono text-text-mid mt-0.5">
                     {u.qualityScore} pts · {u._count.icebergs} 冰山图 · {new Date(u.createdAt).toLocaleDateString('zh-CN')}
-                    {u.banUntil && <span className="text-[#ef4444] ml-2">封至 {new Date(u.banUntil).toLocaleDateString('zh-CN')}</span>}
+                    {u.banUntil && <span className="text-danger ml-2">封至 {new Date(u.banUntil).toLocaleDateString('zh-CN')}</span>}
                   </div>
                 </a>
 
@@ -198,7 +198,7 @@ export function AdminUsers() {
                   {!u.isFounder && (
                     <button
                       onClick={() => { setModal({ user: u, type: 'role' }); setFormData({ role: u.role }); }}
-                      className="btn-purple px-2 py-1 text-[10px] font-mono border border-[#8b5cf630] text-[#8b5cf6] hover:bg-[#8b5cf615] transition-colors"
+                      className="btn-purple px-2 py-1 text-[10px] font-mono border border-[#8b5cf630] text-purple hover:bg-purple/10 transition-colors"
                     >
                       任命
                     </button>
@@ -206,7 +206,7 @@ export function AdminUsers() {
                   {u.status === 'ACTIVE' || u.status === 'WARNED_1' ? (
                     <button
                       onClick={() => { setModal({ user: u, type: 'warn' }); setFormData({ level: '1' }); }}
-                      className="btn-warn px-2 py-1 text-[10px] font-mono border border-[#f59e0b30] text-[#f59e0b] hover:bg-[#f59e0b15] transition-colors"
+                      className="btn-warn px-2 py-1 text-[10px] font-mono border border-warning/20 text-warning hover:bg-warning/10 transition-colors"
                     >
                       警告
                     </button>
@@ -214,7 +214,7 @@ export function AdminUsers() {
                   {(u.status === 'ACTIVE' || u.status.startsWith('WARNED')) && (
                     <button
                       onClick={() => { setModal({ user: u, type: 'restrict' }); setFormData({}); }}
-                      className="btn-info px-2 py-1 text-[10px] font-mono border border-[#3b82f630] text-[#3b82f6] hover:bg-[#3b82f615] transition-colors"
+                      className="btn-info px-2 py-1 text-[10px] font-mono border border-[#3b82f630] text-info hover:bg-info/10 transition-colors"
                     >
                       只读
                     </button>
@@ -222,7 +222,7 @@ export function AdminUsers() {
                   {u.status !== 'PERM_BANNED' && u.status !== 'TEMP_BANNED' && (
                     <button
                       onClick={() => { setModal({ user: u, type: 'ban' }); setFormData({ banType: 'TEMP', days: '7' }); }}
-                      className="btn-danger px-2 py-1 text-[10px] font-mono border border-[#ef444430] text-[#ef4444] hover:bg-[#ef444415] transition-colors"
+                      className="btn-danger px-2 py-1 text-[10px] font-mono border border-[#ef444430] text-danger hover:bg-danger/10 transition-colors"
                     >
                       封禁
                     </button>
@@ -230,7 +230,7 @@ export function AdminUsers() {
                   {u.status !== 'ACTIVE' && (
                     <button
                       onClick={() => { setModal({ user: u, type: 'unban' }); setFormData({ reason: '管理员手动解除' }); }}
-                      className="btn-success px-2 py-1 text-[10px] font-mono border border-[#22c55e30] text-[#22c55e] hover:bg-[#22c55e15] transition-colors"
+                      className="btn-success px-2 py-1 text-[10px] font-mono border border-[#22c55e30] text-success hover:bg-success/10 transition-colors"
                     >
                       解除
                     </button>
@@ -249,8 +249,8 @@ export function AdminUsers() {
                   onClick={() => setPage(p)}
                   className={`px-2.5 py-1 text-xs font-mono border transition-colors ${
                     page === p
-                      ? 'border-[#00FF41] text-[#00FF41]'
-                      : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d]'
+                      ? 'border-brand text-brand'
+                      : 'border-border text-text-lo hover:border-border'
                   }`}
                 >
                   {p}
@@ -264,9 +264,9 @@ export function AdminUsers() {
       {/* 操作模态框 */}
       {modalMounted && modal && (
         <div className={`${modalLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-sm p-5 font-mono`}>
-            <div className="text-xs text-[#3d444d] mb-1">对象：@{modal.user.nickname ?? modal.user.username}</div>
-            <div className="text-sm text-[#cdd9e5] mb-4">
+          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-sm p-5 font-mono`}>
+            <div className="text-xs text-text-lo mb-1">对象：@{modal.user.nickname ?? modal.user.username}</div>
+            <div className="text-sm text-text-hi mb-4">
               {modal.type === 'warn' && '发出警告'}
               {modal.type === 'restrict' && '设为只读'}
               {modal.type === 'ban' && '封禁用户'}
@@ -276,7 +276,7 @@ export function AdminUsers() {
 
             {modal.type === 'role' && (
               <div className="mb-3">
-                <div className="text-[10px] text-[#3d444d] mb-1">目标角色</div>
+                <div className="text-[10px] text-text-lo mb-1">目标角色</div>
                 <div className="grid grid-cols-2 gap-1.5">
                   {APPOINT_ROLES.map(r => (
                     <button
@@ -284,8 +284,8 @@ export function AdminUsers() {
                       onClick={() => setFormData(f => ({ ...f, role: r }))}
                       className={`py-1.5 text-xs font-mono border transition-colors ${
                         formData.role === r
-                          ? 'border-[#8b5cf6] text-[#8b5cf6] bg-[#8b5cf610]'
-                          : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d]'
+                          ? 'border-[#8b5cf6] text-purple bg-purple/10'
+                          : 'border-border text-text-lo hover:border-border'
                       }`}
                     >
                       {r}
@@ -297,7 +297,7 @@ export function AdminUsers() {
 
             {modal.type === 'warn' && (
               <div className="mb-3">
-                <div className="text-[10px] text-[#3d444d] mb-1">警告等级</div>
+                <div className="text-[10px] text-text-lo mb-1">警告等级</div>
                 <div className="flex gap-2">
                   {(['1', '2'] as const).map(l => (
                     <button
@@ -305,8 +305,8 @@ export function AdminUsers() {
                       onClick={() => setFormData(f => ({ ...f, level: l }))}
                       className={`flex-1 py-1.5 text-xs border transition-colors ${
                         formData.level === l
-                          ? 'border-[#f59e0b] text-[#f59e0b]'
-                          : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d]'
+                          ? 'border-warning text-warning'
+                          : 'border-border text-text-lo hover:border-border'
                       }`}
                     >
                       WARNED_{l}
@@ -325,8 +325,8 @@ export function AdminUsers() {
                       onClick={() => setFormData(f => ({ ...f, banType: t }))}
                       className={`flex-1 py-1.5 text-xs border transition-colors ${
                         formData.banType === t
-                          ? 'border-[#ef4444] text-[#ef4444]'
-                          : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d]'
+                          ? 'border-danger text-danger'
+                          : 'border-border text-text-lo hover:border-border'
                       }`}
                     >
                       {t === 'TEMP' ? '临时封禁' : '永久封禁'}
@@ -335,13 +335,13 @@ export function AdminUsers() {
                 </div>
                 {formData.banType !== 'PERM' && (
                   <div>
-                    <div className="text-[10px] text-[#3d444d] mb-1">天数</div>
+                    <div className="text-[10px] text-text-lo mb-1">天数</div>
                     <input
                       type="number"
                       min={1}
                       value={formData.days ?? '7'}
                       onChange={e => setFormData(f => ({ ...f, days: e.target.value }))}
-                      className="w-full px-3 py-1.5 bg-[#161b22] border border-[#30363d] text-xs text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none"
+                      className="w-full px-3 py-1.5 bg-surface-2 border border-border text-xs text-text-hi focus:border-brand focus:outline-none"
                     />
                   </div>
                 )}
@@ -350,14 +350,14 @@ export function AdminUsers() {
 
             {(modal.type !== 'unban') && (
               <div className="mb-4">
-                <div className="text-[10px] text-[#3d444d] mb-1">
+                <div className="text-[10px] text-text-lo mb-1">
                   {modal.type === 'role' ? '备注（可选）' : '理由'}
                 </div>
                 <textarea
                   value={formData.reason ?? ''}
                   onChange={e => setFormData(f => ({ ...f, reason: e.target.value }))}
                   rows={2}
-                  className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none"
+                  className="w-full px-3 py-2 bg-surface-2 border border-border text-xs text-text-hi focus:border-brand focus:outline-none resize-none"
                   placeholder={modal.type === 'role' ? '备注原因（可选）' : '理由（至少 5 字）'}
                 />
               </div>
@@ -366,7 +366,7 @@ export function AdminUsers() {
             <div className="flex gap-3">
               <button
                 onClick={() => { setModal(null); setFormData({}); }}
-                className="btn-ghost flex-1 py-2 border border-[#30363d] text-xs hover:border-[#30363d] transition-colors"
+                className="btn-ghost flex-1 py-2 border border-border text-xs hover:border-border transition-colors"
               >
                 取消
               </button>
@@ -379,8 +379,8 @@ export function AdminUsers() {
                 }
                 className={`flex-1 py-2 text-xs transition-colors disabled:opacity-40 ${
                   modal.type === 'role'
-                    ? 'btn-purple bg-[#8b5cf620] border border-[#8b5cf650] text-[#8b5cf6] hover:bg-[#8b5cf630]'
-                    : 'btn-danger bg-[#ef444420] border border-[#ef444450] text-[#ef4444] hover:bg-[#ef444430]'
+                    ? 'btn-purple bg-purple/20 border border-[#8b5cf650] text-purple hover:bg-purple/20'
+                    : 'btn-danger bg-danger/20 border border-[#ef444450] text-danger hover:bg-danger/20'
                 }`}
               >
                 {acting ? '执行中...' : '确认'}

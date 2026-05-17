@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { toast } from '../ui/Toast';
 import { useModalAnimation } from '../../hooks/useModalAnimation';
 import { AdminListSkeleton } from '../ui/Skeleton';
@@ -107,54 +107,54 @@ export function AdminAppeals() {
               onClick={() => setStatusFilter(s)}
               className={`px-3 py-1 text-[10px] font-mono border transition-colors ${
                 statusFilter === s
-                  ? 'border-[#00FF41] text-[#00FF41]'
-                  : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d]'
+                  ? 'border-brand text-brand'
+                  : 'border-border text-text-lo hover:border-border'
               }`}
             >
               {s}
             </button>
           ))}
         </div>
-        <button onClick={load} className="text-xs font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors">[刷新]</button>
+        <button onClick={load} className="text-xs font-mono text-text-mid hover:text-brand transition-colors">[刷新]</button>
       </div>
 
       {loading ? (
         <AdminListSkeleton rows={3} />
       ) : appeals.length === 0 ? (
-        <div className="py-12 text-center text-[#3d444d] font-mono text-sm border border-[#21262d]">
+        <div className="py-12 text-center text-text-lo font-mono text-sm border border-border-subtle">
           // 暂无 {statusFilter} 申诉
         </div>
       ) : (
         <div className="space-y-3">
           {appeals.map(a => (
-            <div key={a.id} className="border border-[#21262d] bg-[#161b22] p-4">
+            <div key={a.id} className="border border-border-subtle bg-surface-2 p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <a href={`/user/${a.user.id}`} className="font-mono text-sm text-[#cdd9e5] hover:text-[#00FF41] transition-colors">
+                    <a href={`/user/${a.user.id}`} className="font-mono text-sm text-text-hi hover:text-brand transition-colors">
                       @{a.user.nickname ?? a.user.username}
                     </a>
-                    <span className="text-[10px] font-mono border border-[#f59e0b30] text-[#f59e0b] px-1">
+                    <span className="text-[10px] font-mono border border-warning/20 text-warning px-1">
                       {TYPE_LABEL[a.type] ?? a.type}
                     </span>
-                    <span className="text-[10px] font-mono text-[#6e7681]">
+                    <span className="text-[10px] font-mono text-text-mid">
                       {new Date(a.createdAt).toLocaleDateString('zh-CN')}
                     </span>
                   </div>
-                  <p className="text-xs text-[#8b949e] leading-relaxed line-clamp-3">{a.statement}</p>
+                  <p className="text-xs text-text-body leading-relaxed line-clamp-3">{a.statement}</p>
                 </div>
 
                 {a.status === 'PENDING' && (
                   <div className="flex gap-2 flex-shrink-0">
                     <button
                       onClick={() => { setModal({ appeal: a, action: 'approve' }); setNote(''); }}
-                      className="px-2.5 py-1 text-[10px] font-mono border border-[#22c55e30] text-[#22c55e] hover:bg-[#22c55e15] transition-colors"
+                      className="px-2.5 py-1 text-[10px] font-mono border border-[#22c55e30] text-success hover:bg-success/10 transition-colors"
                     >
                       批准
                     </button>
                     <button
                       onClick={() => { setModal({ appeal: a, action: 'reject' }); setNote(''); }}
-                      className="px-2.5 py-1 text-[10px] font-mono border border-[#ef444430] text-[#ef4444] hover:bg-[#ef444415] transition-colors"
+                      className="px-2.5 py-1 text-[10px] font-mono border border-[#ef444430] text-danger hover:bg-danger/10 transition-colors"
                     >
                       驳回
                     </button>
@@ -168,16 +168,16 @@ export function AdminAppeals() {
 
       {modalMounted && modal && (
         <div className={`${modalLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-lg p-5 font-mono`}>
-            <div className="text-sm text-[#cdd9e5] mb-1">
+          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-lg p-5 font-mono`}>
+            <div className="text-sm text-text-hi mb-1">
               {modal.action === 'approve' ? '批准申诉' : '驳回申诉'}
             </div>
-            <div className="text-xs text-[#3d444d] mb-4">
+            <div className="text-xs text-text-lo mb-4">
               @{modal.appeal.user.nickname ?? modal.appeal.user.username} · {TYPE_LABEL[modal.appeal.type]}
             </div>
 
             <div className="mb-4">
-              <div className="text-[10px] text-[#3d444d] mb-1">处理意见</div>
+              <div className="text-[10px] text-text-lo mb-1">处理意见</div>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {APPEAL_NOTE_TEMPLATES[modal.action].map((tpl) => (
                   <button
@@ -186,8 +186,8 @@ export function AdminAppeals() {
                     onClick={() => setNote(tpl.text)}
                     className={`text-[10px] px-2 py-1 border transition-colors ${
                       note === tpl.text
-                        ? 'border-[#00FF41] text-[#00FF41] bg-[#00FF4115]'
-                        : 'border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41]'
+                        ? 'border-brand text-brand bg-brand/10'
+                        : 'border-border text-text-body hover:border-brand hover:text-brand'
                     }`}
                     title={tpl.text}
                   >
@@ -199,7 +199,7 @@ export function AdminAppeals() {
                 value={note}
                 onChange={e => setNote(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none"
+                className="w-full px-3 py-2 bg-surface-2 border border-border text-xs text-text-hi focus:border-brand focus:outline-none resize-none"
                 placeholder="处理意见（将告知申请人）"
               />
             </div>
@@ -207,7 +207,7 @@ export function AdminAppeals() {
             <div className="flex gap-3">
               <button
                 onClick={() => { setModal(null); setNote(''); }}
-                className="flex-1 py-2 border border-[#30363d] text-xs hover:border-[#30363d] transition-colors"
+                className="flex-1 py-2 border border-border text-xs hover:border-border transition-colors"
               >
                 取消
               </button>
@@ -216,8 +216,8 @@ export function AdminAppeals() {
                 disabled={acting || note.trim().length < 3}
                 className={`flex-1 py-2 text-xs border transition-colors disabled:opacity-40 ${
                   modal.action === 'approve'
-                    ? 'bg-[#22c55e15] border-[#22c55e40] text-[#22c55e] hover:bg-[#22c55e25]'
-                    : 'bg-[#ef444415] border-[#ef444440] text-[#ef4444] hover:bg-[#ef444425]'
+                    ? 'bg-success/10 border-success/25 text-success hover:bg-success/15'
+                    : 'bg-danger/10 border-danger/25 text-danger hover:bg-danger/15'
                 }`}
               >
                 {acting ? '处理中...' : '确认'}

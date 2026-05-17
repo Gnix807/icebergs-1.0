@@ -89,8 +89,7 @@ export function AnnouncementBanner({ initial }: Props) {
           onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
           onMouseLeave={e => (e.currentTarget.style.opacity = '0.7')}
         >
-          查看详情 →
-        </a>
+          查看详情 �?        </a>
 
         {/* 关闭按钮 */}
         <button
@@ -101,8 +100,7 @@ export function AnnouncementBanner({ initial }: Props) {
           onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
           onMouseLeave={e => (e.currentTarget.style.opacity = '0.5')}
         >
-          ✕
-        </button>
+          �?        </button>
       </div>
     </div>
   );

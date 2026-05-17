@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type ComponentType } from 'react';
+﻿import { useState, useEffect, useRef, type ComponentType } from 'react';
 import { AWARD_TYPES, USERBOX_LIBRARY, getUserboxDef, USERBOX_BASE_SLOTS, USERBOX_MAX_SLOTS } from '../../lib/awards';
 import { useModalAnimation } from '../../hooks/useModalAnimation';
 import { Eye, Layers, Anchor, BookOpen, Brain, Fish, Trophy } from 'lucide-react';
@@ -197,7 +197,7 @@ function ScoreLogTab({ userId }: { userId: string }) {
     return (
       <div className="space-y-2">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-12 bg-[#161b22] border border-[#21262d] animate-pulse" />
+          <div key={i} className="h-12 bg-surface-2 border border-border-subtle animate-pulse" />
         ))}
       </div>
     );
@@ -205,33 +205,33 @@ function ScoreLogTab({ userId }: { userId: string }) {
 
   if (logs.length === 0) {
     return (
-      <div className="py-20 text-center border border-dashed border-[#21262d]">
-        <p className="text-[#6e7681] font-mono text-sm">暂无质量分记录</p>
+      <div className="py-20 text-center border border-dashed border-border-subtle">
+        <p className="text-text-mid font-mono text-sm">暂无质量分记录</p>
       </div>
     );
   }
 
   return (
     <div>
-      <div className="text-[10px] font-mono text-[#6e7681] mb-4">
+      <div className="text-[10px] font-mono text-text-mid mb-4">
         // 共 {total} 条记录
       </div>
       <div className="space-y-1.5">
         {logs.map(log => {
           const meta = SCORE_REASON_META[log.reason] ?? { label: log.reason, icon: '·', color: '#6b7280' };
           return (
-            <div key={log.id} className="flex items-center gap-3 px-4 py-3 border border-[#21262d] bg-[#161b22]">
+            <div key={log.id} className="flex items-center gap-3 px-4 py-3 border border-border-subtle bg-surface-2">
               <span className="text-base flex-shrink-0" style={{ color: meta.color }}>{meta.icon}</span>
               <div className="flex-1 min-w-0">
-                <span className="text-xs font-mono text-[#8b949e]">{meta.label}</span>
+                <span className="text-xs font-mono text-text-body">{meta.label}</span>
                 {log.note && (
-                  <span className="ml-2 text-[10px] font-mono text-[#6e7681] truncate">{log.note}</span>
+                  <span className="ml-2 text-[10px] font-mono text-text-mid truncate">{log.note}</span>
                 )}
               </div>
-              <span className={`text-sm font-mono font-bold tabular-nums flex-shrink-0 ${log.delta >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+              <span className={`text-sm font-mono font-bold tabular-nums flex-shrink-0 ${log.delta >= 0 ? 'text-success' : 'text-danger'}`}>
                 {log.delta >= 0 ? `+${log.delta}` : log.delta}
               </span>
-              <span className="text-[10px] font-mono text-[#2a2a2a] flex-shrink-0 w-20 text-right">
+              <span className="text-[10px] font-mono text-text-lo flex-shrink-0 w-20 text-right">
                 {new Date(log.createdAt).toLocaleDateString('zh-CN')}
               </span>
             </div>
@@ -243,13 +243,13 @@ function ScoreLogTab({ userId }: { userId: string }) {
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className="px-3 py-1.5 text-[10px] font-mono border border-[#21262d] text-[#3d444d] hover:border-[#30363d] hover:text-[#8b949e] disabled:opacity-30 transition-colors"
+            className="px-3 py-1.5 text-[10px] font-mono border border-border-subtle text-text-lo hover:border-border hover:text-text-body disabled:opacity-30 transition-colors"
           >← 上一页</button>
-          <span className="text-[10px] font-mono text-[#6e7681]">{page} / {pages}</span>
+          <span className="text-[10px] font-mono text-text-mid">{page} / {pages}</span>
           <button
             onClick={() => setPage(p => Math.min(pages, p + 1))}
             disabled={page >= pages}
-            className="px-3 py-1.5 text-[10px] font-mono border border-[#21262d] text-[#3d444d] hover:border-[#30363d] hover:text-[#8b949e] disabled:opacity-30 transition-colors"
+            className="px-3 py-1.5 text-[10px] font-mono border border-border-subtle text-text-lo hover:border-border hover:text-text-body disabled:opacity-30 transition-colors"
           >下一页 →</button>
         </div>
       )}
@@ -279,9 +279,9 @@ function ExploreTab({
     return (
       <div className="py-16 text-center font-mono">
         <div className="flex justify-center mb-4 opacity-20">
-          <Layers size={48} strokeWidth={1} className="text-[#00FF41]" />
+          <Layers size={48} strokeWidth={1} className="text-brand" />
         </div>
-        <div className="text-sm text-[#6e7681]">暂无探索成就定义</div>
+        <div className="text-sm text-text-mid">暂无探索成就定义</div>
       </div>
     );
   }
@@ -291,12 +291,12 @@ function ExploreTab({
   return (
     <div>
       {/* 顶部进度栏 */}
-      <div className="border border-[#21262d] bg-[#161b22] px-5 py-4 mb-5">
+      <div className="border border-border-subtle bg-surface-2 px-5 py-4 mb-5">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-mono text-[#6e7681] tracking-widest">探索进度</span>
-          <span className="text-xs font-mono text-[#f59e0b] tabular-nums">{unlocked} / {visible.length}</span>
+          <span className="text-xs font-mono text-text-mid tracking-widest">探索进度</span>
+          <span className="text-xs font-mono text-warning tabular-nums">{unlocked} / {visible.length}</span>
         </div>
-        <div className="w-full h-2 bg-[#0d0f14] border border-[#111518] overflow-hidden">
+        <div className="w-full h-2 bg-surface-4 border border-border-minimal overflow-hidden">
           <div
             className="h-full transition-all duration-700"
             style={{
@@ -305,7 +305,7 @@ function ExploreTab({
             }}
           />
         </div>
-        <div className="flex justify-between text-[10px] font-mono text-[#2a2a2a] mt-1">
+        <div className="flex justify-between text-[10px] font-mono text-text-lo mt-1">
           <span>累计阅读词条 {userReadCount}</span>
           <span>{Math.round((unlocked / Math.max(1, visible.length)) * 100)}%</span>
         </div>
@@ -387,7 +387,7 @@ function ExploreTab({
                       {ach.labelZh}
                     </span>
                     {isUnlocked && (
-                      <span className="ml-auto text-xs font-mono text-[#22c55e] flex-shrink-0">
+                      <span className="ml-auto text-xs font-mono text-success flex-shrink-0">
                         ✓ {dateStr}
                       </span>
                     )}
@@ -402,11 +402,11 @@ function ExploreTab({
                   {/* 进度条（read_count 类型） */}
                   {isCountType && !isUnlocked && ach.triggerTarget > 0 && (
                     <div>
-                      <div className="flex justify-between text-[10px] font-mono text-[#6e7681] mb-1">
+                      <div className="flex justify-between text-[10px] font-mono text-text-mid mb-1">
                         <span>进度</span>
                         <span className="tabular-nums">{Math.min(userReadCount, ach.triggerTarget)} / {ach.triggerTarget}</span>
                       </div>
-                      <div className="w-full h-1.5 bg-[#0d0f14] border border-[#111518] overflow-hidden">
+                      <div className="w-full h-1.5 bg-surface-4 border border-border-minimal overflow-hidden">
                         <div
                           className="h-full transition-all duration-500"
                           style={{ width: `${Math.round(progress * 100)}%`, background: ach.color }}
@@ -782,11 +782,11 @@ export function UserCenter({
     return (
       <>
         {/* Wikipedia 风用户框 */}
-        <div className="relative border border-[#21262d] bg-[#161b22] overflow-hidden">
+        <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
           <div className="relative">
-            <div className="px-3.5 pt-3 pb-2.5 border-b border-[#111518]">
-              <div className="text-[11px] font-mono text-[#6e7681] tracking-[0.2em]">// USERBOX</div>
+            <div className="px-3.5 pt-3 pb-2.5 border-b border-border-minimal">
+              <div className="text-[11px] font-mono text-text-mid tracking-[0.2em]">// USERBOX</div>
             </div>
             <div className="p-2.5">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -806,7 +806,7 @@ export function UserCenter({
                       onMouseEnter={() => setActiveUserboxIndex(i)}
                       onFocus={() => setActiveUserboxIndex(i)}
                       onClick={() => setActiveUserboxIndex(prev => (prev === i ? null : i))}
-                      className="group relative min-h-[4.8rem] min-w-0 border border-[#111518] transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-1 focus:ring-[#00FF41]"
+                      className="group relative min-h-[4.8rem] min-w-0 border border-border-minimal transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-1 focus:ring-brand"
                       style={{ background: box.leftBg, color: box.leftFg }}
                     >
                       <span className="flex h-full w-full flex-col items-center justify-center gap-1 px-1 py-1.5">
@@ -824,11 +824,11 @@ export function UserCenter({
 
               <div className="mt-2 px-0.5 min-h-[28px]">
                 {activeUserboxIndex !== null ? (
-                  <p className="text-[11px] font-mono text-[#8b949e] leading-relaxed">
+                  <p className="text-[11px] font-mono text-text-body leading-relaxed">
                     {userboxes[activeUserboxIndex]?.text}
                   </p>
                 ) : (
-                  <p className="text-[10px] font-mono text-[#6e7681]">// 悬停或点击徽章查看说明</p>
+                  <p className="text-[10px] font-mono text-text-mid">// 悬停或点击徽章查看说明</p>
                 )}
               </div>
             </div>
@@ -837,12 +837,12 @@ export function UserCenter({
 
         {/* 授予勋章面板 */}
         {awards.length > 0 && (
-          <div className="relative border border-[#21262d] bg-[#161b22] overflow-hidden">
+          <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
             <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
             <div className="relative">
-              <div className="px-3.5 pt-3 pb-2.5 border-b border-[#111518] flex items-center justify-between">
-                <div className="text-[11px] font-mono text-[#6e7681] tracking-[0.2em]">// AWARDS</div>
-                <span className="text-[11px] font-mono text-[#f59e0b]">{awards.length}</span>
+              <div className="px-3.5 pt-3 pb-2.5 border-b border-border-minimal flex items-center justify-between">
+                <div className="text-[11px] font-mono text-text-mid tracking-[0.2em]">// AWARDS</div>
+                <span className="text-[11px] font-mono text-warning">{awards.length}</span>
               </div>
               <div className="divide-y divide-[#0d0f14]">
                 {awards.map(award => {
@@ -858,12 +858,12 @@ export function UserCenter({
                       >
                         {def.icon}
                       </div>
-                      <div className="flex-1 flex flex-col justify-center px-2.5 bg-[#050608] min-w-0 border-l border-[#111518] py-1.5">
+                      <div className="flex-1 flex flex-col justify-center px-2.5 bg-surface-0 min-w-0 border-l border-border-minimal py-1.5">
                         <span className="text-[11px] font-mono font-semibold leading-tight" style={{ color: def.color }}>{def.labelZh}</span>
                         {award.message && (
-                          <span className="text-[10px] font-mono text-[#8b949e] leading-tight mt-0.5 line-clamp-2">{award.message}</span>
+                          <span className="text-[10px] font-mono text-text-body leading-tight mt-0.5 line-clamp-2">{award.message}</span>
                         )}
-                        <span className="text-[10px] font-mono text-[#6e7681] leading-tight mt-0.5">
+                        <span className="text-[10px] font-mono text-text-mid leading-tight mt-0.5">
                           by @{giverName} · {new Date(award.createdAt).toLocaleDateString('zh-CN')}
                         </span>
                       </div>
@@ -877,19 +877,19 @@ export function UserCenter({
 
         {/* 通知入口 */}
         {isOwner && (
-          <div className="relative border border-[#21262d] bg-[#161b22] overflow-hidden">
+          <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
             <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
             <div className="relative p-3.5">
-              <div className="text-[11px] font-mono text-[#6e7681] tracking-[0.2em] mb-3">// NOTIFICATIONS</div>
+              <div className="text-[11px] font-mono text-text-mid tracking-[0.2em] mb-3">// NOTIFICATIONS</div>
               <button
                 onClick={() => setShowNotifPanel(true)}
-                className="flex items-center justify-between w-full text-sm font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors group"
+                className="flex items-center justify-between w-full text-sm font-mono text-text-body hover:text-brand transition-colors group"
               >
                 <span className="group-hover:translate-x-0.5 transition-transform">通知中心</span>
                 <div className="flex items-center gap-2">
                   {unreadCount > 0
                     ? <span className="bg-[#ef4444] text-white text-[10px] font-mono px-1.5 py-0.5 min-w-[20px] text-center">{unreadCount > 99 ? '99+' : unreadCount}</span>
-                    : <span className="text-[#2a2a2a] text-xs">▶</span>
+                    : <span className="text-text-lo text-xs">▶</span>
                   }
                 </div>
               </button>
@@ -898,11 +898,11 @@ export function UserCenter({
         )}
 
         {/* Wikipedia 风成就徽章 — 社区贡献 */}
-        <div className="relative border border-[#21262d] bg-[#161b22] overflow-hidden">
+        <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
           <div className="relative">
-            <div className="flex items-center justify-between px-3.5 pt-3.5 pb-2.5 border-b border-[#111518]">
-              <div className="text-[11px] font-mono text-[#6e7681] tracking-[0.2em]">// COMMUNITY</div>
+            <div className="flex items-center justify-between px-3.5 pt-3.5 pb-2.5 border-b border-border-minimal">
+              <div className="text-[11px] font-mono text-text-mid tracking-[0.2em]">// COMMUNITY</div>
               <span className="text-[11px] font-mono" style={{ color: unlockedCommunityCount > 0 ? levelColor : (isLight ? '#d1d5db' : '#30363d') }}>
                 {unlockedCommunityCount}/{COMMUNITY_BADGES.length}
               </span>
@@ -936,12 +936,12 @@ export function UserCenter({
                     <div className="text-[10px] font-mono font-bold tracking-wide leading-tight" style={{ color: unlocked ? badge.color : (isLight ? '#d1d5db' : '#30363d') }}>
                       {badge.label}
                     </div>
-                    <div className="text-[9px] font-mono text-[#3d444d] leading-tight mt-0.5">{badge.labelZh}</div>
+                    <div className="text-[9px] font-mono text-text-lo leading-tight mt-0.5">{badge.labelZh}</div>
                     {unlocked && dateStr && (
-                      <div className="text-[9px] font-mono text-[#6e7681] mt-1 leading-tight">{dateStr}</div>
+                      <div className="text-[9px] font-mono text-text-mid mt-1 leading-tight">{dateStr}</div>
                     )}
                     {!unlocked && (
-                      <div className="text-[9px] font-mono text-[#1f2937] mt-1">— — —</div>
+                      <div className="text-[9px] font-mono text-text-lo mt-1">— — —</div>
                     )}
                   </div>
                 );
@@ -949,15 +949,15 @@ export function UserCenter({
             </div>
 
             {/* 探索成就概览 */}
-            <div className="border-t border-[#111518] px-3.5 py-2.5 flex items-center justify-between">
-              <div className="text-[10px] font-mono text-[#6e7681]">// EXPLORE</div>
+            <div className="border-t border-border-minimal px-3.5 py-2.5 flex items-center justify-between">
+              <div className="text-[10px] font-mono text-text-mid">// EXPLORE</div>
               <span className="text-[10px] font-mono" style={{ color: unlockedExploreCount > 0 ? '#f59e0b' : (isLight ? '#d1d5db' : '#30363d') }}>
                 {unlockedExploreCount}/{achievementDefs.filter(d => !d.isHidden || d.key in achievementMap).length}
               </span>
             </div>
             {/* 迷你进度条 */}
             <div className="px-3 pb-3">
-              <div className="w-full h-1.5 bg-[#0d0f14] border border-[#111518] overflow-hidden">
+              <div className="w-full h-1.5 bg-surface-4 border border-border-minimal overflow-hidden">
                 <div
                   className="h-full transition-all"
                   style={{
@@ -974,10 +974,10 @@ export function UserCenter({
 
         {/* 社交数据 */}
         {showStats && socialStats && (
-          <div className="relative border border-[#21262d] bg-[#161b22] overflow-hidden">
+          <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
             <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
             <div className="relative p-3.5">
-              <div className="text-[11px] font-mono text-[#6e7681] tracking-[0.2em] mb-3">// STATS</div>
+              <div className="text-[11px] font-mono text-text-mid tracking-[0.2em] mb-3">// STATS</div>
               <div className="space-y-2">
                 {[
                   { label: 'VIEWS',    value: socialStats.totalViews.toLocaleString(),       color: '#06b6d4' },
@@ -985,7 +985,7 @@ export function UserCenter({
                   { label: 'ICEBERGS', value: user._count.icebergs.toString(),               color: levelColor  },
                 ].map(s => (
                   <div key={s.label} className="flex items-center justify-between">
-                    <span className="text-xs font-mono text-[#6e7681] tracking-wider">{s.label}</span>
+                    <span className="text-xs font-mono text-text-mid tracking-wider">{s.label}</span>
                     <span className="text-sm font-mono font-bold tabular-nums" style={{ color: s.color }}>
                       {s.value}
                     </span>
@@ -998,35 +998,35 @@ export function UserCenter({
 
         {/* 快捷操作 */}
         {isOwner && (
-          <div className="relative border border-[#21262d] bg-[#161b22] overflow-hidden">
+          <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
             <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
             <div className="relative p-3.5">
-              <div className="text-[11px] font-mono text-[#6e7681] tracking-[0.2em] mb-3">// QUICK ACTIONS</div>
+              <div className="text-[11px] font-mono text-text-mid tracking-[0.2em] mb-3">// QUICK ACTIONS</div>
               <div className="space-y-2">
                 <a
                   href="/iceberg/new"
-                  className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-[#21262d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors group"
+                  className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-border-subtle text-text-body hover:border-brand hover:text-brand transition-colors group"
                 >
                   <span>创建冰山图</span>
-                  <span className="text-[#2a2a2a] group-hover:text-[#00FF41] transition-colors">+</span>
+                  <span className="text-text-lo group-hover:text-brand transition-colors">+</span>
                 </a>
                 {user.role === 'USER' && promotionEligible && !promotionPending && !promotionSent && (
                   <button
                     onClick={() => setShowPromotion(true)}
-                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-[#f59e0b30] text-[#f59e0b] hover:bg-[#f59e0b10] transition-colors"
+                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-warning/20 text-warning hover:bg-warning/10 transition-colors"
                   >
                     <span>申请晋升</span><span>→</span>
                   </button>
                 )}
                 {user.role === 'USER' && (promotionPending || promotionSent) && (
-                  <div className="text-center text-xs font-mono text-[#f59e0b] py-2 border border-[#f59e0b20]">
+                  <div className="text-center text-xs font-mono text-warning py-2 border border-[#f59e0b20]">
                     晋升审核中…
                   </div>
                 )}
                 {user.role === 'CONTRIBUTOR' && rfaEligible && !rfaPending && (
                   <a
                     href="/rfa/apply"
-                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-[#3b82f630] text-[#3b82f6] hover:bg-[#3b82f610] transition-colors"
+                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-[#3b82f630] text-info hover:bg-info/10 transition-colors"
                   >
                     <span>申请编辑资格（RfA）</span><span>→</span>
                   </a>
@@ -1034,7 +1034,7 @@ export function UserCenter({
                 {user.role === 'CONTRIBUTOR' && rfaPending && rfaActiveId && (
                   <a
                     href={`/rfa/${rfaActiveId}`}
-                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-[#3b82f630] text-[#3b82f6] hover:bg-[#3b82f610] transition-colors"
+                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-[#3b82f630] text-info hover:bg-info/10 transition-colors"
                   >
                     <span>RfA 进行中</span><span>→</span>
                   </a>
@@ -1046,30 +1046,30 @@ export function UserCenter({
 
         {/* Steam 风最近活动 */}
         {(showStats || isOwner) && icebergs.length > 0 && (
-          <div className="relative border border-[#21262d] bg-[#161b22] overflow-hidden">
+          <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
             <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
             <div className="relative">
-              <div className="px-3.5 pt-3.5 pb-2.5 border-b border-[#111518]">
-                <div className="text-[11px] font-mono text-[#6e7681] tracking-[0.2em]">// RECENT ACTIVITY</div>
+              <div className="px-3.5 pt-3.5 pb-2.5 border-b border-border-minimal">
+                <div className="text-[11px] font-mono text-text-mid tracking-[0.2em]">// RECENT ACTIVITY</div>
               </div>
               {icebergs.slice(0, 4).map(ic => (
                 <a
                   key={ic.id}
                   href={`/iceberg/${ic.slug}`}
-                  className="flex items-start gap-3 px-3.5 py-2.5 border-b border-[#0d0f14] hover:bg-[#0d1017] transition-colors group last:border-b-0"
+                  className="flex items-start gap-3 px-3.5 py-2.5 border-b border-[#0d0f14] hover:bg-surface-1 transition-colors group last:border-b-0"
                 >
-                  <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-[#1a1f2a] bg-[#050608] mt-0.5">
-                    <span className="text-[#3d444d] text-xs group-hover:text-[#00FF41] transition-colors">▼</span>
+                  <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-border-minimal bg-surface-0 mt-0.5">
+                    <span className="text-text-lo text-xs group-hover:text-brand transition-colors">▼</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs font-mono text-[#8b949e] truncate group-hover:text-[#00FF41] transition-colors leading-tight mb-1">
+                    <div className="text-xs font-mono text-text-body truncate group-hover:text-brand transition-colors leading-tight mb-1">
                       {ic.title}
                     </div>
-                    <div className="flex items-center gap-2 text-[11px] font-mono text-[#6e7681]">
+                    <div className="flex items-center gap-2 text-[11px] font-mono text-text-mid">
                       <span className="flex items-center gap-1"><Eye size={11} strokeWidth={1.5} /> {ic.viewCount}</span>
                       <span>{timeAgo(ic.createdAt)}</span>
                       {ic.status !== 'PUBLISHED' && (
-                        <span className="text-[#f59e0b] opacity-70">{ic.status}</span>
+                        <span className="text-warning opacity-70">{ic.status}</span>
                       )}
                     </div>
                   </div>
@@ -1104,7 +1104,7 @@ export function UserCenter({
                 <span className="text-base font-bold flex-shrink-0" style={{ color: c.color }}>[{c.icon}]</span>
                 <div>
                   <span className="text-sm" style={{ color: c.color }}>{user.status}</span>
-                  <p className="text-xs text-[#8b949e] mt-0.5 leading-relaxed">{c.msg}</p>
+                  <p className="text-xs text-text-body mt-0.5 leading-relaxed">{c.msg}</p>
                 </div>
               </div>
               {canAppeal && (
@@ -1113,7 +1113,7 @@ export function UserCenter({
                 </button>
               )}
               {user.status === 'WARNED_2' && !canAppeal && !appealEligible && (
-                <span className="flex-shrink-0 text-xs text-[#6e7681] font-mono">申诉冷却中</span>
+                <span className="flex-shrink-0 text-xs text-text-mid font-mono">申诉冷却中</span>
               )}
             </div>
           </div>
@@ -1122,27 +1122,27 @@ export function UserCenter({
 
       {/* ── 管理操作栏（对他人）──────────────────────────────────────────── */}
       {!isOwner && isEditorViewer && (
-        <div className="border border-[#21262d] bg-[#161b22] mb-5 px-4 py-3 flex items-center gap-3 flex-wrap boot-animate" style={{ animationDelay: '0ms' }}>
-          <span className="text-xs font-mono text-[#6e7681] mr-auto tracking-wider">管理操作</span>
+        <div className="border border-border-subtle bg-surface-2 mb-5 px-4 py-3 flex items-center gap-3 flex-wrap boot-animate" style={{ animationDelay: '0ms' }}>
+          <span className="text-xs font-mono text-text-mid mr-auto tracking-wider">管理操作</span>
           {(isAdminViewer || viewerIsFounder) && (
-            <button onClick={() => setShowAwardModal(true)} className="px-3 py-1.5 text-xs font-mono border border-[#f59e0b40] text-[#f59e0b] hover:bg-[#f59e0b15] transition-colors">✦ 授予勋章</button>
+            <button onClick={() => setShowAwardModal(true)} className="px-3 py-1.5 text-xs font-mono border border-warning/25 text-warning hover:bg-warning/10 transition-colors">✦ 授予勋章</button>
           )}
-          <button onClick={() => { setActionModal('warn'); setActionForm({ level: '1' }); }} className="px-3 py-1.5 text-xs font-mono border border-[#f59e0b30] text-[#f59e0b] hover:bg-[#f59e0b15] transition-colors">发警告</button>
+          <button onClick={() => { setActionModal('warn'); setActionForm({ level: '1' }); }} className="px-3 py-1.5 text-xs font-mono border border-warning/20 text-warning hover:bg-warning/10 transition-colors">发警告</button>
           {isAdminViewer && (
             <>
-              <button onClick={() => { setActionModal('restrict'); setActionForm({}); }} className="px-3 py-1.5 text-xs font-mono border border-[#3b82f630] text-[#3b82f6] hover:bg-[#3b82f615] transition-colors">只读限制</button>
-              <button onClick={() => { setActionModal('ban'); setActionForm({ banType: 'TEMP', days: '7' }); }} className="px-3 py-1.5 text-xs font-mono border border-[#ef444430] text-[#ef4444] hover:bg-[#ef444415] transition-colors">封禁</button>
+              <button onClick={() => { setActionModal('restrict'); setActionForm({}); }} className="px-3 py-1.5 text-xs font-mono border border-[#3b82f630] text-info hover:bg-info/10 transition-colors">只读限制</button>
+              <button onClick={() => { setActionModal('ban'); setActionForm({ banType: 'TEMP', days: '7' }); }} className="px-3 py-1.5 text-xs font-mono border border-[#ef444430] text-danger hover:bg-danger/10 transition-colors">封禁</button>
             </>
           )}
         </div>
       )}
 
       {isOwner && viewerIsFounder && (
-        <div className="border border-[#21262d] bg-[#161b22] mb-5 px-4 py-3 flex items-center gap-3 flex-wrap boot-animate" style={{ animationDelay: '0ms' }}>
-          <span className="text-xs font-mono text-[#6e7681] mr-auto tracking-wider">站长操作</span>
+        <div className="border border-border-subtle bg-surface-2 mb-5 px-4 py-3 flex items-center gap-3 flex-wrap boot-animate" style={{ animationDelay: '0ms' }}>
+          <span className="text-xs font-mono text-text-mid mr-auto tracking-wider">站长操作</span>
           <button
             onClick={() => setShowAwardModal(true)}
-            className="px-3 py-1.5 text-xs font-mono border border-[#f59e0b40] text-[#f59e0b] hover:bg-[#f59e0b15] transition-colors"
+            className="px-3 py-1.5 text-xs font-mono border border-warning/25 text-warning hover:bg-warning/10 transition-colors"
           >
             ✦ 自授勋章
           </button>
@@ -1150,11 +1150,11 @@ export function UserCenter({
       )}
 
       {/* ── HUD 档案头部 ──────────────────────────────────────────────────── */}
-      <div className="relative border border-[#21262d] bg-[#161b22] mb-6 overflow-hidden boot-animate" style={{ animationDelay: '20ms' }}>
+      <div className="relative border border-border-subtle bg-surface-2 mb-6 overflow-hidden boot-animate" style={{ animationDelay: '20ms' }}>
         <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
 
-        <div className="relative flex items-center justify-between px-5 py-2 border-b border-[#21262d] bg-[#030506]">
-          <span className="text-[11px] font-mono text-[#6e7681] tracking-[0.18em]">
+        <div className="relative flex items-center justify-between px-5 py-2 border-b border-border-subtle bg-surface-0">
+          <span className="text-[11px] font-mono text-text-mid tracking-[0.18em]">
             PERSONNEL FILE — SUBJECT #{user.username.toUpperCase()}
           </span>
           <div className="flex items-center gap-2" title={presence.hint}>
@@ -1180,7 +1180,7 @@ export function UserCenter({
                   <img src={user.avatar} alt={displayName} className="w-16 h-16 md:w-20 md:h-20 object-cover block"
                     onError={e => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex'; }} />
                 ) : null}
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-[#0d1017] items-center justify-center" style={{ display: user.avatar ? 'none' : 'flex' }}>
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-surface-1 items-center justify-center" style={{ display: user.avatar ? 'none' : 'flex' }}>
                   <span className="font-mono text-3xl" style={{ color: `${levelColor}60` }}>{displayName.charAt(0).toUpperCase()}</span>
                 </div>
               </div>
@@ -1194,22 +1194,22 @@ export function UserCenter({
               <div className="flex flex-wrap items-center gap-2.5 mb-2">
                 <h1 className="text-xl md:text-2xl font-mono font-bold">
                   <span style={{ color: levelColor }}>@</span>
-                  <span className="glitch-hover cursor-default text-[#cdd9e5]">{displayName}</span>
+                  <span className="glitch-hover cursor-default text-text-hi">{displayName}</span>
                 </h1>
-                {user.nickname && <span className="text-xs font-mono text-[#6e7681]">({user.username})</span>}
+                {user.nickname && <span className="text-xs font-mono text-text-mid">({user.username})</span>}
                 {user.isFounder && (
                   <span className="text-[10px] font-mono px-1.5 py-0.5 border"
                     style={{ color: '#f59e0b', borderColor: '#f59e0b50', background: '#f59e0b0d' }}>
                     ◆ FOUNDER
                   </span>
                 )}
-                {isOwner && <span className="text-xs font-mono border border-[#30363d] text-[#6e7681] px-2 py-0.5">YOU</span>}
+                {isOwner && <span className="text-xs font-mono border border-border text-text-mid px-2 py-0.5">YOU</span>}
               </div>
 
               {user.bio
-                ? <p className="text-sm font-mono text-[#8b949e] leading-relaxed mb-3">{user.bio}</p>
+                ? <p className="text-sm font-mono text-text-body leading-relaxed mb-3">{user.bio}</p>
                 : isOwner
-                  ? <p className="text-xs font-mono text-[#3d444d] mb-3 italic">// 点击「设置」添加个人简介</p>
+                  ? <p className="text-xs font-mono text-text-lo mb-3 italic">// 点击「设置」添加个人简介</p>
                   : <div className="mb-3" />
               }
 
@@ -1224,8 +1224,8 @@ export function UserCenter({
                 ].map(m => (
                   <span key={m.label} className="flex items-center gap-1.5 text-xs font-mono">
                     <span style={{ color: `${levelColor}70` }}>◆</span>
-                    <span className="text-[#6e7681]">{m.label}</span>
-                    <span className="text-[#8b949e]">{m.value}</span>
+                    <span className="text-text-mid">{m.label}</span>
+                    <span className="text-text-body">{m.value}</span>
                   </span>
                 ))}
               </div>
@@ -1271,22 +1271,22 @@ export function UserCenter({
         <div className="flex-1 min-w-0">
           <button
             onClick={() => setSidebarOpen(o => !o)}
-            className="md:hidden w-full py-2.5 mb-4 text-xs font-mono border border-[#21262d] text-[#6e7681] hover:text-[#8b949e] hover:border-[#30363d] transition-colors"
+            className="md:hidden w-full py-2.5 mb-4 text-xs font-mono border border-border-subtle text-text-mid hover:text-text-body hover:border-border transition-colors"
           >
             [ 档案附录 {sidebarOpen ? '▲' : '▼'} ]
           </button>
           {sidebarOpen && <div className="md:hidden mb-5 flex flex-col gap-3">{renderSidebar()}</div>}
 
           {/* Tab 导航 */}
-          <div className="flex border-b border-[#21262d] mb-6 boot-animate" style={{ animationDelay: '60ms' }}>
+          <div className="flex border-b border-border-subtle mb-6 boot-animate" style={{ animationDelay: '60ms' }}>
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setTabAndSyncUrl(tab.id)}
                 className={`px-4 md:px-5 py-3 text-sm font-mono transition-colors border-b-2 -mb-px ${
                   activeTab === tab.id
-                    ? tab.amber ? 'border-[#f59e0b] text-[#f59e0b]' : 'border-[#00FF41] text-[#00FF41]'
-                    : 'border-transparent text-[#3d444d] hover:text-[#8b949e]'
+                    ? tab.amber ? 'border-warning text-warning' : 'border-brand text-brand'
+                    : 'border-transparent text-text-lo hover:text-text-body'
                 }`}
               >
                 {tab.label}
@@ -1306,25 +1306,25 @@ export function UserCenter({
             {activeTab === 'settings' && isOwner && (
               <div className="space-y-6">
                 {user.role === 'USER' && (
-                  <div className="border border-[#21262d] bg-[#161b22] p-5">
+                  <div className="border border-border-subtle bg-surface-2 p-5">
                     <div className="flex items-start justify-between gap-4 mb-3">
                       <div>
-                        <span className="text-sm font-mono text-[#cdd9e5]">晋升至 CONTRIBUTOR</span>
-                        <p className="text-xs font-mono text-[#6e7681] mt-1">
+                        <span className="text-sm font-mono text-text-hi">晋升至 CONTRIBUTOR</span>
+                        <p className="text-xs font-mono text-text-mid mt-1">
                           条件：质量分 ≥ 20 · 冰山图 ≥ 2 · 注册 ≥ 7 天 · 账户正常 · 90 天内无 WARNED_2
                         </p>
                       </div>
                       {(promotionPending || promotionSent)
-                        ? <span className="flex-shrink-0 text-xs font-mono text-[#f59e0b] border border-[#f59e0b30] px-2.5 py-1.5">审核中</span>
+                        ? <span className="flex-shrink-0 text-xs font-mono text-warning border border-warning/20 px-2.5 py-1.5">审核中</span>
                         : promotionEligible
-                          ? <button onClick={() => setShowPromotion(true)} className="flex-shrink-0 px-4 py-2 text-sm font-mono bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41] hover:bg-[#00FF4125] transition-colors">申请晋升</button>
-                          : <span className="flex-shrink-0 text-xs font-mono text-[#6e7681] border border-[#21262d] px-2.5 py-1.5">条件未达到</span>
+                          ? <button onClick={() => setShowPromotion(true)} className="flex-shrink-0 px-4 py-2 text-sm font-mono bg-brand/10 border border-brand/25 text-brand hover:bg-brand/15 transition-colors">申请晋升</button>
+                          : <span className="flex-shrink-0 text-xs font-mono text-text-mid border border-border-subtle px-2.5 py-1.5">条件未达到</span>
                       }
                     </div>
                     <div className="flex flex-wrap gap-4 text-xs font-mono">
-                      <span className={user.qualityScore >= 20 ? 'text-[#22c55e]' : 'text-[#6e7681]'}>质量分 {user.qualityScore}/20</span>
-                      <span className={user._count.icebergs >= 2 ? 'text-[#22c55e]' : 'text-[#6e7681]'}>冰山图 {user._count.icebergs}/2</span>
-                      <span className={user.status === 'ACTIVE' ? 'text-[#22c55e]' : 'text-[#ef4444]'}>账户 {user.status}</span>
+                      <span className={user.qualityScore >= 20 ? 'text-success' : 'text-text-mid'}>质量分 {user.qualityScore}/20</span>
+                      <span className={user._count.icebergs >= 2 ? 'text-success' : 'text-text-mid'}>冰山图 {user._count.icebergs}/2</span>
+                      <span className={user.status === 'ACTIVE' ? 'text-success' : 'text-danger'}>账户 {user.status}</span>
                     </div>
                   </div>
                 )}
@@ -1346,29 +1346,29 @@ export function UserCenter({
       {/* ── 通知面板弹窗 ──────────────────────────────────────────────────── */}
       {notifMounted && (
         <div className={`${notifLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/60 flex items-start justify-center z-50 pt-16 px-4`}>
-          <div ref={notifPanelRef} className={`${notifLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-md font-mono max-h-[75vh] flex flex-col`}>
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#21262d]">
+          <div ref={notifPanelRef} className={`${notifLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-md font-mono max-h-[75vh] flex flex-col`}>
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-border-subtle">
               <div>
-                <span className="text-[11px] text-[#6e7681] tracking-[0.2em]">// NOTIFICATIONS</span>
+                <span className="text-[11px] text-text-mid tracking-[0.2em]">// NOTIFICATIONS</span>
                 {unreadCount > 0 && (
                   <span className="ml-2 bg-[#ef4444] text-white text-[10px] px-1.5 py-0.5">{unreadCount} 未读</span>
                 )}
               </div>
               <div className="flex items-center gap-3">
                 {unreadCount > 0 && (
-                  <button onClick={markAllRead} disabled={markingAll} className="text-xs text-[#6e7681] hover:text-[#00FF41] transition-colors">
+                  <button onClick={markAllRead} disabled={markingAll} className="text-xs text-text-mid hover:text-brand transition-colors">
                     {markingAll ? '标记中...' : '全部已读'}
                   </button>
                 )}
-                <button onClick={() => setShowNotifPanel(false)} className="text-[#6e7681] hover:text-[#cdd9e5] transition-colors text-lg leading-none">×</button>
+                <button onClick={() => setShowNotifPanel(false)} className="text-text-mid hover:text-text-hi transition-colors text-lg leading-none">×</button>
               </div>
             </div>
 
             <div className="overflow-y-auto flex-1">
               {!notifLoaded ? (
-                <div className="py-10 text-center text-sm text-[#6e7681] animate-pulse">加载中...</div>
+                <div className="py-10 text-center text-sm text-text-mid animate-pulse">加载中...</div>
               ) : notifications.length === 0 ? (
-                <div className="py-12 text-center text-sm text-[#3d444d]">// 暂无通知</div>
+                <div className="py-12 text-center text-sm text-text-lo">// 暂无通知</div>
               ) : (
                 notifications.map(n => {
                   const ni = NOTIF_ICONS[n.type] ?? { icon: '·', color: '#4b5563' };
@@ -1376,15 +1376,15 @@ export function UserCenter({
                     <button
                       key={n.id}
                       onClick={() => markOneRead(n.id, n.link)}
-                      className={`w-full text-left flex items-start gap-3 px-5 py-4 border-b border-[#111518] hover:bg-[#111518] transition-colors ${!n.read ? 'bg-[#0d1017]' : ''}`}
+                      className={`w-full text-left flex items-start gap-3 px-5 py-4 border-b border-border-minimal hover:bg-surface-4 transition-colors ${!n.read ? 'bg-surface-1' : ''}`}
                     >
                       <span className="text-sm flex-shrink-0 mt-0.5" style={{ color: ni.color }}>[{ni.icon}]</span>
                       <div className="flex-1 min-w-0">
-                        <div className={`text-sm leading-snug mb-1 ${n.read ? 'text-[#8b949e]' : 'text-[#cdd9e5]'}`}>{n.title}</div>
-                        {n.body && <div className="text-xs text-[#3d444d] leading-relaxed line-clamp-2">{n.body}</div>}
-                        <div className="text-[11px] text-[#6e7681] mt-1">{timeAgo(n.createdAt)}</div>
+                        <div className={`text-sm leading-snug mb-1 ${n.read ? 'text-text-body' : 'text-text-hi'}`}>{n.title}</div>
+                        {n.body && <div className="text-xs text-text-lo leading-relaxed line-clamp-2">{n.body}</div>}
+                        <div className="text-[11px] text-text-mid mt-1">{timeAgo(n.createdAt)}</div>
                       </div>
-                      {!n.read && <span className="w-2 h-2 rounded-full bg-[#00FF41] flex-shrink-0 mt-2" />}
+                      {!n.read && <span className="w-2 h-2 rounded-full bg-brand flex-shrink-0 mt-2" />}
                     </button>
                   );
                 })
@@ -1397,16 +1397,16 @@ export function UserCenter({
       {/* ── 管理操作模态框 ───────────────────────────────────────────────── */}
       {actionMounted && actionModal && (
         <div className={`${actionLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${actionLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-sm p-6 font-mono`}>
-            <div className="text-sm text-[#3d444d] mb-1.5">对象：@{displayName}</div>
-            <div className="text-base text-[#cdd9e5] mb-5">
+          <div className={`${actionLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-sm p-6 font-mono`}>
+            <div className="text-sm text-text-lo mb-1.5">对象：@{displayName}</div>
+            <div className="text-base text-text-hi mb-5">
               {actionModal === 'warn' && '发出警告'}{actionModal === 'restrict' && '设为只读'}{actionModal === 'ban' && '封禁用户'}
             </div>
             {actionModal === 'warn' && (
               <div className="mb-4 flex gap-2">
                 {(['1', '2'] as const).map(l => (
                   <button key={l} onClick={() => setActionForm(f => ({ ...f, level: l }))}
-                    className={`flex-1 py-2 text-sm border transition-colors ${actionForm.level === l ? 'border-[#f59e0b] text-[#f59e0b]' : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d]'}`}>
+                    className={`flex-1 py-2 text-sm border transition-colors ${actionForm.level === l ? 'border-warning text-warning' : 'border-border text-text-lo hover:border-border'}`}>
                     WARNED_{l}
                   </button>
                 ))}
@@ -1417,28 +1417,28 @@ export function UserCenter({
                 <div className="flex gap-2">
                   {(['TEMP', 'PERM'] as const).map(t => (
                     <button key={t} onClick={() => setActionForm(f => ({ ...f, banType: t }))}
-                      className={`flex-1 py-2 text-sm border transition-colors ${actionForm.banType === t ? 'border-[#ef4444] text-[#ef4444]' : 'border-[#30363d] text-[#3d444d] hover:border-[#30363d]'}`}>
+                      className={`flex-1 py-2 text-sm border transition-colors ${actionForm.banType === t ? 'border-danger text-danger' : 'border-border text-text-lo hover:border-border'}`}>
                       {t === 'TEMP' ? '临时' : '永久'}
                     </button>
                   ))}
                 </div>
                 {actionForm.banType !== 'PERM' && (
                   <input type="number" min={1} value={actionForm.days ?? '7'} onChange={e => setActionForm(f => ({ ...f, days: e.target.value }))}
-                    className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-sm text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none"
+                    className="w-full px-3 py-2 bg-surface-2 border border-border text-sm text-text-hi focus:border-brand focus:outline-none"
                     placeholder="封禁天数" />
                 )}
               </div>
             )}
             <div className="mb-5">
-              <div className="text-xs text-[#3d444d] mb-1.5">理由</div>
+              <div className="text-xs text-text-lo mb-1.5">理由</div>
               <textarea value={actionForm.reason ?? ''} onChange={e => setActionForm(f => ({ ...f, reason: e.target.value }))}
-                rows={2} className="w-full px-3 py-2.5 bg-[#161b22] border border-[#30363d] text-sm text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none"
+                rows={2} className="w-full px-3 py-2.5 bg-surface-2 border border-border text-sm text-text-hi focus:border-brand focus:outline-none resize-none"
                 placeholder="理由（至少 5 字）" />
             </div>
             <div className="flex gap-3">
-              <button onClick={() => { setActionModal(null); setActionForm({}); }} className="flex-1 py-2.5 border border-[#30363d] text-sm hover:border-[#30363d] transition-colors">取消</button>
+              <button onClick={() => { setActionModal(null); setActionForm({}); }} className="flex-1 py-2.5 border border-border text-sm hover:border-border transition-colors">取消</button>
               <button onClick={execAction} disabled={actionBusy || (actionForm.reason ?? '').trim().length < 5}
-                className="flex-1 py-2.5 bg-[#ef444420] border border-[#ef444450] text-[#ef4444] text-sm hover:bg-[#ef444430] transition-colors disabled:opacity-40">
+                className="flex-1 py-2.5 bg-danger/20 border border-[#ef444450] text-danger text-sm hover:bg-danger/20 transition-colors disabled:opacity-40">
                 {actionBusy ? '执行中...' : '确认'}
               </button>
             </div>
@@ -1449,21 +1449,21 @@ export function UserCenter({
       {/* ── 晋升申请模态框 ───────────────────────────────────────────────── */}
       {promoMounted && (
         <div className={`${promoLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${promoLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-md p-6 font-mono`}>
-            <div className="text-xs text-[#6e7681] mb-1.5 tracking-widest">PROMOTION REQUEST</div>
-            <div className="text-base text-[#cdd9e5] mb-1.5">申请晋升至 CONTRIBUTOR</div>
-            <div className="text-sm text-[#3d444d] mb-5">可附上申请说明（可选），编辑审核后将通知结果。</div>
+          <div className={`${promoLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-md p-6 font-mono`}>
+            <div className="text-xs text-text-mid mb-1.5 tracking-widest">PROMOTION REQUEST</div>
+            <div className="text-base text-text-hi mb-1.5">申请晋升至 CONTRIBUTOR</div>
+            <div className="text-sm text-text-lo mb-5">可附上申请说明（可选），编辑审核后将通知结果。</div>
             <div className="mb-1.5 flex justify-between">
-              <span className="text-xs text-[#3d444d]">申请说明（可选，200 字以内）</span>
-              <span className="text-xs text-[#3d444d]">{promotionStatement.length}/200</span>
+              <span className="text-xs text-text-lo">申请说明（可选，200 字以内）</span>
+              <span className="text-xs text-text-lo">{promotionStatement.length}/200</span>
             </div>
             <textarea value={promotionStatement} onChange={e => setPromotionStatement(e.target.value.slice(0, 200))}
-              rows={4} className="w-full px-3 py-2.5 bg-[#161b22] border border-[#30363d] text-sm text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none mb-5"
+              rows={4} className="w-full px-3 py-2.5 bg-surface-2 border border-border text-sm text-text-hi focus:border-brand focus:outline-none resize-none mb-5"
               placeholder="简述申请理由（非必填）" />
             <div className="flex gap-3">
-              <button onClick={() => { setShowPromotion(false); setPromotionStatement(''); }} className="flex-1 py-2.5 border border-[#30363d] text-sm hover:border-[#30363d] transition-colors">取消</button>
+              <button onClick={() => { setShowPromotion(false); setPromotionStatement(''); }} className="flex-1 py-2.5 border border-border text-sm hover:border-border transition-colors">取消</button>
               <button onClick={submitPromotion} disabled={promotionBusy}
-                className="flex-1 py-2.5 bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41] text-sm hover:bg-[#00FF4125] transition-colors disabled:opacity-40">
+                className="flex-1 py-2.5 bg-brand/10 border border-brand/25 text-brand text-sm hover:bg-brand/15 transition-colors disabled:opacity-40">
                 {promotionBusy ? '提交中...' : '提交申请'}
               </button>
             </div>
@@ -1484,21 +1484,21 @@ export function UserCenter({
       {/* ── 申诉模态框 ───────────────────────────────────────────────────── */}
       {appealMounted && (
         <div className={`${appealLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${appealLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-md p-6 font-mono`}>
-            <div className="text-xs text-[#6e7681] mb-1.5 tracking-widest">APPEAL REQUEST</div>
-            <div className="text-base text-[#cdd9e5] mb-1.5">提交申诉</div>
-            <div className="text-sm text-[#3d444d] mb-5">详细说明情况，管理员审核后将通知结果。</div>
+          <div className={`${appealLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-md p-6 font-mono`}>
+            <div className="text-xs text-text-mid mb-1.5 tracking-widest">APPEAL REQUEST</div>
+            <div className="text-base text-text-hi mb-1.5">提交申诉</div>
+            <div className="text-sm text-text-lo mb-5">详细说明情况，管理员审核后将通知结果。</div>
             <div className="mb-1.5 flex justify-between">
-              <span className="text-xs text-[#3d444d]">申诉说明</span>
-              <span className={`text-xs ${appealStatement.trim().length < 20 ? 'text-[#ef4444]' : 'text-[#22c55e]'}`}>{appealStatement.trim().length} / 20+</span>
+              <span className="text-xs text-text-lo">申诉说明</span>
+              <span className={`text-xs ${appealStatement.trim().length < 20 ? 'text-danger' : 'text-success'}`}>{appealStatement.trim().length} / 20+</span>
             </div>
             <textarea value={appealStatement} onChange={e => setAppealStatement(e.target.value)}
-              rows={5} className="w-full px-3 py-2.5 bg-[#161b22] border border-[#30363d] text-sm text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none mb-5"
+              rows={5} className="w-full px-3 py-2.5 bg-surface-2 border border-border text-sm text-text-hi focus:border-brand focus:outline-none resize-none mb-5"
               placeholder="请详细说明申诉原因，包括对相关事件的解释和今后的改进承诺..." />
             <div className="flex gap-3">
-              <button onClick={() => { setShowAppeal(false); setAppealStatement(''); }} className="flex-1 py-2.5 border border-[#30363d] text-sm hover:border-[#30363d] transition-colors">取消</button>
+              <button onClick={() => { setShowAppeal(false); setAppealStatement(''); }} className="flex-1 py-2.5 border border-border text-sm hover:border-border transition-colors">取消</button>
               <button onClick={submitAppeal} disabled={appealBusy || appealStatement.trim().length < 20}
-                className="flex-1 py-2.5 bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41] text-sm hover:bg-[#00FF4125] transition-colors disabled:opacity-40">
+                className="flex-1 py-2.5 bg-brand/10 border border-brand/25 text-brand text-sm hover:bg-brand/15 transition-colors disabled:opacity-40">
                 {appealBusy ? '提交中...' : '提交申诉'}
               </button>
             </div>
@@ -1583,13 +1583,13 @@ function AwardModal({ userId, isLeaving, onClose, existingAwards }: {
 
   return (
     <div className={`${isLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3 sm:p-4`}>
-      <div className={`${isLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] border-l-4 border-l-[#f59e0b] w-full max-w-[26rem] max-h-[82vh] overflow-y-auto p-4 sm:p-5 font-mono`}>
-        <div className="text-[10px] text-[#6e7681] mb-1.5 tracking-widest">[ AWARD SYSTEM ]</div>
-        <div className="text-base text-[#cdd9e5] mb-1.5"><span className="text-[#f59e0b]">#</span> 授予勋章</div>
-        <div className="text-xs text-[#3d444d] mb-3">选择勋章类型并填写颁奖留言（可选）。已授予的勋章可直接撤回。</div>
+      <div className={`${isLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border border-l-4 border-l-[#f59e0b] w-full max-w-[26rem] max-h-[82vh] overflow-y-auto p-4 sm:p-5 font-mono`}>
+        <div className="text-[10px] text-text-mid mb-1.5 tracking-widest">[ AWARD SYSTEM ]</div>
+        <div className="text-base text-text-hi mb-1.5"><span className="text-warning">#</span> 授予勋章</div>
+        <div className="text-xs text-text-lo mb-3">选择勋章类型并填写颁奖留言（可选）。已授予的勋章可直接撤回。</div>
 
         {error && (
-          <div className="mb-3 p-2.5 bg-[#1a0808] border border-[#ef444440] text-[#ef4444] text-[11px]">&gt; ERROR: {error}</div>
+          <div className="mb-3 p-2.5 bg-[#1a0808] border border-danger/25 text-danger text-[11px]">&gt; ERROR: {error}</div>
         )}
 
         <div className="space-y-1.5 mb-4 max-h-64 overflow-y-auto pr-1">
@@ -1602,16 +1602,16 @@ function AwardModal({ userId, isLeaving, onClose, existingAwards }: {
                   disabled={already || busy || revokingType === a.id}
                   onClick={() => setSelectedType(a.id)}
                   className={`flex-1 flex items-center gap-2.5 px-2.5 py-2 border transition-all text-left ${
-                    already ? 'opacity-60 cursor-not-allowed border-[#21262d] bg-[#11141a]' :
-                    selectedType === a.id ? 'border-[#f59e0b] bg-[#f59e0b0d]' : 'border-[#21262d] hover:border-[#30363d]'
+                    already ? 'opacity-60 cursor-not-allowed border-border-subtle bg-[#11141a]' :
+                    selectedType === a.id ? 'border-warning bg-warning/5' : 'border-border-subtle hover:border-border'
                   }`}
                 >
                   <span className="text-base flex-shrink-0" style={{ color: a.color }}>{a.icon}</span>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-semibold" style={{ color: selectedType === a.id ? a.color : (isLight ? '#374151' : '#e5e5e5') }}>{a.labelZh}</div>
-                    <div className="text-[10px] text-[#3d444d] truncate">{a.desc}</div>
+                    <div className="text-[10px] text-text-lo truncate">{a.desc}</div>
                   </div>
-                  {already && <span className="text-[10px] text-[#6e7681]">已授予</span>}
+                  {already && <span className="text-[10px] text-text-mid">已授予</span>}
                   {selectedType === a.id && !already && <span className="text-[10px]" style={{ color: a.color }}>✓</span>}
                 </button>
                 {already && awardId && (
@@ -1619,7 +1619,7 @@ function AwardModal({ userId, isLeaving, onClose, existingAwards }: {
                     type="button"
                     onClick={() => revoke(a.id, awardId)}
                     disabled={busy || revokingType === a.id}
-                    className="px-2 py-1.5 text-[10px] border border-[#7f1d1d] text-[#ef4444] hover:bg-[#ef444415] transition-colors disabled:opacity-50"
+                    className="px-2 py-1.5 text-[10px] border border-[#7f1d1d] text-danger hover:bg-danger/10 transition-colors disabled:opacity-50"
                   >
                     {revokingType === a.id ? '撤回中...' : '撤回'}
                   </button>
@@ -1630,18 +1630,18 @@ function AwardModal({ userId, isLeaving, onClose, existingAwards }: {
         </div>
 
         <div className="mb-1.5 flex justify-between">
-          <span className="text-xs text-[#3d444d]">颁奖留言（可选，200 字以内）</span>
-          <span className="text-xs text-[#3d444d]">{message.length}/200</span>
+          <span className="text-xs text-text-lo">颁奖留言（可选，200 字以内）</span>
+          <span className="text-xs text-text-lo">{message.length}/200</span>
         </div>
         <textarea
           value={message} onChange={e => setMessage(e.target.value.slice(0, 200))}
           rows={2}
-          className="w-full px-3 py-2.5 bg-[#161b22] border border-[#30363d] text-sm text-[#cdd9e5] focus:border-[#f59e0b] focus:outline-none resize-none mb-4"
+          className="w-full px-3 py-2.5 bg-surface-2 border border-border text-sm text-text-hi focus:border-warning focus:outline-none resize-none mb-4"
           placeholder="写下对该用户贡献的认可…"
         />
 
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2 border border-[#30363d] text-sm text-[#8b949e] hover:border-[#30363d] transition-colors">取消</button>
+          <button onClick={onClose} className="flex-1 py-2 border border-border text-sm text-text-body hover:border-border transition-colors">取消</button>
           <button
             onClick={submit} disabled={busy || !selectedType}
             className="flex-1 py-2 text-sm font-bold transition-colors disabled:opacity-40"
@@ -1715,14 +1715,14 @@ function UserboxPicker({
   const atLimit = !isFounder && selected.size >= maxSlots;
 
   return (
-    <div className="border border-[#21262d] bg-[#161b22] p-5">
+    <div className="border border-border-subtle bg-surface-2 p-5">
       <div className="flex items-center justify-between mb-1">
         <div>
-          <div className="text-sm font-mono text-[#cdd9e5]">用户框定制</div>
+          <div className="text-sm font-mono text-text-hi">用户框定制</div>
         </div>
         <button
           onClick={save} disabled={saving}
-          className={`flex-shrink-0 px-4 py-2 text-xs font-mono border transition-colors disabled:opacity-40 ${saved ? 'border-[#22c55e40] text-[#22c55e]' : 'border-[#00FF4140] text-[#00FF41] hover:bg-[#00FF4115]'}`}
+          className={`flex-shrink-0 px-4 py-2 text-xs font-mono border transition-colors disabled:opacity-40 ${saved ? 'border-success/25 text-success' : 'border-brand/25 text-brand hover:bg-brand/10'}`}
         >
           {saving ? '保存中...' : saved ? '✓ 已保存' : '保存'}
         </button>
@@ -1742,9 +1742,9 @@ function UserboxPicker({
                 />
               ))}
             </div>
-            <span className="text-[10px] font-mono text-[#6e7681]">
+            <span className="text-[10px] font-mono text-text-mid">
               {selected.size}/{maxSlots} 槽位
-              {maxSlots < USERBOX_MAX_SLOTS && <span className="ml-1 text-[#3d444d]">— 解锁更多社区成就可扩展至 {USERBOX_MAX_SLOTS} 个</span>}
+              {maxSlots < USERBOX_MAX_SLOTS && <span className="ml-1 text-text-lo">— 解锁更多社区成就可扩展至 {USERBOX_MAX_SLOTS} 个</span>}
             </span>
           </>
         )}
@@ -1753,7 +1753,7 @@ function UserboxPicker({
       <div className="space-y-4">
         {USERBOX_LIBRARY.map(cat => (
           <div key={cat.category}>
-            <div className="text-[10px] font-mono text-[#6e7681] tracking-widest mb-2">// {cat.category}</div>
+            <div className="text-[10px] font-mono text-text-mid tracking-widest mb-2">// {cat.category}</div>
             <div className="space-y-1">
               {cat.boxes.map(box => {
                 const on     = selected.has(box.id);
@@ -1766,10 +1766,10 @@ function UserboxPicker({
                     disabled={locked || full}
                     title={locked ? `需要：${box.requiresLabel}` : full ? '已达槽位上限' : undefined}
                     className={`w-full flex items-stretch border transition-all ${
-                      locked                           ? 'border-[#21262d] opacity-30 cursor-not-allowed' :
-                      on                               ? 'border-[#00FF4140]' :
-                      full                             ? 'border-[#21262d] opacity-30 cursor-not-allowed' :
-                                                         'border-[#21262d] opacity-60 hover:opacity-90'
+                      locked                           ? 'border-border-subtle opacity-30 cursor-not-allowed' :
+                      on                               ? 'border-brand/25' :
+                      full                             ? 'border-border-subtle opacity-30 cursor-not-allowed' :
+                                                         'border-border-subtle opacity-60 hover:opacity-90'
                     }`}
                     style={{ minHeight: '32px' }}
                   >
@@ -1779,15 +1779,15 @@ function UserboxPicker({
                     >
                       {locked ? '🔒' : box.leftText}
                     </div>
-                    <div className="flex-1 flex items-center px-2.5 bg-[#050608] min-w-0 border-l border-[#111518]">
-                      <span className="text-[11px] font-mono text-[#8b949e] truncate">{box.text}</span>
+                    <div className="flex-1 flex items-center px-2.5 bg-surface-0 min-w-0 border-l border-border-minimal">
+                      <span className="text-[11px] font-mono text-text-body truncate">{box.text}</span>
                       {locked && (
-                        <span className="ml-auto flex-shrink-0 text-[9px] font-mono text-[#3d444d] pl-2 truncate">
+                        <span className="ml-auto flex-shrink-0 text-[9px] font-mono text-text-lo pl-2 truncate">
                           需要 {box.requiresLabel}
                         </span>
                       )}
                     </div>
-                    <div className="w-8 flex items-center justify-center flex-shrink-0 bg-[#050608]">
+                    <div className="w-8 flex items-center justify-center flex-shrink-0 bg-surface-0">
                       <span className="text-[10px] font-mono" style={{ color: on ? '#00FF41' : '#30363d' }}>
                         {on ? '✓' : locked ? '' : '+'}
                       </span>

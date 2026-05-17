@@ -1,4 +1,4 @@
-import { createPortal } from 'react-dom';
+﻿import { createPortal } from 'react-dom';
 import { useState, useEffect, useCallback, type FormEvent, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 
 interface LoginFormProps {
@@ -220,18 +220,18 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
       />
 
       {/* 弹窗 */}
-      <div className="relative w-full max-w-md bg-[#0d1117] border border-[#21262d] border-l-4 border-l-[#00FF41] overflow-hidden shadow-2xl shadow-[#00FF41]/10">
+      <div className="relative w-full max-w-md bg-surface-1 border border-border-subtle border-l-4 border-l-brand overflow-hidden shadow-2xl shadow-[#00FF41]/10">
         {/* 头部 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#21262d] bg-[#050508]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle bg-surface-0">
           <div>
-            <div className="text-[10px] font-mono text-[#6e7681] tracking-widest mb-1">[ AUTH TERMINAL ]</div>
-            <h2 className="text-base font-mono font-semibold text-[#cdd9e5]">
-              <span className="text-[#00FF41]">#</span> {mode === 'login' ? '登录' : mode === 'register' ? '注册' : '重置密码'}
+            <div className="text-[10px] font-mono text-text-mid tracking-widest mb-1">[ AUTH TERMINAL ]</div>
+            <h2 className="text-base font-mono font-semibold text-text-hi">
+              <span className="text-brand">#</span> {mode === 'login' ? '登录' : mode === 'register' ? '注册' : '重置密码'}
             </h2>
           </div>
           <button
             onClick={handleClose}
-            className="text-[#6e7681] hover:text-[#00FF41] border border-[#21262d] hover:border-[#00FF41] px-2.5 py-1.5 text-xs font-mono transition-all"
+            className="text-text-mid hover:text-brand border border-border-subtle hover:border-brand px-2.5 py-1.5 text-xs font-mono transition-all"
           >
             ESC
           </button>
@@ -240,12 +240,12 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
         {/* 内容 */}
         <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
           {error && (
-            <div className="p-3 bg-[#1a0808] border border-[#ef444440] text-[#ef4444] text-xs font-mono">
+            <div className="p-3 bg-[#1a0808] border border-danger/25 text-danger text-xs font-mono">
               &gt; ERROR: {error}
             </div>
           )}
           {info && (
-            <div className="p-3 bg-[#07170d] border border-[#00FF4140] text-[#5ee38a] text-xs font-mono">
+            <div className="p-3 bg-[#07170d] border border-brand/25 text-[#5ee38a] text-xs font-mono">
               &gt; {info}
             </div>
           )}
@@ -257,8 +257,8 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                 onClick={() => setMode('login')}
                 className={`py-2 px-3 text-xs font-mono border transition-colors ${
                   mode === 'login'
-                    ? 'border-[#00FF41] text-[#00FF41] bg-[#00FF4110]'
-                    : 'border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41]'
+                    ? 'border-brand text-brand bg-brand/10'
+                    : 'border-border text-text-body hover:border-brand hover:text-brand'
                 }`}
               >
                 邮箱登录
@@ -268,8 +268,8 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                 onClick={() => setMode('register')}
                 className={`py-2 px-3 text-xs font-mono border transition-colors ${
                   mode === 'register'
-                    ? 'border-[#00FF41] text-[#00FF41] bg-[#00FF4110]'
-                    : 'border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41]'
+                    ? 'border-brand text-brand bg-brand/10'
+                    : 'border-border text-text-body hover:border-brand hover:text-brand'
                 }`}
               >
                 邮箱注册
@@ -282,7 +282,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
             <div className="space-y-2">
               <a
                 href="/api/auth/login?provider=github"
-                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-[#0d0f14] border border-[#30363d] hover:border-[#00FF41] hover:bg-[#1c2128] transition-all text-sm font-mono"
+                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-surface-4 border border-border hover:border-brand hover:bg-surface-3 transition-all text-sm font-mono"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
@@ -291,7 +291,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
               </a>
               <a
                 href="/api/auth/login?provider=google"
-                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-[#0d0f14] border border-[#30363d] hover:border-[#00FF41] hover:bg-[#1c2128] transition-all text-sm font-mono"
+                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-surface-4 border border-border hover:border-brand hover:bg-surface-3 transition-all text-sm font-mono"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M21.8 12.23c0-.76-.07-1.49-.2-2.2H12v4.16h5.49a4.7 4.7 0 0 1-2.04 3.08v2.56h3.31c1.94-1.78 3.04-4.4 3.04-7.6Z" fill="#4285F4"/>
@@ -304,7 +304,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
 
               <div className="flex items-center gap-2 my-3">
                 <div className="flex-1 h-px bg-[#2A2A2A]"></div>
-                <span className="text-[10px] text-[#8b949e]">
+                <span className="text-[10px] text-text-body">
                   或使用邮箱{mode === 'login' ? '登录' : '注册'}
                 </span>
                 <div className="flex-1 h-px bg-[#2A2A2A]"></div>
@@ -319,7 +319,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2.5 bg-[#050508] border border-[#21262d] text-sm font-mono focus:border-[#00FF41] focus:outline-none placeholder-[#3d444d] transition-colors"
+                className="w-full px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder-[#3d444d] transition-colors"
                 placeholder="邮箱"
                 required
               />
@@ -331,7 +331,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                   type="text"
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value.replace(/[^\d]/g, '').slice(0, 6))}
-                  className="flex-1 px-3 py-2.5 bg-[#050508] border border-[#21262d] text-sm font-mono focus:border-[#00FF41] focus:outline-none placeholder-[#3d444d] transition-colors"
+                  className="flex-1 px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder-[#3d444d] transition-colors"
                   placeholder="邮箱验证码（6位）"
                   required
                   inputMode="numeric"
@@ -342,7 +342,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                   type="button"
                   onClick={handleSendCode}
                   disabled={sendingCode || cooldown > 0}
-                  className="px-3 py-2.5 min-w-[118px] text-xs font-mono border border-[#30363d] text-[#adbac7] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2.5 min-w-[118px] text-xs font-mono border border-border text-text-hi hover:border-brand hover:text-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {sendingCode ? '发送中...' : cooldown > 0 ? `${cooldown}s 后重发` : '发送验证码'}
                 </button>
@@ -357,7 +357,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyUp={handlePasswordKeyState}
                   onKeyDown={handlePasswordKeyState}
-                  className="w-full px-3 py-2.5 pr-16 bg-[#050508] border border-[#21262d] text-sm font-mono focus:border-[#00FF41] focus:outline-none placeholder-[#3d444d] transition-colors"
+                  className="w-full px-3 py-2.5 pr-16 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder-[#3d444d] transition-colors"
                   placeholder={mode === 'reset' ? '新密码' : '密码'}
                   required
                   minLength={6}
@@ -365,7 +365,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-mono text-text-mid hover:text-brand transition-colors"
                 >
                   {showPassword ? '隐藏' : '显示'}
                 </button>
@@ -374,7 +374,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
 
             {capsLockOn && (
               <div className="-mt-1">
-                <p className="text-[11px] font-mono text-[#f59e0b]">CapsLock 已开启，注意密码大小写</p>
+                <p className="text-[11px] font-mono text-warning">CapsLock 已开启，注意密码大小写</p>
               </div>
             )}
 
@@ -383,7 +383,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                 <button
                   type="button"
                   onClick={() => setMode('reset')}
-                  className="text-[11px] font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors"
+                  className="text-[11px] font-mono text-text-mid hover:text-brand transition-colors"
                 >
                   忘记密码？
                 </button>
@@ -399,7 +399,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     onKeyUp={handlePasswordKeyState}
                     onKeyDown={handlePasswordKeyState}
-                    className="w-full px-3 py-2.5 pr-16 bg-[#050508] border border-[#21262d] text-sm font-mono focus:border-[#00FF41] focus:outline-none placeholder-[#3d444d] transition-colors"
+                    className="w-full px-3 py-2.5 pr-16 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder-[#3d444d] transition-colors"
                     placeholder="确认新密码"
                     required
                     minLength={6}
@@ -407,7 +407,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword((v) => !v)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-mono text-text-mid hover:text-brand transition-colors"
                   >
                     {showConfirmPassword ? '隐藏' : '显示'}
                   </button>
@@ -420,7 +420,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                 <button
                   type="button"
                   onClick={() => setMode('login')}
-                  className="text-[11px] font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors"
+                  className="text-[11px] font-mono text-text-mid hover:text-brand transition-colors"
                 >
                   返回登录
                 </button>
@@ -434,7 +434,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-[#050508] border border-[#21262d] text-sm font-mono focus:border-[#00FF41] focus:outline-none placeholder-[#3d444d] transition-colors"
+                    className="w-full px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder-[#3d444d] transition-colors"
                     placeholder="用户名"
                     required
                     pattern="^[a-zA-Z0-9_]{3,20}$"
@@ -445,7 +445,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                     type="text"
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-[#050508] border border-[#21262d] text-sm font-mono focus:border-[#00FF41] focus:outline-none placeholder-[#3d444d] transition-colors"
+                    className="w-full px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder-[#3d444d] transition-colors"
                     placeholder="昵称 (选填)"
                   />
                 </div>
@@ -455,7 +455,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-4 bg-[#00FF41] text-[#050505] font-bold text-sm font-mono hover:bg-[#00CC33] transition-colors disabled:opacity-50"
+              className="w-full py-2.5 px-4 bg-brand text-[#050505] font-bold text-sm font-mono hover:bg-brand-hover transition-colors disabled:opacity-50"
             >
               {loading
                 ? '>> 处理中...'
@@ -469,18 +469,18 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
         </div>
 
         {/* 底部 */}
-        <div className="px-6 py-3 border-t border-[#21262d] bg-[#050508] flex items-center justify-between">
-          <p className="text-[10px] text-[#3d444d] font-mono">
+        <div className="px-6 py-3 border-t border-border-subtle bg-surface-0 flex items-center justify-between">
+          <p className="text-[10px] text-text-lo font-mono">
             {mode === 'reset' ? (
               '重置密码请确保邮箱可用'
             ) : (
               <>
                 {mode === 'login' ? '登录' : '注册'}即同意
-                <a href="/terms" className="mx-1 text-[#8b949e] hover:text-[#00FF41] underline-offset-2 hover:underline">
+                <a href="/terms" className="mx-1 text-text-body hover:text-brand underline-offset-2 hover:underline">
                   服务条款
                 </a>
                 和
-                <a href="/privacy" className="mx-1 text-[#8b949e] hover:text-[#00FF41] underline-offset-2 hover:underline">
+                <a href="/privacy" className="mx-1 text-text-body hover:text-brand underline-offset-2 hover:underline">
                   隐私政策
                 </a>
               </>
@@ -488,7 +488,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
           </p>
           <a
             href={mode === 'reset' && resetOnly ? '/login' : '/'}
-            className="text-[10px] font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors"
+            className="text-[10px] font-mono text-text-mid hover:text-brand transition-colors"
           >
             {mode === 'reset' && resetOnly ? '← 返回登录' : '← 首页'}
           </a>

@@ -1,4 +1,4 @@
----
+﻿---
 import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
 import { renderMarkdownWithMath } from '../../lib/markdown';
@@ -182,9 +182,9 @@ for (const lbl of allLabels) {
 <Layout title={`${iceberg?.title || '冰山图'} | 冰山图宇宙`}>
   <main class="max-w-5xl mx-auto px-4 py-12">
     {error ? (
-      <div class="p-8 bg-[#161b22] border border-[#30363d] text-center reveal">
+      <div class="p-8 bg-surface-2 border border-border text-center reveal">
         <p class="text-red-500 font-mono">{error}</p>
-        <a href="/iceberg/list" class="text-[#00FF41] hover:underline mt-4 inline-block font-mono text-sm">
+        <a href="/iceberg/list" class="text-brand hover:underline mt-4 inline-block font-mono text-sm">
           ← 返回列表
         </a>
       </div>
@@ -192,42 +192,42 @@ for (const lbl of allLabels) {
       <>
         {iceberg.tiers.length > 0 && (
           <div id="reading-progress-top" class="fixed top-14 inset-x-0 z-40 pointer-events-none">
-            <div id="read-progress-track" class="h-1 bg-[#0d1117]/95 border-b border-[#21262d]">
-              <div id="read-progress-fill" class="h-full bg-[#00FF41]" style="width: 0%"></div>
+            <div id="read-progress-track" class="h-1 bg-surface-1/95 border-b border-border-subtle">
+              <div id="read-progress-fill" class="h-full bg-brand" style="width: 0%"></div>
             </div>
           </div>
         )}
 
         {/* ── Header ─────────────────────────────────────── */}
         <header class="mb-10 reveal">
-          <div class="text-xs text-[#8b949e] font-mono mb-3 flex items-center gap-2">
-            <a href="/iceberg/list" class="hover:text-[#00FF41] transition-colors">冰山图列表</a>
-            <span class="text-[#3d444d]">/</span>
-            <span class={iceberg.status === 'PUBLISHED' ? 'text-[#22c55e]' : iceberg.status === 'PENDING_REVIEW' ? 'text-[#f59e0b]' : 'text-[#8b949e]'}>
+          <div class="text-xs text-text-body font-mono mb-3 flex items-center gap-2">
+            <a href="/iceberg/list" class="hover:text-brand transition-colors">冰山图列表</a>
+            <span class="text-text-lo">/</span>
+            <span class={iceberg.status === 'PUBLISHED' ? 'text-success' : iceberg.status === 'PENDING_REVIEW' ? 'text-warning' : 'text-text-body'}>
               {statusLabelMap[iceberg.status] ?? iceberg.status}
             </span>
           </div>
 
           <h1 class="text-3xl md:text-4xl font-mono font-semibold mb-4 leading-tight">
-            <span class="text-[#00FF41]">#</span> {iceberg.title}
+            <span class="text-brand">#</span> {iceberg.title}
           </h1>
 
           {iceberg.description && (
-            <div class="mt-4 text-[#8b949e] markdown-content text-sm leading-relaxed border-l-2 border-[#30363d] pl-4" set:html={iceberg.description} />
+            <div class="mt-4 text-text-body markdown-content text-sm leading-relaxed border-l-2 border-border pl-4" set:html={iceberg.description} />
           )}
 
-          <div class="iceberg-meta mt-5 flex flex-wrap items-center justify-between gap-4 text-xs text-[#8b949e] font-mono">
+          <div class="iceberg-meta mt-5 flex flex-wrap items-center justify-between gap-4 text-xs text-text-body font-mono">
             <div class="flex flex-wrap items-center gap-4">
-              <span class="text-[#6e7681]">
-                <span class="text-[#8b949e]">{iceberg.tiers.length}</span> 层 ·
-                <span class="text-[#8b949e] ml-1">{allItemsFlat.length}</span> 词条
+              <span class="text-text-mid">
+                <span class="text-text-body">{iceberg.tiers.length}</span> 层 ·
+                <span class="text-text-body ml-1">{allItemsFlat.length}</span> 词条
               </span>
-              <span class="text-[#6e7681]">
-                <span class="text-[#8b949e]">{iceberg.viewCount}</span> 次探索
+              <span class="text-text-mid">
+                <span class="text-text-body">{iceberg.viewCount}</span> 次探索
               </span>
               <span>
                 作者:
-                <a href={`/user/${iceberg.author?.id}`} class="text-[#8b949e] hover:text-[#00FF41] transition-colors ml-1">
+                <a href={`/user/${iceberg.author?.id}`} class="text-text-body hover:text-brand transition-colors ml-1">
                   {iceberg.author?.nickname || iceberg.author?.username || '匿名'}
                 </a>
               </span>
@@ -250,16 +250,16 @@ for (const lbl of allLabels) {
 
         {/* ── 阅读工具：目录 / 进度 / 续读 ───────────────────── */}
         {iceberg.tiers.length > 0 && (
-          <section id="reading-tools" class="mb-6 border border-[#21262d] bg-[#0d1117] p-4 space-y-3">
+          <section id="reading-tools" class="mb-6 border border-border-subtle bg-surface-1 p-4 space-y-3">
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div class="min-w-0">
-                <div class="text-[10px] font-mono text-[#6e7681] tracking-widest mb-1">目录</div>
+                <div class="text-[10px] font-mono text-text-mid tracking-widest mb-1">目录</div>
                 <div class="flex flex-wrap gap-1.5">
                   {iceberg.tiers.map((tier: any, ti: number) => (
                     <a
                       href={`#tier-${ti}`}
                       data-tier-jump={String(ti)}
-                      class="toc-link text-[10px] font-mono px-2 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+                      class="toc-link text-[10px] font-mono px-2 py-1 border border-border text-text-body hover:border-brand hover:text-brand transition-colors"
                     >
                       {tier.name}
                     </a>
@@ -268,7 +268,7 @@ for (const lbl of allLabels) {
               </div>
               <button
                 id="resume-reading-btn"
-                class="hidden text-[10px] font-mono px-2 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+                class="hidden text-[10px] font-mono px-2 py-1 border border-border text-text-body hover:border-brand hover:text-brand transition-colors"
               >
                 回到上次阅读位置
               </button>
@@ -278,10 +278,10 @@ for (const lbl of allLabels) {
 
         {/* ── Filter Bar ──────────────────────────────────── */}
         {(iceberg.tiers.length > 1 || allLabels.length > 0) && (
-          <div id="filter-bar" class="mb-6 border border-[#21262d] bg-[#0d1117] px-4 py-3 space-y-2.5">
+          <div id="filter-bar" class="mb-6 border border-border-subtle bg-surface-1 px-4 py-3 space-y-2.5">
             {iceberg.tiers.length > 1 && (
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-[10px] font-mono text-[#6e7681] tracking-widest w-8 shrink-0">层级</span>
+                <span class="text-[10px] font-mono text-text-mid tracking-widest w-8 shrink-0">层级</span>
                 <button
                   data-tier-filter="all"
                   class="filter-btn text-[10px] font-mono px-2 py-1 border transition-colors"
@@ -300,7 +300,7 @@ for (const lbl of allLabels) {
             )}
             {allLabels.length > 0 && (
               <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-[10px] font-mono text-[#6e7681] tracking-widest w-8 shrink-0">标签</span>
+                <span class="text-[10px] font-mono text-text-mid tracking-widest w-8 shrink-0">标签</span>
                 {allLabels.map((label: string) => (
                   <button
                     data-label-filter={label}
@@ -313,8 +313,8 @@ for (const lbl of allLabels) {
               </div>
             )}
             <div class="flex items-center justify-between min-h-[1rem]">
-              <span id="filter-count" class="text-[10px] font-mono text-[#6e7681]"></span>
-              <button id="filter-reset" class="hidden text-[10px] font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors">
+              <span id="filter-count" class="text-[10px] font-mono text-text-mid"></span>
+              <button id="filter-reset" class="hidden text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
                 × 清除筛选
               </button>
             </div>
@@ -339,36 +339,36 @@ for (const lbl of allLabels) {
                     <h3 class="font-mono text-sm font-semibold" style={`color: ${color}`}>
                       {tier.name}
                     </h3>
-                    <span class="tier-count font-mono text-[10px] text-[#6e7681] border border-[#30363d] px-1.5 py-0.5">
+                    <span class="tier-count font-mono text-[10px] text-text-mid border border-border px-1.5 py-0.5">
                       {tier.items.length} 词条
                     </span>
                   </div>
                   {tier.desc && (
-                    <p class="mt-0.5 font-mono text-[11px] text-[#8b949e]">{tier.desc}</p>
+                    <p class="mt-0.5 font-mono text-[11px] text-text-body">{tier.desc}</p>
                   )}
                 </div>
 
                 {/* Items as chips */}
                 <div
-                  class="tier-body border-l-4 border-b border-r border-[#21262d] p-4"
+                  class="tier-body border-l-4 border-b border-r border-border-subtle p-4"
                   style={`border-left-color: ${color}44`}
                 >
                   {tier.items.length === 0 ? (
-                    <p class="text-xs text-[#6e7681] font-mono">暂无词条</p>
+                    <p class="text-xs text-text-mid font-mono">暂无词条</p>
                   ) : (
                     <div class="flex flex-wrap gap-2">
                       {tier.items.map((item: any, ii: number) => {
                         const idx = startIdx + ii;
                         return (
                           <button
-                            class="item-chip group flex items-center gap-1.5 px-3 py-1.5 bg-[#161b22] border border-[#30363d]
-                                   hover:border-current hover:bg-[#1c2128] transition-all text-left cursor-pointer"
+                            class="item-chip group flex items-center gap-1.5 px-3 py-1.5 bg-surface-2 border border-border
+                                   hover:border-current hover:bg-surface-3 transition-all text-left cursor-pointer"
                             style={`--chip-color: ${color}`}
                             data-index={idx}
                             data-id={item.id}
                             data-labels={JSON.stringify((item as any)._labels ?? [])}
                           >
-                            <span class="chip-title font-mono text-xs text-[#cdd9e5] group-hover:text-white transition-colors">
+                            <span class="chip-title font-mono text-xs text-text-hi group-hover:text-white transition-colors">
                               {item.title}
                             </span>
                             {(item as any)._labels?.length > 0 && (
@@ -395,16 +395,16 @@ for (const lbl of allLabels) {
         </div>
 
         {/* ── Footer Actions ─────────────────────────────── */}
-        <div class="mt-10 flex flex-wrap justify-between items-center gap-4 border-t border-[#21262d] pt-6">
+        <div class="mt-10 flex flex-wrap justify-between items-center gap-4 border-t border-border-subtle pt-6">
           <a
             href={`/feedback?id=${iceberg.id}&title=${encodeURIComponent(iceberg.title)}`}
-            class="px-4 py-2 border border-[#30363d] text-xs font-mono text-[#8b949e] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
+            class="px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-danger hover:text-danger transition-colors"
           >
             ! 提交反馈
           </a>
           <a
             href="/iceberg/list"
-            class="px-5 py-2 border border-[#30363d] font-mono text-sm text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+            class="px-5 py-2 border border-border font-mono text-sm text-text-body hover:border-brand hover:text-brand transition-colors"
           >
             ← 返回列表
           </a>
@@ -434,19 +434,19 @@ for (const lbl of allLabels) {
   {/* ── Drawer Panel ──────────────────────────────────────── */}
   <div
     id="drawer"
-    class="fixed top-0 right-0 h-full w-full md:w-[520px] bg-[#0d1117] border-l border-[#21262d]
+    class="fixed top-0 right-0 h-full w-full md:w-[520px] bg-surface-1 border-l border-border-subtle
            shadow-[-20px_0_60px_rgba(0,0,0,0.7)] z-50
            transform translate-x-full transition-transform duration-300 flex flex-col"
   >
     {/* Drawer Header */}
-    <div class="flex items-start justify-between px-6 py-4 border-b border-[#21262d] bg-[#0d1117] shrink-0">
+    <div class="flex items-start justify-between px-6 py-4 border-b border-border-subtle bg-surface-1 shrink-0">
       <div class="flex-1 min-w-0 mr-4">
         <div id="drawer-tier" class="text-[10px] font-mono mb-1.5 tracking-widest"></div>
-        <h2 id="drawer-title" class="text-lg font-mono text-[#cdd9e5] leading-snug"></h2>
+        <h2 id="drawer-title" class="text-lg font-mono text-text-hi leading-snug"></h2>
       </div>
       <button
         onclick="closeDrawer()"
-        class="shrink-0 mt-0.5 text-[#8b949e] hover:text-[#cdd9e5] border border-[#21262d] hover:border-[#30363d]
+        class="shrink-0 mt-0.5 text-text-body hover:text-text-hi border border-border-subtle hover:border-border
                px-2.5 py-1.5 text-xs font-mono transition-all"
       >
         ✕
@@ -454,43 +454,43 @@ for (const lbl of allLabels) {
     </div>
 
     {/* Navigation bar */}
-    <div id="drawer-nav" class="flex items-center justify-between px-6 py-2.5 border-b border-[#21262d] bg-[#0d1117] shrink-0">
+    <div id="drawer-nav" class="flex items-center justify-between px-6 py-2.5 border-b border-border-subtle bg-surface-1 shrink-0">
       <button
         id="drawer-prev"
         onclick="navigateDrawer(-1)"
-        class="font-mono text-xs text-[#8b949e] hover:text-[#00FF41] disabled:opacity-30 disabled:cursor-not-allowed
-               border border-[#21262d] hover:border-[#00FF41] px-2.5 py-1 transition-all"
+        class="font-mono text-xs text-text-body hover:text-brand disabled:opacity-30 disabled:cursor-not-allowed
+               border border-border-subtle hover:border-brand px-2.5 py-1 transition-all"
       >
         ← 上一个
       </button>
-      <span id="drawer-count" class="font-mono text-[10px] text-[#6e7681] tracking-widest"></span>
+      <span id="drawer-count" class="font-mono text-[10px] text-text-mid tracking-widest"></span>
       <button
         id="drawer-next"
         onclick="navigateDrawer(1)"
-        class="font-mono text-xs text-[#8b949e] hover:text-[#00FF41] disabled:opacity-30 disabled:cursor-not-allowed
-               border border-[#21262d] hover:border-[#00FF41] px-2.5 py-1 transition-all"
+        class="font-mono text-xs text-text-body hover:text-brand disabled:opacity-30 disabled:cursor-not-allowed
+               border border-border-subtle hover:border-brand px-2.5 py-1 transition-all"
       >
         下一个 →
       </button>
     </div>
 
     {/* Labels */}
-    <div id="drawer-labels-row" class="px-6 py-2.5 border-b border-[#21262d] shrink-0 hidden">
+    <div id="drawer-labels-row" class="px-6 py-2.5 border-b border-border-subtle shrink-0 hidden">
       <div id="drawer-labels" class="flex flex-wrap gap-1.5"></div>
     </div>
 
     {/* Content */}
     <div id="drawer-body" class="flex-1 overflow-y-auto p-6">
-      <div id="drawer-content" class="markdown-content text-sm text-[#8b949e] leading-relaxed"></div>
+      <div id="drawer-content" class="markdown-content text-sm text-text-body leading-relaxed"></div>
     </div>
 
     {/* Footer */}
-    <div class="px-6 py-3 border-t border-[#21262d] shrink-0 bg-[#0d1117] flex items-center justify-between">
+    <div class="px-6 py-3 border-t border-border-subtle shrink-0 bg-surface-1 flex items-center justify-between">
       <span class="text-[10px] font-mono text-[#21262d] truncate">{iceberg?.title}</span>
       <a
         id="drawer-feedback-link"
         href="#"
-        class="text-[10px] font-mono text-[#6e7681] hover:text-[#ef4444] transition-colors whitespace-nowrap ml-4"
+        class="text-[10px] font-mono text-text-mid hover:text-danger transition-colors whitespace-nowrap ml-4"
       >
         ! 反馈
       </a>
@@ -630,7 +630,7 @@ for (const lbl of allLabels) {
     }
 
     // Content
-    drawerContent.innerHTML = item.descHtml || '<p class="text-[#3d444d]">暂无描述</p>';
+    drawerContent.innerHTML = item.descHtml || '<p class="text-text-lo">暂无描述</p>';
 
     // Feedback link
     if (drawerFeedback) {

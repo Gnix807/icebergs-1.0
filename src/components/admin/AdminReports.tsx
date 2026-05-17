@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { toast } from '../ui/Toast';
 import { useModalAnimation } from '../../hooks/useModalAnimation';
 import { AdminListSkeleton } from '../ui/Skeleton';
@@ -193,31 +193,31 @@ export function AdminReports() {
   return (
     <div className="space-y-4">
       {/* 状态 Tab */}
-      <div className="flex items-center gap-1 border-b border-[#21262d] mb-2">
+      <div className="flex items-center gap-1 border-b border-border-subtle mb-2">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveStatus(tab.id)}
             className={`px-4 py-2 text-xs font-mono transition-colors border-b-2 -mb-px ${
               activeStatus === tab.id
-                ? 'border-[#00FF41] text-[#00FF41]'
-                : 'border-transparent text-[#3d444d] hover:text-[#8b949e]'
+                ? 'border-brand text-brand'
+                : 'border-transparent text-text-lo hover:text-text-body'
             }`}
           >
             {tab.label}
           </button>
         ))}
-        <span className="ml-auto text-[10px] font-mono text-[#6e7681]">共 {total} 条</span>
+        <span className="ml-auto text-[10px] font-mono text-text-mid">共 {total} 条</span>
         <button
           onClick={() => load(activeStatus)}
-          className="ml-3 text-xs font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors"
+          className="ml-3 text-xs font-mono text-text-mid hover:text-brand transition-colors"
         >
           [刷新]
         </button>
       </div>
 
       {/* 筛选条 */}
-      <div className="border border-[#21262d] bg-[#161b22] px-3 py-2.5">
+      <div className="border border-border-subtle bg-surface-2 px-3 py-2.5">
         <div className="flex flex-wrap items-center gap-2">
           {TYPE_TABS.map((tab) => (
             <button
@@ -225,8 +225,8 @@ export function AdminReports() {
               onClick={() => setTypeFilter(tab.id)}
               className={`px-2.5 py-1 text-[10px] font-mono border transition-colors ${
                 typeFilter === tab.id
-                  ? 'border-[#00FF41] text-[#00FF41] bg-[#00FF4110]'
-                  : 'border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41]'
+                  ? 'border-brand text-brand bg-brand/10'
+                  : 'border-border text-text-body hover:border-brand hover:text-brand'
               }`}
             >
               {tab.label}
@@ -237,15 +237,15 @@ export function AdminReports() {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="搜索理由/详情/目标ID"
-            className="ml-auto min-w-[220px] flex-1 max-w-xs px-2.5 py-1.5 bg-[#0d1117] border border-[#30363d] text-xs font-mono text-[#cdd9e5] focus:outline-none focus:border-[#00FF41] placeholder:text-[#3d444d]"
+            className="ml-auto min-w-[220px] flex-1 max-w-xs px-2.5 py-1.5 bg-surface-1 border border-border text-xs font-mono text-text-hi focus:outline-none focus:border-brand placeholder:text-text-lo"
           />
         </div>
       </div>
 
       {/* 待处理批量工具条 */}
       {pendingMode && !loading && reports.length > 0 && (
-        <div className="border border-[#21262d] bg-[#0d1117] px-3 py-2.5 flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-xs font-mono text-[#8b949e] cursor-pointer select-none">
+        <div className="border border-border-subtle bg-surface-1 px-3 py-2.5 flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-xs font-mono text-text-body cursor-pointer select-none">
             <input
               type="checkbox"
               checked={allSelected}
@@ -254,14 +254,14 @@ export function AdminReports() {
             />
             全选当前页
           </label>
-          <span className="text-[10px] font-mono text-[#6e7681]">已选 {selectedIds.length} 条</span>
+          <span className="text-[10px] font-mono text-text-mid">已选 {selectedIds.length} 条</span>
           <button
             onClick={() => {
               setBatchModal({ action: 'RESOLVED_ACTION' });
               setBatchResolution('');
             }}
             disabled={selectedIds.length === 0}
-            className="px-2.5 py-1 text-xs font-mono border border-[#ef444440] text-[#ef4444] hover:bg-[#ef444410] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-2.5 py-1 text-xs font-mono border border-danger/25 text-danger hover:bg-danger/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             批量采取行动
           </button>
@@ -271,7 +271,7 @@ export function AdminReports() {
               setBatchResolution('');
             }}
             disabled={selectedIds.length === 0}
-            className="px-2.5 py-1 text-xs font-mono border border-[#30363d] text-[#8b949e] hover:border-[#8b949e] hover:text-[#cdd9e5] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-2.5 py-1 text-xs font-mono border border-border text-text-body hover:border-[#8b949e] hover:text-text-hi transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             批量驳回
           </button>
@@ -281,7 +281,7 @@ export function AdminReports() {
       {loading && <AdminListSkeleton rows={3} />}
 
       {!loading && reports.length === 0 && (
-        <div className="py-12 text-center text-[#3d444d] font-mono text-sm border border-[#21262d]">
+        <div className="py-12 text-center text-text-lo font-mono text-sm border border-border-subtle">
           // 暂无{STATUS_TABS.find((t) => t.id === activeStatus)?.label}举报
         </div>
       )}
@@ -290,7 +290,7 @@ export function AdminReports() {
         const typeInfo = TYPE_LABELS[report.type] ?? { label: report.type, color: '#6b7280' };
         const checked = selectedIds.includes(report.id);
         return (
-          <div key={report.id} className="border border-[#21262d] bg-[#161b22] p-4">
+          <div key={report.id} className="border border-border-subtle bg-surface-2 p-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3 flex-1 min-w-0">
                 {pendingMode && (
@@ -313,23 +313,23 @@ export function AdminReports() {
                       href={targetLink(report.type, report.targetId)}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors truncate"
+                      className="text-xs font-mono text-text-body hover:text-brand transition-colors truncate"
                     >
                       ID: {report.targetId.slice(-8).toUpperCase()}
                     </a>
                   </div>
 
-                  <p className="text-xs text-[#cdd9e5] font-mono mb-1">{report.reason}</p>
+                  <p className="text-xs text-text-hi font-mono mb-1">{report.reason}</p>
                   {report.detail && (
-                    <p className="text-[11px] text-[#8b949e] leading-relaxed line-clamp-2 border-l-2 border-[#30363d] pl-2 mb-2">
+                    <p className="text-[11px] text-text-body leading-relaxed line-clamp-2 border-l-2 border-border pl-2 mb-2">
                       {report.detail}
                     </p>
                   )}
 
-                  <div className="flex flex-wrap gap-3 text-[10px] font-mono text-[#6e7681]">
+                  <div className="flex flex-wrap gap-3 text-[10px] font-mono text-text-mid">
                     <span>
                       举报人:
-                      <a href={`/user/${report.filer.id}`} className="ml-1 hover:text-[#00FF41] transition-colors">
+                      <a href={`/user/${report.filer.id}`} className="ml-1 hover:text-brand transition-colors">
                         @{report.filer.nickname ?? report.filer.username}
                       </a>
                     </span>
@@ -338,7 +338,7 @@ export function AdminReports() {
                   </div>
 
                   {report.resolution && (
-                    <p className="mt-2 text-[11px] text-[#3d444d] border-l-2 border-[#30363d] pl-2">
+                    <p className="mt-2 text-[11px] text-text-lo border-l-2 border-border pl-2">
                       处理说明：{report.resolution}
                     </p>
                   )}
@@ -352,7 +352,7 @@ export function AdminReports() {
                       setModal({ report, action: 'RESOLVED_ACTION' });
                       setResolution('');
                     }}
-                    className="px-3 py-1.5 text-xs font-mono bg-[#ef444415] border border-[#ef444440] text-[#ef4444] hover:bg-[#ef444425] transition-colors"
+                    className="px-3 py-1.5 text-xs font-mono bg-danger/10 border border-danger/25 text-danger hover:bg-danger/15 transition-colors"
                   >
                     采取行动
                   </button>
@@ -361,7 +361,7 @@ export function AdminReports() {
                       setModal({ report, action: 'RESOLVED_DISMISSED' });
                       setResolution('');
                     }}
-                    className="px-3 py-1.5 text-xs font-mono bg-[#30363d15] border border-[#30363d40] text-[#8b949e] hover:bg-[#30363d25] transition-colors"
+                    className="px-3 py-1.5 text-xs font-mono bg-[#30363d15] border border-border/25 text-text-body hover:bg-[#30363d25] transition-colors"
                   >
                     驳回
                   </button>
@@ -375,16 +375,16 @@ export function AdminReports() {
       {/* 单条处理模态框 */}
       {modalMounted && modal && (
         <div className={`${modalLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-sm p-5 font-mono`}>
-            <div className="text-[10px] text-[#6e7681] mb-1 tracking-widest">REPORT RESOLUTION</div>
-            <div className="text-sm text-[#cdd9e5] mb-1">
+          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-sm p-5 font-mono`}>
+            <div className="text-[10px] text-text-mid mb-1 tracking-widest">REPORT RESOLUTION</div>
+            <div className="text-sm text-text-hi mb-1">
               {modal.action === 'RESOLVED_ACTION' ? '采取行动' : '驳回举报'}
             </div>
-            <div className="text-xs text-[#3d444d] mb-3">
+            <div className="text-xs text-text-lo mb-3">
               {modal.report.type === 'iceberg' ? '冰山图' : '用户'} · {modal.report.reason}
             </div>
 
-            <div className="mb-1 text-[10px] text-[#3d444d]">
+            <div className="mb-1 text-[10px] text-text-lo">
               {modal.action === 'RESOLVED_ACTION' ? '已采取的行动说明' : '驳回理由'}
             </div>
             <div className="flex flex-wrap gap-1.5 mb-2">
@@ -393,7 +393,7 @@ export function AdminReports() {
                   key={tpl}
                   type="button"
                   onClick={() => setResolution(tpl)}
-                  className="text-[10px] px-2 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+                  className="text-[10px] px-2 py-1 border border-border text-text-body hover:border-brand hover:text-brand transition-colors"
                 >
                   套用模板
                 </button>
@@ -403,7 +403,7 @@ export function AdminReports() {
               value={resolution}
               onChange={(e) => setResolution(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none mb-4"
+              className="w-full px-3 py-2 bg-surface-2 border border-border text-xs text-text-hi focus:border-brand focus:outline-none resize-none mb-4"
               placeholder={modal.action === 'RESOLVED_ACTION' ? '说明已对目标内容/用户采取的措施...' : '说明驳回原因...'}
             />
 
@@ -413,7 +413,7 @@ export function AdminReports() {
                   setModal(null);
                   setResolution('');
                 }}
-                className="flex-1 py-2 border border-[#30363d] text-xs hover:border-[#8b949e] transition-colors"
+                className="flex-1 py-2 border border-border text-xs hover:border-[#8b949e] transition-colors"
               >
                 取消
               </button>
@@ -422,8 +422,8 @@ export function AdminReports() {
                 disabled={acting || resolution.trim().length < 3}
                 className={`flex-1 py-2 text-xs border transition-colors disabled:opacity-40 ${
                   modal.action === 'RESOLVED_ACTION'
-                    ? 'bg-[#ef444415] border-[#ef444440] text-[#ef4444] hover:bg-[#ef444425]'
-                    : 'bg-[#30363d15] border-[#30363d40] text-[#8b949e] hover:bg-[#30363d25]'
+                    ? 'bg-danger/10 border-danger/25 text-danger hover:bg-danger/15'
+                    : 'bg-[#30363d15] border-border/25 text-text-body hover:bg-[#30363d25]'
                 }`}
               >
                 {acting ? '处理中...' : '确认'}
@@ -436,21 +436,21 @@ export function AdminReports() {
       {/* 批量处理模态框 */}
       {batchMounted && batchModal && (
         <div className={`${batchLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${batchLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-md p-5 font-mono`}>
-            <div className="text-[10px] text-[#6e7681] mb-1 tracking-widest">BATCH REPORT RESOLUTION</div>
-            <div className="text-sm text-[#cdd9e5] mb-1">
+          <div className={`${batchLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-md p-5 font-mono`}>
+            <div className="text-[10px] text-text-mid mb-1 tracking-widest">BATCH REPORT RESOLUTION</div>
+            <div className="text-sm text-text-hi mb-1">
               {batchModal.action === 'RESOLVED_ACTION' ? '批量采取行动' : '批量驳回举报'}
             </div>
-            <div className="text-xs text-[#3d444d] mb-3">将处理 {selectedIds.length} 条举报</div>
+            <div className="text-xs text-text-lo mb-3">将处理 {selectedIds.length} 条举报</div>
 
-            <div className="mb-1 text-[10px] text-[#3d444d]">处理说明</div>
+            <div className="mb-1 text-[10px] text-text-lo">处理说明</div>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {RESOLUTION_TEMPLATES[batchModal.action].map((tpl) => (
                 <button
                   key={tpl}
                   type="button"
                   onClick={() => setBatchResolution(tpl)}
-                  className="text-[10px] px-2 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+                  className="text-[10px] px-2 py-1 border border-border text-text-body hover:border-brand hover:text-brand transition-colors"
                 >
                   套用模板
                 </button>
@@ -460,7 +460,7 @@ export function AdminReports() {
               value={batchResolution}
               onChange={(e) => setBatchResolution(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none mb-4"
+              className="w-full px-3 py-2 bg-surface-2 border border-border text-xs text-text-hi focus:border-brand focus:outline-none resize-none mb-4"
               placeholder="填写统一处理说明，所有选中记录将使用此说明"
             />
 
@@ -470,7 +470,7 @@ export function AdminReports() {
                   setBatchModal(null);
                   setBatchResolution('');
                 }}
-                className="flex-1 py-2 border border-[#30363d] text-xs hover:border-[#8b949e] transition-colors"
+                className="flex-1 py-2 border border-border text-xs hover:border-[#8b949e] transition-colors"
               >
                 取消
               </button>
@@ -479,8 +479,8 @@ export function AdminReports() {
                 disabled={batchActing || batchResolution.trim().length < 3 || selectedIds.length === 0}
                 className={`flex-1 py-2 text-xs border transition-colors disabled:opacity-40 ${
                   batchModal.action === 'RESOLVED_ACTION'
-                    ? 'bg-[#ef444415] border-[#ef444440] text-[#ef4444] hover:bg-[#ef444425]'
-                    : 'bg-[#30363d15] border-[#30363d40] text-[#8b949e] hover:bg-[#30363d25]'
+                    ? 'bg-danger/10 border-danger/25 text-danger hover:bg-danger/15'
+                    : 'bg-[#30363d15] border-border/25 text-text-body hover:bg-[#30363d25]'
                 }`}
               >
                 {batchActing ? '处理中...' : '确认批量处理'}

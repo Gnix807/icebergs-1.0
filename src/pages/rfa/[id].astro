@@ -1,4 +1,4 @@
----
+﻿---
 import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
 import { getSessionById } from '../../lib/auth';
@@ -109,16 +109,16 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
   <main class="max-w-2xl mx-auto px-4 py-8 reveal">
 
     <!-- 面包屑 -->
-    <div class="text-[10px] font-mono text-[#30363d] mb-6">
-      <a href="/org" class="hover:text-[#8b949e] transition-colors">机构</a>
+    <div class="text-[10px] font-mono text-text-lo mb-6">
+      <a href="/org" class="hover:text-text-body transition-colors">机构</a>
       <span class="mx-2">›</span>
       <span>编辑资格申请</span>
     </div>
 
     <!-- 申请头部 -->
-    <div class="border border-[#1a1a1a] bg-[#161b22] p-5 mb-6">
+    <div class="border border-border-minimal bg-surface-2 p-5 mb-6">
       <div class="flex items-center gap-3 flex-wrap mb-2">
-        <h1 class="font-mono text-base text-[#cdd9e5]">
+        <h1 class="font-mono text-base text-text-hi">
           编辑资格申请（RfA）
         </h1>
         <span class="text-[10px] font-mono border px-1.5 py-0.5"
@@ -129,25 +129,25 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
 
       <!-- 申请人 -->
       <div class="flex items-center gap-2 mb-3">
-        <span class="text-[10px] font-mono text-[#30363d]">申请人：</span>
+        <span class="text-[10px] font-mono text-text-lo">申请人：</span>
         <a href={`/user/${rfaRaw.user.id}`}
-          class="text-sm font-mono text-[#cdd9e5] hover:text-[#00FF41] transition-colors">
+          class="text-sm font-mono text-text-hi hover:text-brand transition-colors">
           @{applicantDisplay}
         </a>
-        <span class="text-[10px] font-mono text-[#30363d]">{rfaRaw.user.role}</span>
-        <span class="text-[10px] font-mono text-[#3d444d]">质量分 {rfaRaw.user.qualityScore}</span>
+        <span class="text-[10px] font-mono text-text-lo">{rfaRaw.user.role}</span>
+        <span class="text-[10px] font-mono text-text-lo">质量分 {rfaRaw.user.qualityScore}</span>
       </div>
 
       {rfaRaw.statement ? (
-        <div class="border border-[#1a1a1a] bg-[#050505] px-4 py-3 mb-3">
-          <div class="text-[10px] font-mono text-[#30363d] mb-1">申请陈述</div>
-          <p class="text-xs font-mono text-[#8b949e] leading-relaxed whitespace-pre-wrap">{rfaRaw.statement}</p>
+        <div class="border border-border-minimal bg-surface-0 px-4 py-3 mb-3">
+          <div class="text-[10px] font-mono text-text-lo mb-1">申请陈述</div>
+          <p class="text-xs font-mono text-text-body leading-relaxed whitespace-pre-wrap">{rfaRaw.statement}</p>
         </div>
       ) : (
-        <div class="text-[10px] font-mono text-[#3d444d] mb-3">// 申请人未填写陈述</div>
+        <div class="text-[10px] font-mono text-text-lo mb-3">// 申请人未填写陈述</div>
       )}
 
-      <div class="text-[10px] font-mono text-[#30363d] space-y-0.5">
+      <div class="text-[10px] font-mono text-text-lo space-y-0.5">
         <div>申请时间：{new Date(rfaRaw.createdAt).toLocaleString('zh-CN')}</div>
         <div>投票截止：{new Date(rfaRaw.closesAt).toLocaleString('zh-CN')}</div>
         {rfaRaw.resolvedAt && (
@@ -158,11 +158,11 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
 
     <!-- 结果公告 -->
     {status === 'APPROVED' && (
-      <div class="border border-[#8b5cf640] bg-[#8b5cf608] p-4 mb-6 font-mono">
-        <div class="text-[10px] text-[#8b5cf6] mb-1 tracking-wider">// 申请结果</div>
-        <div class="text-sm text-[#cdd9e5]">
-          <span class="text-[#8b5cf6]">★</span>{' '}
-          <a href={`/user/${rfaRaw.user.id}`} class="text-[#8b5cf6] hover:underline">
+      <div class="border border-[#8b5cf640] bg-purple/5 p-4 mb-6 font-mono">
+        <div class="text-[10px] text-purple mb-1 tracking-wider">// 申请结果</div>
+        <div class="text-sm text-text-hi">
+          <span class="text-purple">★</span>{' '}
+          <a href={`/user/${rfaRaw.user.id}`} class="text-purple hover:underline">
             @{applicantDisplay}
           </a>
           {' '}已成功晋升为 EDITOR
@@ -170,9 +170,9 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
       </div>
     )}
     {status === 'REJECTED' && (
-      <div class="border border-[#ef444430] bg-[#ef444408] p-4 mb-6 font-mono">
-        <div class="text-[10px] text-[#ef4444] mb-1 tracking-wider">// 申请结果</div>
-        <div class="text-sm text-[#8b949e]">本次申请未通过，申请人可在冷却期结束后再次申请。</div>
+      <div class="border border-[#ef444430] bg-danger/5 p-4 mb-6 font-mono">
+        <div class="text-[10px] text-danger mb-1 tracking-wider">// 申请结果</div>
+        <div class="text-sm text-text-body">本次申请未通过，申请人可在冷却期结束后再次申请。</div>
       </div>
     )}
 
@@ -182,7 +182,7 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
         <button
           id="cancel-rfa-btn"
           data-rfa-id={id}
-          class="text-[10px] font-mono border border-[#ef444430] text-[#ef4444] px-3 py-1.5 hover:bg-[#ef444415] transition-colors"
+          class="text-[10px] font-mono border border-[#ef444430] text-danger px-3 py-1.5 hover:bg-danger/10 transition-colors"
         >
           撤销申请
         </button>

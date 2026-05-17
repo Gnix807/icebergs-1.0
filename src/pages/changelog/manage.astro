@@ -1,4 +1,4 @@
----
+﻿---
 import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
 import { getSessionById } from '../../lib/auth';
@@ -33,9 +33,9 @@ const initialList = announcements.map((a: any) => ({
   <main class="max-w-3xl mx-auto px-4 py-8 reveal">
 
     <div class="mb-8">
-      <div class="text-[10px] font-mono text-[#6e7681] tracking-widest mb-2">// CHANGELOG MANAGEMENT</div>
-      <h1 class="text-2xl font-mono text-[#cdd9e5] mb-2">更新日志发布</h1>
-      <p class="text-xs font-mono text-[#8b949e]">仅管理更新日志类型：更新、维护、风险提示。</p>
+      <div class="text-[10px] font-mono text-text-mid tracking-widest mb-2">// CHANGELOG MANAGEMENT</div>
+      <h1 class="text-2xl font-mono text-text-hi mb-2">更新日志发布</h1>
+      <p class="text-xs font-mono text-text-body">仅管理更新日志类型：更新、维护、风险提示。</p>
     </div>
 
     <AnnouncementManager

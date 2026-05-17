@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -24,9 +24,9 @@ const ICONS: Record<ToastType, string> = {
 };
 
 const STYLES: Record<ToastType, string> = {
-  success: 'border-[#00FF41] text-[#00FF41] shadow-[0_0_12px_rgba(0,255,65,0.25)]',
-  error:   'border-[#ef4444] text-[#ef4444] shadow-[0_0_12px_rgba(239,68,68,0.25)]',
-  info:    'border-[#6b7280] text-[#8b949e]',
+  success: 'border-brand text-brand shadow-[0_0_12px_rgba(0,255,65,0.25)]',
+  error:   'border-danger text-danger shadow-[0_0_12px_rgba(239,68,68,0.25)]',
+  info:    'border-[#6b7280] text-text-body',
 };
 
 export function Toast() {
@@ -54,7 +54,7 @@ export function Toast() {
       {toasts.map(t => (
         <div
           key={t.id}
-          className={`toast-item px-4 py-2.5 font-mono text-sm border bg-[#161b22] pointer-events-auto ${STYLES[t.type]}`}
+          className={`toast-item px-4 py-2.5 font-mono text-sm border bg-surface-2 pointer-events-auto ${STYLES[t.type]}`}
         >
           <span className="mr-2 opacity-60">{ICONS[t.type]}</span>
           {t.message}

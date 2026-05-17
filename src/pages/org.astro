@@ -1,4 +1,4 @@
----
+﻿---
 import Layout from '../layouts/Layout.astro';
 import { prisma } from '../lib/prisma';
 import { getSessionById } from '../lib/auth';
@@ -90,34 +90,34 @@ const STATUS_COLOR: Record<string, string> = {
 
     <!-- 页面标题 -->
     <header class="mb-10 reveal" style="">
-      <div class="text-xs font-mono text-[#30363d] mb-3 tracking-widest">[ ORG SYSTEM ]</div>
+      <div class="text-xs font-mono text-text-lo mb-3 tracking-widest">[ ORG SYSTEM ]</div>
       <h1 class="text-3xl font-mono font-semibold glitch-hover cursor-default">
-        <span class="text-[#f59e0b]">#</span> 组织架构
+        <span class="text-warning">#</span> 组织架构
       </h1>
-      <p class="mt-2 text-sm text-[#8b949e] font-mono">公开透明的治理体系 · 所有权限基于角色制度运行</p>
+      <p class="mt-2 text-sm text-text-body font-mono">公开透明的治理体系 · 所有权限基于角色制度运行</p>
     </header>
 
     <!-- 治理说明 -->
-    <div class="border border-[#21262d] border-l-4 border-l-[#f59e0b] bg-[#161b22] p-5 mb-10 reveal" style="">
-      <div class="text-[10px] font-mono text-[#30363d] tracking-widest mb-3">// ROLE HIERARCHY</div>
+    <div class="border border-border-subtle border-l-4 border-l-[#f59e0b] bg-surface-2 p-5 mb-10 reveal" style="">
+      <div class="text-[10px] font-mono text-text-lo tracking-widest mb-3">// ROLE HIERARCHY</div>
       <div class="space-y-2 text-[11px] font-mono">
         <div class="flex items-start gap-2">
-          <span class="text-[#f59e0b] flex-shrink-0">◆</span>
-          <span><span class="text-[#f59e0b] font-semibold">FOUNDER</span> <span class="text-[#3d444d]">— 平台创始人，永久免疫所有操作，不参与换届</span></span>
+          <span class="text-warning flex-shrink-0">◆</span>
+          <span><span class="text-warning font-semibold">FOUNDER</span> <span class="text-text-lo">— 平台创始人，永久免疫所有操作，不参与换届</span></span>
         </div>
         <div class="flex items-start gap-2">
-          <span class="text-[#f59e0b] flex-shrink-0">★</span>
-          <span><span class="text-[#f59e0b]">ADMIN</span> <span class="text-[#3d444d]">— 管理员，由选举产生或由 FOUNDER 任命，负责平台日常治理</span></span>
+          <span class="text-warning flex-shrink-0">★</span>
+          <span><span class="text-warning">ADMIN</span> <span class="text-text-lo">— 管理员，由选举产生或由 FOUNDER 任命，负责平台日常治理</span></span>
         </div>
         <div class="flex items-start gap-2">
-          <span class="text-[#3b82f6] flex-shrink-0">▲</span>
-          <span><span class="text-[#3b82f6]">MODERATOR</span> <span class="text-[#3d444d]">— 版主，由管理员任命，协助内容审核与社区维护</span></span>
+          <span class="text-info flex-shrink-0">▲</span>
+          <span><span class="text-info">MODERATOR</span> <span class="text-text-lo">— 版主，由管理员任命，协助内容审核与社区维护</span></span>
         </div>
         <div class="flex items-start gap-2">
-          <span class="text-[#22c55e] flex-shrink-0">●</span>
-          <span><span class="text-[#22c55e]">EDITOR</span> <span class="text-[#3d444d]">— 编辑，审核冰山图，可申请晋升版主</span></span>
+          <span class="text-success flex-shrink-0">●</span>
+          <span><span class="text-success">EDITOR</span> <span class="text-text-lo">— 编辑，审核冰山图，可申请晋升版主</span></span>
         </div>
-        <div class="pt-2 border-t border-[#1a1a1a] text-[#30363d]">
+        <div class="pt-2 border-t border-border-minimal text-text-lo">
           晋升路径：USER → CONTRIBUTOR → EDITOR（申请制）→ MODERATOR（任命）→ ADMIN（选举）
         </div>
       </div>
@@ -125,16 +125,16 @@ const STATUS_COLOR: Record<string, string> = {
 
     <!-- 进行中的选举 -->
     {activeElection && (
-      <div class="border border-[#22c55e40] border-l-4 border-l-[#22c55e] bg-[#22c55e08] p-5 mb-10 reveal" style="">
-        <div class="text-[10px] font-mono text-[#22c55e] mb-3 tracking-widest">[ ACTIVE ELECTION ]</div>
+      <div class="border border-success/25 border-l-4 border-l-[#22c55e] bg-[#22c55e08] p-5 mb-10 reveal" style="">
+        <div class="text-[10px] font-mono text-success mb-3 tracking-widest">[ ACTIVE ELECTION ]</div>
         <div class="flex items-center gap-3 flex-wrap mb-3">
-          <span class="text-base font-mono font-semibold text-[#cdd9e5]">{activeElection.title}</span>
+          <span class="text-base font-mono font-semibold text-text-hi">{activeElection.title}</span>
           <span class="text-[10px] font-mono border px-1.5 py-0.5"
             style={`color:${STATUS_COLOR[activeElection.status]};border-color:${STATUS_COLOR[activeElection.status]}40`}>
             {STATUS_LABEL[activeElection.status]}
           </span>
         </div>
-        <div class="text-[11px] font-mono text-[#3d444d] space-y-0.5 mb-4">
+        <div class="text-[11px] font-mono text-text-lo space-y-0.5 mb-4">
           {activeElection.status === 'OPEN_APPLY' && (
             <div>报名截止：{new Date(activeElection.applyDeadline).toLocaleString('zh-CN')}</div>
           )}
@@ -153,11 +153,11 @@ const STATUS_COLOR: Record<string, string> = {
     <!-- 进行中的 RfA -->
     <section class="mb-10 reveal" style="">
       <div class="flex items-center gap-3 mb-4">
-        <span class="text-xs font-mono text-[#22c55e] tracking-widest">// 编辑资格申请（RfA）</span>
+        <span class="text-xs font-mono text-success tracking-widest">// 编辑资格申请（RfA）</span>
         <div class="flex-1 border-t border-[#22c55e15]"></div>
         {openRfas.length > 0
-          ? <span class="text-[10px] font-mono text-[#30363d]">{openRfas.length} 项进行中</span>
-          : <a href="/rfa" class="text-[10px] font-mono text-[#30363d] hover:text-[#8b949e] transition-colors">查看记录 →</a>
+          ? <span class="text-[10px] font-mono text-text-lo">{openRfas.length} 项进行中</span>
+          : <a href="/rfa" class="text-[10px] font-mono text-text-lo hover:text-text-body transition-colors">查看记录 →</a>
         }
       </div>
       {openRfas.length > 0 && (
@@ -166,19 +166,19 @@ const STATUS_COLOR: Record<string, string> = {
             const daysLeft = Math.max(0, Math.ceil((new Date(rfa.closesAt).getTime() - Date.now()) / 86400_000));
             return (
               <a href={`/rfa/${rfa.id}`}
-                class="flex items-center gap-3 px-4 py-3 border border-[#22c55e20] bg-[#22c55e05] hover:bg-[#22c55e0d] transition-colors group">
+                class="flex items-center gap-3 px-4 py-3 border border-success/20 bg-[#22c55e05] hover:bg-[#22c55e0d] transition-colors group">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-mono text-sm text-[#cdd9e5] group-hover:text-[#22c55e] transition-colors">
+                    <span class="font-mono text-sm text-text-hi group-hover:text-success transition-colors">
                       @{rfa.user.nickname ?? rfa.user.username}
                     </span>
-                    <span class="text-[10px] font-mono text-[#3d444d]">申请编辑资格</span>
+                    <span class="text-[10px] font-mono text-text-lo">申请编辑资格</span>
                   </div>
-                  <div class="text-[10px] font-mono text-[#30363d] mt-0.5">
+                  <div class="text-[10px] font-mono text-text-lo mt-0.5">
                     {rfa._count.votes} 票已投 · 剩余 {daysLeft} 天
                   </div>
                 </div>
-                <span class="text-[10px] font-mono border border-[#22c55e40] text-[#22c55e] px-1.5 py-0.5 flex-shrink-0">
+                <span class="text-[10px] font-mono border border-success/25 text-success px-1.5 py-0.5 flex-shrink-0">
                   进行中
                 </span>
               </a>
@@ -188,7 +188,7 @@ const STATUS_COLOR: Record<string, string> = {
       )}
       {openRfas.length > 0 && (
         <div class="mt-2 text-right">
-          <a href="/rfa" class="text-[10px] font-mono text-[#30363d] hover:text-[#8b949e] transition-colors">
+          <a href="/rfa" class="text-[10px] font-mono text-text-lo hover:text-text-body transition-colors">
             查看全部 RfA 记录 →
           </a>
         </div>
@@ -199,29 +199,29 @@ const STATUS_COLOR: Record<string, string> = {
     {openImpeachments.length > 0 && (
       <section class="mb-10 reveal" style="">
         <div class="flex items-center gap-3 mb-4">
-          <span class="text-xs font-mono text-[#ef4444] tracking-widest">// 弹劾案（进行中）</span>
+          <span class="text-xs font-mono text-danger tracking-widest">// 弹劾案（进行中）</span>
           <div class="flex-1 border-t border-[#ef444415]"></div>
-          <span class="text-[10px] font-mono text-[#30363d]">{openImpeachments.length} 项</span>
+          <span class="text-[10px] font-mono text-text-lo">{openImpeachments.length} 项</span>
         </div>
         <div class="space-y-1.5">
           {openImpeachments.map((req: any) => {
             const daysLeft = Math.max(0, Math.ceil((new Date(req.closesAt).getTime() - Date.now()) / 86400_000));
             return (
               <a href={`/impeach/${req.id}`}
-                class="flex items-center gap-3 px-4 py-3 border border-[#ef444420] bg-[#ef444405] hover:bg-[#ef44440d] transition-colors group">
+                class="flex items-center gap-3 px-4 py-3 border border-danger/20 bg-[#ef444405] hover:bg-[#ef44440d] transition-colors group">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-[10px] font-mono border px-1.5 py-0.5"
                       style="color:#ef4444;border-color:#ef444440">弹劾 {req.targetRole}</span>
-                    <span class="font-mono text-sm text-[#cdd9e5] group-hover:text-[#ef4444] transition-colors">
+                    <span class="font-mono text-sm text-text-hi group-hover:text-danger transition-colors">
                       @{req.target.nickname ?? req.target.username}
                     </span>
                   </div>
-                  <div class="text-[10px] font-mono text-[#30363d] mt-0.5">
+                  <div class="text-[10px] font-mono text-text-lo mt-0.5">
                     {req._count.votes} 票 · 剩余 {daysLeft} 天
                   </div>
                 </div>
-                <span class="text-[10px] font-mono border border-[#ef444440] text-[#ef4444] px-1.5 py-0.5 flex-shrink-0">
+                <span class="text-[10px] font-mono border border-danger/25 text-danger px-1.5 py-0.5 flex-shrink-0">
                   投票中
                 </span>
               </a>
@@ -229,7 +229,7 @@ const STATUS_COLOR: Record<string, string> = {
           })}
         </div>
         <div class="mt-2 text-right">
-          <a href="/impeach" class="text-[10px] font-mono text-[#30363d] hover:text-[#8b949e] transition-colors">
+          <a href="/impeach" class="text-[10px] font-mono text-text-lo hover:text-text-body transition-colors">
             查看全部弹劾记录 →
           </a>
         </div>
@@ -239,28 +239,28 @@ const STATUS_COLOR: Record<string, string> = {
     <!-- FOUNDER -->
     <section class="mb-10 reveal" style="">
       <div class="flex items-center gap-3 mb-4">
-        <span class="text-xs font-mono font-semibold text-[#f59e0b] tracking-widest">◆ FOUNDER</span>
-        <div class="flex-1 border-t border-[#30363d]"></div>
-        <span class="text-[10px] font-mono text-[#8b949e] px-2">永久席位</span>
+        <span class="text-xs font-mono font-semibold text-warning tracking-widest">◆ FOUNDER</span>
+        <div class="flex-1 border-t border-border"></div>
+        <span class="text-[10px] font-mono text-text-body px-2">永久席位</span>
       </div>
       {founders.length === 0 ? (
-        <p class="text-[10px] font-mono text-[#3d444d]">// 暂无</p>
+        <p class="text-[10px] font-mono text-text-lo">// 暂无</p>
       ) : (
         <div class="space-y-2">
           {founders.map(u => (
             <a href={`/user/${u.id}`}
-              class="org-founder-card flex items-center gap-4 px-5 py-4 border border-[#f59e0b30] border-l-4 border-l-[#f59e0b] transition-all group">
+              class="org-founder-card flex items-center gap-4 px-5 py-4 border border-warning/20 border-l-4 border-l-[#f59e0b] transition-all group">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-3 flex-wrap mb-0.5">
-                  <span class="font-mono text-base font-semibold text-[#cdd9e5] group-hover:text-[#f59e0b] transition-colors">
+                  <span class="font-mono text-base font-semibold text-text-hi group-hover:text-warning transition-colors">
                     @{u.nickname ?? u.username}
                   </span>
                 </div>
-                {u.bio && <p class="text-xs font-mono text-[#8b949e] truncate">{u.bio}</p>}
+                {u.bio && <p class="text-xs font-mono text-text-body truncate">{u.bio}</p>}
               </div>
               <div class="flex-shrink-0 text-right">
-                <div class="text-sm font-mono font-semibold text-[#f59e0b]">{u.qualityScore.toLocaleString()}</div>
-                <div class="text-[10px] font-mono text-[#8b949e]">pts</div>
+                <div class="text-sm font-mono font-semibold text-warning">{u.qualityScore.toLocaleString()}</div>
+                <div class="text-[10px] font-mono text-text-body">pts</div>
               </div>
             </a>
           ))}
@@ -271,12 +271,12 @@ const STATUS_COLOR: Record<string, string> = {
     <!-- ADMIN -->
     <section class="mb-10 reveal" style="">
       <div class="flex items-center gap-3 mb-4">
-        <span class="text-xs font-mono font-semibold text-[#f59e0b] tracking-widest">★ ADMIN</span>
-        <div class="flex-1 border-t border-[#30363d]"></div>
-        <span class="text-[10px] font-mono text-[#8b949e] px-2">选举产生</span>
+        <span class="text-xs font-mono font-semibold text-warning tracking-widest">★ ADMIN</span>
+        <div class="flex-1 border-t border-border"></div>
+        <span class="text-[10px] font-mono text-text-body px-2">选举产生</span>
       </div>
       {admins.length === 0 ? (
-        <p class="text-[11px] font-mono text-[#30363d]">// 暂无专任管理员（由 FOUNDER 代行职责）</p>
+        <p class="text-[11px] font-mono text-text-lo">// 暂无专任管理员（由 FOUNDER 代行职责）</p>
       ) : (
         <div class="space-y-2">
           {admins.map(u => (
@@ -284,19 +284,19 @@ const STATUS_COLOR: Record<string, string> = {
               <a href={`/user/${u.id}`}
                 class="org-admin-card flex-1 flex items-center gap-4 px-5 py-3.5 border border-[#f59e0b20] border-l-4 border-l-[#f59e0b60] transition-all group">
                 <div class="flex-1 min-w-0">
-                  <span class="font-mono text-sm font-medium text-[#cdd9e5] group-hover:text-[#f59e0b] transition-colors">
+                  <span class="font-mono text-sm font-medium text-text-hi group-hover:text-warning transition-colors">
                     @{u.nickname ?? u.username}
                   </span>
-                  {u.bio && <p class="text-[10px] font-mono text-[#3d444d] mt-0.5 truncate">{u.bio}</p>}
+                  {u.bio && <p class="text-[10px] font-mono text-text-lo mt-0.5 truncate">{u.bio}</p>}
                 </div>
                 <div class="flex-shrink-0 text-right">
-                  <div class="text-sm font-mono text-[#8b949e]">{u.qualityScore.toLocaleString()}</div>
-                  <div class="text-[10px] font-mono text-[#8b949e]">pts</div>
+                  <div class="text-sm font-mono text-text-body">{u.qualityScore.toLocaleString()}</div>
+                  <div class="text-[10px] font-mono text-text-body">pts</div>
                 </div>
               </a>
               {session?.isFounder && (
                 <a href={`/impeach/new?target=${u.id}`}
-                  class="flex-shrink-0 px-3 py-3.5 text-[10px] font-mono border border-[#ef444420] text-[#ef4444] hover:bg-[#ef444415] transition-colors">
+                  class="flex-shrink-0 px-3 py-3.5 text-[10px] font-mono border border-danger/20 text-danger hover:bg-danger/10 transition-colors">
                   弹劾
                 </a>
               )}
@@ -309,28 +309,28 @@ const STATUS_COLOR: Record<string, string> = {
     <!-- MODERATOR -->
     <section class="mb-10 reveal" style="">
       <div class="flex items-center gap-3 mb-4">
-        <span class="text-xs font-mono text-[#3b82f6] tracking-widest">▲ MODERATOR</span>
-        <div class="flex-1 border-t border-[#30363d]"></div>
-        <span class="text-[10px] font-mono text-[#8b949e]">{moderators.length} 人</span>
+        <span class="text-xs font-mono text-info tracking-widest">▲ MODERATOR</span>
+        <div class="flex-1 border-t border-border"></div>
+        <span class="text-[10px] font-mono text-text-body">{moderators.length} 人</span>
       </div>
       {moderators.length === 0 ? (
-        <p class="text-[10px] font-mono text-[#3d444d]">// 暂无</p>
+        <p class="text-[10px] font-mono text-text-lo">// 暂无</p>
       ) : (
         <div class="space-y-1.5">
           {moderators.map(u => (
             <div class="flex items-center gap-2">
               <a href={`/user/${u.id}`}
-                class="org-mod-card flex-1 flex items-center gap-3 px-4 py-3 border border-[#21262d] bg-[#161b22] hover:border-[#3b82f640] transition-all group">
+                class="org-mod-card flex-1 flex items-center gap-3 px-4 py-3 border border-border-subtle bg-surface-2 hover:border-info/25 transition-all group">
                 <div class="flex-1 min-w-0">
-                  <span class="font-mono text-sm text-[#cdd9e5] group-hover:text-[#3b82f6] transition-colors">
+                  <span class="font-mono text-sm text-text-hi group-hover:text-info transition-colors">
                     @{u.nickname ?? u.username}
                   </span>
                 </div>
-                <span class="text-[10px] font-mono text-[#8b949e]">{u.qualityScore.toLocaleString()} pts</span>
+                <span class="text-[10px] font-mono text-text-body">{u.qualityScore.toLocaleString()} pts</span>
               </a>
               {(session?.isFounder || session?.role === 'ADMIN') && (
                 <a href={`/impeach/new?target=${u.id}`}
-                  class="flex-shrink-0 px-2.5 py-3 text-[10px] font-mono border border-[#ef444420] text-[#ef4444] hover:bg-[#ef444415] transition-colors">
+                  class="flex-shrink-0 px-2.5 py-3 text-[10px] font-mono border border-danger/20 text-danger hover:bg-danger/10 transition-colors">
                   弹劾
                 </a>
               )}
@@ -343,21 +343,21 @@ const STATUS_COLOR: Record<string, string> = {
     <!-- EDITOR -->
     <section class="mb-10 reveal" style="">
       <div class="flex items-center gap-3 mb-4">
-        <span class="text-xs font-mono text-[#22c55e] tracking-widest">● EDITOR</span>
-        <div class="flex-1 border-t border-[#30363d]"></div>
-        <span class="text-[10px] font-mono text-[#8b949e]">{editors.length} 人</span>
+        <span class="text-xs font-mono text-success tracking-widest">● EDITOR</span>
+        <div class="flex-1 border-t border-border"></div>
+        <span class="text-[10px] font-mono text-text-body">{editors.length} 人</span>
       </div>
       {editors.length === 0 ? (
-        <p class="text-[10px] font-mono text-[#3d444d]">// 暂无</p>
+        <p class="text-[10px] font-mono text-text-lo">// 暂无</p>
       ) : (
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
           {editors.map(u => (
             <a href={`/user/${u.id}`}
-              class="org-editor-card px-3 py-2.5 border border-[#21262d] bg-[#161b22] hover:border-[#22c55e30] transition-all group">
-              <span class="font-mono text-xs text-[#8b949e] group-hover:text-[#22c55e] transition-colors block truncate">
+              class="org-editor-card px-3 py-2.5 border border-border-subtle bg-surface-2 hover:border-[#22c55e30] transition-all group">
+              <span class="font-mono text-xs text-text-body group-hover:text-success transition-colors block truncate">
                 @{u.nickname ?? u.username}
               </span>
-              <span class="text-[10px] font-mono text-[#3d444d]">{u.qualityScore} pts</span>
+              <span class="text-[10px] font-mono text-text-lo">{u.qualityScore} pts</span>
             </a>
           ))}
         </div>
@@ -367,27 +367,27 @@ const STATUS_COLOR: Record<string, string> = {
     <!-- 选举历史 -->
     <section class="reveal" style="">
       <div class="flex items-center gap-3 mb-4">
-        <span class="text-xs font-mono text-[#8b949e] tracking-widest">// 选举历史</span>
-        <div class="flex-1 border-t border-[#30363d]"></div>
+        <span class="text-xs font-mono text-text-body tracking-widest">// 选举历史</span>
+        <div class="flex-1 border-t border-border"></div>
       </div>
       {elections.length === 0 ? (
-        <p class="text-[10px] font-mono text-[#3d444d]">// 暂无选举记录</p>
+        <p class="text-[10px] font-mono text-text-lo">// 暂无选举记录</p>
       ) : (
         <div class="space-y-1.5">
           {elections.map(e => (
             <a href={`/elections/${e.id}`}
-              class="flex items-center gap-3 px-4 py-3 border border-[#21262d] bg-[#161b22] hover:border-[#30363d] transition-colors group">
+              class="flex items-center gap-3 px-4 py-3 border border-border-subtle bg-surface-2 hover:border-border transition-colors group">
               <span class="text-[10px] font-mono border px-1.5 py-0.5 flex-shrink-0"
                 style={`color:${STATUS_COLOR[e.status]};border-color:${STATUS_COLOR[e.status]}40`}>
                 {STATUS_LABEL[e.status] ?? e.status}
               </span>
-              <span class="flex-1 font-mono text-xs text-[#8b949e] group-hover:text-[#cdd9e5] transition-colors truncate">
+              <span class="flex-1 font-mono text-xs text-text-body group-hover:text-text-hi transition-colors truncate">
                 {e.title}
               </span>
-              <span class="text-[10px] font-mono text-[#30363d] flex-shrink-0">
+              <span class="text-[10px] font-mono text-text-lo flex-shrink-0">
                 {e._count.candidates} 候选 · {e._count.votes} 票
               </span>
-              <span class="text-[10px] font-mono text-[#3d444d] flex-shrink-0">
+              <span class="text-[10px] font-mono text-text-lo flex-shrink-0">
                 {new Date(e.createdAt).toLocaleDateString('zh-CN')}
               </span>
             </a>

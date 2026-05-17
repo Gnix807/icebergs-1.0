@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { toast } from '../ui/Toast';
 
 interface Setting {
@@ -92,27 +92,27 @@ export function AdminSettings() {
 
   const isDirty = settings.some(s => edits[s.key] !== s.value);
 
-  if (loading) return <div className="text-[#3d444d] font-mono text-sm py-8 text-center">// 加载中...</div>;
+  if (loading) return <div className="text-text-lo font-mono text-sm py-8 text-center">// 加载中...</div>;
 
   return (
     <div className="space-y-3">
-      <div className="text-[10px] font-mono text-[#6e7681] mb-4">
+      <div className="text-[10px] font-mono text-text-mid mb-4">
         // 治理参数配置 · 修改后立即生效（懒加载计算）
       </div>
 
       {settings.map(s => {
         const meta = SETTING_META[s.key];
         return (
-          <div key={s.key} className="border border-[#21262d] bg-[#161b22] p-4">
+          <div key={s.key} className="border border-border-subtle bg-surface-2 p-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-mono text-[#cdd9e5] mb-0.5">
+                <div className="text-xs font-mono text-text-hi mb-0.5">
                   {meta?.label ?? s.key}
                 </div>
-                <div className="text-[10px] font-mono text-[#6e7681]">
+                <div className="text-[10px] font-mono text-text-mid">
                   {meta?.hint ?? s.key}
                 </div>
-                <div className="text-[10px] font-mono text-[#3d444d] mt-1">
+                <div className="text-[10px] font-mono text-text-lo mt-1">
                   key: {s.key} · 更新于 {new Date(s.updatedAt).toLocaleDateString('zh-CN')}
                 </div>
               </div>
@@ -120,10 +120,10 @@ export function AdminSettings() {
                 type="text"
                 value={edits[s.key] ?? s.value}
                 onChange={e => setEdits(v => ({ ...v, [s.key]: e.target.value }))}
-                className={`w-24 px-2 py-1.5 text-xs font-mono text-right bg-[#161b22] border focus:outline-none transition-colors ${
+                className={`w-24 px-2 py-1.5 text-xs font-mono text-right bg-surface-2 border focus:outline-none transition-colors ${
                   edits[s.key] !== s.value
-                    ? 'border-[#f59e0b] text-[#f59e0b]'
-                    : 'border-[#30363d] text-[#8b949e] focus:border-[#00FF41]'
+                    ? 'border-warning text-warning'
+                    : 'border-border text-text-body focus:border-brand'
                 }`}
               />
             </div>
@@ -135,7 +135,7 @@ export function AdminSettings() {
         <button
           onClick={save}
           disabled={!isDirty || saving}
-          className="px-5 py-2 text-xs font-mono bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41] hover:bg-[#00FF4125] transition-colors disabled:opacity-40"
+          className="px-5 py-2 text-xs font-mono bg-brand/10 border border-brand/25 text-brand hover:bg-brand/15 transition-colors disabled:opacity-40"
         >
           {saving ? '保存中...' : isDirty ? '保存修改' : '无更改'}
         </button>

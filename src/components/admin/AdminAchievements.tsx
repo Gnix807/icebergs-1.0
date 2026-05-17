@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { toast } from '../ui/Toast';
 import { Trash2, ChevronDown } from 'lucide-react';
 import type { Condition, BlockCondition, ConditionOp } from '../../lib/types';
@@ -105,28 +105,28 @@ function BlockRow({ cond, onChange, onRemove }: {
       case 'boolean':
         return (
           <select value={String(cond.value)} onChange={e => onChange({ ...cond, value: e.target.value === 'true' })}
-            className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono w-20">
+            className="bg-surface-1 border border-border text-text-hi text-xs px-2 py-1 font-mono w-20">
             <option value="true">是</option><option value="false">否</option>
           </select>
         );
       case 'dayOfWeek':
         return (
           <select value={Number(cond.value)} onChange={e => onChange({ ...cond, value: Number(e.target.value) })}
-            className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono">
+            className="bg-surface-1 border border-border text-text-hi text-xs px-2 py-1 font-mono">
             {DAY_OPTIONS.map((d, i) => <option key={i} value={i}>{d}</option>)}
           </select>
         );
       case 'month':
         return (
           <select value={Number(cond.value)} onChange={e => onChange({ ...cond, value: Number(e.target.value) })}
-            className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono">
+            className="bg-surface-1 border border-border text-text-hi text-xs px-2 py-1 font-mono">
             {MONTH_OPTIONS.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
           </select>
         );
       case 'triggerType':
         return (
           <select value={String(cond.value)} onChange={e => onChange({ ...cond, value: e.target.value })}
-            className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono">
+            className="bg-surface-1 border border-border text-text-hi text-xs px-2 py-1 font-mono">
             {['read','search','random','vote','visit'].map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         );
@@ -134,24 +134,24 @@ function BlockRow({ cond, onChange, onRemove }: {
         return (
           <>
             <select value={cond.varA ?? ''} onChange={e => onChange({ ...cond, varA: e.target.value })}
-              className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono">
+              className="bg-surface-1 border border-border text-text-hi text-xs px-2 py-1 font-mono">
               <option value="">变量A</option>
               {VAR_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
             </select>
             {cond.block === 'varDiff' && (
               <>
                 <select value={cond.varB ?? ''} onChange={e => onChange({ ...cond, varB: e.target.value })}
-                  className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono">
+                  className="bg-surface-1 border border-border text-text-hi text-xs px-2 py-1 font-mono">
                   <option value="">变量B</option>
                   {VAR_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
                 <input type="number" value={Number(cond.value)} onChange={e => onChange({ ...cond, value: Number(e.target.value) })}
-                  className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono w-16" placeholder="阈值" />
+                  className="bg-surface-1 border border-border text-text-hi text-xs px-2 py-1 font-mono w-16" placeholder="阈值" />
               </>
             )}
             {cond.block === 'varEqual' && (
               <select value={cond.varB ?? ''} onChange={e => onChange({ ...cond, varB: e.target.value })}
-                className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono">
+                className="bg-surface-1 border border-border text-text-hi text-xs px-2 py-1 font-mono">
                 <option value="">变量B</option>
                 {VAR_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
               </select>
@@ -161,12 +161,12 @@ function BlockRow({ cond, onChange, onRemove }: {
       case 'text':
         return (
           <input type="text" value={String(cond.value)} onChange={e => onChange({ ...cond, value: e.target.value })}
-            className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono w-32" placeholder="文字" />
+            className="bg-surface-1 border border-border text-text-hi text-xs px-2 py-1 font-mono w-32" placeholder="文字" />
         );
       default:
         return (
           <input type="number" value={Number(cond.value)} onChange={e => onChange({ ...cond, value: Number(e.target.value) })}
-            className="bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1 font-mono w-20" />
+            className="bg-surface-1 border border-border text-text-hi text-xs px-2 py-1 font-mono w-20" />
         );
     }
   };
@@ -177,7 +177,7 @@ function BlockRow({ cond, onChange, onRemove }: {
         const newDef = BLOCK_BY_KEY[e.target.value];
         onChange({ block: e.target.value, op: newDef?.ops[0] ?? '==',
           value: newDef?.valueType === 'boolean' ? true : newDef?.valueType === 'text' ? '' : 0 });
-      }} className="bg-[#0d1117] border border-[#00FF41]/40 text-[#00FF41] text-xs px-2 py-1 font-mono">
+      }} className="bg-surface-1 border border-brand/40 text-brand text-xs px-2 py-1 font-mono">
         {BLOCK_CATEGORIES.map(cat => (
           <optgroup key={cat.label} label={cat.label}>
             {cat.blocks.map(b => <option key={b.key} value={b.key}>{b.label}</option>)}
@@ -186,12 +186,12 @@ function BlockRow({ cond, onChange, onRemove }: {
       </select>
       {def && !['varEqual','isPrime','all_clear'].includes(cond.block) && (
         <select value={cond.op} onChange={e => onChange({ ...cond, op: e.target.value as ConditionOp })}
-          className="bg-[#0d1117] border border-[#30363d] text-[#8b949e] text-xs px-2 py-1 font-mono">
+          className="bg-surface-1 border border-border text-text-body text-xs px-2 py-1 font-mono">
           {def.ops.map(o => <option key={o} value={o}>{o}</option>)}
         </select>
       )}
       {renderValueInput()}
-      <button onClick={onRemove} className="text-[#3d444d] hover:text-[#ef4444] text-xs px-1 font-mono transition-colors">
+      <button onClick={onRemove} className="text-text-lo hover:text-danger text-xs px-1 font-mono transition-colors">
         <Trash2 size={13} strokeWidth={1.5} />
       </button>
     </div>
@@ -215,8 +215,8 @@ function ConditionPreview({ conditions }: { conditions: Condition[] }) {
       else parts.push(`「${label} ${opLabel} ${c.value}」`);
     }
   }
-  if (parts.length === 0) return <span className="text-[#3d444d] text-xs">（未设置条件）</span>;
-  return <span className="text-[#8b949e] text-xs font-mono">当 {parts.join(' ')} 时解锁</span>;
+  if (parts.length === 0) return <span className="text-text-lo text-xs">（未设置条件）</span>;
+  return <span className="text-text-body text-xs font-mono">当 {parts.join(' ')} 时解锁</span>;
 }
 
 // ── 条件积木编辑器 ────────────────────────────────────────
@@ -243,18 +243,18 @@ function ConditionBuilder({ conditions, onChange }: { conditions: Condition[]; o
           {i < blocks.length - 1 && (
             <button onClick={() => rebuild(blocks, logics.map((l, idx) =>
               idx === i ? { logic: l.logic === 'AND' ? 'OR' as const : 'AND' as const } : l))}
-              className="mt-1 text-[10px] font-mono px-2 py-0.5 border transition-colors border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41]">
+              className="mt-1 text-[10px] font-mono px-2 py-0.5 border transition-colors border-border text-text-body hover:border-brand hover:text-brand">
               {logics[i]?.logic ?? 'AND'} ▼
             </button>
           )}
         </div>
       ))}
       <button onClick={() => rebuild([...blocks, { block: 'totalRead', op: '>=', value: 1 }], [...logics, { logic: 'AND' }])}
-        className="text-xs font-mono text-[#8b949e] border border-dashed border-[#30363d] hover:border-[#00FF41] hover:text-[#00FF41] px-3 py-1 transition-colors">
+        className="text-xs font-mono text-text-body border border-dashed border-border hover:border-brand hover:text-brand px-3 py-1 transition-colors">
         + 添加积木
       </button>
       {conditions.length > 0 && (
-        <div className="mt-2 px-2 py-1.5 bg-[#0d1117] border border-[#21262d]">
+        <div className="mt-2 px-2 py-1.5 bg-surface-1 border border-border-subtle">
           <ConditionPreview conditions={conditions} />
         </div>
       )}
@@ -303,7 +303,7 @@ function InlineForm({ editId, initialForm, initialConditions, onSave, onCancel }
   };
 
   return (
-    <div className="border-t border-[#21262d] bg-[#0d1117] px-4 py-4 space-y-3">
+    <div className="border-t border-border-subtle bg-surface-1 px-4 py-4 space-y-3">
       {[
         { label: '唯一Key *', field: 'key', disabled: !!editId },
         { label: '图标(emoji) *', field: 'icon' },
@@ -312,27 +312,27 @@ function InlineForm({ editId, initialForm, initialConditions, onSave, onCancel }
         { label: '描述 *', field: 'desc' },
       ].map(({ label, field, disabled }) => (
         <div key={field}>
-          <div className="text-[10px] font-mono text-[#8b949e] mb-1">{label}</div>
+          <div className="text-[10px] font-mono text-text-body mb-1">{label}</div>
           <input value={(form as any)[field]}
             onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
             disabled={disabled}
-            className="w-full bg-[#161b22] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1.5 font-mono disabled:opacity-50" />
+            className="w-full bg-surface-2 border border-border text-text-hi text-xs px-2 py-1.5 font-mono disabled:opacity-50" />
         </div>
       ))}
 
       <div className="flex gap-3">
         <div className="flex-1">
-          <div className="text-[10px] font-mono text-[#8b949e] mb-1">颜色</div>
+          <div className="text-[10px] font-mono text-text-body mb-1">颜色</div>
           <input type="color" value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
-            className="w-full h-8 bg-[#161b22] border border-[#30363d] cursor-pointer" />
+            className="w-full h-8 bg-surface-2 border border-border cursor-pointer" />
         </div>
         <div className="flex-1">
-          <div className="text-[10px] font-mono text-[#8b949e] mb-1">排序</div>
+          <div className="text-[10px] font-mono text-text-body mb-1">排序</div>
           <input type="number" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: Number(e.target.value) }))}
-            className="w-full bg-[#161b22] border border-[#30363d] text-[#cdd9e5] text-xs px-2 py-1.5 font-mono" />
+            className="w-full bg-surface-2 border border-border text-text-hi text-xs px-2 py-1.5 font-mono" />
         </div>
         <div className="flex items-end pb-1.5">
-          <label className="flex items-center gap-1 text-xs font-mono text-[#8b949e] cursor-pointer">
+          <label className="flex items-center gap-1 text-xs font-mono text-text-body cursor-pointer">
             <input type="checkbox" checked={form.isHidden} onChange={e => setForm(f => ({ ...f, isHidden: e.target.checked }))} />
             隐藏成就
           </label>
@@ -340,17 +340,17 @@ function InlineForm({ editId, initialForm, initialConditions, onSave, onCancel }
       </div>
 
       <div>
-        <div className="text-[10px] font-mono text-[#8b949e] mb-2 border-b border-[#21262d] pb-1">触发条件积木</div>
+        <div className="text-[10px] font-mono text-text-body mb-2 border-b border-border-subtle pb-1">触发条件积木</div>
         <ConditionBuilder conditions={conditions} onChange={setConditions} />
       </div>
 
       <div className="flex justify-end gap-2 pt-1">
         <button onClick={onCancel}
-          className="px-3 py-1.5 text-xs font-mono border border-[#30363d] text-[#8b949e] hover:border-[#8b949e] transition-colors">
+          className="px-3 py-1.5 text-xs font-mono border border-border text-text-body hover:border-[#8b949e] transition-colors">
           取消
         </button>
         <button onClick={submit} disabled={busy}
-          className="px-3 py-1.5 text-xs font-mono bg-[#00FF41] text-[#0A0A0A] font-bold hover:bg-[#00CC33] disabled:opacity-50 transition-colors">
+          className="px-3 py-1.5 text-xs font-mono bg-brand text-[#0A0A0A] font-bold hover:bg-brand-hover disabled:opacity-50 transition-colors">
           {busy ? '保存中...' : (editId ? '更新' : '创建')}
         </button>
       </div>
@@ -417,15 +417,15 @@ export function AdminAchievements() {
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
-        <div className="text-sm font-mono text-[#8b949e]">
-          探索成就定义 — <span className="text-[#00FF41]">{achievements.length}</span> 条
+        <div className="text-sm font-mono text-text-body">
+          探索成就定义 — <span className="text-brand">{achievements.length}</span> 条
         </div>
         <button
           onClick={() => toggle('new')}
           className={`px-3 py-1.5 text-xs font-mono border transition-colors ${
             expandedId === 'new'
-              ? 'border-[#00FF41] text-[#00FF41]'
-              : 'border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41]'
+              ? 'border-brand text-brand'
+              : 'border-border text-text-body hover:border-brand hover:text-brand'
           }`}
         >
           {expandedId === 'new' ? '▲ 收起' : '+ 新建成就'}
@@ -435,9 +435,9 @@ export function AdminAchievements() {
       {/* 新建表单（行内展开，在列表上方） */}
       <div style={{ display: 'grid', gridTemplateRows: expandedId === 'new' ? '1fr' : '0fr', transition: 'grid-template-rows 0.25s ease' }}>
         <div style={{ overflow: 'hidden' }}>
-          <div className="border border-[#00FF41]/30 bg-[#161b22] mb-4">
-            <div className="px-4 py-2.5 border-b border-[#21262d] flex items-center justify-between">
-              <span className="text-xs font-mono text-[#00FF41]">// 新建成就</span>
+          <div className="border border-brand/30 bg-surface-2 mb-4">
+            <div className="px-4 py-2.5 border-b border-border-subtle flex items-center justify-between">
+              <span className="text-xs font-mono text-brand">// 新建成就</span>
             </div>
             <InlineForm
               editId={null}
@@ -452,7 +452,7 @@ export function AdminAchievements() {
 
       {/* 成就列表 */}
       {loading ? (
-        <div className="text-xs text-[#3d444d] font-mono">加载中...</div>
+        <div className="text-xs text-text-lo font-mono">加载中...</div>
       ) : (
         <div className="space-y-1">
           {achievements.map(ach => {
@@ -466,31 +466,31 @@ export function AdminAchievements() {
             const { form, conditions } = getFormData(ach);
 
             return (
-              <div key={ach.id} className={`border transition-colors ${isOpen ? 'border-[#30363d]' : 'border-[#21262d]'} bg-[#161b22]`}
+              <div key={ach.id} className={`border transition-colors ${isOpen ? 'border-border' : 'border-border-subtle'} bg-surface-2`}
                 style={{ borderLeftColor: ach.color, borderLeftWidth: '3px' }}>
                 {/* 条目行 */}
                 <div className="flex items-center gap-3 px-3 py-2">
                   <span className="text-xl flex-shrink-0">{ach.icon}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-[#cdd9e5]">{ach.labelZh}</span>
-                      {ach.isHidden && <span className="text-[10px] text-[#8b949e] border border-[#30363d] px-1">隐藏</span>}
+                      <span className="text-xs font-mono text-text-hi">{ach.labelZh}</span>
+                      {ach.isHidden && <span className="text-[10px] text-text-body border border-border px-1">隐藏</span>}
                     </div>
-                    <div className="text-[10px] text-[#3d444d] font-mono mt-0.5">
+                    <div className="text-[10px] text-text-lo font-mono mt-0.5">
                       {preview.length > 0 ? preview.join(' + ') : ach.triggerType}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <button
                       onClick={() => toggle(ach.id)}
-                      className={`flex items-center gap-1 text-[10px] font-mono transition-colors ${isOpen ? 'text-[#00FF41]' : 'text-[#8b949e] hover:text-[#00FF41]'}`}
+                      className={`flex items-center gap-1 text-[10px] font-mono transition-colors ${isOpen ? 'text-brand' : 'text-text-body hover:text-brand'}`}
                     >
                       编辑
                       <ChevronDown size={12} strokeWidth={2}
                         style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
                     </button>
                     <button onClick={() => deleteAch(ach)} disabled={deleting === ach.id}
-                      className="text-[10px] font-mono text-[#8b949e] hover:text-[#ef4444] transition-colors">
+                      className="text-[10px] font-mono text-text-body hover:text-danger transition-colors">
                       {deleting === ach.id ? '...' : '删除'}
                     </button>
                   </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+﻿import { useEffect, useState, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { LoginForm } from './LoginForm';
 import { useModalAnimation } from '../hooks/useModalAnimation';
 import { User, LayoutDashboard, Plus, LogOut, Lock, Settings } from 'lucide-react';
@@ -299,16 +299,16 @@ export function NavBar() {
   // ── render ─────────────────────────────────────
   return (
     <>
-      <nav className="site-navbar fixed top-0 left-0 right-0 z-40 bg-[#0d1117]/96 backdrop-blur-sm border-b border-[#21262d]">
+      <nav className="site-navbar fixed top-0 left-0 right-0 z-40 bg-surface-1/96 backdrop-blur-sm border-b border-border-subtle">
         <div className="w-full max-w-none px-3 md:px-4 lg:px-6 xl:px-8">
           <div className="flex items-center justify-between h-14 gap-2 lg:gap-3">
             <div className="flex min-w-0 flex-1 items-center gap-2 lg:gap-4">
               {/* Logo */}
               <a href="/" className="flex items-center gap-1 font-mono group glitch-hover flex-shrink-0">
-                <span className="text-[#00FF41] font-bold text-[15px] transition-colors">Iceberg</span>
-                <span className="text-[#3d444d] font-bold text-[15px] group-hover:text-[#6b7280] transition-colors">::</span>
-                <span className="text-[#8b949e] font-bold text-[15px] group-hover:text-[#cdd9e5] transition-colors">DB</span>
-                <span className="text-[#00FF41] text-[15px] terminal-cursor-blink">_</span>
+                <span className="text-brand font-bold text-[15px] transition-colors">Iceberg</span>
+                <span className="text-text-lo font-bold text-[15px] group-hover:text-text-mid transition-colors">::</span>
+                <span className="text-text-body font-bold text-[15px] group-hover:text-text-hi transition-colors">DB</span>
+                <span className="text-brand text-[15px] terminal-cursor-blink">_</span>
               </a>
 
               {/* Desktop nav */}
@@ -320,12 +320,12 @@ export function NavBar() {
                     <a key={href} href={href}
                       className={`relative px-2.5 xl:px-3 py-2 text-[15px] transition-all font-mono border-b-2 ${
                         active
-                          ? 'text-[#00FF41] border-[#00FF41]'
-                          : 'text-[#adbac7] hover:text-[#00FF41] border-transparent hover:border-[#00FF41]/25'
+                          ? 'text-brand border-brand'
+                          : 'text-text-hi hover:text-brand border-transparent hover:border-brand/25'
                       }`}>
                       {label}
                       {isAnn && hasNewAnnouncement && (
-                        <span className="absolute top-1.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[#00FF41]" />
+                        <span className="absolute top-1.5 right-0.5 w-1.5 h-1.5 rounded-full bg-brand" />
                       )}
                     </a>
                   );
@@ -337,8 +337,8 @@ export function NavBar() {
                     onClick={() => setShowMore(v => !v)}
                     className={`relative px-2.5 xl:px-3 py-2 text-[15px] transition-all font-mono border-b-2 ${
                       moreLinks.some(l => isActive(l.href))
-                        ? 'text-[#00FF41] border-[#00FF41]'
-                        : 'text-[#adbac7] hover:text-[#00FF41] border-transparent hover:border-[#00FF41]/25'
+                        ? 'text-brand border-brand'
+                        : 'text-text-hi hover:text-brand border-transparent hover:border-brand/25'
                     }`}
                   >
                     更多
@@ -346,16 +346,16 @@ export function NavBar() {
                   </button>
 
                   {showMore && (
-                    <div className="absolute top-full left-0 mt-1 w-36 bg-[#161b22] border border-[#30363d] shadow-xl z-50 nav-dropdown-in">
+                    <div className="absolute top-full left-0 mt-1 w-36 bg-surface-2 border border-border shadow-xl z-50 nav-dropdown-in">
                       {moreLinks.map(({ href, label }) => {
                         const active = isActive(href);
                         return (
                           <a key={href} href={href}
                             onClick={() => setShowMore(false)}
-                            className={`block px-4 py-2.5 text-xs font-mono transition-colors border-b border-[#21262d] last:border-0 ${
+                            className={`block px-4 py-2.5 text-xs font-mono transition-colors border-b border-border-subtle last:border-0 ${
                               active
-                                ? 'text-[#00FF41] bg-[#00FF41]/5'
-                                : 'text-[#8b949e] hover:text-[#00FF41] hover:bg-[#0d1117]'
+                                ? 'text-brand bg-brand/5'
+                                : 'text-text-body hover:text-brand hover:bg-surface-1'
                             }`}>
                             {label}
                           </a>
@@ -373,19 +373,19 @@ export function NavBar() {
               {/* 搜索按钮（桌面端） */}
                 <button
                   onClick={() => setShowSearch(true)}
-                  className="hidden lg:flex items-center gap-2 px-2.5 xl:px-3 py-1.5 text-[15px] text-[#8b949e] bg-[#161b22] border border-[#30363d] hover:border-[#00FF41] transition-all font-mono w-32 xl:w-40"
+                  className="hidden lg:flex items-center gap-2 px-2.5 xl:px-3 py-1.5 text-[15px] text-text-body bg-surface-2 border border-border hover:border-brand transition-all font-mono w-32 xl:w-40"
                   title="搜索 (Ctrl+K)"
                 >
                 <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="9" cy="9" r="6"/><path d="M13 13l4 4"/>
                 </svg>
                 <span className="flex-1 text-left truncate">搜索...</span>
-                <span className="text-xs text-[#6e7681]">⌘K</span>
+                <span className="text-xs text-text-mid">⌘K</span>
               </button>
 
               {/* 主题切换 */}
               <button onClick={toggleTheme}
-                className="w-9 h-9 flex items-center justify-center text-[#8b949e] hover:text-[#00FF41] border border-[#30363d] hover:border-[#00FF41] transition-all"
+                className="w-9 h-9 flex items-center justify-center text-text-body hover:text-brand border border-border hover:border-brand transition-all"
                 title={theme === 'dark' ? '切换浅色' : '切换深色'}>
                 {theme === 'dark' ? (
                   <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
@@ -404,7 +404,7 @@ export function NavBar() {
                 <div className="relative" ref={notifRef}>
                   <button
                     onClick={openNotif}
-                    className="relative w-9 h-9 flex items-center justify-center text-[#8b949e] hover:text-[#00FF41] border border-[#30363d] hover:border-[#00FF41] transition-all"
+                    className="relative w-9 h-9 flex items-center justify-center text-text-body hover:text-brand border border-border hover:border-brand transition-all"
                     title="通知"
                   >
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -421,11 +421,11 @@ export function NavBar() {
                   </button>
 
                   {notifMounted && (
-                    <div className={`absolute right-0 top-full mt-2 w-80 bg-[#161b22] border border-[#30363d] shadow-2xl z-50 overflow-hidden ${notifLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
-                      <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#21262d] bg-[#0d1117]">
-                        <span className="text-xs font-mono text-[#cdd9e5]">通知</span>
+                    <div className={`absolute right-0 top-full mt-2 w-80 bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden ${notifLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
+                      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle bg-surface-1">
+                        <span className="text-xs font-mono text-text-hi">通知</span>
                         {unreadCount > 0 && (
-                          <button onClick={markAllRead} className="text-[10px] font-mono text-[#3d444d] hover:text-[#00FF41] transition-colors">
+                          <button onClick={markAllRead} className="text-[10px] font-mono text-text-lo hover:text-brand transition-colors">
                             全部已读
                           </button>
                         )}
@@ -433,10 +433,10 @@ export function NavBar() {
 
                       <div className="max-h-[400px] overflow-y-auto">
                         {notifLoading && (
-                          <div className="py-8 text-center text-[#3d444d] font-mono text-xs animate-pulse">// 加载中...</div>
+                          <div className="py-8 text-center text-text-lo font-mono text-xs animate-pulse">// 加载中...</div>
                         )}
                         {!notifLoading && notifications.length === 0 && (
-                          <div className="py-8 text-center text-[#484f58] font-mono text-xs">// 暂无通知</div>
+                          <div className="py-8 text-center text-text-lo font-mono text-xs">// 暂无通知</div>
                         )}
                         {!notifLoading && notifications.map(n => {
                           const iconMap: Record<string, string> = {
@@ -459,23 +459,23 @@ export function NavBar() {
                             <button
                               key={n.id}
                               onClick={() => markRead(n.id, n.link)}
-                              className={`w-full text-left px-4 py-3 border-b border-[#21262d] last:border-0 transition-colors hover:bg-[#161b22] ${!n.read ? 'bg-[#161b22]' : ''}`}
+                              className={`w-full text-left px-4 py-3 border-b border-border-subtle last:border-0 transition-colors hover:bg-surface-2 ${!n.read ? 'bg-surface-2' : ''}`}
                             >
                               <div className="flex items-start gap-2.5">
                                 <span className="flex-shrink-0 text-xs font-mono font-bold mt-0.5" style={{ color }}>[{icon}]</span>
                                 <div className="flex-1 min-w-0">
-                                  <p className={`text-xs font-mono leading-snug ${n.read ? 'text-[#8b949e]' : 'text-[#cdd9e5]'}`}>
+                                  <p className={`text-xs font-mono leading-snug ${n.read ? 'text-text-body' : 'text-text-hi'}`}>
                                     {n.title}
                                   </p>
                                   {n.body && (
-                                    <p className="text-[10px] text-[#3d444d] mt-0.5 leading-relaxed line-clamp-2">{n.body}</p>
+                                    <p className="text-[10px] text-text-lo mt-0.5 leading-relaxed line-clamp-2">{n.body}</p>
                                   )}
-                                  <p className="text-[10px] text-[#484f58] mt-1 font-mono">
+                                  <p className="text-[10px] text-text-lo mt-1 font-mono">
                                     {new Date(n.createdAt).toLocaleDateString('zh-CN')}
                                   </p>
                                 </div>
                                 {!n.read && (
-                                  <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-[#00FF41] mt-1.5" />
+                                  <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-brand mt-1.5" />
                                 )}
                               </div>
                             </button>
@@ -493,8 +493,8 @@ export function NavBar() {
                   {user ? (
                     <div className="relative" ref={dropdownRef}>
                       <button onClick={() => setShowDropdown(!showDropdown)}
-                        className="flex items-center gap-2 px-3 py-1.5 text-[15px] text-[#adbac7] hover:text-[#00FF41] border border-[#30363d] hover:border-[#00FF41] transition-all font-mono">
-                        <User size={14} strokeWidth={1.5} className="text-[#00FF41]" />
+                        className="flex items-center gap-2 px-3 py-1.5 text-[15px] text-text-hi hover:text-brand border border-border hover:border-brand transition-all font-mono">
+                        <User size={14} strokeWidth={1.5} className="text-brand" />
                         <span className="hidden sm:inline max-w-20 truncate">{user.nickname || user.username}</span>
                         <span
                           className="text-xs transition-transform duration-200"
@@ -503,10 +503,10 @@ export function NavBar() {
                       </button>
 
                       {dropdownMounted && (
-                        <div className={`absolute right-0 top-full mt-2 w-52 bg-[#161b22] border border-[#30363d] shadow-xl overflow-hidden z-50 ${dropdownLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
-                          <div className="px-4 py-3 border-b border-[#30363d]">
+                        <div className={`absolute right-0 top-full mt-2 w-52 bg-surface-2 border border-border shadow-xl overflow-hidden z-50 ${dropdownLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
+                          <div className="px-4 py-3 border-b border-border">
                             <div className="flex items-center gap-2">
-                              <p className="text-sm font-mono text-[#cdd9e5]">{user.nickname || user.username}</p>
+                              <p className="text-sm font-mono text-text-hi">{user.nickname || user.username}</p>
                               {user.isFounder && (
                                 <span className="text-[10px] font-mono px-1 py-0.5 border"
                                   style={{ color: '#f59e0b', borderColor: '#f59e0b50', background: '#f59e0b10' }}>
@@ -514,28 +514,28 @@ export function NavBar() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-[#8b949e] truncate">@{user.username}</p>
+                            <p className="text-xs text-text-body truncate">@{user.username}</p>
                           </div>
                           <div className="py-1">
                             <a href={`/user/${user.id}`}
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-[#adbac7] hover:text-[#00FF41] hover:bg-[#1c2128] transition-colors font-mono"
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
                               onClick={() => setShowDropdown(false)}>
                               <LayoutDashboard size={14} strokeWidth={1.5} /> 我的主页
                             </a>
                             <a href={`/user/${user.id}?tab=settings`}
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-[#adbac7] hover:text-[#00FF41] hover:bg-[#1c2128] transition-colors font-mono"
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
                               onClick={() => setShowDropdown(false)}>
                               <Settings size={14} strokeWidth={1.5} /> 账号设置
                             </a>
                             <a href="/iceberg/new"
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-[#adbac7] hover:text-[#00FF41] hover:bg-[#1c2128] transition-colors font-mono"
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
                               onClick={() => setShowDropdown(false)}>
                               <Plus size={14} strokeWidth={1.5} /> 创建冰山图
                             </a>
                           </div>
-                          <div className="border-t border-[#30363d] py-1">
+                          <div className="border-t border-border py-1">
                             <a href="/api/auth/logout"
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-[#ef4444] hover:bg-[#1c2128] transition-colors font-mono">
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:bg-surface-3 transition-colors font-mono">
                               <LogOut size={14} strokeWidth={1.5} /> 退出登录
                             </a>
                           </div>
@@ -544,7 +544,7 @@ export function NavBar() {
                     </div>
                   ) : (
                     <button onClick={() => setShowLogin(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm text-[#adbac7] hover:text-[#00FF41] border border-[#30363d] hover:border-[#00FF41] transition-all font-mono">
+                      className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-hi hover:text-brand border border-border hover:border-brand transition-all font-mono">
                       <Lock size={14} strokeWidth={1.5} />
                       <span className="hidden sm:inline">登录/注册</span>
                     </button>
@@ -554,7 +554,7 @@ export function NavBar() {
 
               {/* 移动端搜索图标 */}
               <button onClick={() => setShowSearch(true)}
-                className="lg:hidden w-9 h-9 flex items-center justify-center text-[#8b949e] hover:text-[#00FF41] transition-colors">
+                className="lg:hidden w-9 h-9 flex items-center justify-center text-text-body hover:text-brand transition-colors">
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="9" cy="9" r="6"/><path d="M13 13l4 4"/>
                 </svg>
@@ -562,7 +562,7 @@ export function NavBar() {
 
               {/* 移动端汉堡 */}
               <button onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="lg:hidden w-9 h-9 flex items-center justify-center text-[#8b949e] hover:text-[#00FF41] transition-colors"
+                className="lg:hidden w-9 h-9 flex items-center justify-center text-text-body hover:text-brand transition-colors"
                 aria-label="菜单">
                 {showMobileMenu ? (
                   <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
@@ -580,29 +580,29 @@ export function NavBar() {
 
         {/* 移动端展开菜单 */}
         {showMobileMenu && (
-          <div className="lg:hidden border-t border-[#21262d] bg-[#0d1117]/98 mobile-menu-animate">
+          <div className="lg:hidden border-t border-border-subtle bg-surface-1/98 mobile-menu-animate">
             {allLinks.map(({ href, label }) => {
               const active = isActive(href);
               const isAnn = href === '/announcements';
               return (
                 <a key={href} href={href}
-                  className={`flex items-center gap-2 px-6 py-3.5 text-sm font-mono border-b border-[#21262d] last:border-0 transition-colors ${
+                  className={`flex items-center gap-2 px-6 py-3.5 text-sm font-mono border-b border-border-subtle last:border-0 transition-colors ${
                     active
-                      ? 'text-[#00FF41] bg-[#00FF41]/5'
-                      : 'text-[#adbac7] hover:text-[#00FF41] hover:bg-[#00FF41]/5'
+                      ? 'text-brand bg-brand/5'
+                      : 'text-text-hi hover:text-brand hover:bg-brand/5'
                   }`}
                   onClick={() => setShowMobileMenu(false)}>
-                  <span className={`text-xs font-mono w-3 ${active ? 'text-[#00FF41]' : 'text-transparent'}`}>›</span>
+                  <span className={`text-xs font-mono w-3 ${active ? 'text-brand' : 'text-transparent'}`}>›</span>
                   {label}
                   {isAnn && hasNewAnnouncement && (
-                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00FF41]" />
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-brand" />
                   )}
                 </a>
               );
             })}
             {!loading && !user && (
               <button
-                className="w-full flex items-center gap-2 px-6 py-3.5 text-sm text-[#adbac7] hover:text-[#00FF41] hover:bg-[#00FF41]/5 font-mono transition-colors border-t border-[#21262d]"
+                className="w-full flex items-center gap-2 px-6 py-3.5 text-sm text-text-hi hover:text-brand hover:bg-brand/5 font-mono transition-colors border-t border-border-subtle"
                 onClick={() => { setShowMobileMenu(false); setShowLogin(true); }}>
                 <Lock size={14} strokeWidth={1.5} /> 登录/注册
               </button>
@@ -612,31 +612,31 @@ export function NavBar() {
       </nav>
 
       {/* ── 移动端底部导航栏 ── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d1117]/96 backdrop-blur-sm border-t border-[#21262d] mobile-bottom-nav">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-1/96 backdrop-blur-sm border-t border-border-subtle mobile-bottom-nav">
         <div className="flex items-stretch min-h-[64px]">
           {/* 首页 */}
-          <a href="/" className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/') ? 'text-[#00FF41]' : 'text-[#8b949e]'}`}>
+          <a href="/" className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/') ? 'text-brand' : 'text-text-body'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
             首页
           </a>
           {/* 广场 */}
-          <a href="/iceberg/list" className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/iceberg/list') ? 'text-[#00FF41]' : 'text-[#8b949e]'}`}>
+          <a href="/iceberg/list" className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/iceberg/list') ? 'text-brand' : 'text-text-body'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
             </svg>
             广场
           </a>
           {/* 搜索 */}
-          <button onClick={() => setShowSearch(true)} className="flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-[#8b949e] transition-colors">
+          <button onClick={() => setShowSearch(true)} className="flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-text-body transition-colors">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
             </svg>
             搜索
           </button>
           {/* 机构 */}
-          <a href="/org" className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/org') ? 'text-[#00FF41]' : 'text-[#8b949e]'}`}>
+          <a href="/org" className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/org') ? 'text-brand' : 'text-text-body'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><line x1="9" y1="22" x2="9" y2="12"/><line x1="15" y1="22" x2="15" y2="12"/><line x1="12" y1="2" x2="12" y2="12"/>
             </svg>
@@ -644,14 +644,14 @@ export function NavBar() {
           </a>
           {/* 我的 / 登录 */}
           {user ? (
-            <a href={`/user/${user.id}`} className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${currentPath.startsWith('/user/') ? 'text-[#00FF41]' : 'text-[#8b949e]'}`}>
+            <a href={`/user/${user.id}`} className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${currentPath.startsWith('/user/') ? 'text-brand' : 'text-text-body'}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
               </svg>
               我的
             </a>
           ) : (
-            <button onClick={() => setShowLogin(true)} className="flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-[#8b949e] transition-colors">
+            <button onClick={() => setShowLogin(true)} className="flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-text-body transition-colors">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
@@ -673,7 +673,7 @@ export function NavBar() {
           >
             {/* 搜索输入框 */}
             <div className="search-modal-header flex items-center gap-3 px-4 py-3 border-b">
-              <svg className="text-[#00FF41] flex-shrink-0" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <svg className="text-brand flex-shrink-0" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <circle cx="9" cy="9" r="6"/><path d="M13 13l4 4"/>
               </svg>
               <input
@@ -699,7 +699,7 @@ export function NavBar() {
                 <SearchQuickLinks onNavigate={() => setShowSearch(false)} />
               )}
               {searchLoading && (
-                <div className="px-4 py-6 text-center text-[#8b949e] font-mono text-sm animate-pulse">
+                <div className="px-4 py-6 text-center text-text-body font-mono text-sm animate-pulse">
                   搜索中...
                 </div>
               )}
@@ -708,31 +708,31 @@ export function NavBar() {
                 <a
                   key={item.id}
                   href={`/iceberg/${item.slug || item.id}`}
-                  className={`block px-4 py-3 border-b border-[#21262d] last:border-0 transition-colors ${idx === searchIndex ? 'bg-[#00FF41]/10 border-l-2 border-l-[#00FF41]' : 'hover:bg-[#00FF41]/5'}`}
+                  className={`block px-4 py-3 border-b border-border-subtle last:border-0 transition-colors ${idx === searchIndex ? 'bg-brand/10 border-l-2 border-l-brand' : 'hover:bg-brand/5'}`}
                   onClick={() => setShowSearch(false)}
                   onMouseEnter={() => setSearchIndex(idx)}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-[#3d444d] font-mono text-xs">#</span>
-                    <span className={`text-sm font-mono ${idx === searchIndex ? 'text-[#00FF41]' : 'text-[#cdd9e5]'}`}>{item.title}</span>
+                    <span className="text-text-lo font-mono text-xs">#</span>
+                    <span className={`text-sm font-mono ${idx === searchIndex ? 'text-brand' : 'text-text-hi'}`}>{item.title}</span>
                     {item._count && (
-                      <span className="ml-auto text-xs text-[#3d444d] font-mono">{item._count.tiers} 层</span>
+                      <span className="ml-auto text-xs text-text-lo font-mono">{item._count.tiers} 层</span>
                     )}
                   </div>
                   {item.description && (
-                    <p className="text-xs text-[#8b949e] mt-1 truncate pl-4">{item.description}</p>
+                    <p className="text-xs text-text-body mt-1 truncate pl-4">{item.description}</p>
                   )}
                 </a>
               ))}
 
               {!searchLoading && searchQuery.length >= 2 && searchResults.length === 0 && (
-                <div className="px-4 py-8 text-center text-[#8b949e] font-mono text-sm">
+                <div className="px-4 py-8 text-center text-text-body font-mono text-sm">
                   未找到「{searchQuery}」相关的冰山图
                 </div>
               )}
 
               {searchQuery.length < 2 && (
-                <div className="px-4 py-4 text-center text-[#3d444d] font-mono text-xs">
+                <div className="px-4 py-4 text-center text-text-lo font-mono text-xs">
                   输入至少 2 个字符开始搜索
                 </div>
               )}

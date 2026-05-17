@@ -1,4 +1,4 @@
----
+﻿---
 /**
  * /rfa/apply — 提交编辑资格申请表单页
  * 仅 CONTRIBUTOR 可访问；不满足条件则显示具体原因
@@ -54,27 +54,27 @@ const eligible = reasons.length === 0;
 <Layout title="申请编辑资格（RfA）— 冰山图宇宙">
   <main class="max-w-xl mx-auto px-4 py-8 reveal">
 
-    <div class="text-[10px] font-mono text-[#30363d] mb-6">
-      <a href="/org" class="hover:text-[#8b949e] transition-colors">机构</a>
+    <div class="text-[10px] font-mono text-text-lo mb-6">
+      <a href="/org" class="hover:text-text-body transition-colors">机构</a>
       <span class="mx-2">›</span>
       <span>申请编辑资格</span>
     </div>
 
-    <div class="border border-[#1a1a1a] bg-[#161b22] p-5 mb-6">
-      <h1 class="font-mono text-base text-[#cdd9e5] mb-1">申请编辑资格（RfA）</h1>
-      <p class="text-[11px] font-mono text-[#3d444d]">编辑可以审核冰山图、管理内容、参与平台治理。申请后将进入为期 {settings.voteDays} 天的公开投票，CONTRIBUTOR 及以上均可投票，需获得足够的加权支持票方可通过。</p>
+    <div class="border border-border-minimal bg-surface-2 p-5 mb-6">
+      <h1 class="font-mono text-base text-text-hi mb-1">申请编辑资格（RfA）</h1>
+      <p class="text-[11px] font-mono text-text-lo">编辑可以审核冰山图、管理内容、参与平台治理。申请后将进入为期 {settings.voteDays} 天的公开投票，CONTRIBUTOR 及以上均可投票，需获得足够的加权支持票方可通过。</p>
     </div>
 
     <!-- 不满足条件 -->
     {!eligible && (
-      <div class="border border-[#ef444430] bg-[#ef444408] p-4 mb-6">
-        <div class="text-[10px] font-mono text-[#ef4444] mb-2 tracking-wider">// 不满足申请条件</div>
+      <div class="border border-[#ef444430] bg-danger/5 p-4 mb-6">
+        <div class="text-[10px] font-mono text-danger mb-2 tracking-wider">// 不满足申请条件</div>
         <ul class="space-y-1">
           {reasons.map(r => (
-            <li class="text-xs font-mono text-[#8b949e] before:content-['·'] before:mr-2 before:text-[#ef4444]">{r}</li>
+            <li class="text-xs font-mono text-text-body before:content-['·'] before:mr-2 before:text-danger">{r}</li>
           ))}
         </ul>
-        <div class="mt-3 text-[10px] font-mono text-[#30363d]">
+        <div class="mt-3 text-[10px] font-mono text-text-lo">
           达到条件后，在个人主页的快捷操作栏中申请。
         </div>
       </div>
@@ -82,28 +82,28 @@ const eligible = reasons.length === 0;
 
     <!-- 条件达标：申请表单 -->
     {eligible && (
-      <div class="border border-[#1a1a1a] bg-[#050505] p-5">
-        <div class="text-[10px] font-mono text-[#30363d] mb-4 space-y-0.5">
-          <div>质量分：<span class="text-[#22c55e]">{user?.qualityScore}</span>（门槛 {settings.minScore}）</div>
-          <div>注册天数：<span class="text-[#22c55e]">{Math.floor(ageDays)}</span>（门槛 {settings.minDays} 天）</div>
+      <div class="border border-border-minimal bg-surface-0 p-5">
+        <div class="text-[10px] font-mono text-text-lo mb-4 space-y-0.5">
+          <div>质量分：<span class="text-success">{user?.qualityScore}</span>（门槛 {settings.minScore}）</div>
+          <div>注册天数：<span class="text-success">{Math.floor(ageDays)}</span>（门槛 {settings.minDays} 天）</div>
         </div>
 
         <form id="rfa-form" class="space-y-4">
           <div>
-            <label class="text-[10px] font-mono text-[#3d444d] block mb-1.5">
+            <label class="text-[10px] font-mono text-text-lo block mb-1.5">
               申请陈述（可选，最多 500 字）
             </label>
             <textarea
               id="rfa-statement"
               rows={5}
               maxlength={500}
-              class="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none"
+              class="w-full px-3 py-2 bg-surface-2 border border-border text-xs font-mono text-text-hi focus:border-brand focus:outline-none resize-none"
               placeholder="介绍你的参与经历、对内容质量的理解、以及你希望以编辑身份做什么……"
             ></textarea>
-            <div id="char-count" class="text-right text-[10px] font-mono text-[#3d444d]">0/500</div>
+            <div id="char-count" class="text-right text-[10px] font-mono text-text-lo">0/500</div>
           </div>
 
-          <div class="text-[10px] font-mono text-[#30363d] border border-[#1a1a1a] px-3 py-2 space-y-0.5">
+          <div class="text-[10px] font-mono text-text-lo border border-border-minimal px-3 py-2 space-y-0.5">
             <div>· 提交后进入 {settings.voteDays} 天公开投票，无法修改陈述</div>
             <div>· 若未通过，需等待 {settings.cooldownDays} 天冷却期后方可再次申请</div>
           </div>
@@ -111,7 +111,7 @@ const eligible = reasons.length === 0;
           <button
             type="submit"
             id="submit-btn"
-            class="w-full py-2.5 text-sm font-mono border border-[#3b82f640] text-[#3b82f6] hover:bg-[#3b82f610] transition-colors disabled:opacity-40"
+            class="w-full py-2.5 text-sm font-mono border border-info/25 text-info hover:bg-info/10 transition-colors disabled:opacity-40"
           >
             提交申请
           </button>
@@ -120,7 +120,7 @@ const eligible = reasons.length === 0;
     )}
 
     <div class="mt-4 text-center">
-      <a href="/rules" class="text-[10px] font-mono text-[#30363d] hover:text-[#8b949e] transition-colors">
+      <a href="/rules" class="text-[10px] font-mono text-text-lo hover:text-text-body transition-colors">
         了解编辑资格规则 →
       </a>
     </div>

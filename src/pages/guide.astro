@@ -1,4 +1,4 @@
----
+﻿---
 /**
  * /guide — 平台使用指南与冰山图撰写细则
  */
@@ -16,9 +16,9 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
 
     <!-- 标题 -->
     <div class="mb-10">
-      <div class="text-[10px] font-mono text-[#6e7681] tracking-widest mb-2">// GUIDE · 使用指南</div>
-      <h1 class="text-2xl font-mono text-[#cdd9e5] mb-2">冰山图宇宙 · 使用指南</h1>
-      <p class="text-xs font-mono text-[#8b949e]">本页介绍平台核心功能与冰山图撰写规范，帮助你快速上手并创作高质量内容。</p>
+      <div class="text-[10px] font-mono text-text-mid tracking-widest mb-2">// GUIDE · 使用指南</div>
+      <h1 class="text-2xl font-mono text-text-hi mb-2">冰山图宇宙 · 使用指南</h1>
+      <p class="text-xs font-mono text-text-body">本页介绍平台核心功能与冰山图撰写规范，帮助你快速上手并创作高质量内容。</p>
       <!-- 跳转索引 -->
       <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1">
         {[
@@ -32,7 +32,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           ['#features','功能一览'],
           ['#faq',     '常见问题'],
         ].map(([href, label]) => (
-          <a href={href} class="text-[10px] font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors">
+          <a href={href} class="text-[10px] font-mono text-text-body hover:text-brand transition-colors">
             › {label}
           </a>
         ))}
@@ -42,53 +42,53 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
     <!-- ── 01 什么是冰山图 ── -->
     <section id="what" class="mb-10">
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-[#00FF41] tracking-widest">01 · 什么是冰山图</span>
-        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+        <span class="text-[10px] font-mono text-brand tracking-widest">01 · 什么是冰山图</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
-      <div class="border border-[#1a1a1a] bg-[#161b22] p-4 mb-3">
-        <p class="text-[11px] font-mono text-[#8b949e] leading-relaxed mb-3">冰山图是一种将某一主题的知识按"大众认知 → 深层奥秘"分层呈现的结构化内容形式。就像冰山一样，浮出水面的只是表层，而真正庞大而有趣的部分藏在水面之下。</p>
-        <p class="text-[11px] font-mono text-[#8b949e] leading-relaxed">例如，一张关于"宇宙"的冰山图，顶层可能是"太阳系""银河系"这样的常识；往下则是"暗物质""弦理论"；更深处是"时间的本质""多宇宙猜想"……每一层都比上一层更冷门、更深入、更令人震惊。</p>
+      <div class="border border-border-minimal bg-surface-2 p-4 mb-3">
+        <p class="text-[11px] font-mono text-text-body leading-relaxed mb-3">冰山图是一种将某一主题的知识按"大众认知 → 深层奥秘"分层呈现的结构化内容形式。就像冰山一样，浮出水面的只是表层，而真正庞大而有趣的部分藏在水面之下。</p>
+        <p class="text-[11px] font-mono text-text-body leading-relaxed">例如，一张关于"宇宙"的冰山图，顶层可能是"太阳系""银河系"这样的常识；往下则是"暗物质""弦理论"；更深处是"时间的本质""多宇宙猜想"……每一层都比上一层更冷门、更深入、更令人震惊。</p>
       </div>
 
       <!-- 视觉结构示意 -->
-      <div class="border border-[#21262d] bg-[#050508] p-4 font-mono text-xs">
-        <div class="text-[10px] text-[#6e7681] mb-3">// 结构示意</div>
+      <div class="border border-border-subtle bg-surface-0 p-4 font-mono text-xs">
+        <div class="text-[10px] text-text-mid mb-3">// 结构示意</div>
         <div class="space-y-1">
           <div class="flex items-center gap-3">
-            <span class="text-[#8b949e] w-20 text-right text-[10px]">第 1 层</span>
-            <div class="flex-1 bg-[#00FF41]/10 border border-[#00FF41]/20 px-3 py-1 text-[#8b949e] text-[11px]">
+            <span class="text-text-body w-20 text-right text-[10px]">第 1 层</span>
+            <div class="flex-1 bg-brand/10 border border-brand/20 px-3 py-1 text-text-body text-[11px]">
               ██████████████████  大众熟知的常识与入门知识
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <span class="text-[#8b949e] w-20 text-right text-[10px]">第 2 层</span>
-            <div class="flex-1 bg-[#22c55e]/8 border border-[#22c55e]/15 px-3 py-1 text-[#8b949e] text-[11px]">
+            <span class="text-text-body w-20 text-right text-[10px]">第 2 层</span>
+            <div class="flex-1 bg-[#22c55e]/8 border border-success/15 px-3 py-1 text-text-body text-[11px]">
               ██████████████  略有了解的人才知道的内容
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <span class="text-[#8b949e] w-20 text-right text-[10px]">第 3 层</span>
-            <div class="flex-1 bg-[#3b82f6]/8 border border-[#3b82f6]/15 px-3 py-1 text-[#8b949e] text-[11px]">
+            <span class="text-text-body w-20 text-right text-[10px]">第 3 层</span>
+            <div class="flex-1 bg-[#3b82f6]/8 border border-[#3b82f6]/15 px-3 py-1 text-text-body text-[11px]">
               ██████████  需要深入了解才能接触到的知识
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <span class="text-[#8b949e] w-20 text-right text-[10px]">第 4 层+</span>
-            <div class="flex-1 bg-[#8b5cf6]/8 border border-[#8b5cf6]/15 px-3 py-1 text-[#8b949e] text-[11px]">
+            <span class="text-text-body w-20 text-right text-[10px]">第 4 层+</span>
+            <div class="flex-1 bg-[#8b5cf6]/8 border border-[#8b5cf6]/15 px-3 py-1 text-text-body text-[11px]">
               ████████  极小众的冷知识、猎奇内容、深层理论
             </div>
           </div>
         </div>
-        <div class="mt-3 text-[10px] text-[#8b949e] text-center tracking-wider">▼ 越往下越冷门、越小众</div>
+        <div class="mt-3 text-[10px] text-text-body text-center tracking-wider">▼ 越往下越冷门、越小众</div>
       </div>
     </section>
 
     <!-- ── 02 快速开始 ── -->
     <section id="start" class="mb-10">
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-[#00FF41] tracking-widest">02 · 快速开始</span>
-        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+        <span class="text-[10px] font-mono text-brand tracking-widest">02 · 快速开始</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
       <div class="space-y-2">
@@ -99,11 +99,11 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           ['创建你的第一张冰山图', '点击右上角用户菜单中的"创建冰山图"，进入编辑器。填写标题、描述、层级与词条后，通过提交前检查单即可提交审核。', '#00FF41'],
           ['成为 CONTRIBUTOR', '累积足够的质量分与冰山图数量后，可申请晋升 CONTRIBUTOR。CONTRIBUTOR 可发布冰山图并参与 RfA 投票。', '#30363d'],
         ].map(([title, desc, color], i) => (
-          <div class="border border-[#1a1a1a] bg-[#161b22] p-4 flex gap-4">
+          <div class="border border-border-minimal bg-surface-2 p-4 flex gap-4">
             <span class="font-mono text-sm flex-shrink-0 w-6 text-right" style={`color:${color}`}>{i + 1}.</span>
             <div>
-              <div class="text-xs font-mono text-[#cdd9e5] mb-1">{title}</div>
-              <p class="text-[11px] font-mono text-[#8b949e] leading-relaxed">{desc}</p>
+              <div class="text-xs font-mono text-text-hi mb-1">{title}</div>
+              <p class="text-[11px] font-mono text-text-body leading-relaxed">{desc}</p>
             </div>
           </div>
         ))}
@@ -113,42 +113,42 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
     <!-- ── 03 创建冰山图 ── -->
     <section id="create" class="mb-10">
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-[#00FF41] tracking-widest">03 · 创建冰山图</span>
-        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+        <span class="text-[10px] font-mono text-brand tracking-widest">03 · 创建冰山图</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
       <div class="space-y-3">
 
         <!-- 字段说明 -->
-        <div class="border border-[#1a1a1a] bg-[#161b22] p-4">
-          <div class="text-[10px] font-mono text-[#8b949e] mb-3">字段说明</div>
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-[10px] font-mono text-text-body mb-3">字段说明</div>
           <div class="space-y-3 text-[11px] font-mono">
             <div class="flex gap-3 items-start">
-              <span class="text-[#00FF41] w-14 flex-shrink-0">标题</span>
-              <span class="text-[#8b949e]">冰山图的主题名称。至少 <strong class="text-[#cdd9e5]">5 个字</strong>，简洁说明主题即可，例如"日本历史""深海生物""量子力学"。</span>
+              <span class="text-brand w-14 flex-shrink-0">标题</span>
+              <span class="text-text-body">冰山图的主题名称。至少 <strong class="text-text-hi">5 个字</strong>，简洁说明主题即可，例如"日本历史""深海生物""量子力学"。</span>
             </div>
             <div class="flex gap-3 items-start">
-              <span class="text-[#00FF41] w-14 flex-shrink-0">摘要</span>
-              <span class="text-[#8b949e]">对冰山图主题的简短介绍。至少 <strong class="text-[#cdd9e5]">20 个字</strong>，帮助读者了解该冰山图的范围与视角。</span>
+              <span class="text-brand w-14 flex-shrink-0">摘要</span>
+              <span class="text-text-body">对冰山图主题的简短介绍。至少 <strong class="text-text-hi">20 个字</strong>，帮助读者了解该冰山图的范围与视角。</span>
             </div>
             <div class="flex gap-3 items-start">
-              <span class="text-[#00FF41] w-14 flex-shrink-0">层级</span>
-              <span class="text-[#8b949e]">代表知识深度的分层。至少需要 <strong class="text-[#cdd9e5]">3 层</strong>，可自定义层名（如"水面""浅水区""深水区""深渊"）。</span>
+              <span class="text-brand w-14 flex-shrink-0">层级</span>
+              <span class="text-text-body">代表知识深度的分层。至少需要 <strong class="text-text-hi">3 层</strong>，可自定义层名（如"水面""浅水区""深水区""深渊"）。</span>
             </div>
             <div class="flex gap-3 items-start">
-              <span class="text-[#00FF41] w-14 flex-shrink-0">词条</span>
-              <span class="text-[#8b949e]">每个知识点。每层至少 <strong class="text-[#cdd9e5]">2 个词条</strong>，词条有标题（必填）和描述（推荐填写，全图 50% 以上词条须有描述）。</span>
+              <span class="text-brand w-14 flex-shrink-0">词条</span>
+              <span class="text-text-body">每个知识点。每层至少 <strong class="text-text-hi">2 个词条</strong>，词条有标题（必填）和描述（推荐填写，全图 50% 以上词条须有描述）。</span>
             </div>
             <div class="flex gap-3 items-start">
-              <span class="text-[#00FF41] w-14 flex-shrink-0">标签</span>
-              <span class="text-[#8b949e]">给词条打上分类标签，包含成人内容须打 <strong class="text-[#ef4444]">NSFW</strong> 标签，提交时需额外勾选确认。</span>
+              <span class="text-brand w-14 flex-shrink-0">标签</span>
+              <span class="text-text-body">给词条打上分类标签，包含成人内容须打 <strong class="text-danger">NSFW</strong> 标签，提交时需额外勾选确认。</span>
             </div>
           </div>
         </div>
 
         <!-- 提交检查单 -->
-        <div class="border border-[#00FF41]/15 bg-[#00FF41]/3 p-4">
-          <div class="text-[10px] font-mono text-[#00FF41] mb-3">// 提交前检查单（所有项目必须通过）</div>
+        <div class="border border-brand/15 bg-brand/3 p-4">
+          <div class="text-[10px] font-mono text-brand mb-3">// 提交前检查单（所有项目必须通过）</div>
           <ul class="space-y-1.5 text-[11px] font-mono">
             {[
               '标题已填写（≥ 5 字）',
@@ -159,24 +159,24 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
               '含 NSFW 内容时已勾选确认',
             ].map(item => (
               <li class="flex items-center gap-2">
-                <span class="text-[#00FF41]">✓</span>
-                <span class="text-[#8b949e]">{item}</span>
+                <span class="text-brand">✓</span>
+                <span class="text-text-body">{item}</span>
               </li>
             ))}
           </ul>
         </div>
 
         <!-- 审核流程 -->
-        <div class="border border-[#1a1a1a] bg-[#161b22] p-4">
-          <div class="text-[10px] font-mono text-[#8b949e] mb-3">审核流程</div>
-          <div class="flex items-center gap-2 flex-wrap text-[11px] font-mono text-[#8b949e]">
-            <span class="border border-[#1a1a1a] px-2 py-1 text-[#8b949e]">草稿</span>
-            <span class="text-[#8b949e]">──通过检查单──▶</span>
-            <span class="border border-[#f59e0b30] px-2 py-1 text-[#f59e0b]">待审核</span>
-            <span class="text-[#8b949e]">──EDITOR 审核──▶</span>
-            <span class="border border-[#22c55e30] px-2 py-1 text-[#22c55e]">已发布</span>
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-[10px] font-mono text-text-body mb-3">审核流程</div>
+          <div class="flex items-center gap-2 flex-wrap text-[11px] font-mono text-text-body">
+            <span class="border border-border-minimal px-2 py-1 text-text-body">草稿</span>
+            <span class="text-text-body">──通过检查单──▶</span>
+            <span class="border border-warning/20 px-2 py-1 text-warning">待审核</span>
+            <span class="text-text-body">──EDITOR 审核──▶</span>
+            <span class="border border-[#22c55e30] px-2 py-1 text-success">已发布</span>
           </div>
-          <p class="text-[10px] font-mono text-[#6e7681] mt-3">
+          <p class="text-[10px] font-mono text-text-mid mt-3">
             · 审核通常在 24–48 小时内完成。NSFW 内容进入专项审核队列，审核时间可能更长。<br/>
             · 被驳回时会收到通知并附上驳回原因，修改后可重新提交。
           </p>
@@ -189,55 +189,55 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
     <section id="writing" class="mb-10">
       <div class="flex items-center gap-2 mb-4">
         <span class="text-[10px] font-mono text-[#f97316] tracking-widest">04 · 冰山撰写细则</span>
-        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+        <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
       <div class="space-y-3">
 
-        <div class="border border-[#22c55e20] bg-[#22c55e05] p-4">
-          <div class="text-[10px] font-mono text-[#22c55e] mb-3">// 核心原则</div>
-          <ul class="space-y-2 text-[11px] font-mono text-[#8b949e]">
+        <div class="border border-success/20 bg-[#22c55e05] p-4">
+          <div class="text-[10px] font-mono text-success mb-3">// 核心原则</div>
+          <ul class="space-y-2 text-[11px] font-mono text-text-body">
             <li class="flex items-start gap-2">
-              <span class="text-[#22c55e] flex-shrink-0">▶</span>
-              <span><strong class="text-[#8b949e]">层级要有梯度。</strong>越靠下的层级，内容应越冷门、越偏门、越令人意外。如果读者对你的"第 5 层"内容感到"这我知道啊"，说明分层不够深。</span>
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">层级要有梯度。</strong>越靠下的层级，内容应越冷门、越偏门、越令人意外。如果读者对你的"第 5 层"内容感到"这我知道啊"，说明分层不够深。</span>
             </li>
             <li class="flex items-start gap-2">
-              <span class="text-[#22c55e] flex-shrink-0">▶</span>
-              <span><strong class="text-[#8b949e]">内容要可查证。</strong>所有词条内容应有据可查，建议在描述中注明来源（文章、视频、论文、Wikipedia 等）。禁止编造事实。</span>
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">内容要可查证。</strong>所有词条内容应有据可查，建议在描述中注明来源（文章、视频、论文、Wikipedia 等）。禁止编造事实。</span>
             </li>
             <li class="flex items-start gap-2">
-              <span class="text-[#22c55e] flex-shrink-0">▶</span>
-              <span><strong class="text-[#8b949e]">描述要有信息量。</strong>描述不应只是标题的同义反复。好的描述能解释"为什么这个词条在这一层"，提供背景、来源或延伸信息。</span>
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">描述要有信息量。</strong>描述不应只是标题的同义反复。好的描述能解释"为什么这个词条在这一层"，提供背景、来源或延伸信息。</span>
             </li>
             <li class="flex items-start gap-2">
-              <span class="text-[#22c55e] flex-shrink-0">▶</span>
-              <span><strong class="text-[#8b949e]">主题要聚焦。</strong>一张冰山图应围绕单一主题展开，不要把不同领域的内容混合在同一张图里。宁可做多张，不要做一张什么都有的大杂烩。</span>
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">主题要聚焦。</strong>一张冰山图应围绕单一主题展开，不要把不同领域的内容混合在同一张图里。宁可做多张，不要做一张什么都有的大杂烩。</span>
             </li>
           </ul>
         </div>
 
-        <div class="border border-[#ef444420] bg-[#ef444405] p-4">
-          <div class="text-[10px] font-mono text-[#ef4444] mb-3">// 常见问题与避雷指南</div>
-          <ul class="space-y-2 text-[11px] font-mono text-[#8b949e]">
+        <div class="border border-danger/20 bg-[#ef444405] p-4">
+          <div class="text-[10px] font-mono text-danger mb-3">// 常见问题与避雷指南</div>
+          <ul class="space-y-2 text-[11px] font-mono text-text-body">
             <li class="flex items-start gap-2">
-              <span class="text-[#ef4444] flex-shrink-0">✕</span>
-              <span><strong class="text-[#8b949e]">层级梯度混乱。</strong>比如把"爱因斯坦"放在第 5 层——这是常识，不是深层内容。每层的冷门度应明显高于上一层。</span>
+              <span class="text-danger flex-shrink-0">✕</span>
+              <span><strong class="text-text-body">层级梯度混乱。</strong>比如把"爱因斯坦"放在第 5 层——这是常识，不是深层内容。每层的冷门度应明显高于上一层。</span>
             </li>
             <li class="flex items-start gap-2">
-              <span class="text-[#ef4444] flex-shrink-0">✕</span>
-              <span><strong class="text-[#8b949e]">词条描述空洞。</strong>描述如"这是一个很有趣的事情""详见百度百科"无法通过审核。描述至少要说明该词条的核心信息。</span>
+              <span class="text-danger flex-shrink-0">✕</span>
+              <span><strong class="text-text-body">词条描述空洞。</strong>描述如"这是一个很有趣的事情""详见百度百科"无法通过审核。描述至少要说明该词条的核心信息。</span>
             </li>
             <li class="flex items-start gap-2">
-              <span class="text-[#ef4444] flex-shrink-0">✕</span>
-              <span><strong class="text-[#8b949e]">未打标的 NSFW 内容。</strong>含血腥、色情、强烈暴力内容的词条必须打上 NSFW 标签。漏标将导致冰山图被直接驳回。</span>
+              <span class="text-danger flex-shrink-0">✕</span>
+              <span><strong class="text-text-body">未打标的 NSFW 内容。</strong>含血腥、色情、强烈暴力内容的词条必须打上 NSFW 标签。漏标将导致冰山图被直接驳回。</span>
             </li>
             <li class="flex items-start gap-2">
-              <span class="text-[#ef4444] flex-shrink-0">✕</span>
-              <span><strong class="text-[#8b949e]">主观评价代替事实。</strong>"某某是最伟大的……""某某绝对是错的……"——观点性内容需标明为观点，不可作为客观事实呈现。</span>
+              <span class="text-danger flex-shrink-0">✕</span>
+              <span><strong class="text-text-body">主观评价代替事实。</strong>"某某是最伟大的……""某某绝对是错的……"——观点性内容需标明为观点，不可作为客观事实呈现。</span>
             </li>
             <li class="flex items-start gap-2">
-              <span class="text-[#ef4444] flex-shrink-0">✕</span>
-              <span><strong class="text-[#8b949e]">重复提交相似主题。</strong>提交前请在广场搜索是否已有类似主题。重复主题可能被驳回或要求合并。</span>
+              <span class="text-danger flex-shrink-0">✕</span>
+              <span><strong class="text-text-body">重复提交相似主题。</strong>提交前请在广场搜索是否已有类似主题。重复主题可能被驳回或要求合并。</span>
             </li>
           </ul>
         </div>
@@ -249,31 +249,31 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
     <section id="tiers" class="mb-10">
       <div class="flex items-center gap-2 mb-4">
         <span class="text-[10px] font-mono text-[#f97316] tracking-widest">05 · 层级设计规范</span>
-        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+        <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
       <div class="space-y-3">
-        <div class="border border-[#1a1a1a] bg-[#161b22] p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-[#8b949e] mb-3">层级数量建议</div>
-          <div class="space-y-2 text-[#8b949e]">
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">层级数量建议</div>
+          <div class="space-y-2 text-text-body">
             <div class="flex items-center justify-between">
               <span>最少层数</span>
-              <span class="text-[#cdd9e5]">3 层（提交要求下限）</span>
+              <span class="text-text-hi">3 层（提交要求下限）</span>
             </div>
             <div class="flex items-center justify-between">
               <span>推荐层数</span>
-              <span class="text-[#22c55e]">5 — 8 层</span>
+              <span class="text-success">5 — 8 层</span>
             </div>
             <div class="flex items-center justify-between">
               <span>层数过多时</span>
-              <span class="text-[#f59e0b]">考虑拆分为多张冰山图</span>
+              <span class="text-warning">考虑拆分为多张冰山图</span>
             </div>
           </div>
         </div>
 
-        <div class="border border-[#1a1a1a] bg-[#161b22] p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-[#8b949e] mb-3">层级命名建议</div>
-          <p class="text-[#8b949e] mb-3">层名是读者的阅读引导，好的层名能强化"冰山感"。以下是几种常见风格：</p>
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">层级命名建议</div>
+          <p class="text-text-body mb-3">层名是读者的阅读引导，好的层名能强化"冰山感"。以下是几种常见风格：</p>
           <div class="space-y-2">
             {[
               ['比喻风格', ['水面', '浅水区', '深水区', '深渊', '海底未知带']],
@@ -281,8 +281,8 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
               ['认知风格', ['常识', '教科书知识', '专业知识', '学术前沿', '阴谋论领域']],
             ].map(([style, examples]) => (
               <div>
-                <span class="text-[#6e7681]">{style}：</span>
-                <span class="text-[#8b949e]">
+                <span class="text-text-mid">{style}：</span>
+                <span class="text-text-body">
                   {(examples as string[]).map((e, i, arr) => (
                     <span>{e}{i < arr.length - 1 ? ' → ' : ''}</span>
                   ))}
@@ -292,32 +292,32 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           </div>
         </div>
 
-        <div class="border border-[#1a1a1a] bg-[#161b22] p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-[#8b949e] mb-3">层级内容配比建议</div>
-          <div class="space-y-1.5 text-[#8b949e]">
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">层级内容配比建议</div>
+          <div class="space-y-1.5 text-text-body">
             <div class="flex items-center gap-2">
               <div class="w-32 text-right text-[10px]">顶层（第 1–2 层）</div>
-              <div class="flex-1 bg-[#1a1a1a] h-2 relative overflow-hidden">
-                <div class="absolute inset-y-0 left-0 bg-[#00FF41]/40" style="width:70%"></div>
+              <div class="flex-1 bg-surface-0 h-2 relative overflow-hidden">
+                <div class="absolute inset-y-0 left-0 bg-brand/40" style="width:70%"></div>
               </div>
-              <span class="text-[#8b949e] w-32">词条多，内容浅</span>
+              <span class="text-text-body w-32">词条多，内容浅</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="w-32 text-right text-[10px]">中层（第 3–5 层）</div>
-              <div class="flex-1 bg-[#1a1a1a] h-2 relative overflow-hidden">
+              <div class="flex-1 bg-surface-0 h-2 relative overflow-hidden">
                 <div class="absolute inset-y-0 left-0 bg-[#22c55e]/40" style="width:45%"></div>
               </div>
-              <span class="text-[#8b949e] w-32">适量词条，需描述</span>
+              <span class="text-text-body w-32">适量词条，需描述</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="w-32 text-right text-[10px]">底层（第 6 层+）</div>
-              <div class="flex-1 bg-[#1a1a1a] h-2 relative overflow-hidden">
+              <div class="flex-1 bg-surface-0 h-2 relative overflow-hidden">
                 <div class="absolute inset-y-0 left-0 bg-[#8b5cf6]/40" style="width:20%"></div>
               </div>
-              <span class="text-[#8b949e] w-32">词条少但质量高</span>
+              <span class="text-text-body w-32">词条少但质量高</span>
             </div>
           </div>
-          <p class="text-[10px] text-[#6e7681] mt-3">顶层内容多但浅，越往下词条越少但每个词条的信息密度越高，这样整体读起来有强烈的"探索感"。</p>
+          <p class="text-[10px] text-text-mid mt-3">顶层内容多但浅，越往下词条越少但每个词条的信息密度越高，这样整体读起来有强烈的"探索感"。</p>
         </div>
       </div>
     </section>
@@ -326,48 +326,48 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
     <section id="items" class="mb-10">
       <div class="flex items-center gap-2 mb-4">
         <span class="text-[10px] font-mono text-[#f97316] tracking-widest">06 · 词条撰写规范</span>
-        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+        <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
       <div class="space-y-3">
         <!-- 词条标题 -->
-        <div class="border border-[#1a1a1a] bg-[#161b22] p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-[#8b949e] mb-2">词条标题</div>
-          <ul class="space-y-1.5 text-[#8b949e]">
-            <li class="flex gap-2"><span class="text-[#22c55e]">✓</span> 简洁明了，一般为专有名词或短语，例如："薛定谔的猫"、"曼德拉效应"</li>
-            <li class="flex gap-2"><span class="text-[#22c55e]">✓</span> 中英文均可，保持一张图内的风格统一</li>
-            <li class="flex gap-2"><span class="text-[#ef4444]">✕</span> 不要用整句话作为标题，例如："有一种理论认为宇宙是模拟的"（这应该是描述内容）</li>
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-2">词条标题</div>
+          <ul class="space-y-1.5 text-text-body">
+            <li class="flex gap-2"><span class="text-success">✓</span> 简洁明了，一般为专有名词或短语，例如："薛定谔的猫"、"曼德拉效应"</li>
+            <li class="flex gap-2"><span class="text-success">✓</span> 中英文均可，保持一张图内的风格统一</li>
+            <li class="flex gap-2"><span class="text-danger">✕</span> 不要用整句话作为标题，例如："有一种理论认为宇宙是模拟的"（这应该是描述内容）</li>
           </ul>
         </div>
 
         <!-- 词条描述 -->
-        <div class="border border-[#1a1a1a] bg-[#161b22] p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-[#8b949e] mb-2">词条描述（推荐所有词条都填写）</div>
-          <ul class="space-y-1.5 text-[#8b949e]">
-            <li class="flex gap-2"><span class="text-[#22c55e]">✓</span> 解释这个词条是什么，以及它为什么属于这一层（为什么冷门、为什么深）</li>
-            <li class="flex gap-2"><span class="text-[#22c55e]">✓</span> 提供背景信息：时间、地点、人物、事件起因</li>
-            <li class="flex gap-2"><span class="text-[#22c55e]">✓</span> 引用来源：书名、纪录片、论文标题、网址等</li>
-            <li class="flex gap-2"><span class="text-[#22c55e]">✓</span> 描述支持 Markdown 格式（加粗、斜体、链接、代码块）及 LaTeX 数学公式</li>
-            <li class="flex gap-2"><span class="text-[#ef4444]">✕</span> 不要只写"见百度百科"或"Google 可查"——这不是有效描述</li>
-            <li class="flex gap-2"><span class="text-[#ef4444]">✕</span> 不要复制粘贴大段维基百科原文，应提炼核心信息</li>
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-2">词条描述（推荐所有词条都填写）</div>
+          <ul class="space-y-1.5 text-text-body">
+            <li class="flex gap-2"><span class="text-success">✓</span> 解释这个词条是什么，以及它为什么属于这一层（为什么冷门、为什么深）</li>
+            <li class="flex gap-2"><span class="text-success">✓</span> 提供背景信息：时间、地点、人物、事件起因</li>
+            <li class="flex gap-2"><span class="text-success">✓</span> 引用来源：书名、纪录片、论文标题、网址等</li>
+            <li class="flex gap-2"><span class="text-success">✓</span> 描述支持 Markdown 格式（加粗、斜体、链接、代码块）及 LaTeX 数学公式</li>
+            <li class="flex gap-2"><span class="text-danger">✕</span> 不要只写"见百度百科"或"Google 可查"——这不是有效描述</li>
+            <li class="flex gap-2"><span class="text-danger">✕</span> 不要复制粘贴大段维基百科原文，应提炼核心信息</li>
           </ul>
         </div>
 
         <!-- 好描述 vs 差描述对比 -->
-        <div class="border border-[#21262d] bg-[#050508] p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-[#6e7681] mb-3">// 描述质量对比示例</div>
+        <div class="border border-border-subtle bg-surface-0 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-mid mb-3">// 描述质量对比示例</div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <div class="text-[10px] text-[#ef4444] mb-1.5">差的描述</div>
-              <div class="border border-[#ef444420] bg-[#ef444405] px-3 py-2 text-[#8b949e] leading-relaxed">
-                <div class="text-[#8b949e] mb-1">词条：曼德拉效应</div>
+              <div class="text-[10px] text-danger mb-1.5">差的描述</div>
+              <div class="border border-danger/20 bg-[#ef444405] px-3 py-2 text-text-body leading-relaxed">
+                <div class="text-text-body mb-1">词条：曼德拉效应</div>
                 "这是一个很有意思的心理现象，感兴趣的朋友可以自己搜索。"
               </div>
             </div>
             <div>
-              <div class="text-[10px] text-[#22c55e] mb-1.5">好的描述</div>
-              <div class="border border-[#22c55e20] bg-[#22c55e05] px-3 py-2 text-[#8b949e] leading-relaxed">
-                <div class="text-[#8b949e] mb-1">词条：曼德拉效应</div>
+              <div class="text-[10px] text-success mb-1.5">好的描述</div>
+              <div class="border border-success/20 bg-[#22c55e05] px-3 py-2 text-text-body leading-relaxed">
+                <div class="text-text-body mb-1">词条：曼德拉效应</div>
                 "大量人群对某一历史事件拥有错误的集体记忆。得名于许多人错误地记得南非前总统曼德拉死于20世纪80年代狱中（实际于2013年去世）。心理学上解释为记忆的可塑性与社会暗示效应。"
               </div>
             </div>
@@ -375,23 +375,23 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
         </div>
 
         <!-- 标签使用 -->
-        <div class="border border-[#1a1a1a] bg-[#161b22] p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-[#8b949e] mb-2">标签使用规范</div>
-          <div class="space-y-1.5 text-[#8b949e]">
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-2">标签使用规范</div>
+          <div class="space-y-1.5 text-text-body">
             <div class="flex items-center gap-2">
-              <span class="border border-[#ef444440] text-[#ef4444] px-1.5 py-0.5 text-[10px]">NSFW</span>
+              <span class="border border-danger/25 text-danger px-1.5 py-0.5 text-[10px]">NSFW</span>
               <span>含成人内容、强烈血腥暴力、色情内容时必须标注</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="border border-[#f59e0b40] text-[#f59e0b] px-1.5 py-0.5 text-[10px]">争议</span>
+              <span class="border border-warning/25 text-warning px-1.5 py-0.5 text-[10px]">争议</span>
               <span>内容存在较大争议性或学界尚无定论时建议标注</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="border border-[#3b82f640] text-[#3b82f6] px-1.5 py-0.5 text-[10px]">猜测</span>
+              <span class="border border-info/25 text-info px-1.5 py-0.5 text-[10px]">猜测</span>
               <span>内容为推测、假说、未经证实的理论时标注</span>
             </div>
           </div>
-          <p class="text-[10px] text-[#6e7681] mt-3">漏打 NSFW 标签将导致冰山图被直接驳回，需修改后重新提交。</p>
+          <p class="text-[10px] text-text-mid mt-3">漏打 NSFW 标签将导致冰山图被直接驳回，需修改后重新提交。</p>
         </div>
       </div>
     </section>
@@ -400,15 +400,15 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
     <section id="markdown" class="mb-10">
       <div class="flex items-center gap-2 mb-4">
         <span class="text-[10px] font-mono text-[#a78bfa] tracking-widest">07 · Markdown 与数学公式</span>
-        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+        <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
       <div class="space-y-3">
 
         <!-- Markdown 速查 -->
-        <div class="border border-[#1a1a1a] bg-[#161b22] p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-[#8b949e] mb-3">Markdown 基础语法</div>
-          <div class="space-y-1.5 text-[#8b949e]">
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">Markdown 基础语法</div>
+          <div class="space-y-1.5 text-text-body">
             {[
               ['**加粗**',              '加粗文字'],
               ['*斜体*',               '斜体文字'],
@@ -422,56 +422,56 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
               ['---',                   '分隔线'],
             ].map(([syntax, desc]) => (
               <div class="flex items-center gap-4">
-                <code class="text-[#cdd9e5] w-52 flex-shrink-0">{syntax}</code>
-                <span class="text-[#8b949e]">→ {desc}</span>
+                <code class="text-text-hi w-52 flex-shrink-0">{syntax}</code>
+                <span class="text-text-body">→ {desc}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div class="border border-[#21262d] bg-[#050508] px-4 py-2.5 text-[10px] font-mono text-[#6e7681]">
-          // 语法基于 CommonMark GFM，完整参考见 <a href="https://www.runoob.com/markdown/md-tutorial.html" target="_blank" rel="noopener" class="text-[#8b949e] hover:text-[#00FF41] transition-colors border-b border-[#30363d]">runoob.com/markdown</a>
+        <div class="border border-border-subtle bg-surface-0 px-4 py-2.5 text-[10px] font-mono text-text-mid">
+          // 语法基于 CommonMark GFM，完整参考见 <a href="https://www.runoob.com/markdown/md-tutorial.html" target="_blank" rel="noopener" class="text-text-body hover:text-brand transition-colors border-b border-border">runoob.com/markdown</a>
         </div>
 
         <!-- LaTeX 公式 -->
         <div class="border border-[#a78bfa30] bg-[#a78bfa05] p-4 text-[11px] font-mono">
           <div class="text-[10px] text-[#a78bfa] mb-1">LaTeX 数学公式（由 KaTeX 渲染）</div>
-          <p class="text-[#8b949e] mb-3 text-[10px]">适合数学、物理、化学、经济等需要精确符号表达的词条描述。</p>
+          <p class="text-text-body mb-3 text-[10px]">适合数学、物理、化学、经济等需要精确符号表达的词条描述。</p>
 
           <div class="space-y-3">
             <!-- 行内公式 -->
             <div>
-              <div class="text-[10px] text-[#8b949e] mb-1.5">行内公式 — 用单个 $ 包裹</div>
+              <div class="text-[10px] text-text-body mb-1.5">行内公式 — 用单个 $ 包裹</div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div class="bg-[#0d1117] border border-[#21262d] px-3 py-2">
-                  <div class="text-[10px] text-[#6e7681] mb-1">写法</div>
-                  <code class="text-[#cdd9e5]">质能等价 $E = mc^2$ 由爱因斯坦提出</code>
+                <div class="bg-surface-1 border border-border-subtle px-3 py-2">
+                  <div class="text-[10px] text-text-mid mb-1">写法</div>
+                  <code class="text-text-hi">质能等价 $E = mc^2$ 由爱因斯坦提出</code>
                 </div>
-                <div class="bg-[#0d1117] border border-[#21262d] px-3 py-2">
-                  <div class="text-[10px] text-[#6e7681] mb-1">效果</div>
-                  <div class="markdown-content text-[#8b949e]" set:html={latexInlineExampleHtml}></div>
+                <div class="bg-surface-1 border border-border-subtle px-3 py-2">
+                  <div class="text-[10px] text-text-mid mb-1">效果</div>
+                  <div class="markdown-content text-text-body" set:html={latexInlineExampleHtml}></div>
                 </div>
               </div>
             </div>
 
             <!-- 块级公式 -->
             <div>
-              <div class="text-[10px] text-[#8b949e] mb-1.5">块级公式 — 用双 $$ 包裹，独占一行</div>
+              <div class="text-[10px] text-text-body mb-1.5">块级公式 — 用双 $$ 包裹，独占一行</div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div class="bg-[#0d1117] border border-[#21262d] px-3 py-2">
-                  <div class="text-[10px] text-[#6e7681] mb-1">写法</div>
-                  <code class="text-[#cdd9e5] whitespace-pre-line">{'$$\n\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}\n$$'}</code>
+                <div class="bg-surface-1 border border-border-subtle px-3 py-2">
+                  <div class="text-[10px] text-text-mid mb-1">写法</div>
+                  <code class="text-text-hi whitespace-pre-line">{'$$\n\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}\n$$'}</code>
                 </div>
-                <div class="bg-[#0d1117] border border-[#21262d] px-3 py-2">
-                  <div class="text-[10px] text-[#6e7681] mb-1">效果</div>
-                  <div class="markdown-content text-[#8b949e]" set:html={latexBlockExampleHtml}></div>
+                <div class="bg-surface-1 border border-border-subtle px-3 py-2">
+                  <div class="text-[10px] text-text-mid mb-1">效果</div>
+                  <div class="markdown-content text-text-body" set:html={latexBlockExampleHtml}></div>
                 </div>
               </div>
             </div>
 
             <!-- 常用符号速查 -->
             <div>
-              <div class="text-[10px] text-[#8b949e] mb-1.5">常用 LaTeX 符号速查</div>
+              <div class="text-[10px] text-text-body mb-1.5">常用 LaTeX 符号速查</div>
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[10px]">
                 {[
                   ['x^{2}',          '上标 x²'],
@@ -487,9 +487,9 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
                   ['\\vec{v}',       '向量箭头'],
                   ['\\hat{x}',       '帽子符号'],
                 ].map(([sym, desc]) => (
-                  <div class="flex items-center gap-1.5 border border-[#21262d] px-2 py-1">
-                    <code class="text-[#cdd9e5] flex-shrink-0">{sym}</code>
-                    <span class="text-[#6e7681] truncate">→ {desc}</span>
+                  <div class="flex items-center gap-1.5 border border-border-subtle px-2 py-1">
+                    <code class="text-text-hi flex-shrink-0">{sym}</code>
+                    <span class="text-text-mid truncate">→ {desc}</span>
                   </div>
                 ))}
               </div>
@@ -497,8 +497,8 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           </div>
         </div>
 
-        <div class="border border-[#21262d] bg-[#050508] px-4 py-2.5 text-[10px] font-mono text-[#6e7681]">
-          // 公式语法基于 KaTeX，完整符号表见 <a href="https://www.latexlive.com/help" target="_blank" rel="noopener" class="text-[#8b949e] hover:text-[#00FF41] transition-colors border-b border-[#30363d]">latexlive.com/help</a>
+        <div class="border border-border-subtle bg-surface-0 px-4 py-2.5 text-[10px] font-mono text-text-mid">
+          // 公式语法基于 KaTeX，完整符号表见 <a href="https://www.latexlive.com/help" target="_blank" rel="noopener" class="text-text-body hover:text-brand transition-colors border-b border-border">latexlive.com/help</a>
         </div>
 
       </div>
@@ -507,8 +507,8 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
     <!-- ── 08 功能一览 ── -->
     <section id="features" class="mb-10">
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-[#3b82f6] tracking-widest">08 · 平台功能一览</span>
-        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+        <span class="text-[10px] font-mono text-info tracking-widest">08 · 平台功能一览</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
       <div class="space-y-2">
@@ -559,16 +559,16 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
             desc: '账号受到处罚（限制、封禁）后，可在个人主页的通知中找到申诉入口，向 ADMIN 申请复查。',
           },
         ].map(({ icon, label, link, linkLabel, desc }) => (
-          <div class="border border-[#1a1a1a] bg-[#161b22] px-4 py-3 flex gap-3 items-start">
-            <span class="text-xs font-mono text-[#6e7681] mt-0.5 w-4 flex-shrink-0">{icon}</span>
+          <div class="border border-border-minimal bg-surface-2 px-4 py-3 flex gap-3 items-start">
+            <span class="text-xs font-mono text-text-mid mt-0.5 w-4 flex-shrink-0">{icon}</span>
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2 mb-1 flex-wrap">
-                <span class="text-xs font-mono text-[#cdd9e5]">{label}</span>
+                <span class="text-xs font-mono text-text-hi">{label}</span>
                 {link && (
-                  <a href={link} class="text-[10px] font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors">{linkLabel}</a>
+                  <a href={link} class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">{linkLabel}</a>
                 )}
               </div>
-              <p class="text-[11px] font-mono text-[#8b949e] leading-relaxed">{desc}</p>
+              <p class="text-[11px] font-mono text-text-body leading-relaxed">{desc}</p>
             </div>
           </div>
         ))}
@@ -578,8 +578,8 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
     <!-- ── 09 常见问题 ── -->
     <section id="faq" class="mb-10">
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-[#8b5cf6] tracking-widest">09 · 常见问题</span>
-        <div class="flex-1 border-t border-[#1a1a1a]"></div>
+        <span class="text-[10px] font-mono text-purple tracking-widest">09 · 常见问题</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
       <div class="space-y-2" id="faq-list">
@@ -621,18 +621,18 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
             a: '前往反馈页（/feedback）提交问题或建议，管理员会查看并回复。',
           },
         ].map(({ q, a }, i) => (
-          <div class="border border-[#1a1a1a] bg-[#161b22] overflow-hidden">
+          <div class="border border-border-minimal bg-surface-2 overflow-hidden">
             <button
               type="button"
               class="w-full text-left px-4 py-3 flex items-start gap-2 hover:bg-[#0f131a] transition-colors faq-btn"
               data-index={i}
             >
-              <span class="text-[#00FF41] font-mono text-xs mt-0.5 flex-shrink-0">?</span>
-              <span class="text-xs font-mono text-[#8b949e] leading-snug">{q}</span>
-              <span class="ml-auto text-[#6e7681] font-mono text-xs flex-shrink-0 faq-arrow">+</span>
+              <span class="text-brand font-mono text-xs mt-0.5 flex-shrink-0">?</span>
+              <span class="text-xs font-mono text-text-body leading-snug">{q}</span>
+              <span class="ml-auto text-text-mid font-mono text-xs flex-shrink-0 faq-arrow">+</span>
             </button>
             <div class="faq-body px-4 pb-0 max-h-0 overflow-hidden transition-all duration-200">
-              <p class="text-[11px] font-mono text-[#8b949e] leading-relaxed pb-3 border-t border-[#1a1a1a] pt-2">{a}</p>
+              <p class="text-[11px] font-mono text-text-body leading-relaxed pb-3 border-t border-border-minimal pt-2">{a}</p>
             </div>
           </div>
         ))}
@@ -640,16 +640,16 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
     </section>
 
     <!-- 底部链接 -->
-    <div class="flex items-center justify-between flex-wrap gap-4 border-t border-[#1a1a1a] pt-6">
+    <div class="flex items-center justify-between flex-wrap gap-4 border-t border-border-minimal pt-6">
       <div class="flex gap-4">
-        <a href="/rules" class="text-[10px] font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors">
+        <a href="/rules" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
           查看完整规则 →
         </a>
-        <a href="/iceberg/list" class="text-[10px] font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors">
+        <a href="/iceberg/list" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
           前往冰山广场 →
         </a>
       </div>
-      <a href="/feedback" class="text-[10px] font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors">
+      <a href="/feedback" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
         反馈与建议 →
       </a>
     </div>

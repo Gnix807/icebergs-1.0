@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { toast } from '../ui/Toast';
 import { useModalAnimation } from '../../hooks/useModalAnimation';
 import { AdminListSkeleton } from '../ui/Skeleton';
@@ -75,12 +75,12 @@ export function AdminPromotions() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-mono text-[#3d444d]">// 晋升申请 · {requests.length} 条待审</span>
-        <button onClick={load} className="text-xs font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors">[刷新]</button>
+        <span className="text-xs font-mono text-text-lo">// 晋升申请 · {requests.length} 条待审</span>
+        <button onClick={load} className="text-xs font-mono text-text-mid hover:text-brand transition-colors">[刷新]</button>
       </div>
 
       {requests.length === 0 && (
-        <div className="py-12 text-center text-[#3d444d] font-mono text-sm border border-[#21262d]">
+        <div className="py-12 text-center text-text-lo font-mono text-sm border border-border-subtle">
           // 暂无待审晋升申请
         </div>
       )}
@@ -89,16 +89,16 @@ export function AdminPromotions() {
         const ageDays = Math.floor((Date.now() - new Date(r.user.createdAt).getTime()) / (24 * 60 * 60 * 1000));
         const expiresSoon = new Date(r.expiresAt).getTime() - Date.now() < 3 * 24 * 60 * 60 * 1000;
         return (
-          <div key={r.id} className={`border bg-[#161b22] p-4 ${expiresSoon ? 'border-[#f59e0b40]' : 'border-[#21262d]'}`}>
+          <div key={r.id} className={`border bg-surface-2 p-4 ${expiresSoon ? 'border-warning/25' : 'border-border-subtle'}`}>
             {expiresSoon && (
-              <div className="text-[10px] font-mono text-[#f59e0b] mb-2">! 即将过期</div>
+              <div className="text-[10px] font-mono text-warning mb-2">! 即将过期</div>
             )}
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <a href={`/user/${r.user.id}`} className="font-mono text-sm text-[#cdd9e5] hover:text-[#00FF41] transition-colors">
+                <a href={`/user/${r.user.id}`} className="font-mono text-sm text-text-hi hover:text-brand transition-colors">
                   @{r.user.nickname ?? r.user.username}
                 </a>
-                <div className="flex flex-wrap gap-3 mt-1 text-[10px] font-mono text-[#6e7681]">
+                <div className="flex flex-wrap gap-3 mt-1 text-[10px] font-mono text-text-mid">
                   <span>质量分 {r.user.qualityScore}</span>
                   <span>{r.user._count.icebergs} 冰山图</span>
                   <span>注册 {ageDays} 天</span>
@@ -106,7 +106,7 @@ export function AdminPromotions() {
                   <span>{new Date(r.createdAt).toLocaleDateString('zh-CN')}</span>
                 </div>
                 {r.statement && (
-                  <p className="mt-2 text-xs text-[#8b949e] leading-relaxed line-clamp-2 border-l-2 border-[#30363d] pl-2">
+                  <p className="mt-2 text-xs text-text-body leading-relaxed line-clamp-2 border-l-2 border-border pl-2">
                     {r.statement}
                   </p>
                 )}
@@ -114,13 +114,13 @@ export function AdminPromotions() {
               <div className="flex gap-2 flex-shrink-0">
                 <button
                   onClick={() => { setModal({ req: r, action: 'approve' }); setNote(''); }}
-                  className="btn-primary px-3 py-1.5 text-xs font-mono bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41] hover:bg-[#00FF4125] transition-colors"
+                  className="btn-primary px-3 py-1.5 text-xs font-mono bg-brand/10 border border-brand/25 text-brand hover:bg-brand/15 transition-colors"
                 >
                   批准
                 </button>
                 <button
                   onClick={() => { setModal({ req: r, action: 'reject' }); setNote(''); }}
-                  className="btn-danger px-3 py-1.5 text-xs font-mono bg-[#ef444415] border border-[#ef444440] text-[#ef4444] hover:bg-[#ef444425] transition-colors"
+                  className="btn-danger px-3 py-1.5 text-xs font-mono bg-danger/10 border border-danger/25 text-danger hover:bg-danger/15 transition-colors"
                 >
                   拒绝
                 </button>
@@ -132,27 +132,27 @@ export function AdminPromotions() {
 
       {modalMounted && modal && (
         <div className={`${modalLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-sm p-5 font-mono`}>
-            <div className="text-sm text-[#cdd9e5] mb-1">
+          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-sm p-5 font-mono`}>
+            <div className="text-sm text-text-hi mb-1">
               {modal.action === 'approve' ? '批准晋升' : '拒绝申请'}
             </div>
-            <div className="text-xs text-[#3d444d] mb-4">
+            <div className="text-xs text-text-lo mb-4">
               @{modal.req.user.nickname ?? modal.req.user.username} → {modal.req.targetRole}
             </div>
             {modal.action === 'reject' && (
               <div className="mb-4">
-                <div className="text-[10px] text-[#3d444d] mb-1">拒绝理由（用户可见）</div>
+                <div className="text-[10px] text-text-lo mb-1">拒绝理由（用户可见）</div>
                 <textarea
                   value={note}
                   onChange={e => setNote(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs text-[#cdd9e5] focus:border-[#00FF41] focus:outline-none resize-none"
+                  className="w-full px-3 py-2 bg-surface-2 border border-border text-xs text-text-hi focus:border-brand focus:outline-none resize-none"
                   placeholder="请说明拒绝原因..."
                 />
               </div>
             )}
             <div className="flex gap-3">
-              <button onClick={() => { setModal(null); setNote(''); }} className="btn-ghost flex-1 py-2 border border-[#30363d] text-xs hover:border-[#30363d] transition-colors">
+              <button onClick={() => { setModal(null); setNote(''); }} className="btn-ghost flex-1 py-2 border border-border text-xs hover:border-border transition-colors">
                 取消
               </button>
               <button
@@ -160,8 +160,8 @@ export function AdminPromotions() {
                 disabled={acting || (modal.action === 'reject' && note.trim().length < 3)}
                 className={`flex-1 py-2 text-xs border transition-colors disabled:opacity-40 ${
                   modal.action === 'approve'
-                    ? 'btn-primary bg-[#00FF4115] border-[#00FF4140] text-[#00FF41] hover:bg-[#00FF4125]'
-                    : 'btn-danger bg-[#ef444415] border-[#ef444440] text-[#ef4444] hover:bg-[#ef444425]'
+                    ? 'btn-primary bg-brand/10 border-brand/25 text-brand hover:bg-brand/15'
+                    : 'btn-danger bg-danger/10 border-danger/25 text-danger hover:bg-danger/15'
                 }`}
               >
                 {acting ? '处理中...' : '确认'}

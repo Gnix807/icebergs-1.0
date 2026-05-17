@@ -1,4 +1,4 @@
----
+﻿---
 import Layout from '../../layouts/Layout.astro';
 import { UserCenter } from '../../components/user/UserCenter';
 import { prisma } from '../../lib/prisma';
@@ -242,9 +242,9 @@ try {
   <div class="relative z-10">
     {error ? (
       <div class="max-w-4xl mx-auto px-4 md:px-6 py-12">
-        <div class="p-10 border border-[#30363d] text-center reveal">
-          <p class="text-[#ef4444] font-mono mb-4">{error}</p>
-          <a href="/" class="text-[#00FF41] hover:underline font-mono text-sm">← 返回首页</a>
+        <div class="p-10 border border-border text-center reveal">
+          <p class="text-danger font-mono mb-4">{error}</p>
+          <a href="/" class="text-brand hover:underline font-mono text-sm">← 返回首页</a>
         </div>
       </div>
     ) : (

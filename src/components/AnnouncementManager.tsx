@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type FormEvent } from 'react';
+﻿import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { renderMarkdown } from '../lib/markdown';
 
 type AnnType = 'info' | 'warning' | 'maintenance' | 'update';
@@ -367,7 +367,7 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
         <div className="mb-6 flex flex-wrap items-center gap-2">
           <button
             onClick={() => openCreate(defaultCreateType)}
-            className="font-mono text-xs px-4 py-2 border border-[#00FF41] text-[#00FF41] bg-[#0d1117] hover:bg-[#00FF4110] transition-colors"
+            className="font-mono text-xs px-4 py-2 border border-brand text-brand bg-surface-1 hover:bg-brand/10 transition-colors"
           >
             {createMainLabel}
           </button>
@@ -376,12 +376,12 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
 
       {/* 编辑表单 */}
       {showForm && (
-        <div className="mb-8 border border-[#21262d] bg-[#161b22]">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-[#21262d] bg-[#0d1117]">
-            <span className="font-mono text-xs text-[#cdd9e5]">
+        <div className="mb-8 border border-border-subtle bg-surface-2">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-border-subtle bg-surface-1">
+            <span className="font-mono text-xs text-text-hi">
               {editingId ? '// 编辑公告' : '// 新建公告'}
             </span>
-            <button onClick={closeForm} className="font-mono text-xs text-[#6e7681] hover:text-[#8b949e]">✕</button>
+            <button onClick={closeForm} className="font-mono text-xs text-text-mid hover:text-text-body">✕</button>
           </div>
           <form onSubmit={handleSubmit} className="p-4 space-y-4">
 
@@ -391,7 +391,7 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                 <button
                   type="button"
                   onClick={() => setShowTemplates(v => !v)}
-                  className="font-mono text-[10px] text-[#6e7681] hover:text-[#8b949e] border border-[#30363d] hover:border-[#484f58] px-3 py-1.5 transition-colors"
+                  className="font-mono text-[10px] text-text-mid hover:text-text-body border border-border hover:border-border px-3 py-1.5 transition-colors"
                 >
                   {showTemplates ? '▲ 收起模板' : '▼ 从模板开始'}
                 </button>
@@ -410,7 +410,7 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                             setShowTemplates(false);
                             setTimeout(() => titleRef.current?.focus(), 50);
                           }}
-                          className="text-left border border-[#30363d] bg-[#0d1117] px-3 py-2.5 hover:border-[#484f58] transition-colors group"
+                          className="text-left border border-border bg-surface-1 px-3 py-2.5 hover:border-border transition-colors group"
                         >
                           <div className="flex items-center gap-2 mb-0.5">
                             <span
@@ -419,11 +419,11 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                             >
                               {m.label}
                             </span>
-                            <span className="font-mono text-xs text-[#cdd9e5] group-hover:text-[#00FF41] transition-colors">
+                            <span className="font-mono text-xs text-text-hi group-hover:text-brand transition-colors">
                               {tpl.label}
                             </span>
                           </div>
-                          <p className="font-mono text-[10px] text-[#3d444d] group-hover:text-[#6e7681] transition-colors leading-snug">
+                          <p className="font-mono text-[10px] text-text-lo group-hover:text-text-mid transition-colors leading-snug">
                             {tpl.desc}
                           </p>
                         </button>
@@ -436,32 +436,32 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
 
             {/* 标题 */}
             <div>
-              <label className="block font-mono text-[10px] text-[#6e7681] mb-1 tracking-widest">TITLE</label>
+              <label className="block font-mono text-[10px] text-text-mid mb-1 tracking-widest">TITLE</label>
               <input
                 ref={titleRef}
                 value={form.title}
                 onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                 placeholder="公告标题"
                 maxLength={100}
-                className="w-full bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] font-mono text-sm px-3 py-2 focus:outline-none focus:border-[#00FF41] placeholder-[#3d444d]"
+                className="w-full bg-surface-1 border border-border text-text-hi font-mono text-sm px-3 py-2 focus:outline-none focus:border-brand placeholder-[#3d444d]"
               />
             </div>
 
             {/* 类型 + 置顶 */}
             <div className="flex gap-4 items-center">
               <div className="flex-1">
-                <label className="block font-mono text-[10px] text-[#6e7681] mb-1 tracking-widest">TYPE</label>
+                <label className="block font-mono text-[10px] text-text-mid mb-1 tracking-widest">TYPE</label>
                 <select
                   value={form.type}
                   onChange={e => setForm(f => ({ ...f, type: e.target.value as AnnType }))}
-                  className="w-full bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] font-mono text-xs px-3 py-2 focus:outline-none focus:border-[#00FF41]"
+                  className="w-full bg-surface-1 border border-border text-text-hi font-mono text-xs px-3 py-2 focus:outline-none focus:border-brand"
                 >
                   {allowedTypes.map((typeKey) => (
                     <option key={typeKey} value={typeKey}>{TYPE_META[typeKey].label}</option>
                   ))}
                 </select>
               </div>
-              <p className="mt-1 font-mono text-[10px] text-[#3d444d]">
+              <p className="mt-1 font-mono text-[10px] text-text-lo">
                 {mode === 'announcements'
                   ? '提示：公告页仅展示“公告”类型；更新日志请前往日志管理发布。'
                   : '提示：更新 / 注意 / 维护 类型会同步显示在「更新日志」页面。'}
@@ -475,7 +475,7 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                     onChange={e => setForm(f => ({ ...f, pinned: e.target.checked }))}
                     className="accent-[#00FF41]"
                   />
-                  <label htmlFor="pinned-cb" className="font-mono text-xs text-[#8b949e] cursor-pointer">置顶</label>
+                  <label htmlFor="pinned-cb" className="font-mono text-xs text-text-body cursor-pointer">置顶</label>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -485,9 +485,9 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                     onChange={e => setForm(f => ({ ...f, banner: e.target.checked }))}
                     className="accent-[#f59e0b]"
                   />
-                  <label htmlFor="banner-cb" className="font-mono text-xs text-[#8b949e] cursor-pointer">
+                  <label htmlFor="banner-cb" className="font-mono text-xs text-text-body cursor-pointer">
                     横幅展示
-                    <span className="ml-1 text-[10px] text-[#3d444d]">（全站顶部）</span>
+                    <span className="ml-1 text-[10px] text-text-lo">（全站顶部）</span>
                   </label>
                 </div>
               </div>
@@ -495,27 +495,27 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
 
             {/* 内容 */}
             <div>
-              <label className="block font-mono text-[10px] text-[#6e7681] mb-1 tracking-widest">CONTENT (Markdown)</label>
+              <label className="block font-mono text-[10px] text-text-mid mb-1 tracking-widest">CONTENT (Markdown)</label>
               <textarea
                 value={form.content}
                 onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
                 placeholder="支持 Markdown 格式…"
                 rows={8}
                 maxLength={10000}
-                className="w-full bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] font-mono text-xs px-3 py-2 focus:outline-none focus:border-[#00FF41] placeholder-[#3d444d] resize-y"
+                className="w-full bg-surface-1 border border-border text-text-hi font-mono text-xs px-3 py-2 focus:outline-none focus:border-brand placeholder-[#3d444d] resize-y"
               />
-              <div className="text-right font-mono text-[10px] text-[#3d444d] mt-0.5">
+              <div className="text-right font-mono text-[10px] text-text-lo mt-0.5">
                 {form.content.length} / 10000
               </div>
             </div>
 
-            {err && <p className="font-mono text-xs text-[#ef4444]">{err}</p>}
+            {err && <p className="font-mono text-xs text-danger">{err}</p>}
 
             <div className="flex gap-2">
               <button
                 type="submit"
                 disabled={submitting}
-                className="font-mono text-xs px-4 py-2 border border-[#00FF41] text-[#00FF41] bg-[#0d1117] hover:bg-[#00FF4110] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="font-mono text-xs px-4 py-2 border border-brand text-brand bg-surface-1 hover:bg-brand/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {submitting
                   ? '[ 保存中... ]'
@@ -526,7 +526,7 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
               <button
                 type="button"
                 onClick={closeForm}
-                className="font-mono text-xs px-4 py-2 border border-[#30363d] text-[#6e7681] hover:border-[#8b949e] hover:text-[#8b949e] transition-colors"
+                className="font-mono text-xs px-4 py-2 border border-border text-text-mid hover:border-[#8b949e] hover:text-text-body transition-colors"
               >
                 [ 取消 ]
               </button>
@@ -536,16 +536,16 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
       )}
 
       {/* 筛选条 */}
-      <div className="mb-4 border border-[#21262d] bg-[#161b22] p-3">
+      <div className="mb-4 border border-border-subtle bg-surface-2 p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] font-mono text-[#6e7681] tracking-widest mr-1">FILTER</span>
+          <span className="text-[10px] font-mono text-text-mid tracking-widest mr-1">FILTER</span>
           <button
             type="button"
             onClick={() => setTypeFilter('all')}
             className={`text-[10px] font-mono px-2 py-1 border transition-colors ${
               typeFilter === 'all'
-                ? 'border-[#00FF41] text-[#00FF41] bg-[#00FF4110]'
-                : 'border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41]'
+                ? 'border-brand text-brand bg-brand/10'
+                : 'border-border text-text-body hover:border-brand hover:text-brand'
             }`}
           >
             全部
@@ -575,13 +575,13 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
             onClick={() => setPinnedOnly((v) => !v)}
             className={`text-[10px] font-mono px-2 py-1 border transition-colors ${
               pinnedOnly
-                ? 'border-[#f59e0b] text-[#f59e0b] bg-[#f59e0b10]'
-                : 'border-[#30363d] text-[#8b949e] hover:border-[#f59e0b] hover:text-[#f59e0b]'
+                ? 'border-warning text-warning bg-warning/10'
+                : 'border-border text-text-body hover:border-warning hover:text-warning'
             }`}
           >
             仅看置顶
           </button>
-          <span className="ml-auto text-[10px] font-mono text-[#6e7681]">
+          <span className="ml-auto text-[10px] font-mono text-text-mid">
             共 {visibleList.length} 条
           </span>
         </div>
@@ -589,8 +589,8 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
 
       {/* 公告列表 */}
       {visibleList.length === 0 ? (
-        <div className="border border-[#21262d] bg-[#161b22] p-8 text-center">
-          <p className="font-mono text-xs text-[#3d444d]">// 当前筛选下暂无公告</p>
+        <div className="border border-border-subtle bg-surface-2 p-8 text-center">
+          <p className="font-mono text-xs text-text-lo">// 当前筛选下暂无公告</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -600,7 +600,7 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
             return (
               <div
                 key={ann.id}
-                className="border bg-[#161b22] relative overflow-hidden"
+                className="border bg-surface-2 relative overflow-hidden"
                 style={{ borderColor: ann.pinned ? meta.color + '40' : '#21262d', background: ann.pinned ? meta.bg : undefined }}
               >
                 {ann.pinned && (
@@ -611,13 +611,13 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                   />
                 )}
                 {/* 头部 */}
-                <div className="flex items-start justify-between gap-3 px-4 py-3 border-b border-[#21262d]">
+                <div className="flex items-start justify-between gap-3 px-4 py-3 border-b border-border-subtle">
                   <div className="flex items-center gap-2 flex-wrap min-w-0">
                     {ann.pinned && (
-                      <span className="font-mono text-[10px] text-[#f59e0b] flex-shrink-0">📌</span>
+                      <span className="font-mono text-[10px] text-warning flex-shrink-0">📌</span>
                     )}
                     {ann.pinned && (
-                      <span className="font-mono text-[9px] px-1.5 py-0.5 border border-[#f59e0b40] text-[#f59e0b] bg-[#f59e0b10] flex-shrink-0">
+                      <span className="font-mono text-[9px] px-1.5 py-0.5 border border-warning/25 text-warning bg-warning/10 flex-shrink-0">
                         置顶
                       </span>
                     )}
@@ -629,7 +629,7 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                     </span>
                     <a
                       href={`${detailBasePath}/${ann.id}`}
-                      className="font-mono text-sm text-[#cdd9e5] hover:text-[#00FF41] transition-colors truncate"
+                      className="font-mono text-sm text-text-hi hover:text-brand transition-colors truncate"
                     >
                       {ann.title}
                     </a>
@@ -638,7 +638,7 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                     <div className="flex gap-2 flex-shrink-0">
                       <button
                         onClick={() => openEdit(ann)}
-                        className="font-mono text-[10px] text-[#6e7681] hover:text-[#8b949e] transition-colors"
+                        className="font-mono text-[10px] text-text-mid hover:text-text-body transition-colors"
                       >
                         [ 编辑 ]
                       </button>
@@ -646,13 +646,13 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                         <span className="flex gap-1">
                           <button
                             onClick={() => handleDelete(ann.id)}
-                            className="font-mono text-[10px] text-[#ef4444] hover:text-red-300 transition-colors"
+                            className="font-mono text-[10px] text-danger hover:text-red-300 transition-colors"
                           >
                             [ 确认删除 ]
                           </button>
                           <button
                             onClick={() => setDeleteConfirm(null)}
-                            className="font-mono text-[10px] text-[#6e7681] hover:text-[#8b949e] transition-colors"
+                            className="font-mono text-[10px] text-text-mid hover:text-text-body transition-colors"
                           >
                             [ 取消 ]
                           </button>
@@ -660,7 +660,7 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                       ) : (
                         <button
                           onClick={() => setDeleteConfirm(ann.id)}
-                          className="font-mono text-[10px] text-[#6e7681] hover:text-[#ef4444] transition-colors"
+                          className="font-mono text-[10px] text-text-mid hover:text-danger transition-colors"
                         >
                           [ 删除 ]
                         </button>
@@ -683,7 +683,7 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                         <div className="mt-1">
                           <a
                             href={`${detailBasePath}/${ann.id}`}
-                            className="font-mono text-[11px] text-[#00FF41] hover:underline"
+                            className="font-mono text-[11px] text-brand hover:underline"
                           >
                             阅读全文 →
                           </a>
@@ -694,11 +694,11 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                 })()}
 
                 {/* 底部元信息 */}
-                <div className="px-4 py-2 border-t border-[#21262d] flex items-center gap-3 font-mono text-[10px] text-[#3d444d]">
+                <div className="px-4 py-2 border-t border-border-subtle flex items-center gap-3 font-mono text-[10px] text-text-lo">
                   <span>{ann.author.nickname ?? ann.author.username}</span>
                   <span>·</span>
                   <span>{formatDate(ann.createdAt)}</span>
-                  {isEdited && <span className="text-[#3d444d]">· 已编辑</span>}
+                  {isEdited && <span className="text-text-lo">· 已编辑</span>}
                 </div>
               </div>
             );

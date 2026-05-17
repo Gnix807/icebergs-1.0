@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 
 interface Iceberg {
   id: string;
@@ -40,9 +40,9 @@ export function UserWatchlist({ userId, isOwner, publiclyVisible = false }: Prop
 
   if (!isOwner && !publiclyVisible) {
     return (
-      <div className="py-16 text-center border border-dashed border-[#30363d]">
-        <p className="text-[#8b949e] font-mono text-sm mb-1">收藏夹未公开</p>
-        <p className="text-[10px] font-mono text-[#6e7681]">// ACCESS RESTRICTED</p>
+      <div className="py-16 text-center border border-dashed border-border">
+        <p className="text-text-body font-mono text-sm mb-1">收藏夹未公开</p>
+        <p className="text-[10px] font-mono text-text-mid">// ACCESS RESTRICTED</p>
       </div>
     );
   }
@@ -51,7 +51,7 @@ export function UserWatchlist({ userId, isOwner, publiclyVisible = false }: Prop
     return (
       <div className="space-y-2">
         {[0, 1, 2].map(i => (
-          <div key={i} className="h-16 bg-[#161b22] border border-[#21262d] animate-pulse" />
+          <div key={i} className="h-16 bg-surface-2 border border-border-subtle animate-pulse" />
         ))}
       </div>
     );
@@ -59,17 +59,17 @@ export function UserWatchlist({ userId, isOwner, publiclyVisible = false }: Prop
 
   if (error) {
     return (
-      <div className="py-16 text-center border border-dashed border-[#30363d]">
-        <p className="text-[#ef4444] font-mono text-sm">{error}</p>
+      <div className="py-16 text-center border border-dashed border-border">
+        <p className="text-danger font-mono text-sm">{error}</p>
       </div>
     );
   }
 
   if (icebergs.length === 0) {
     return (
-      <div className="py-16 text-center border border-dashed border-[#30363d]">
-        <p className="text-[#8b949e] font-mono text-sm mb-2">收藏夹为空</p>
-        <a href="/iceberg/list" className="text-[#00FF41] font-mono text-xs hover:underline">
+      <div className="py-16 text-center border border-dashed border-border">
+        <p className="text-text-body font-mono text-sm mb-2">收藏夹为空</p>
+        <a href="/iceberg/list" className="text-brand font-mono text-xs hover:underline">
           去探索冰山图 →
         </a>
       </div>
@@ -85,13 +85,13 @@ export function UserWatchlist({ userId, isOwner, publiclyVisible = false }: Prop
           className="archive-card group flex items-start gap-4 p-4 block"
         >
           <div className="flex-1 min-w-0">
-            <h3 className="font-mono text-sm text-[#cdd9e5] group-hover:text-[#00FF41] transition-colors truncate">
-              <span className="text-[#6e7681] mr-1">#</span>{iceberg.title}
+            <h3 className="font-mono text-sm text-text-hi group-hover:text-brand transition-colors truncate">
+              <span className="text-text-mid mr-1">#</span>{iceberg.title}
             </h3>
             {iceberg.description && (
-              <p className="text-xs text-[#8b949e] mt-1 truncate">{iceberg.description}</p>
+              <p className="text-xs text-text-body mt-1 truncate">{iceberg.description}</p>
             )}
-            <div className="flex gap-3 mt-2 text-xs text-[#3d444d] font-mono">
+            <div className="flex gap-3 mt-2 text-xs text-text-lo font-mono">
               <span>{iceberg._count.tiers} 层</span>
               <span className="flex items-center gap-1">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -101,8 +101,8 @@ export function UserWatchlist({ userId, isOwner, publiclyVisible = false }: Prop
             </div>
           </div>
           <div className="flex-shrink-0 text-right">
-            <div className="text-xs text-[#f59e0b] font-mono">★ 已收藏</div>
-            <div className="text-xs text-[#6e7681] font-mono mt-1">
+            <div className="text-xs text-warning font-mono">★ 已收藏</div>
+            <div className="text-xs text-text-mid font-mono mt-1">
               {new Date(iceberg.createdAt).toLocaleDateString('zh-CN')}
             </div>
           </div>

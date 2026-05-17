@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 
 interface AchievementItem {
   key: string;
@@ -91,12 +91,12 @@ export function AchievementToast() {
       }}
     >
       <div
-        className="bg-[#161b22] border border-[#21262d] overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.8)]"
+        className="bg-surface-2 border border-border-subtle overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.8)]"
         style={{ borderLeftColor: current.color, borderLeftWidth: '4px' }}
       >
         {/* 顶部标签 */}
-        <div className="px-4 py-1.5 bg-[#161b22] border-b border-[#21262d]">
-          <span className="text-[10px] font-mono text-[#00FF41] tracking-widest animate-pulse">
+        <div className="px-4 py-1.5 bg-surface-2 border-b border-border-subtle">
+          <span className="text-[10px] font-mono text-brand tracking-widest animate-pulse">
             ▶ 隐藏权限已解锁 // ACHIEVEMENT UNLOCKED
           </span>
         </div>
@@ -104,10 +104,10 @@ export function AchievementToast() {
         <div className="flex items-start gap-3.5 px-4 py-3.5">
           <span className="text-2xl mt-0.5 flex-shrink-0">{current.icon}</span>
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-bold text-[#e5e7eb] font-mono truncate">
+            <div className="text-sm font-bold text-text-hi font-mono truncate">
               {current.labelZh}
             </div>
-            <div className="text-xs text-[#8b949e] mt-0.5 leading-relaxed line-clamp-2">
+            <div className="text-xs text-text-body mt-0.5 leading-relaxed line-clamp-2">
               {current.desc}
             </div>
           </div>

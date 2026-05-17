@@ -1,4 +1,4 @@
----
+﻿---
 import Layout from '../layouts/Layout.astro';
 import { prisma } from '../lib/prisma';
 import { getSessionById } from '../lib/auth';
@@ -273,10 +273,10 @@ const QUICK_QA = [
     <!-- 右侧公告浮栏（xl+ 显示，绝对定位于 hero 右侧空白处） -->
     {latestAnnouncements.length > 0 && (
       <aside class="hidden xl:block absolute right-4 md:right-6 top-12 w-64 z-20">
-        <div class="border border-[#21262d] bg-[#0d1117]">
-          <div class="flex items-center justify-between px-3 py-2 border-b border-[#21262d]">
-            <span class="font-mono text-[9px] text-[#6e7681] tracking-widest">// 最新公告</span>
-            <a href="/announcements" class="font-mono text-[9px] text-[#6e7681] hover:text-[#00FF41] transition-colors">全部 →</a>
+        <div class="border border-border-subtle bg-surface-1">
+          <div class="flex items-center justify-between px-3 py-2 border-b border-border-subtle">
+            <span class="font-mono text-[9px] text-text-mid tracking-widest">// 最新公告</span>
+            <a href="/announcements" class="font-mono text-[9px] text-text-mid hover:text-brand transition-colors">全部 →</a>
           </div>
           <ul>
             {latestAnnouncements.map((ann: any, i: number) => {
@@ -284,18 +284,18 @@ const QUICK_QA = [
               const label = ANN_TYPE_LABEL[ann.type] ?? '公告';
               const isLast = i === latestAnnouncements.length - 1;
               return (
-                <li class={`px-3 py-2.5 hover:bg-[#161b22] transition-colors ${!isLast ? 'border-b border-[#21262d]' : ''}`}>
+                <li class={`px-3 py-2.5 hover:bg-surface-2 transition-colors ${!isLast ? 'border-b border-border-subtle' : ''}`}>
                   <div class="flex items-center gap-1.5 mb-1">
                     {ann.pinned && <span class="text-[9px] flex-shrink-0">📌</span>}
                     <span
                       class="font-mono text-[9px] px-1 py-0.5 border flex-shrink-0"
                       style={`color:${color};border-color:${color}30`}
                     >{label}</span>
-                    <span class="font-mono text-[10px] text-[#3d444d] ml-auto flex-shrink-0">{formatDate(ann.createdAt)}</span>
+                    <span class="font-mono text-[10px] text-text-lo ml-auto flex-shrink-0">{formatDate(ann.createdAt)}</span>
                   </div>
                   <a
                     href={`/announcements/${ann.id}`}
-                    class="font-mono text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors line-clamp-2 leading-snug block"
+                    class="font-mono text-xs text-text-body hover:text-brand transition-colors line-clamp-2 leading-snug block"
                   >{ann.title}</a>
                 </li>
               );
@@ -332,15 +332,15 @@ const QUICK_QA = [
       </div>
       <!-- 前景文字 -->
       <div class="relative z-10">
-        <div class="inline-block font-mono text-xs text-[#6e7681] mb-5 tracking-widest border border-[#21262d] px-3 py-1">
+        <div class="inline-block font-mono text-xs text-text-mid mb-5 tracking-widest border border-border-subtle px-3 py-1">
           ICEBERG DATABASE v1.0
         </div>
         <h1 class="text-4xl md:text-5xl font-mono font-semibold terminal-glow glitch-hover mb-5 cursor-default">
-          <span class="text-[#00FF41]">冰山图</span>宇宙
+          <span class="text-brand">冰山图</span>宇宙
         </h1>
-        <p class="text-base text-[#adbac7] max-w-md mx-auto font-mono leading-loose">
+        <p class="text-base text-text-hi max-w-md mx-auto font-mono leading-loose">
           任何话题的表面之下，都藏着冰山。<br />
-          <span class="text-[#8b949e]">在这里，探索被隐藏的 99%。</span>
+          <span class="text-text-body">在这里，探索被隐藏的 99%。</span>
         </p>
       </div>
     </header>
@@ -348,10 +348,10 @@ const QUICK_QA = [
     <!-- 门户入口（借鉴知识库式信息架构） -->
     <section class="mb-10 reveal">
       <div class="text-center mb-5">
-        <h2 class="text-sm font-mono text-[#00FF41]">
-          <span class="text-[#3d444d]">// </span>你可以在这里找到什么
+        <h2 class="text-sm font-mono text-brand">
+          <span class="text-text-lo">// </span>你可以在这里找到什么
         </h2>
-        <p class="text-xs font-mono text-[#6e7681] mt-2">按入口浏览，比盲搜更快</p>
+        <p class="text-xs font-mono text-text-mid mt-2">按入口浏览，比盲搜更快</p>
       </div>
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {KNOWLEDGE_ENTRANCES.map((entry, index) => (
@@ -361,17 +361,17 @@ const QUICK_QA = [
             data-reveal-delay={`${index * 45}`}
           >
             <div class="flex items-center justify-between mb-2">
-              <h3 class="text-sm font-mono text-[#cdd9e5] group-hover:text-[#00FF41] transition-colors">
+              <h3 class="text-sm font-mono text-text-hi group-hover:text-brand transition-colors">
                 {entry.title}
               </h3>
-              <span class="text-[10px] font-mono text-[#6e7681] border border-[#30363d] px-1.5 py-0.5">
+              <span class="text-[10px] font-mono text-text-mid border border-border px-1.5 py-0.5">
                 {entry.tag}
               </span>
             </div>
-            <p class="text-xs text-[#8b949e] leading-relaxed mb-3">
+            <p class="text-xs text-text-body leading-relaxed mb-3">
               {entry.desc}
             </p>
-            <div class="text-[10px] font-mono text-[#6e7681] group-hover:text-[#8b949e] transition-colors">
+            <div class="text-[10px] font-mono text-text-mid group-hover:text-text-body transition-colors">
               继续浏览 →
             </div>
           </a>
@@ -383,26 +383,26 @@ const QUICK_QA = [
     <div class="flex justify-center gap-8 md:gap-16 mb-8 font-mono reveal">
       <div class="text-center">
         <div
-          class="text-3xl md:text-4xl font-bold text-[#00FF41] tabular-nums stat-glow"
+          class="text-3xl md:text-4xl font-bold text-brand tabular-nums stat-glow"
           data-countup={stats.total}
         >{stats.total}</div>
-        <div class="text-xs text-[#8b949e] mt-1 tracking-widest">张图</div>
+        <div class="text-xs text-text-body mt-1 tracking-widest">张图</div>
       </div>
       <div class="stats-divider self-stretch"></div>
       <div class="text-center">
         <div
-          class="text-3xl md:text-4xl font-bold text-[#00FF41] tabular-nums stat-glow"
+          class="text-3xl md:text-4xl font-bold text-brand tabular-nums stat-glow"
           data-countup={stats.totalViews}
         >{stats.totalViews.toLocaleString()}</div>
-        <div class="text-xs text-[#8b949e] mt-1 tracking-widest">次探索</div>
+        <div class="text-xs text-text-body mt-1 tracking-widest">次探索</div>
       </div>
       <div class="stats-divider self-stretch"></div>
       <div class="text-center">
         <div
-          class="text-3xl md:text-4xl font-bold text-[#00FF41] tabular-nums stat-glow"
+          class="text-3xl md:text-4xl font-bold text-brand tabular-nums stat-glow"
           data-countup={stats.totalItems}
         >{stats.totalItems.toLocaleString()}</div>
-        <div class="text-xs text-[#8b949e] mt-1 tracking-widest">个词条</div>
+        <div class="text-xs text-text-body mt-1 tracking-widest">个词条</div>
       </div>
     </div>
 
@@ -410,19 +410,19 @@ const QUICK_QA = [
     <div class="flex justify-center flex-wrap gap-3 mb-4 reveal">
       <a
         href="/iceberg/new"
-        class="px-6 py-2.5 bg-[#00FF41] text-[#0A0A0A] font-mono font-semibold text-sm hover:bg-[#00CC33] transition-colors"
+        class="px-6 py-2.5 bg-brand text-[#0A0A0A] font-mono font-semibold text-sm hover:bg-brand-hover transition-colors"
       >
         + 创建冰山图
       </a>
       <a
         href="/iceberg/random"
-        class="px-6 py-2.5 border border-[#00FF41] text-[#00FF41] font-mono text-sm hover:bg-[#00FF41]/10 transition-all"
+        class="px-6 py-2.5 border border-brand text-brand font-mono text-sm hover:bg-brand/10 transition-all"
       >
         ◈ 随机漫游
       </a>
       <a
         href="/iceberg/list"
-        class="px-6 py-2.5 border border-[#30363d] text-[#8b949e] font-mono text-sm hover:border-[#484f58] hover:text-[#adbac7] transition-all"
+        class="px-6 py-2.5 border border-border text-text-body font-mono text-sm hover:border-[#484f58] hover:text-text-hi transition-all"
       >
         浏览全部
       </a>
@@ -430,28 +430,28 @@ const QUICK_QA = [
 
     <!-- Ctrl+K hint -->
     <div class="text-center mb-14 reveal">
-      <span class="text-xs font-mono text-[#6e7681]">// 按</span>
-      <kbd class="mx-1 text-xs font-mono text-[#8b949e] bg-[#161b22] border border-[#30363d] px-1.5 py-0.5">Ctrl+K</kbd>
-      <span class="text-xs font-mono text-[#6e7681]">快速搜索</span>
+      <span class="text-xs font-mono text-text-mid">// 按</span>
+      <kbd class="mx-1 text-xs font-mono text-text-body bg-surface-2 border border-border px-1.5 py-0.5">Ctrl+K</kbd>
+      <span class="text-xs font-mono text-text-mid">快速搜索</span>
     </div>
 
     <!-- 常见搜索 / 索引问答 -->
     <section class="mb-10 reveal">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-sm font-mono text-[#00FF41]">
-          <span class="text-[#3d444d]">// </span>热门问题与常见搜索
+        <h2 class="text-sm font-mono text-brand">
+          <span class="text-text-lo">// </span>热门问题与常见搜索
         </h2>
       </div>
       <div class="grid gap-3 md:grid-cols-3">
         {QUICK_QA.map((item, index) => (
           <a
             href={item.href}
-            class="reveal-grid block border border-[#21262d] bg-[#161b22] p-4 hover:border-[#00FF41] hover:bg-[#0d1117] transition-colors"
+            class="reveal-grid block border border-border-subtle bg-surface-2 p-4 hover:border-brand hover:bg-surface-1 transition-colors"
             data-reveal-delay={`${index * 50}`}
           >
-            <div class="text-xs font-mono text-[#cdd9e5] mb-2">{item.q}</div>
-            <p class="text-xs text-[#8b949e] leading-relaxed mb-3">{item.a}</p>
-            <div class="text-[10px] font-mono text-[#6e7681]">{item.action} →</div>
+            <div class="text-xs font-mono text-text-hi mb-2">{item.q}</div>
+            <p class="text-xs text-text-body leading-relaxed mb-3">{item.a}</p>
+            <div class="text-[10px] font-mono text-text-mid">{item.action} →</div>
           </a>
         ))}
       </div>
@@ -461,45 +461,45 @@ const QUICK_QA = [
     {session && (
       <section class="mb-10 reveal">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-sm font-mono text-[#00FF41]">
-            <span class="text-[#3d444d]">// </span>为你准备
+          <h2 class="text-sm font-mono text-brand">
+            <span class="text-text-lo">// </span>为你准备
           </h2>
-          <a href={`/user/${session.userId}`} class="text-xs font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors">
+          <a href={`/user/${session.userId}`} class="text-xs font-mono text-text-body hover:text-brand transition-colors">
             前往个人中心 →
           </a>
         </div>
         <div class="grid gap-4 md:grid-cols-2">
-          <div class="border border-[#21262d] bg-[#161b22] p-4">
+          <div class="border border-border-subtle bg-surface-2 p-4">
             <div class="flex items-center justify-between mb-3">
-              <h3 class="text-xs font-mono text-[#cdd9e5]">继续浏览</h3>
-              <span class="text-[10px] font-mono text-[#6e7681]">RECENT</span>
+              <h3 class="text-xs font-mono text-text-hi">继续浏览</h3>
+              <span class="text-[10px] font-mono text-text-mid">RECENT</span>
             </div>
             {continueBrowsing.length === 0 ? (
-              <p class="text-xs font-mono text-[#6e7681] py-4">// 暂无阅读记录</p>
+              <p class="text-xs font-mono text-text-mid py-4">// 暂无阅读记录</p>
             ) : (
               <div class="space-y-1.5">
                 {continueBrowsing.map((iceberg: any) => (
-                  <a href={`/iceberg/${iceberg.slug || iceberg.id}`} class="block px-2.5 py-2 border border-[#21262d] hover:border-[#00FF41] hover:bg-[#0d1117] transition-colors">
-                    <div class="text-xs font-mono text-[#cdd9e5] truncate">{iceberg.title}</div>
-                    <div class="text-[10px] font-mono text-[#6e7681] mt-1">{iceberg._count.tiers} 层 · {iceberg.viewCount} 次探索</div>
+                  <a href={`/iceberg/${iceberg.slug || iceberg.id}`} class="block px-2.5 py-2 border border-border-subtle hover:border-brand hover:bg-surface-1 transition-colors">
+                    <div class="text-xs font-mono text-text-hi truncate">{iceberg.title}</div>
+                    <div class="text-[10px] font-mono text-text-mid mt-1">{iceberg._count.tiers} 层 · {iceberg.viewCount} 次探索</div>
                   </a>
                 ))}
               </div>
             )}
           </div>
-          <div class="border border-[#21262d] bg-[#161b22] p-4">
+          <div class="border border-border-subtle bg-surface-2 p-4">
             <div class="flex items-center justify-between mb-3">
-              <h3 class="text-xs font-mono text-[#cdd9e5]">你关注的更新</h3>
-              <a href={`/user/${session.userId}?tab=watchlist`} class="text-[10px] font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors">查看全部</a>
+              <h3 class="text-xs font-mono text-text-hi">你关注的更新</h3>
+              <a href={`/user/${session.userId}?tab=watchlist`} class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">查看全部</a>
             </div>
             {followingUpdates.length === 0 ? (
-              <p class="text-xs font-mono text-[#6e7681] py-4">// 先去收藏一些冰山图吧</p>
+              <p class="text-xs font-mono text-text-mid py-4">// 先去收藏一些冰山图吧</p>
             ) : (
               <div class="space-y-1.5">
                 {followingUpdates.map((iceberg: any) => (
-                  <a href={`/iceberg/${iceberg.slug || iceberg.id}`} class="block px-2.5 py-2 border border-[#21262d] hover:border-[#00FF41] hover:bg-[#0d1117] transition-colors">
-                    <div class="text-xs font-mono text-[#cdd9e5] truncate">{iceberg.title}</div>
-                    <div class="text-[10px] font-mono text-[#6e7681] mt-1">最近更新于 {formatDate(iceberg.updatedAt)}</div>
+                  <a href={`/iceberg/${iceberg.slug || iceberg.id}`} class="block px-2.5 py-2 border border-border-subtle hover:border-brand hover:bg-surface-1 transition-colors">
+                    <div class="text-xs font-mono text-text-hi truncate">{iceberg.title}</div>
+                    <div class="text-[10px] font-mono text-text-mid mt-1">最近更新于 {formatDate(iceberg.updatedAt)}</div>
                   </a>
                 ))}
               </div>
@@ -514,16 +514,16 @@ const QUICK_QA = [
     {featuredIcebergs.length > 0 && (
       <section class="mb-10 reveal">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-sm font-mono text-[#f59e0b]">
-            <span class="text-[#3d444d]">// </span>编辑精选
-            <span class="ml-2 text-[10px] text-[#6e7681] border border-[#30363d] px-1">FEATURED</span>
+          <h2 class="text-sm font-mono text-warning">
+            <span class="text-text-lo">// </span>编辑精选
+            <span class="ml-2 text-[10px] text-text-mid border border-border px-1">FEATURED</span>
           </h2>
         </div>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {featuredIcebergs.map((iceberg: any, index: number) => (
             <a
               href={`/iceberg/${iceberg.slug || iceberg.id}`}
-              class="archive-card reveal-grid group relative block p-5 border-[#f59e0b30]"
+              class="archive-card reveal-grid group relative block p-5 border-warning/20"
               data-reveal-delay={`${index * 60}`}
             >
               <div class="flex gap-px mb-3 h-3 opacity-50 group-hover:opacity-90 transition-opacity duration-200">
@@ -532,13 +532,13 @@ const QUICK_QA = [
                 ))}
               </div>
               <div class="text-[10px] font-mono text-[#f59e0b80] mb-1 tracking-widest">★ FEATURED</div>
-              <h3 class="font-mono text-sm font-semibold text-[#cdd9e5] group-hover:text-[#f59e0b] transition-colors mb-2 line-clamp-1">
-                <span class="text-[#3d444d] mr-1">#</span>{iceberg.title}
+              <h3 class="font-mono text-sm font-semibold text-text-hi group-hover:text-warning transition-colors mb-2 line-clamp-1">
+                <span class="text-text-lo mr-1">#</span>{iceberg.title}
               </h3>
               {iceberg.description && (
-                <p class="text-xs text-[#8b949e] mb-3 line-clamp-2 leading-relaxed">{iceberg.description}</p>
+                <p class="text-xs text-text-body mb-3 line-clamp-2 leading-relaxed">{iceberg.description}</p>
               )}
-              <div class="flex items-center justify-between text-xs text-[#8b949e] font-mono">
+              <div class="flex items-center justify-between text-xs text-text-body font-mono">
                 <span>{iceberg._count.tiers} 层</span>
                 <span class="flex items-center gap-1">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -557,22 +557,22 @@ const QUICK_QA = [
       <!-- Recent icebergs (2/3) -->
       <section class="lg:col-span-2 reveal">
         <div class="flex items-center justify-between mb-5">
-          <h2 class="text-sm font-mono text-[#00FF41]">
-            <span class="text-[#3d444d]">// </span>最新发布
+          <h2 class="text-sm font-mono text-brand">
+            <span class="text-text-lo">// </span>最新发布
           </h2>
           {recentIcebergs.length > 0 && (
-            <a href="/iceberg/list" class="text-xs font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors">
+            <a href="/iceberg/list" class="text-xs font-mono text-text-body hover:text-brand transition-colors">
               查看更多 →
             </a>
           )}
         </div>
 
         {recentIcebergs.length === 0 ? (
-          <div class="py-20 text-center border border-dashed border-[#21262d] bg-[#161b22]/30">
-            <div class="font-mono text-[#484f58] text-3xl mb-4 leading-none select-none">∅</div>
-            <p class="text-[#8b949e] font-mono text-sm mb-1">// 还没有冰山图</p>
-            <p class="text-[#6e7681] font-mono text-xs mb-5">成为第一个探索者</p>
-            <a href="/iceberg/new" class="inline-block px-4 py-1.5 border border-[#00FF41] text-[#00FF41] font-mono text-xs hover:bg-[#00FF41]/10 transition-colors">
+          <div class="py-20 text-center border border-dashed border-border-subtle bg-surface-2/30">
+            <div class="font-mono text-text-lo text-3xl mb-4 leading-none select-none">∅</div>
+            <p class="text-text-body font-mono text-sm mb-1">// 还没有冰山图</p>
+            <p class="text-text-mid font-mono text-xs mb-5">成为第一个探索者</p>
+            <a href="/iceberg/new" class="inline-block px-4 py-1.5 border border-brand text-brand font-mono text-xs hover:bg-brand/10 transition-colors">
               + 创建冰山图
             </a>
           </div>
@@ -591,17 +591,17 @@ const QUICK_QA = [
                   ))}
                 </div>
 
-                <h3 class="font-mono text-sm font-semibold text-[#cdd9e5] group-hover:text-[#00FF41] transition-colors mb-2 line-clamp-1">
-                  <span class="text-[#3d444d] mr-1">#</span>{iceberg.title}
+                <h3 class="font-mono text-sm font-semibold text-text-hi group-hover:text-brand transition-colors mb-2 line-clamp-1">
+                  <span class="text-text-lo mr-1">#</span>{iceberg.title}
                 </h3>
 
                 {iceberg.description && (
-                  <p class="text-xs text-[#8b949e] mb-3 line-clamp-2 leading-relaxed">
+                  <p class="text-xs text-text-body mb-3 line-clamp-2 leading-relaxed">
                     {iceberg.description}
                   </p>
                 )}
 
-                <div class="flex items-center justify-between text-xs text-[#8b949e] font-mono">
+                <div class="flex items-center justify-between text-xs text-text-body font-mono">
                   <div class="flex items-center gap-3">
                     <span>{iceberg._count.tiers} 层</span>
                     <span class="flex items-center gap-1">
@@ -609,11 +609,11 @@ const QUICK_QA = [
                       {iceberg.viewCount}
                     </span>
                   </div>
-                  <span class="text-[#6e7681]">{formatDate(iceberg.createdAt)}</span>
+                  <span class="text-text-mid">{formatDate(iceberg.createdAt)}</span>
                 </div>
 
                 {iceberg.author && (
-                  <div class="mt-2 pt-2 border-t border-[#21262d] text-xs text-[#6e7681] font-mono">
+                  <div class="mt-2 pt-2 border-t border-border-subtle text-xs text-text-mid font-mono">
                     @{iceberg.author.nickname || iceberg.author.username}
                   </div>
                 )}
@@ -621,15 +621,15 @@ const QUICK_QA = [
                 <!-- Hover preview -->
                 {iceberg.tiers[0]?.items?.length > 0 && (
                   <div class="card-preview absolute left-0 right-0 top-full mt-px z-50
-                              bg-[#0d1117] border border-[#00FF41]/20 px-3 py-2.5
+                              bg-surface-1 border border-brand/20 px-3 py-2.5
                               opacity-0 pointer-events-none group-hover:opacity-100
                               transition-opacity duration-150">
-                    <div class="text-[10px] font-mono text-[#6e7681] mb-1.5 uppercase tracking-widest truncate">
+                    <div class="text-[10px] font-mono text-text-mid mb-1.5 uppercase tracking-widest truncate">
                       {iceberg.tiers[0].name}
                     </div>
                     {iceberg.tiers[0].items.map((item: any) => (
-                      <div class="text-xs font-mono text-[#8b949e] py-0.5 truncate">
-                        <span class="text-[#6e7681] mr-1.5">›</span>{item.title}
+                      <div class="text-xs font-mono text-text-body py-0.5 truncate">
+                        <span class="text-text-mid mr-1.5">›</span>{item.title}
                       </div>
                     ))}
                   </div>
@@ -645,11 +645,11 @@ const QUICK_QA = [
 
         <!-- 最深探索 TOP5 -->
         <section>
-          <h2 class="text-xs font-mono text-[#6e7681] mb-3 tracking-widest uppercase">
+          <h2 class="text-xs font-mono text-text-mid mb-3 tracking-widest uppercase">
             // 最深探索
           </h2>
           {topDeep.length === 0 ? (
-            <p class="text-xs text-[#8b949e] font-mono py-4 text-center border border-dashed border-[#21262d]">
+            <p class="text-xs text-text-body font-mono py-4 text-center border border-dashed border-border-subtle">
               暂无数据
             </p>
           ) : (
@@ -663,17 +663,17 @@ const QUICK_QA = [
                 return (
                   <a
                     href={`/iceberg/${iceberg.slug || iceberg.id}`}
-                    class="flex items-center gap-2 px-2 py-2.5 group transition-colors hover:bg-[#1c2128]"
+                    class="flex items-center gap-2 px-2 py-2.5 group transition-colors hover:bg-surface-3"
                     style={medal ? `background: ${medal.bg}` : ''}
                   >
                     <span class="font-mono text-[10px] w-5 flex-shrink-0 text-right font-bold"
                           style={medal ? `color: ${medal.color}` : 'color: #484f58'}>
                       {medal ? medal.label : String(i + 1).padStart(2, '0')}
                     </span>
-                    <span class="font-mono text-xs text-[#8b949e] group-hover:text-[#00FF41] transition-colors flex-1 truncate">
+                    <span class="font-mono text-xs text-text-body group-hover:text-brand transition-colors flex-1 truncate">
                       {iceberg.title}
                     </span>
-                    <span class="font-mono text-[10px] text-[#6e7681] flex-shrink-0 border border-[#21262d] px-1">
+                    <span class="font-mono text-[10px] text-text-mid flex-shrink-0 border border-border-subtle px-1">
                       {iceberg._count.tiers}F
                     </span>
                   </a>
@@ -686,15 +686,15 @@ const QUICK_QA = [
         <!-- 本周趋势 TOP5 -->
         <section>
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-xs font-mono text-[#6e7681] tracking-widest uppercase">
+            <h2 class="text-xs font-mono text-text-mid tracking-widest uppercase">
               // 本周趋势
             </h2>
-            <a href="/leaderboard" class="text-[10px] font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors">
+            <a href="/leaderboard" class="text-[10px] font-mono text-text-body hover:text-brand transition-colors">
               完整榜单 →
             </a>
           </div>
           {trendingIcebergs.length === 0 ? (
-            <p class="text-xs text-[#484f58] font-mono py-4 text-center border border-dashed border-[#21262d]">
+            <p class="text-xs text-text-lo font-mono py-4 text-center border border-dashed border-border-subtle">
               // 本周暂无数据
             </p>
           ) : (
@@ -708,17 +708,17 @@ const QUICK_QA = [
                 return (
                   <a
                     href={`/iceberg/${iceberg.slug || iceberg.id}`}
-                    class="flex items-center gap-2 px-2 py-2.5 group transition-colors hover:bg-[#1c2128]"
+                    class="flex items-center gap-2 px-2 py-2.5 group transition-colors hover:bg-surface-3"
                     style={medal ? `background: ${medal.bg}` : ''}
                   >
                     <span class="font-mono text-[10px] w-5 flex-shrink-0 text-right font-bold"
                           style={medal ? `color: ${medal.color}` : 'color: #484f58'}>
                       {String(i + 1).padStart(2, '0')}
                     </span>
-                    <span class="font-mono text-xs text-[#8b949e] group-hover:text-[#00FF41] transition-colors flex-1 truncate">
+                    <span class="font-mono text-xs text-text-body group-hover:text-brand transition-colors flex-1 truncate">
                       {iceberg.title}
                     </span>
-                    <span class="font-mono text-[10px] text-[#22c55e] flex-shrink-0 border border-[#22c55e20] px-1">
+                    <span class="font-mono text-[10px] text-success flex-shrink-0 border border-success/20 px-1">
                       +{iceberg.weekViews}
                     </span>
                   </a>
@@ -729,7 +729,7 @@ const QUICK_QA = [
         </section>
 
         <!-- Quick nav -->
-        <section class="border-t border-[#21262d] pt-6">
+        <section class="border-t border-border-subtle pt-6">
           <div class="space-y-1">
             {[
               { href: '/leaderboard', label: '浏览量排行榜', icon: '▲' },
@@ -738,12 +738,12 @@ const QUICK_QA = [
             ].map(({ href, label, icon }) => (
               <a
                 href={href}
-                class="flex items-center gap-2 px-2 py-1.5 group hover:bg-[#161b22] transition-colors"
+                class="flex items-center gap-2 px-2 py-1.5 group hover:bg-surface-2 transition-colors"
               >
-                <span class="font-mono text-xs text-[#6e7681] group-hover:text-[#00FF41] transition-colors w-4 text-center">
+                <span class="font-mono text-xs text-text-mid group-hover:text-brand transition-colors w-4 text-center">
                   {icon}
                 </span>
-                <span class="font-mono text-xs text-[#8b949e] group-hover:text-[#adbac7] transition-colors">
+                <span class="font-mono text-xs text-text-body group-hover:text-text-hi transition-colors">
                   {label}
                 </span>
               </a>

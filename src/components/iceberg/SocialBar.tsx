@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { toast } from '../ui/Toast';
 
 interface Props {
@@ -59,7 +59,7 @@ export function SocialBar({ icebergId }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-xs font-mono text-[#6e7681]">
+      <div className="flex items-center gap-2 text-xs font-mono text-text-mid">
         <span>loading...</span>
       </div>
     );
@@ -73,7 +73,7 @@ export function SocialBar({ icebergId }: Props) {
         className={`vote-btn flex items-center gap-1 px-2 py-1 border text-xs font-mono transition-colors ${
           userVote === 1
             ? 'active-up'
-            : 'border-[#30363d] text-[#8b949e] hover:border-[#22c55e] hover:text-[#22c55e]'
+            : 'border-border text-text-body hover:border-success hover:text-success'
         }`}
       >
         ▲ {score > 0 ? `+${score}` : score < 0 ? score : ''}
@@ -85,7 +85,7 @@ export function SocialBar({ icebergId }: Props) {
         className={`vote-btn flex items-center gap-1 px-2 py-1 border text-xs font-mono transition-colors ${
           userVote === -1
             ? 'active-down'
-            : 'border-[#30363d] text-[#8b949e] hover:border-[#ef4444] hover:text-[#ef4444]'
+            : 'border-border text-text-body hover:border-danger hover:text-danger'
         }`}
       >
         ▼
@@ -96,8 +96,8 @@ export function SocialBar({ icebergId }: Props) {
         onClick={handleWatchlist}
         className={`flex items-center gap-1 px-2 py-1 border text-xs font-mono transition-colors ${
           inWatchlist
-            ? 'border-[#f59e0b] text-[#f59e0b]'
-            : 'border-[#30363d] text-[#8b949e] hover:border-[#f59e0b] hover:text-[#f59e0b]'
+            ? 'border-warning text-warning'
+            : 'border-border text-text-body hover:border-warning hover:text-warning'
         }`}
       >
         {inWatchlist ? '★' : '☆'} 收藏

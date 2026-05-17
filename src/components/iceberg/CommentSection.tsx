@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from '../ui/Toast';
 import { MessageSquare, Trash2, Send, ThumbsUp, CornerDownRight, Clock, Flame } from 'lucide-react';
 
@@ -77,7 +77,7 @@ function Avatar({
   const imageSrc = !isGuest && typeof avatar === 'string' && avatar.trim() && !imgError ? avatar : null;
   const showImage = imageSrc !== null;
   const baseClass = `shrink-0 w-7 h-7 border flex items-center justify-center ${
-    isGuest ? 'border-[#3d444d] bg-[#0d1117]' : 'border-[#30363d] bg-[#161b22]'
+    isGuest ? 'border-[#3d444d] bg-surface-1' : 'border-border bg-surface-2'
   }`;
   const content = showImage ? (
     <img
@@ -88,7 +88,7 @@ function Avatar({
       onError={() => setImgError(true)}
     />
   ) : (
-    <span className={`text-[10px] font-mono ${isGuest ? 'text-[#6e7681]' : 'text-[#3d444d]'}`}>
+    <span className={`text-[10px] font-mono ${isGuest ? 'text-text-mid' : 'text-text-lo'}`}>
       {isGuest ? '游' : name.charAt(0).toUpperCase()}
     </span>
   );
@@ -97,7 +97,7 @@ function Avatar({
     return (
       <a
         href={profileHref}
-        className={`${baseClass} transition-colors hover:border-[#00FF41]`}
+        className={`${baseClass} transition-colors hover:border-brand`}
         title={`查看 ${name} 的主页`}
         aria-label={`查看 ${name} 的主页`}
       >
@@ -270,28 +270,28 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
   const totalCount = comments.reduce((s, c) => s + 1 + c.replies.length, 0);
 
   return (
-    <section className="mt-10 border-t border-[#21262d] pt-8">
+    <section className="mt-10 border-t border-border-subtle pt-8">
       {/* 标题栏 + 排序 */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <MessageSquare size={14} strokeWidth={1.5} className="text-[#00FF41]" />
-          <span className="text-xs font-mono text-[#8b949e] tracking-widest">
+          <MessageSquare size={14} strokeWidth={1.5} className="text-brand" />
+          <span className="text-xs font-mono text-text-body tracking-widest">
             COMMENTS · {loading ? '…' : totalCount}
           </span>
         </div>
-        <div className="flex border border-[#30363d]">
+        <div className="flex border border-border">
           <button
             onClick={() => changeSort('time')}
             className={`flex items-center gap-1 px-3 py-1 text-[10px] font-mono transition-colors ${
-              sort === 'time' ? 'bg-[#00FF4115] text-[#00FF41]' : 'text-[#3d444d] hover:text-[#8b949e]'
+              sort === 'time' ? 'bg-brand/10 text-brand' : 'text-text-lo hover:text-text-body'
             }`}
           >
             <Clock size={10} strokeWidth={1.5} /> 时间
           </button>
           <button
             onClick={() => changeSort('hot')}
-            className={`flex items-center gap-1 px-3 py-1 text-[10px] font-mono border-l border-[#30363d] transition-colors ${
-              sort === 'hot' ? 'bg-[#f59e0b15] text-[#f59e0b]' : 'text-[#3d444d] hover:text-[#8b949e]'
+            className={`flex items-center gap-1 px-3 py-1 text-[10px] font-mono border-l border-border transition-colors ${
+              sort === 'hot' ? 'bg-warning/10 text-warning' : 'text-text-lo hover:text-text-body'
             }`}
           >
             <Flame size={10} strokeWidth={1.5} /> 热度
@@ -308,8 +308,8 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
             onChange={e => setGuestName(e.target.value)}
             maxLength={20}
             placeholder="游客昵称（2–20 字符）"
-            className="w-full mb-2 px-3 py-2 bg-[#161b22] border border-[#30363d] text-sm font-mono
-                       text-[#cdd9e5] placeholder-[#3d444d] focus:border-[#00FF41] focus:outline-none transition-colors"
+            className="w-full mb-2 px-3 py-2 bg-surface-2 border border-border text-sm font-mono
+                       text-text-hi placeholder-[#3d444d] focus:border-brand focus:outline-none transition-colors"
           />
         )}
         <textarea
@@ -320,28 +320,28 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
           rows={3}
           maxLength={1000}
           placeholder="写下你的想法... (Ctrl+Enter 发送)"
-          className="w-full px-3 py-2.5 bg-[#161b22] border border-[#30363d] text-sm font-mono text-[#cdd9e5]
-                     placeholder-[#3d444d] focus:border-[#00FF41] focus:outline-none resize-none transition-colors"
+          className="w-full px-3 py-2.5 bg-surface-2 border border-border text-sm font-mono text-text-hi
+                     placeholder-[#3d444d] focus:border-brand focus:outline-none resize-none transition-colors"
         />
         <div className="flex items-center justify-between mt-2">
           {!currentUserId ? (
-            <span className="text-[10px] font-mono text-[#6e7681]">
+            <span className="text-[10px] font-mono text-text-mid">
               游客评论 ·{' '}
-              <a href="#" className="text-[#00FF41] hover:underline"
+              <a href="#" className="text-brand hover:underline"
                 onClick={e => { e.preventDefault(); (window as any).__openLogin?.(); }}>
                 登录
               </a>
               {' '}后可回复 / 点赞
             </span>
           ) : (
-            <span className="text-[10px] font-mono text-[#6e7681]">{draft.length} / 1000</span>
+            <span className="text-[10px] font-mono text-text-mid">{draft.length} / 1000</span>
           )}
           <button
             onClick={submit}
             disabled={submitting || !draft.trim()}
             className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-mono
-                       bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41]
-                       hover:bg-[#00FF4125] transition-colors disabled:opacity-40"
+                       bg-brand/10 border border-brand/25 text-brand
+                       hover:bg-brand/15 transition-colors disabled:opacity-40"
           >
             <Send size={11} strokeWidth={1.5} />
             {submitting ? '发送中...' : '发送'}
@@ -354,17 +354,17 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
         <div className="space-y-4">
           {[1, 2, 3].map(i => (
             <div key={i} className="flex gap-3">
-              <div className="shrink-0 w-7 h-7 bg-[#1a1d24] animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
+              <div className="shrink-0 w-7 h-7 bg-surface-3 animate-pulse" style={{ animationDelay: `${i * 80}ms` }} />
               <div className="flex-1 space-y-2">
-                <div className="h-2.5 bg-[#1a1d24] rounded-sm animate-pulse w-1/4" style={{ animationDelay: `${i * 80 + 30}ms` }} />
-                <div className="h-3 bg-[#1a1d24] rounded-sm animate-pulse w-3/4" style={{ animationDelay: `${i * 80 + 50}ms` }} />
+                <div className="h-2.5 bg-surface-3 rounded-sm animate-pulse w-1/4" style={{ animationDelay: `${i * 80 + 30}ms` }} />
+                <div className="h-3 bg-surface-3 rounded-sm animate-pulse w-3/4" style={{ animationDelay: `${i * 80 + 50}ms` }} />
               </div>
             </div>
           ))}
         </div>
       ) : comments.length === 0 ? (
-        <div className="py-8 text-center border border-dashed border-[#21262d]">
-          <p className="text-xs font-mono text-[#6e7681]">// 暂无评论，成为第一个</p>
+        <div className="py-8 text-center border border-dashed border-border-subtle">
+          <p className="text-xs font-mono text-text-mid">// 暂无评论，成为第一个</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -387,20 +387,20 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                       {commentProfileHref ? (
                         <a
                           href={commentProfileHref}
-                          className="text-xs font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors"
+                          className="text-xs font-mono text-text-body hover:text-brand transition-colors"
                           title={`查看 ${displayName} 的主页`}
                         >
                           {displayName}
                         </a>
                       ) : (
-                        <span className="text-xs font-mono text-[#6e7681]">{displayName}</span>
+                        <span className="text-xs font-mono text-text-mid">{displayName}</span>
                       )}
                       {isGuestComment && (
-                        <span className="text-[9px] font-mono text-[#3d444d] border border-[#21262d] px-1">游客</span>
+                        <span className="text-[9px] font-mono text-text-lo border border-border-subtle px-1">游客</span>
                       )}
-                      <span className="text-[10px] font-mono text-[#6e7681]">{formatDate(comment.createdAt)}</span>
+                      <span className="text-[10px] font-mono text-text-mid">{formatDate(comment.createdAt)}</span>
                     </div>
-                    <p className="text-sm text-[#c9d1d9] leading-relaxed whitespace-pre-wrap break-words mb-2">
+                    <p className="text-sm text-text-hi leading-relaxed whitespace-pre-wrap break-words mb-2">
                       {comment.content}
                     </p>
                     <div className="flex items-center gap-3">
@@ -408,7 +408,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                         onClick={() => toggleLike(comment.id, false)}
                         disabled={likingId === comment.id}
                         className={`flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-40 ${
-                          comment.isLikedByMe ? 'text-[#00FF41]' : 'text-[#6e7681] hover:text-[#8b949e]'
+                          comment.isLikedByMe ? 'text-brand' : 'text-text-mid hover:text-text-body'
                         }`}
                       >
                         <ThumbsUp size={11} strokeWidth={1.5} />
@@ -418,7 +418,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                         <button
                           onClick={() => openReply(comment.id)}
                           className={`flex items-center gap-1 text-[10px] font-mono transition-colors ${
-                            replyingTo === comment.id ? 'text-[#00FF41]' : 'text-[#6e7681] hover:text-[#8b949e]'
+                            replyingTo === comment.id ? 'text-brand' : 'text-text-mid hover:text-text-body'
                           }`}
                         >
                           <CornerDownRight size={11} strokeWidth={1.5} /> 回复
@@ -429,7 +429,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                           onClick={() => remove(comment.id, false)}
                           disabled={deletingId === comment.id}
                           className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-[10px] font-mono
-                                     text-[#ef4444] transition-all disabled:opacity-40"
+                                     text-danger transition-all disabled:opacity-40"
                         >
                           <Trash2 size={10} strokeWidth={1.5} />
                         </button>
@@ -440,7 +440,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
 
                 {/* 回复输入框（仅登录用户） */}
                 {replyingTo === comment.id && currentUserId && (
-                  <div className="ml-10 mt-3 pl-3 border-l-2 border-[#30363d]">
+                  <div className="ml-10 mt-3 pl-3 border-l-2 border-border">
                     <textarea
                       ref={replyRef}
                       value={replyDraft}
@@ -449,13 +449,13 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                       rows={2}
                       maxLength={500}
                       placeholder={`回复 @${displayName}... (Ctrl+Enter)`}
-                      className="w-full px-3 py-2 bg-[#161b22] border border-[#30363d] text-xs font-mono text-[#cdd9e5]
-                                 placeholder-[#3d444d] focus:border-[#00FF41] focus:outline-none resize-none transition-colors"
+                      className="w-full px-3 py-2 bg-surface-2 border border-border text-xs font-mono text-text-hi
+                                 placeholder-[#3d444d] focus:border-brand focus:outline-none resize-none transition-colors"
                     />
                     <div className="flex justify-end gap-2 mt-1.5">
                       <button
                         onClick={() => { setReplyingTo(null); setReplyDraft(''); }}
-                        className="px-3 py-1 text-[10px] font-mono text-[#3d444d] hover:text-[#8b949e] transition-colors"
+                        className="px-3 py-1 text-[10px] font-mono text-text-lo hover:text-text-body transition-colors"
                       >
                         取消
                       </button>
@@ -463,8 +463,8 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                         onClick={() => submitReply(comment.id)}
                         disabled={replySubmitting || !replyDraft.trim()}
                         className="flex items-center gap-1 px-3 py-1 text-[10px] font-mono
-                                   bg-[#00FF4115] border border-[#00FF4140] text-[#00FF41]
-                                   hover:bg-[#00FF4125] transition-colors disabled:opacity-40"
+                                   bg-brand/10 border border-brand/25 text-brand
+                                   hover:bg-brand/15 transition-colors disabled:opacity-40"
                       >
                         <Send size={9} strokeWidth={1.5} />
                         {replySubmitting ? '发送...' : '发送'}
@@ -475,7 +475,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
 
                 {/* 楼中楼回复 */}
                 {comment.replies.length > 0 && (
-                  <div className="ml-10 mt-3 space-y-3 pl-3 border-l-2 border-[#21262d]">
+                  <div className="ml-10 mt-3 space-y-3 pl-3 border-l-2 border-border-subtle">
                     {comment.replies.map(reply => {
                       const isGuestReply = !reply.user;
                       const replyName = getDisplayName(reply);
@@ -493,20 +493,20 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                               {replyProfileHref ? (
                                 <a
                                   href={replyProfileHref}
-                                  className="text-xs font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors"
+                                  className="text-xs font-mono text-text-body hover:text-brand transition-colors"
                                   title={`查看 ${replyName} 的主页`}
                                 >
                                   {replyName}
                                 </a>
                               ) : (
-                                <span className="text-xs font-mono text-[#6e7681]">{replyName}</span>
+                                <span className="text-xs font-mono text-text-mid">{replyName}</span>
                               )}
                               {isGuestReply && (
-                                <span className="text-[9px] font-mono text-[#3d444d] border border-[#21262d] px-1">游客</span>
+                                <span className="text-[9px] font-mono text-text-lo border border-border-subtle px-1">游客</span>
                               )}
-                              <span className="text-[10px] font-mono text-[#6e7681]">{formatDate(reply.createdAt)}</span>
+                              <span className="text-[10px] font-mono text-text-mid">{formatDate(reply.createdAt)}</span>
                             </div>
-                            <p className="text-sm text-[#c9d1d9] leading-relaxed whitespace-pre-wrap break-words mb-1.5">
+                            <p className="text-sm text-text-hi leading-relaxed whitespace-pre-wrap break-words mb-1.5">
                               {reply.content}
                             </p>
                             <div className="flex items-center gap-3">
@@ -514,7 +514,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                                 onClick={() => toggleLike(reply.id, true, comment.id)}
                                 disabled={likingId === reply.id}
                                 className={`flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-40 ${
-                                  reply.isLikedByMe ? 'text-[#00FF41]' : 'text-[#6e7681] hover:text-[#8b949e]'
+                                  reply.isLikedByMe ? 'text-brand' : 'text-text-mid hover:text-text-body'
                                 }`}
                               >
                                 <ThumbsUp size={10} strokeWidth={1.5} />
@@ -525,7 +525,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                                   onClick={() => remove(reply.id, true, comment.id)}
                                   disabled={deletingId === reply.id}
                                   className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-[10px] font-mono
-                                             text-[#ef4444] transition-all disabled:opacity-40"
+                                             text-danger transition-all disabled:opacity-40"
                                 >
                                   <Trash2 size={10} strokeWidth={1.5} />
                                 </button>

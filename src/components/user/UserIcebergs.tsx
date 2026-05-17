@@ -1,4 +1,4 @@
-interface Iceberg {
+﻿interface Iceberg {
   id: string;
   slug: string;
   title: string;
@@ -23,10 +23,10 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
 
   if (icebergs.length === 0) {
     return (
-      <div className="py-16 text-center border border-dashed border-[#30363d]">
-        <p className="text-[#8b949e] font-mono text-sm mb-3">暂无冰山图</p>
+      <div className="py-16 text-center border border-dashed border-border">
+        <p className="text-text-body font-mono text-sm mb-3">暂无冰山图</p>
         {isOwner && (
-          <a href="/iceberg/new" className="text-[#00FF41] font-mono text-sm hover:underline">
+          <a href="/iceberg/new" className="text-brand font-mono text-sm hover:underline">
             立即创建 →
           </a>
         )}
@@ -43,10 +43,10 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
   };
 
   const statusClass = (status: string) => {
-    if (status === 'PUBLISHED') return 'text-[#22c55e] border border-[#22c55e]/30';
-    if (status === 'PENDING_REVIEW') return 'text-[#f59e0b] border border-[#f59e0b]/30';
-    if (status === 'REJECTED') return 'text-[#ef4444] border border-[#ef4444]/30';
-    if (status === 'ARCHIVED') return 'text-[#8b949e] border border-[#6b7280]/30';
+    if (status === 'PUBLISHED') return 'text-success border border-success/30';
+    if (status === 'PENDING_REVIEW') return 'text-warning border border-warning/30';
+    if (status === 'REJECTED') return 'text-danger border border-danger/30';
+    if (status === 'ARCHIVED') return 'text-text-body border border-[#6b7280]/30';
     return 'text-[#60a5fa] border border-[#60a5fa]/30';
   };
 
@@ -55,7 +55,7 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
     return (
       <div className="mb-6">
         {label && (
-          <div className="text-xs font-mono text-[#6e7681] mb-2 tracking-widest">{label}</div>
+          <div className="text-xs font-mono text-text-mid mb-2 tracking-widest">{label}</div>
         )}
         <div className="space-y-2">
           {items.map(iceberg => (
@@ -65,13 +65,13 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
               className="archive-card group flex items-start gap-4 p-4 block"
             >
               <div className="flex-1 min-w-0">
-                <h3 className="font-mono text-sm text-[#cdd9e5] group-hover:text-[#00FF41] transition-colors truncate">
-                  <span className="text-[#6e7681] mr-1">#</span>{iceberg.title}
+                <h3 className="font-mono text-sm text-text-hi group-hover:text-brand transition-colors truncate">
+                  <span className="text-text-mid mr-1">#</span>{iceberg.title}
                 </h3>
                 {iceberg.description && (
-                  <p className="text-xs text-[#8b949e] mt-1 truncate">{iceberg.description}</p>
+                  <p className="text-xs text-text-body mt-1 truncate">{iceberg.description}</p>
                 )}
-                <div className="flex gap-3 mt-2 text-xs text-[#3d444d] font-mono">
+                <div className="flex gap-3 mt-2 text-xs text-text-lo font-mono">
                   <span>{iceberg._count.tiers} 层</span>
                   <span className="flex items-center gap-1">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -83,14 +83,14 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
                 <span className={`text-xs font-mono px-1.5 py-0.5 ${statusClass(iceberg.status)}`}>
                   {statusLabel(iceberg.status)}
                 </span>
-                <div className="text-xs text-[#6e7681] font-mono mt-1">
+                <div className="text-xs text-text-mid font-mono mt-1">
                   {new Date(iceberg.createdAt).toLocaleDateString('zh-CN')}
                 </div>
                 {isOwner && (
                   <a
                     href={`/iceberg/edit/${iceberg.id}`}
                     onClick={e => e.stopPropagation()}
-                    className="block text-xs text-[#3d444d] hover:text-[#00FF41] font-mono mt-1 transition-colors"
+                    className="block text-xs text-text-lo hover:text-brand font-mono mt-1 transition-colors"
                   >
                     编辑
                   </a>
@@ -119,8 +119,8 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
       {renderList(pendingReview, '// 待审核')}
       {renderList(rejected, '// 需修改后重提')}
       {renderList(archived, '// 已归档')}
-      <div className="mt-4 pt-4 border-t border-[#21262d]">
-        <a href="/iceberg/new" className="text-xs text-[#00FF41] font-mono hover:underline">
+      <div className="mt-4 pt-4 border-t border-border-subtle">
+        <a href="/iceberg/new" className="text-xs text-brand font-mono hover:underline">
           + 新建冰山图
         </a>
       </div>

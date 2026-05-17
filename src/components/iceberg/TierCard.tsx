@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import {
   SortableContext,
   verticalListSortingStrategy,
@@ -109,18 +109,18 @@ export function TierCard({
   return (
     <div
       ref={setNodeRef}
-      className={`border border-[#21262d] bg-[#0d1117] transition-colors ${isOver ? 'border-[#00FF41]/30' : ''}`}
+      className={`border border-border-subtle bg-surface-1 transition-colors ${isOver ? 'border-brand/30' : ''}`}
       style={tierStyle}
     >
       {/* ── Tier 标题栏 ── */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[#21262d]"
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle"
            style={{ background: `linear-gradient(90deg, ${tierColor}0d 0%, transparent 60%)` }}>
         <div className="flex items-center gap-2 min-w-0">
           <button
             type="button"
             {...tierDragAttributes}
             {...tierDragListeners}
-            className="font-mono text-[10px] px-1 text-[#3d444d] hover:text-[#8b949e] cursor-grab active:cursor-grabbing"
+            className="font-mono text-[10px] px-1 text-text-lo hover:text-text-body cursor-grab active:cursor-grabbing"
             title="拖拽排序层级"
           >
             ⋮⋮
@@ -144,29 +144,29 @@ export function TierCard({
               onChange={(e) => setEditName(e.target.value)}
               onBlur={handleSaveName}
               onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-              className="bg-transparent border-b border-[#00FF41] font-mono text-sm text-[#cdd9e5] focus:outline-none min-w-0 flex-1"
+              className="bg-transparent border-b border-brand font-mono text-sm text-text-hi focus:outline-none min-w-0 flex-1"
               autoFocus
             />
           ) : (
-            <h3 className="font-mono text-sm text-[#cdd9e5] cursor-pointer hover:text-[#00FF41] transition-colors truncate"
+            <h3 className="font-mono text-sm text-text-hi cursor-pointer hover:text-brand transition-colors truncate"
               onClick={() => setIsEditing(true)} title="点击编辑层级名称">
               {tier.name}
             </h3>
           )}
 
-          <span className="text-[10px] font-mono text-[#3d444d] flex-shrink-0">
+          <span className="text-[10px] font-mono text-text-lo flex-shrink-0">
             [{tier.items.length}]
           </span>
         </div>
 
         <button onClick={() => onDeleteTier(tier.id)}
-          className="text-[10px] font-mono text-[#3d444d] hover:text-[#ef4444] transition-colors flex-shrink-0 ml-3 border border-transparent hover:border-[#ef444440] px-1.5 py-0.5">
+          className="text-[10px] font-mono text-text-lo hover:text-danger transition-colors flex-shrink-0 ml-3 border border-transparent hover:border-danger/25 px-1.5 py-0.5">
           DEL
         </button>
       </div>
 
       {/* ── 层级描述 ── */}
-      <div className="px-4 py-1.5 border-b border-[#21262d]/50">
+      <div className="px-4 py-1.5 border-b border-border-subtle/50">
         {isEditingDesc ? (
           <input
             type="text"
@@ -174,7 +174,7 @@ export function TierCard({
             onChange={(e) => setEditDesc(e.target.value)}
             onBlur={handleSaveDesc}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSaveDesc(); if (e.key === 'Escape') setIsEditingDesc(false); }}
-            className="w-full bg-transparent border-b border-[#00FF41]/40 font-mono text-xs text-[#8b949e] focus:outline-none placeholder:text-[#3d444d]"
+            className="w-full bg-transparent border-b border-brand/40 font-mono text-xs text-text-body focus:outline-none placeholder:text-text-lo"
             placeholder="// 层级描述…"
             autoFocus
           />
@@ -193,7 +193,7 @@ export function TierCard({
           {tier.items.length === 0 && (
             <div
               className={`mb-2 rounded border border-dashed px-3 py-2 text-[11px] font-mono transition-colors ${
-                isOver ? 'border-[#00FF41] text-[#00FF41] bg-[#00FF41]/5' : 'border-[#30363d] text-[#6e7681]'
+                isOver ? 'border-brand text-brand bg-brand/5' : 'border-border text-text-mid'
               }`}
             >
               {isOver ? '释放以移动词条到此层' : '将词条拖到这里'}

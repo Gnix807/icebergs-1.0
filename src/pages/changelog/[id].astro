@@ -1,4 +1,4 @@
----
+﻿---
 import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
 import { getSessionById } from '../../lib/auth';
@@ -41,32 +41,32 @@ function formatDate(d: Date) {
 
 <Layout title={`${entry.title} — 更新日志`}>
   <main class="max-w-3xl mx-auto px-4 py-8 reveal">
-    <div class="flex items-center gap-2 font-mono text-[10px] text-[#6e7681] mb-6">
-      <a href="/changelog" class="hover:text-[#8b949e] transition-colors">更新日志</a>
-      <span class="text-[#3d444d]">/</span>
-      <span class="text-[#8b949e] truncate">{entry.title}</span>
+    <div class="flex items-center gap-2 font-mono text-[10px] text-text-mid mb-6">
+      <a href="/changelog" class="hover:text-text-body transition-colors">更新日志</a>
+      <span class="text-text-lo">/</span>
+      <span class="text-text-body truncate">{entry.title}</span>
     </div>
 
     <article
-      class="border bg-[#161b22]"
+      class="border bg-surface-2"
       style={`border-color: ${entry.pinned ? meta.color + '40' : '#21262d'}; background: ${entry.pinned ? meta.bg : ''}`}
     >
-      <div class="flex items-start justify-between gap-3 px-5 py-4 border-b border-[#21262d]">
+      <div class="flex items-start justify-between gap-3 px-5 py-4 border-b border-border-subtle">
         <div class="flex items-center gap-2 flex-wrap min-w-0">
-          {entry.pinned && <span class="font-mono text-[10px] text-[#6e7681] flex-shrink-0">📌</span>}
+          {entry.pinned && <span class="font-mono text-[10px] text-text-mid flex-shrink-0">📌</span>}
           <span
             class="font-mono text-[10px] px-1.5 py-0.5 border flex-shrink-0"
             style={`color:${meta.color}; border-color:${meta.border}`}
           >
             {meta.label}
           </span>
-          <h1 class="font-mono text-base text-[#cdd9e5]">{entry.title}</h1>
+          <h1 class="font-mono text-base text-text-hi">{entry.title}</h1>
         </div>
 
         {isAdmin && (
           <a
             href="/changelog/manage"
-            class="font-mono text-[10px] text-[#6e7681] hover:text-[#8b949e] transition-colors flex-shrink-0"
+            class="font-mono text-[10px] text-text-mid hover:text-text-body transition-colors flex-shrink-0"
             title="前往更新日志管理"
           >
             [ 管理 ]
@@ -76,7 +76,7 @@ function formatDate(d: Date) {
 
       <div class="px-5 py-5 markdown-content" set:html={contentHtml} />
 
-      <div class="px-5 py-3 border-t border-[#21262d] flex items-center gap-3 font-mono text-[10px] text-[#3d444d]">
+      <div class="px-5 py-3 border-t border-border-subtle flex items-center gap-3 font-mono text-[10px] text-text-lo">
         <span>{entry.author.nickname ?? entry.author.username}</span>
         <span>·</span>
         <span>{formatDate(entry.createdAt)}</span>
@@ -92,7 +92,7 @@ function formatDate(d: Date) {
     <div class="mt-6">
       <a
         href="/changelog"
-        class="font-mono text-xs text-[#6e7681] hover:text-[#8b949e] transition-colors"
+        class="font-mono text-xs text-text-mid hover:text-text-body transition-colors"
       >
         ‹ 返回更新日志
       </a>

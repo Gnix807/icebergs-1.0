@@ -1,4 +1,4 @@
----
+﻿---
 import Layout from '../layouts/Layout.astro';
 import { prisma } from '../lib/prisma';
 
@@ -105,11 +105,11 @@ const rankLabel = (i: number) =>
 
     <!-- Header -->
     <header class="mb-8 reveal">
-      <div class="text-xs font-mono text-[#6e7681] mb-3 tracking-widest">[ LEADERBOARD ]</div>
+      <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">[ LEADERBOARD ]</div>
       <h1 class="text-3xl font-mono font-semibold glitch-hover cursor-default">
-        <span class="text-[#00FF41]">#</span> 冰山图排行榜
+        <span class="text-brand">#</span> 冰山图排行榜
       </h1>
-      <p class="mt-2 text-sm text-[#8b949e] font-mono">
+      <p class="mt-2 text-sm text-text-body font-mono">
         {tab === 'views'
           ? '按浏览量排名，最受关注的冰山图'
           : '按净票数排名，最受认可的冰山图'}
@@ -117,23 +117,23 @@ const rankLabel = (i: number) =>
     </header>
 
     <!-- Tab 切换 -->
-    <div class="flex gap-0 mb-8 border border-[#30363d] w-fit reveal">
+    <div class="flex gap-0 mb-8 border border-border w-fit reveal">
       <a
         href="/leaderboard?tab=views"
         class={`px-5 py-2 text-xs font-mono tracking-widest transition-colors ${
           tab === 'views'
-            ? 'bg-[#00FF41] text-[#0A0A0A] font-bold'
-            : 'text-[#8b949e] hover:text-[#00FF41] hover:bg-[#00FF4108]'
+            ? 'bg-brand text-[#0A0A0A] font-bold'
+            : 'text-text-body hover:text-brand hover:bg-brand/5'
         }`}
       >
         浏览量
       </a>
       <a
         href="/leaderboard?tab=votes"
-        class={`px-5 py-2 text-xs font-mono tracking-widest transition-colors border-l border-[#30363d] ${
+        class={`px-5 py-2 text-xs font-mono tracking-widest transition-colors border-l border-border ${
           tab === 'votes'
             ? 'bg-[#22c55e] text-[#0A0A0A] font-bold'
-            : 'text-[#8b949e] hover:text-[#22c55e] hover:bg-[#22c55e08]'
+            : 'text-text-body hover:text-success hover:bg-[#22c55e08]'
         }`}
       >
         点赞数
@@ -143,36 +143,36 @@ const rankLabel = (i: number) =>
     <!-- Stats 概览 -->
     {ranked.length > 0 && (
       <div class="grid grid-cols-3 gap-4 mb-8 reveal">
-        <div class="bg-[#161b22] border border-[#21262d] p-4 text-center">
-          <div class="text-2xl font-mono font-bold text-[#00FF41]">{ranked.length}</div>
-          <div class="text-xs text-[#8b949e] mt-1 tracking-widest font-mono">上榜图谱</div>
+        <div class="bg-surface-2 border border-border-subtle p-4 text-center">
+          <div class="text-2xl font-mono font-bold text-brand">{ranked.length}</div>
+          <div class="text-xs text-text-body mt-1 tracking-widest font-mono">上榜图谱</div>
         </div>
         {tab === 'views' ? (
           <>
-            <div class="bg-[#161b22] border border-[#21262d] p-4 text-center">
-              <div class="text-2xl font-mono font-bold text-[#cdd9e5]">{totalViews.toLocaleString()}</div>
-              <div class="text-xs text-[#8b949e] mt-1 tracking-widest font-mono">总浏览量</div>
+            <div class="bg-surface-2 border border-border-subtle p-4 text-center">
+              <div class="text-2xl font-mono font-bold text-text-hi">{totalViews.toLocaleString()}</div>
+              <div class="text-xs text-text-body mt-1 tracking-widest font-mono">总浏览量</div>
             </div>
-            <div class="bg-[#161b22] border border-[#21262d] p-4 text-center">
-              <div class="text-xl font-mono font-bold text-[#cdd9e5] truncate" title={topItem?.title}>
+            <div class="bg-surface-2 border border-border-subtle p-4 text-center">
+              <div class="text-xl font-mono font-bold text-text-hi truncate" title={topItem?.title}>
                 {topItem ? topItem.viewCount.toLocaleString() : '—'}
               </div>
-              <div class="text-xs text-[#8b949e] mt-1 tracking-widest font-mono">最高浏览</div>
+              <div class="text-xs text-text-body mt-1 tracking-widest font-mono">最高浏览</div>
             </div>
           </>
         ) : (
           <>
-            <div class="bg-[#161b22] border border-[#21262d] p-4 text-center">
-              <div class={`text-2xl font-mono font-bold ${totalVotes >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+            <div class="bg-surface-2 border border-border-subtle p-4 text-center">
+              <div class={`text-2xl font-mono font-bold ${totalVotes >= 0 ? 'text-success' : 'text-danger'}`}>
                 {totalVotes >= 0 ? '+' : ''}{totalVotes.toLocaleString()}
               </div>
-              <div class="text-xs text-[#8b949e] mt-1 tracking-widest font-mono">净票总数</div>
+              <div class="text-xs text-text-body mt-1 tracking-widest font-mono">净票总数</div>
             </div>
-            <div class="bg-[#161b22] border border-[#21262d] p-4 text-center">
-              <div class={`text-2xl font-mono font-bold ${(topItem?.voteScore ?? 0) >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+            <div class="bg-surface-2 border border-border-subtle p-4 text-center">
+              <div class={`text-2xl font-mono font-bold ${(topItem?.voteScore ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
                 {topItem ? `${topItem.voteScore > 0 ? '+' : ''}${topItem.voteScore}` : '—'}
               </div>
-              <div class="text-xs text-[#8b949e] mt-1 tracking-widest font-mono">最高票数</div>
+              <div class="text-xs text-text-body mt-1 tracking-widest font-mono">最高票数</div>
             </div>
           </>
         )}
@@ -180,15 +180,15 @@ const rankLabel = (i: number) =>
     )}
 
     {error ? (
-      <div class="p-8 text-center border border-[#30363d]">
+      <div class="p-8 text-center border border-border">
         <p class="text-red-500 font-mono">{error}</p>
       </div>
     ) : ranked.length === 0 ? (
-      <div class="py-20 text-center border border-dashed border-[#30363d]">
-        <p class="text-[#8b949e] font-mono text-sm mb-4">
+      <div class="py-20 text-center border border-dashed border-border">
+        <p class="text-text-body font-mono text-sm mb-4">
           {tab === 'votes' ? '暂无被投票的冰山图' : '暂无已发布的冰山图'}
         </p>
-        <a href="/iceberg/new" class="text-[#00FF41] font-mono text-sm hover:underline">成为第一个 →</a>
+        <a href="/iceberg/new" class="text-brand font-mono text-sm hover:underline">成为第一个 →</a>
       </div>
     ) : (
       <div class="space-y-2 reveal">
@@ -200,45 +200,45 @@ const rankLabel = (i: number) =>
           return (
             <a
               href={`/iceberg/${iceberg.slug || iceberg.id}`}
-              class={`rank-card ${rankBorderClass(index)} group flex items-center gap-4 p-4 bg-[#161b22] border border-[#21262d] transition-all duration-200`}
+              class={`rank-card ${rankBorderClass(index)} group flex items-center gap-4 p-4 bg-surface-2 border border-border-subtle transition-all duration-200`}
             >
               <!-- 排名序号 -->
               <div class="w-8 flex flex-col items-center gap-0.5 flex-shrink-0 font-mono">
                 {index < 3 ? (
                   <>
                     <span class={`text-[9px] leading-none ${
-                      index === 0 ? 'text-[#f59e0b]' :
+                      index === 0 ? 'text-warning' :
                       index === 1 ? 'text-[#9ca3af]' :
                       'text-[#cd7f32]'
                     }`}>{index === 0 ? '▲' : index === 1 ? '●' : '■'}</span>
                     <span class={`text-sm font-bold leading-none border px-1.5 py-0.5 ${
-                      index === 0 ? 'text-[#f59e0b] border-[#f59e0b40] bg-[#f59e0b08]' :
+                      index === 0 ? 'text-warning border-warning/25 bg-warning/5' :
                       index === 1 ? 'text-[#9ca3af] border-[#9ca3af30] bg-[#9ca3af06]' :
                                     'text-[#cd7f32] border-[#cd7f3240] bg-[#cd7f3208]'
                     }`}>{rankLabel(index)}</span>
                   </>
                 ) : (
-                  <span class="text-xs text-[#6e7681]">{rankLabel(index)}</span>
+                  <span class="text-xs text-text-mid">{rankLabel(index)}</span>
                 )}
               </div>
 
               <!-- 标题 + 描述 + 进度条 -->
               <div class="flex-1 min-w-0">
-                <h3 class={`font-mono text-sm text-[#cdd9e5] transition-colors truncate ${
-                  index === 0 ? 'group-hover:text-[#f59e0b]' :
+                <h3 class={`font-mono text-sm text-text-hi transition-colors truncate ${
+                  index === 0 ? 'group-hover:text-warning' :
                   index === 1 ? 'group-hover:text-[#9ca3af]' :
                   index === 2 ? 'group-hover:text-[#cd7f32]' :
-                  'group-hover:text-[#00FF41]'
+                  'group-hover:text-brand'
                 }`}>
                   {iceberg.title}
                 </h3>
                 {iceberg.description && (
-                  <p class="text-xs text-[#8b949e] mt-0.5 truncate">{iceberg.description}</p>
+                  <p class="text-xs text-text-body mt-0.5 truncate">{iceberg.description}</p>
                 )}
                 <div class="view-bar mt-2">
                   <div class="view-bar-fill" style={`width:${barWidth}%; background:${barColor}`}></div>
                 </div>
-                <div class="flex items-center gap-3 mt-1.5 text-xs text-[#8b949e] font-mono">
+                <div class="flex items-center gap-3 mt-1.5 text-xs text-text-body font-mono">
                   <span>{iceberg._count.tiers} 层</span>
                   {iceberg.author && (
                     <span>@{iceberg.author.nickname || iceberg.author.username}</span>
@@ -252,31 +252,31 @@ const rankLabel = (i: number) =>
                 {tab === 'views' ? (
                   <>
                     <div>
-                      <div class="text-base font-mono font-semibold text-[#00FF41]">
+                      <div class="text-base font-mono font-semibold text-brand">
                         {iceberg.viewCount.toLocaleString()}
                       </div>
-                      <div class="text-[10px] text-[#8b949e] font-mono">浏览</div>
+                      <div class="text-[10px] text-text-body font-mono">浏览</div>
                     </div>
                     <div>
-                      <div class={`text-sm font-mono ${iceberg.voteScore > 0 ? 'text-[#22c55e]' : iceberg.voteScore < 0 ? 'text-[#ef4444]' : 'text-[#6e7681]'}`}>
+                      <div class={`text-sm font-mono ${iceberg.voteScore > 0 ? 'text-success' : iceberg.voteScore < 0 ? 'text-danger' : 'text-text-mid'}`}>
                         {iceberg.voteScore > 0 ? '+' : ''}{iceberg.voteScore}
                       </div>
-                      <div class="text-[10px] text-[#8b949e] font-mono">票</div>
+                      <div class="text-[10px] text-text-body font-mono">票</div>
                     </div>
                   </>
                 ) : (
                   <>
                     <div>
-                      <div class={`text-base font-mono font-semibold ${iceberg.voteScore > 0 ? 'text-[#22c55e]' : iceberg.voteScore < 0 ? 'text-[#ef4444]' : 'text-[#8b949e]'}`}>
+                      <div class={`text-base font-mono font-semibold ${iceberg.voteScore > 0 ? 'text-success' : iceberg.voteScore < 0 ? 'text-danger' : 'text-text-body'}`}>
                         {iceberg.voteScore > 0 ? '+' : ''}{iceberg.voteScore}
                       </div>
-                      <div class="text-[10px] text-[#8b949e] font-mono">票</div>
+                      <div class="text-[10px] text-text-body font-mono">票</div>
                     </div>
                     <div>
-                      <div class="text-sm font-mono text-[#8b949e]">
+                      <div class="text-sm font-mono text-text-body">
                         {iceberg.viewCount.toLocaleString()}
                       </div>
-                      <div class="text-[10px] text-[#8b949e] font-mono">浏览</div>
+                      <div class="text-[10px] text-text-body font-mono">浏览</div>
                     </div>
                   </>
                 )}
