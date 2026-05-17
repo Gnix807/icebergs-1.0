@@ -1,37 +1,94 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import type { ChecklistItem } from '../../lib/types';
 import { useModalAnimation } from '../../hooks/useModalAnimation';
 import * as dndCore from '@dnd-kit/core';
 import {
   SortableContext,
+  arrayMove,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { TierCard } from './TierCard';
-import { useIcebergStore, type Tier, type Item } from '../../stores/icebergStore';
+import { useIcebergStore, type Tier, type Item, type Iceberg } from '../../stores/icebergStore';
 import { toast } from '../ui/Toast';
+import { ICEBERG_TOPICS, isPresetIcebergTopic, normalizeIcebergTopic } from '../../lib/icebergTopic';
 
 const { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } = dndCore;
 type DragEndEvent = dndCore.DragEndEvent;
 
-const EMPTY_ICEBERG = {
-  id: 'new',
-  slug: '',
-  title: '未命名冰山图',
-  description: '',
-  authorId: '',
-  status: 'DRAFT' as const,
-  viewCount: 0,
-  tiers: [],
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-};
+const DRAFT_STORAGE_PREFIX = 'iceberg_draft_';
+const LEGACY_DRAFT_KEY = 'iceberg_draft';
+const VERSION_HISTORY_PREFIX = 'iceberg_draft_history_';
+const VERSION_HISTORY_LIMIT = 12;
 
-const LOCALSTORAGE_KEY = 'iceberg_draft';
+function buildSeedTiers(icebergId: string): Tier[] {
+  const now = Date.now();
+  return [
+    { id: `tier_${now}_0`, name: 'Tier 1', desc: '', order: 0, icebergId, items: [] },
+    { id: `tier_${now}_1`, name: 'Tier 2', desc: '', order: 1, icebergId, items: [] },
+    { id: `tier_${now}_2`, name: 'Tier 3', desc: '', order: 2, icebergId, items: [] },
+  ];
+}
+
+function buildEmptyIceberg(tempId: string): Iceberg {
+  return {
+    id: tempId,
+    slug: '',
+    title: '未命名冰山图',
+    description: '',
+    topic: 'general',
+    authorId: '',
+    status: 'DRAFT',
+    viewCount: 0,
+    tiers: buildSeedTiers(tempId),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    review: null,
+  };
+}
+
+function buildCreatePayload(target: Iceberg, slug: string) {
+  return {
+    title: target.title,
+    description: target.description,
+    topic: target.topic,
+    slug,
+    tiers: target.tiers.map((tier, tierIndex) => ({
+      name: tier.name,
+      desc: tier.desc ?? '',
+      order: typeof tier.order === 'number' ? tier.order : tierIndex,
+      items: tier.items.map((item, itemIndex) => ({
+        title: item.title,
+        desc: item.desc ?? '',
+        order: typeof item.order === 'number' ? item.order : itemIndex,
+        labels: item.labels ?? [],
+      })),
+    })),
+  };
+}
 
 interface IcebergEditorProps {
   icebergId?: string;
+}
+
+type IcebergDraft = Iceberg & { savedAt?: string };
+type VersionSource = 'auto' | 'manual' | 'submit';
+interface DraftVersion {
+  id: string;
+  savedAt: string;
+  source: VersionSource;
+  snapshot: Iceberg;
+}
+
+interface SyncFailure {
+  key: string;
+  message: string;
+  method: 'POST' | 'PUT' | 'DELETE';
+  url: string;
+  body?: Record<string, unknown>;
+  attempts: number;
+  lastAt: string;
 }
 
 export function IcebergEditor({ icebergId }: IcebergEditorProps) {
@@ -42,13 +99,14 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     setIceberg,
     updateTitle,
     updateDescription,
+    updateTopic,
     addTier,
     updateTier,
     removeTier,
+    reorderTiers,
     addItem,
     updateItem,
     removeItem,
-    moveItem,
     setDirty,
     setLastSaved,
   } = useIcebergStore();
@@ -58,7 +116,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [showBackConfirm, setShowBackConfirm] = useState(false);
   const [showRecovery, setShowRecovery] = useState(false);
-  const [draftToRecover, setDraftToRecover] = useState<Iceberg | null>(null);
+  const [draftToRecover, setDraftToRecover] = useState<IcebergDraft | null>(null);
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const { mounted: deleteMounted, isLeaving: deleteLeaving } = useModalAnimation(showDeleteConfirm);
@@ -66,6 +124,16 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [customSlug, setCustomSlug] = useState('');
   const [slugError, setSlugError] = useState<string | null>(null);
+  const [useCustomTopic, setUseCustomTopic] = useState(false);
+  const [customTopicInput, setCustomTopicInput] = useState('');
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [versionHistory, setVersionHistory] = useState<DraftVersion[]>([]);
+  const { mounted: historyMounted, isLeaving: historyLeaving } = useModalAnimation(showVersionHistory);
+  const [syncFailures, setSyncFailures] = useState<SyncFailure[]>([]);
+  const creatingIcebergRef = useRef<Promise<Iceberg | null> | null>(null);
+  const tiersScrollRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollTiersUp, setCanScrollTiersUp] = useState(false);
+  const [canScrollTiersDown, setCanScrollTiersDown] = useState(false);
 
   const SLUG_RE = /^[a-zA-Z0-9_-]{2,60}$/;
 
@@ -75,10 +143,141 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     return null;
   }
 
+  function withTopic(target: Iceberg): Iceberg {
+    return {
+      ...target,
+      topic: normalizeIcebergTopic(target.topic),
+    };
+  }
+
   function handleSlugChange(val: string) {
     setCustomSlug(val);
     setSlugError(validateSlug(val));
   }
+
+  const getDraftStorageKey = useCallback((target: Iceberg | null = null) => {
+    if (target && !target.id.startsWith('temp_')) return `${DRAFT_STORAGE_PREFIX}${target.id}`;
+    if (icebergId && icebergId !== 'new') return `${DRAFT_STORAGE_PREFIX}${icebergId}`;
+    return `${DRAFT_STORAGE_PREFIX}new`;
+  }, [icebergId]);
+
+  const getHistoryKey = useCallback((target: Iceberg | null = null) => {
+    if (target && !target.id.startsWith('temp_')) {
+      return `${VERSION_HISTORY_PREFIX}${target.id}`;
+    }
+    return `${VERSION_HISTORY_PREFIX}${icebergId ?? 'new'}`;
+  }, [icebergId]);
+
+  const loadVersionHistory = useCallback((target: Iceberg | null = null) => {
+    try {
+      const raw = localStorage.getItem(getHistoryKey(target));
+      if (!raw) {
+        setVersionHistory([]);
+        return;
+      }
+      const parsed = JSON.parse(raw) as DraftVersion[];
+      if (!Array.isArray(parsed)) {
+        setVersionHistory([]);
+        return;
+      }
+      const clean = parsed.filter((entry) =>
+        entry &&
+        typeof entry.id === 'string' &&
+        typeof entry.savedAt === 'string' &&
+        entry.snapshot &&
+        typeof entry.snapshot.id === 'string',
+      );
+      setVersionHistory(clean.slice(0, VERSION_HISTORY_LIMIT));
+    } catch {
+      setVersionHistory([]);
+    }
+  }, [getHistoryKey]);
+
+  const pushVersionSnapshot = useCallback((target: Iceberg, source: VersionSource) => {
+    try {
+      const key = getHistoryKey(target);
+      const raw = localStorage.getItem(key);
+      const prev = raw ? (JSON.parse(raw) as DraftVersion[]) : [];
+      const now = new Date().toISOString();
+      const nextEntry: DraftVersion = {
+        id: `${now}-${Math.random().toString(36).slice(2, 8)}`,
+        savedAt: now,
+        source,
+        snapshot: {
+          ...target,
+          tiers: target.tiers.map((tier) => ({
+            ...tier,
+            items: tier.items.map((item) => ({ ...item })),
+          })),
+        },
+      };
+      const merged = [nextEntry, ...prev].slice(0, VERSION_HISTORY_LIMIT);
+      localStorage.setItem(key, JSON.stringify(merged));
+      setVersionHistory(merged);
+    } catch {
+      // ignore localStorage failures
+    }
+  }, [getHistoryKey]);
+
+  const queueSyncFailure = useCallback((failure: Omit<SyncFailure, 'attempts' | 'lastAt'>) => {
+    const now = new Date().toISOString();
+    setSyncFailures((prev) => {
+      const hit = prev.find((item) => item.key === failure.key);
+      if (hit) {
+        return prev.map((item) =>
+          item.key === failure.key
+            ? { ...item, message: failure.message, method: failure.method, url: failure.url, body: failure.body, attempts: item.attempts + 1, lastAt: now }
+            : item,
+        );
+      }
+      return [{ ...failure, attempts: 1, lastAt: now }, ...prev].slice(0, 24);
+    });
+  }, []);
+
+  const clearSyncFailure = useCallback((key: string) => {
+    setSyncFailures((prev) => prev.filter((item) => item.key !== key));
+  }, []);
+
+  const retrySyncFailure = useCallback(async (key: string) => {
+    const target = syncFailures.find((item) => item.key === key);
+    if (!target) return;
+    try {
+      const res = await fetch(target.url, {
+        method: target.method,
+        headers: target.body ? { 'Content-Type': 'application/json' } : undefined,
+        body: target.body ? JSON.stringify(target.body) : undefined,
+      });
+      if (res.ok || res.status === 404) {
+        clearSyncFailure(key);
+        toast('已完成一次失败同步重试');
+        return;
+      }
+      throw new Error(`HTTP ${res.status}`);
+    } catch {
+      setSyncFailures((prev) =>
+        prev.map((item) => item.key === key ? { ...item, attempts: item.attempts + 1, lastAt: new Date().toISOString() } : item),
+      );
+      toast('重试失败，请稍后再试', 'error');
+    }
+  }, [syncFailures, clearSyncFailure]);
+
+  const retryAllSyncFailures = useCallback(async () => {
+    for (const failure of syncFailures) {
+      // eslint-disable-next-line no-await-in-loop
+      await retrySyncFailure(failure.key);
+    }
+  }, [syncFailures, retrySyncFailure]);
+  const clearAllSyncFailures = useCallback(() => {
+    setSyncFailures([]);
+  }, []);
+
+  const restoreVersion = (entry: DraftVersion) => {
+    setIceberg(withTopic(entry.snapshot));
+    setDirty(true);
+    setLastSaved(new Date(entry.savedAt));
+    setShowVersionHistory(false);
+    toast(`已恢复到 ${new Date(entry.savedAt).toLocaleString()} 的版本`);
+  };
 
   // 新建时：标题变化自动填充 ID 建议（仅当 ID 还未手动修改时）
   const slugTouched = useRef(false);
@@ -94,36 +293,58 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   useEffect(() => {
     if (!icebergId) {
       // 创建新冰山图 — 强制清空 store
-      setIceberg({ ...EMPTY_ICEBERG, id: `temp_${Date.now()}` });
+      const tempId = `temp_${Date.now()}`;
+      setIceberg(buildEmptyIceberg(tempId));
     } else if (!iceberg) {
       // 编辑模式但 store 为空时填充占位，等待 fetch 完成
-      setIceberg({ ...EMPTY_ICEBERG, id: `temp_${Date.now()}` });
+      const tempId = `temp_${Date.now()}`;
+      setIceberg(buildEmptyIceberg(tempId));
     }
+    setSyncFailures([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!iceberg) return;
+    if (isPresetIcebergTopic(iceberg.topic)) {
+      setUseCustomTopic(false);
+      setCustomTopicInput('');
+      return;
+    }
+    setUseCustomTopic(true);
+    setCustomTopicInput(iceberg.topic);
+  }, [iceberg?.topic, iceberg?.id]);
 
   // 检查 localStorage 是否有未完成的草稿
   useEffect(() => {
     if (!icebergId || icebergId !== 'new') return;
 
-    const savedDraft = localStorage.getItem(LOCALSTORAGE_KEY);
+    const draftKey = getDraftStorageKey(null);
+    const savedDraft = localStorage.getItem(draftKey) ?? localStorage.getItem(LEGACY_DRAFT_KEY);
     if (savedDraft) {
       try {
-        const draft = JSON.parse(savedDraft);
+        const draft = JSON.parse(savedDraft) as IcebergDraft;
         if (draft.title && draft.title !== '未命名冰山图') {
-          setDraftToRecover(draft);
+          setDraftToRecover({
+            ...draft,
+            topic: normalizeIcebergTopic(draft.topic),
+          });
           setShowRecovery(true);
+          if (!localStorage.getItem(draftKey)) {
+            localStorage.setItem(draftKey, savedDraft);
+          }
+          localStorage.removeItem(LEGACY_DRAFT_KEY);
         }
       } catch {
         // ignore parse errors
       }
     }
-  }, [icebergId]);
+  }, [icebergId, getDraftStorageKey]);
 
   // 恢复草稿
   const handleRecoverDraft = () => {
     if (draftToRecover) {
-      setIceberg(draftToRecover);
+      setIceberg(withTopic(draftToRecover));
       setDirty(true);
       setShowRecovery(false);
     }
@@ -131,7 +352,8 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
   // 丢弃草稿
   const handleDiscardDraft = () => {
-    localStorage.removeItem(LOCALSTORAGE_KEY);
+    localStorage.removeItem(getDraftStorageKey(iceberg));
+    localStorage.removeItem(LEGACY_DRAFT_KEY);
     setShowRecovery(false);
     setDraftToRecover(null);
   };
@@ -144,8 +366,13 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       ...iceberg,
       savedAt: new Date().toISOString(),
     };
-    localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(savedDraft));
-  }, [iceberg, isDirty]);
+    localStorage.setItem(getDraftStorageKey(iceberg), JSON.stringify(savedDraft));
+  }, [iceberg, isDirty, getDraftStorageKey]);
+
+  // 切换编辑目标时读取版本历史
+  useEffect(() => {
+    loadVersionHistory(iceberg ?? null);
+  }, [loadVersionHistory, iceberg?.id, icebergId]);
 
   // 加载现有冰山图
   useEffect(() => {
@@ -155,11 +382,11 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     setLoading(true);
     setError(null);
 
-    fetch(`/api/icebergs/${icebergId}`)
+    fetch(`/api/icebergs/${icebergId}?context=editor`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          setIceberg(data.data);
+          setIceberg(withTopic(data.data));
         } else {
           setError(data.error?.message || '加载失败');
         }
@@ -190,30 +417,58 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       setIsSaving(true);
       try {
         if (iceberg.id.startsWith('temp_')) {
-          const res = await fetch('/api/icebergs', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: iceberg.title, description: iceberg.description, slug: customSlug }),
-          });
-          const data = await res.json();
-          if (data.success) {
-            setIceberg(data.data);
+          const created = await createTempIcebergOnServer('auto');
+          if (created) {
             setDirty(false);
             setLastSaved(new Date());
-            localStorage.removeItem(LOCALSTORAGE_KEY);
+            pushVersionSnapshot(created, 'auto');
+            localStorage.removeItem(getDraftStorageKey(iceberg));
           }
         } else {
-          await fetch(`/api/icebergs/${iceberg.id}`, {
+          const payload = {
+            title: iceberg.title,
+            description: iceberg.description,
+            topic: iceberg.topic,
+            status: iceberg.status,
+          };
+          const res = await fetch(`/api/icebergs/${iceberg.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: iceberg.title, description: iceberg.description, status: iceberg.status }),
+            body: JSON.stringify(payload),
           });
-          setDirty(false);
-          setLastSaved(new Date());
-          localStorage.removeItem(LOCALSTORAGE_KEY);
+          const data = await res.json().catch(() => null);
+          if (res.ok && data?.success) {
+            setDirty(false);
+            setLastSaved(new Date());
+            pushVersionSnapshot(iceberg, 'auto');
+            localStorage.removeItem(getDraftStorageKey(iceberg));
+            clearSyncFailure(`iceberg:update:${iceberg.id}`);
+          } else {
+            queueSyncFailure({
+              key: `iceberg:update:${iceberg.id}`,
+              message: data?.error?.message || '草稿自动保存失败，等待重试',
+              method: 'PUT',
+              url: `/api/icebergs/${iceberg.id}`,
+              body: payload,
+            });
+          }
         }
       } catch (err) {
         console.error('自动保存失败:', err);
+        if (!iceberg.id.startsWith('temp_')) {
+          queueSyncFailure({
+            key: `iceberg:update:${iceberg.id}`,
+            message: '草稿自动保存失败，等待重试',
+            method: 'PUT',
+            url: `/api/icebergs/${iceberg.id}`,
+            body: {
+              title: iceberg.title,
+              description: iceberg.description,
+              topic: iceberg.topic,
+              status: iceberg.status,
+            },
+          });
+        }
       } finally {
         setIsSaving(false);
       }
@@ -224,59 +479,114 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
         clearTimeout(autoSaveTimerRef.current);
       }
     };
-  }, [isDirty, iceberg]);
+  }, [isDirty, iceberg, customSlug, pushVersionSnapshot, getDraftStorageKey, clearSyncFailure, queueSyncFailure]);
 
-  // 获取真实的 iceberg id（如果是 temp_ 需要先创建）
-  const getRealIcebergId = useCallback(async () => {
-    if (!iceberg) return null;
+  const createTempIcebergOnServer = useCallback(async (
+    source: 'auto' | 'manual' | 'sync',
+  ): Promise<Iceberg | null> => {
+    const current = useIcebergStore.getState().iceberg ?? iceberg;
+    if (!current || !current.id.startsWith('temp_')) return current ?? null;
+    if (creatingIcebergRef.current) {
+      return await creatingIcebergRef.current;
+    }
 
-    if (iceberg.id.startsWith('temp_')) {
-      const slugErr = validateSlug(customSlug);
-      if (slugErr) { toast(slugErr, 'error'); return null; }
-      const res = await fetch('/api/icebergs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: iceberg.title, description: iceberg.description, slug: customSlug }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setIceberg(data.data);
-        return data.data.id;
-      }
-      toast(data.error?.message || '创建失败', 'error');
+    const slugErr = validateSlug(customSlug);
+    if (slugErr) {
+      if (source !== 'sync') toast(slugErr, 'error');
       return null;
     }
-    return iceberg.id;
-  }, [iceberg, setIceberg, customSlug]);
+
+    const payload = buildCreatePayload(current, customSlug);
+    const creatingTask = (async (): Promise<Iceberg | null> => {
+      try {
+        const res = await fetch('/api/icebergs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => null);
+        if (res.ok && data?.success) {
+          const created = withTopic(data.data);
+          setIceberg(created);
+          clearSyncFailure('iceberg:create:temp');
+          return created;
+        }
+        queueSyncFailure({
+          key: 'iceberg:create:temp',
+          message: data?.error?.message || '草稿创建失败，等待重试',
+          method: 'POST',
+          url: '/api/icebergs',
+          body: payload,
+        });
+        if (source !== 'sync') toast(data?.error?.message || '创建失败', 'error');
+      } catch (err) {
+        console.error('创建冰山图失败:', err);
+        queueSyncFailure({
+          key: 'iceberg:create:temp',
+          message: '草稿创建失败，等待重试',
+          method: 'POST',
+          url: '/api/icebergs',
+          body: payload,
+        });
+        if (source !== 'sync') toast('创建失败，请稍后重试', 'error');
+      }
+      return null;
+    })();
+
+    creatingIcebergRef.current = creatingTask;
+    try {
+      return await creatingTask;
+    } finally {
+      creatingIcebergRef.current = null;
+    }
+  }, [iceberg, customSlug, setIceberg, clearSyncFailure, queueSyncFailure]);
+
+  const getRealIcebergId = useCallback(async (source: 'auto' | 'manual' | 'sync' = 'sync') => {
+    const current = useIcebergStore.getState().iceberg ?? iceberg;
+    if (!current) return null;
+    if (!current.id.startsWith('temp_')) return current.id;
+    const created = await createTempIcebergOnServer(source);
+    return created?.id ?? null;
+  }, [iceberg, createTempIcebergOnServer]);
 
   // 确保 tier 已经同步到服务器
   const ensureTierSynced = useCallback(async (tier: Tier) => {
     if (tier.id.startsWith('tier_')) {
       // 本地 tier，需要同步到服务器
-      const icebergId = await getRealIcebergId();
+      const icebergId = await getRealIcebergId('sync');
       if (!icebergId) return null;
 
       const res = await fetch(`/api/icebergs/${icebergId}/tiers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: tier.name, order: tier.order }),
+        body: JSON.stringify({ name: tier.name, desc: tier.desc ?? '', order: tier.order }),
       });
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
+        clearSyncFailure(`tier:create:${tier.id}`);
         return data.data; // 返回服务器的 tier
       }
+      queueSyncFailure({
+        key: `tier:create:${tier.id}`,
+        message: data?.error?.message || '层级创建未同步',
+        method: 'POST',
+        url: `/api/icebergs/${icebergId}/tiers`,
+        body: { name: tier.name, desc: tier.desc ?? '', order: tier.order },
+      });
       return null;
     }
     return tier; // 已经是服务器的数据
-  }, [getRealIcebergId]);
+  }, [getRealIcebergId, clearSyncFailure, queueSyncFailure]);
 
   // 添加层级
   const handleAddTier = async () => {
     if (!iceberg) return;
+    const wasTempIceberg = iceberg.id.startsWith('temp_');
 
     const newTier: Tier = {
       id: `tier_${Date.now()}`,
       name: `Tier ${iceberg.tiers.length + 1}`,
+      desc: '',
       order: iceberg.tiers.length,
       icebergId: iceberg.id,
       items: [],
@@ -286,28 +596,47 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     addTier(newTier);
     setDirty(true);
 
-    // 如果已经有真实的 iceberg id，同步到服务器
-    if (!iceberg.id.startsWith('temp_')) {
-      try {
-        const res = await fetch(`/api/icebergs/${iceberg.id}/tiers`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: newTier.name, order: newTier.order }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          // 更新本地 id 为服务器返回的 id
-          const currentIceberg = useIcebergStore.getState().iceberg;
-          if (currentIceberg) {
-            const updatedTiers = currentIceberg.tiers.map((t) =>
-              t.id === newTier.id ? { ...t, id: data.data.id } : t
-            );
-            setIceberg({ ...currentIceberg, tiers: updatedTiers });
-          }
+    // 临时冰山图先确保创建成功，避免后续词条同步出现孤儿 tier
+    if (wasTempIceberg) {
+      await getRealIcebergId('sync');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/icebergs/${iceberg.id}/tiers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newTier.name, desc: newTier.desc ?? '', order: newTier.order }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
+        // 更新本地 id 为服务器返回的 id
+        const currentIceberg = useIcebergStore.getState().iceberg;
+        if (currentIceberg) {
+          const updatedTiers = currentIceberg.tiers.map((t) =>
+            t.id === newTier.id ? { ...t, id: data.data.id } : t
+          );
+          setIceberg({ ...currentIceberg, tiers: updatedTiers });
         }
-      } catch (err) {
-        console.error('创建层级失败:', err);
+        clearSyncFailure(`tier:create:${newTier.id}`);
+      } else {
+        queueSyncFailure({
+          key: `tier:create:${newTier.id}`,
+          message: data?.error?.message || '层级创建未同步',
+          method: 'POST',
+          url: `/api/icebergs/${iceberg.id}/tiers`,
+          body: { name: newTier.name, desc: newTier.desc ?? '', order: newTier.order },
+        });
       }
+    } catch (err) {
+      console.error('创建层级失败:', err);
+      queueSyncFailure({
+        key: `tier:create:${newTier.id}`,
+        message: '层级创建未同步',
+        method: 'POST',
+        url: `/api/icebergs/${iceberg.id}/tiers`,
+        body: { name: newTier.name, desc: newTier.desc ?? '', order: newTier.order },
+      });
     }
   };
 
@@ -317,15 +646,38 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     setDirty(true);
 
     // 如果是服务器数据，同步更新
-    if (!tierId.startsWith('tier_') && (updates.name !== undefined || updates.desc !== undefined)) {
+    if (!tierId.startsWith('tier_') && (updates.name !== undefined || updates.desc !== undefined || updates.order !== undefined)) {
+      const payload: Record<string, unknown> = {};
+      if (updates.name !== undefined) payload.name = updates.name;
+      if (updates.desc !== undefined) payload.desc = updates.desc;
+      if (updates.order !== undefined) payload.order = updates.order;
       try {
-        await fetch(`/api/tiers/${tierId}`, {
+        const res = await fetch(`/api/tiers/${tierId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: updates.name, desc: updates.desc }),
+          body: JSON.stringify(payload),
         });
+        const data = await res.json().catch(() => null);
+        if (!(res.ok && data?.success)) {
+          queueSyncFailure({
+            key: `tier:update:${tierId}`,
+            message: data?.error?.message || '层级更新未同步',
+            method: 'PUT',
+            url: `/api/tiers/${tierId}`,
+            body: payload,
+          });
+        } else {
+          clearSyncFailure(`tier:update:${tierId}`);
+        }
       } catch (err) {
         console.error('更新层级失败:', err);
+        queueSyncFailure({
+          key: `tier:update:${tierId}`,
+          message: '层级更新未同步',
+          method: 'PUT',
+          url: `/api/tiers/${tierId}`,
+          body: payload,
+        });
       }
     }
   };
@@ -337,11 +689,27 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
     if (!tierId.startsWith('tier_')) {
       try {
-        await fetch(`/api/tiers/${tierId}`, {
+        const res = await fetch(`/api/tiers/${tierId}`, {
           method: 'DELETE',
         });
+        if (!res.ok && res.status !== 404) {
+          queueSyncFailure({
+            key: `tier:delete:${tierId}`,
+            message: '层级删除未同步',
+            method: 'DELETE',
+            url: `/api/tiers/${tierId}`,
+          });
+        } else {
+          clearSyncFailure(`tier:delete:${tierId}`);
+        }
       } catch (err) {
         console.error('删除层级失败:', err);
+        queueSyncFailure({
+          key: `tier:delete:${tierId}`,
+          message: '层级删除未同步',
+          method: 'DELETE',
+          url: `/api/tiers/${tierId}`,
+        });
       }
     }
   };
@@ -362,18 +730,20 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       if (syncedTier) {
         realTierId = syncedTier.id;
       } else {
+        toast('层级尚未同步，词条将保留在本地草稿中', 'error');
         return;
       }
     }
 
+    const payload = { title: item.title, desc: item.desc, order: item.order, labels: item.labels ?? [] };
     try {
       const res = await fetch(`/api/tiers/${realTierId}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: item.title, desc: item.desc, order: item.order, labels: item.labels ?? [] }),
+        body: JSON.stringify(payload),
       });
-      const data = await res.json();
-      if (data.success) {
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
         // 更新本地 id
         const currentIceberg = useIcebergStore.getState().iceberg;
         if (currentIceberg) {
@@ -389,9 +759,25 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           );
           setIceberg({ ...currentIceberg, tiers: updatedTiers });
         }
+        clearSyncFailure(`item:create:${item.id}`);
+      } else {
+        queueSyncFailure({
+          key: `item:create:${item.id}`,
+          message: data?.error?.message || '词条创建未同步',
+          method: 'POST',
+          url: `/api/tiers/${realTierId}/items`,
+          body: payload,
+        });
       }
     } catch (err) {
       console.error('创建条目失败:', err);
+      queueSyncFailure({
+        key: `item:create:${item.id}`,
+        message: '词条创建未同步',
+        method: 'POST',
+        url: `/api/tiers/${realTierId}/items`,
+        body: payload,
+      });
     }
   };
 
@@ -401,18 +787,38 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     setDirty(true);
 
     if (!itemId.startsWith('item_') && (updates.title !== undefined || updates.desc !== undefined || updates.labels !== undefined)) {
+      const payload = {
+        title: updates.title,
+        desc: updates.desc,
+        labels: updates.labels,
+      };
       try {
-        await fetch(`/api/items/${itemId}`, {
+        const res = await fetch(`/api/items/${itemId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: updates.title,
-            desc: updates.desc,
-            labels: updates.labels,
-          }),
+          body: JSON.stringify(payload),
         });
+        const data = await res.json().catch(() => null);
+        if (!(res.ok && data?.success)) {
+          queueSyncFailure({
+            key: `item:update:${itemId}`,
+            message: data?.error?.message || '词条更新未同步',
+            method: 'PUT',
+            url: `/api/items/${itemId}`,
+            body: payload,
+          });
+        } else {
+          clearSyncFailure(`item:update:${itemId}`);
+        }
       } catch (err) {
         console.error('更新条目失败:', err);
+        queueSyncFailure({
+          key: `item:update:${itemId}`,
+          message: '词条更新未同步',
+          method: 'PUT',
+          url: `/api/items/${itemId}`,
+          body: payload,
+        });
       }
     }
   };
@@ -424,11 +830,27 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
     if (!itemId.startsWith('item_')) {
       try {
-        await fetch(`/api/items/${itemId}`, {
+        const res = await fetch(`/api/items/${itemId}`, {
           method: 'DELETE',
         });
+        if (!res.ok && res.status !== 404) {
+          queueSyncFailure({
+            key: `item:delete:${itemId}`,
+            message: '词条删除未同步',
+            method: 'DELETE',
+            url: `/api/items/${itemId}`,
+          });
+        } else {
+          clearSyncFailure(`item:delete:${itemId}`);
+        }
       } catch (err) {
         console.error('删除条目失败:', err);
+        queueSyncFailure({
+          key: `item:delete:${itemId}`,
+          message: '词条删除未同步',
+          method: 'DELETE',
+          url: `/api/items/${itemId}`,
+        });
       }
     }
   };
@@ -438,73 +860,119 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
+  const updateTierScrollState = useCallback(() => {
+    const el = tiersScrollRef.current;
+    if (!el) {
+      setCanScrollTiersUp(false);
+      setCanScrollTiersDown(false);
+      return;
+    }
+    const maxTop = el.scrollHeight - el.clientHeight;
+    const nextCanUp = maxTop > 4 && el.scrollTop > 8;
+    const nextCanDown = maxTop > 4 && el.scrollTop < maxTop - 8;
+    setCanScrollTiersUp((prev) => (prev === nextCanUp ? prev : nextCanUp));
+    setCanScrollTiersDown((prev) => (prev === nextCanDown ? prev : nextCanDown));
+  }, []);
 
-    const activeId = active.id as string;
-    const overId = over.id as string;
+  const scrollTiersToBottom = useCallback(() => {
+    const el = tiersScrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, []);
 
-    let fromTierId: string | null = null;
-    let toTierId: string | null = null;
+  const scrollTiersToTop = useCallback(() => {
+    const el = tiersScrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
-    iceberg?.tiers.forEach((tier) => {
-      if (tier.items.some((item) => item.id === activeId)) fromTierId = tier.id;
-      if (tier.items.some((item) => item.id === overId)) toTierId = tier.id;
-    });
+  useEffect(() => {
+    const el = tiersScrollRef.current;
+    if (!el) return;
+    const onScroll = () => updateTierScrollState();
+    onScroll();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(onScroll) : null;
+    resizeObserver?.observe(el);
+    const mutationObserver = typeof MutationObserver !== 'undefined' ? new MutationObserver(onScroll) : null;
+    mutationObserver?.observe(el, { childList: true, subtree: true, attributes: true });
+    const timer = window.setTimeout(onScroll, 80);
+    return () => {
+      window.clearTimeout(timer);
+      el.removeEventListener('scroll', onScroll);
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+    };
+  }, [updateTierScrollState, iceberg?.tiers.length]);
 
-    if (fromTierId && toTierId && fromTierId === toTierId) {
-      const tier = iceberg?.tiers.find((t) => t.id === fromTierId);
-      if (!tier) return;
-      const oldIndex = tier.items.findIndex((i) => i.id === activeId);
-      const newIndex = tier.items.findIndex((i) => i.id === overId);
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newItems = [...tier.items];
-        const [removed] = newItems.splice(oldIndex, 1);
-        newItems.splice(newIndex, 0, removed);
-        // 更新 order 字段
-        const orderedItems = newItems.map((item, idx) => ({ ...item, order: idx }));
-        updateTier(fromTierId, { items: orderedItems });
-        setDirty(true);
-        // 同步到服务器
-        syncItemOrders(fromTierId, orderedItems);
-      }
-    } else if (fromTierId && toTierId) {
-      const fromTier = iceberg?.tiers.find((t) => t.id === fromTierId);
-      const toTier = iceberg?.tiers.find((t) => t.id === toTierId);
-      const newIndex = toTier?.items.findIndex((i) => i.id === overId) ?? 0;
-      moveItem(activeId, fromTierId, toTierId, newIndex);
-      setDirty(true);
-      // 同步移动的 item
-      const movedItem = fromTier?.items.find((i) => i.id === activeId);
-      if (movedItem && !movedItem.id.startsWith('item_')) {
-        syncItemOrder(activeId, toTierId, newIndex);
-      }
-      // 重新排序目标 tier
-      if (toTier) {
-        const updatedToTier = { ...toTier, items: [...toTier.items] };
-        const movedItemInTarget = updatedToTier.items.find((i) => i.id === activeId);
-        if (movedItemInTarget) {
-          updatedToTier.items = updatedToTier.items.filter((i) => i.id !== activeId);
-          updatedToTier.items.splice(newIndex, 0, movedItemInTarget);
-          updatedToTier.items = updatedToTier.items.map((item, idx) => ({ ...item, order: idx }));
-          syncItemOrders(toTierId, updatedToTier.items);
+  // 同步 tier 排序到服务器
+  const syncTierOrders = async (tiers: Tier[]) => {
+    for (let i = 0; i < tiers.length; i++) {
+      const tier = tiers[i];
+      if (tier.id.startsWith('tier_')) continue;
+      const payload = { order: i };
+      try {
+        const res = await fetch(`/api/tiers/${tier.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json().catch(() => null);
+        if (res.ok && data?.success) {
+          clearSyncFailure(`tier:order:${tier.id}`);
+        } else {
+          queueSyncFailure({
+            key: `tier:order:${tier.id}`,
+            message: data?.error?.message || '层级排序未同步',
+            method: 'PUT',
+            url: `/api/tiers/${tier.id}`,
+            body: payload,
+          });
         }
+      } catch (err) {
+        console.error('同步 tier order 失败:', err);
+        queueSyncFailure({
+          key: `tier:order:${tier.id}`,
+          message: '层级排序未同步',
+          method: 'PUT',
+          url: `/api/tiers/${tier.id}`,
+          body: payload,
+        });
       }
     }
   };
 
-  // 同步单个 item 的 order 到服务器
+  // 同步单个 item 的 tier/order 到服务器
   const syncItemOrder = async (itemId: string, tierId: string, order: number) => {
     if (itemId.startsWith('item_')) return;
+    const payload = { order, tierId };
     try {
-      await fetch(`/api/items/${itemId}`, {
+      const res = await fetch(`/api/items/${itemId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order }),
+        body: JSON.stringify(payload),
       });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
+        clearSyncFailure(`item:order:${itemId}`);
+      } else {
+        queueSyncFailure({
+          key: `item:order:${itemId}`,
+          message: data?.error?.message || '词条位置未同步',
+          method: 'PUT',
+          url: `/api/items/${itemId}`,
+          body: payload,
+        });
+      }
     } catch (err) {
       console.error('同步 item order 失败:', err);
+      queueSyncFailure({
+        key: `item:order:${itemId}`,
+        message: '词条位置未同步',
+        method: 'PUT',
+        url: `/api/items/${itemId}`,
+        body: payload,
+      });
     }
   };
 
@@ -518,40 +986,151 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     }
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    if (!iceberg) return;
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    const activeType = active.data.current?.type as string | undefined;
+
+    // Tier 排序
+    if (activeType === 'tier') {
+      const oldIndex = iceberg.tiers.findIndex((t) => t.id === activeId);
+      const newIndex = iceberg.tiers.findIndex((t) => t.id === overId);
+      if (oldIndex === -1 || newIndex === -1) return;
+      const orderedTierIds = arrayMove(iceberg.tiers.map((t) => t.id), oldIndex, newIndex);
+      reorderTiers(orderedTierIds);
+      setDirty(true);
+      const orderedTiers = orderedTierIds
+        .map((id, idx) => {
+          const tier = iceberg.tiers.find((t) => t.id === id);
+          return tier ? { ...tier, order: idx } : null;
+        })
+        .filter((t): t is Tier => !!t);
+      void syncTierOrders(orderedTiers);
+      return;
+    }
+
+    // Item 排序 / 跨层移动
+    if (activeType !== 'item') return;
+
+    let fromTierId: string | null = null;
+    let toTierId: string | null = null;
+    let overItemIndex = -1;
+
+    for (const tier of iceberg.tiers) {
+      if (tier.items.some((item) => item.id === activeId)) fromTierId = tier.id;
+      const hitIndex = tier.items.findIndex((item) => item.id === overId);
+      if (hitIndex !== -1) {
+        toTierId = tier.id;
+        overItemIndex = hitIndex;
+      }
+      if (tier.id === overId) {
+        toTierId = tier.id;
+        overItemIndex = tier.items.length;
+      }
+    }
+
+    if (!fromTierId || !toTierId) return;
+
+    const fromTier = iceberg.tiers.find((t) => t.id === fromTierId);
+    const toTier = iceberg.tiers.find((t) => t.id === toTierId);
+    if (!fromTier || !toTier) return;
+
+    const movingItem = fromTier.items.find((item) => item.id === activeId);
+    if (!movingItem) return;
+
+    if (fromTierId === toTierId) {
+      const oldIndex = fromTier.items.findIndex((i) => i.id === activeId);
+      const newIndex = overItemIndex;
+      if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return;
+      const reordered = arrayMove(fromTier.items, oldIndex, newIndex).map((item, idx) => ({ ...item, order: idx }));
+      updateTier(fromTierId, { items: reordered });
+      setDirty(true);
+      void syncItemOrders(fromTierId, reordered);
+      return;
+    }
+
+    const fromItems = fromTier.items
+      .filter((item) => item.id !== activeId)
+      .map((item, idx) => ({ ...item, order: idx }));
+    const targetItems = toTier.items.filter((item) => item.id !== activeId);
+    const insertIndex = Math.max(0, Math.min(overItemIndex, targetItems.length));
+    targetItems.splice(insertIndex, 0, { ...movingItem, tierId: toTierId });
+    const toItems = targetItems.map((item, idx) => ({ ...item, tierId: toTierId, order: idx }));
+
+    updateTier(fromTierId, { items: fromItems });
+    updateTier(toTierId, { items: toItems });
+    setDirty(true);
+
+    void syncItemOrders(fromTierId, fromItems);
+    void syncItemOrder(activeId, toTierId, insertIndex);
+    void syncItemOrders(toTierId, toItems);
+  };
+
   const handleSave = async () => {
     if (!iceberg) return;
     try {
       if (iceberg.id.startsWith('temp_')) {
         const slugErr = validateSlug(customSlug);
         if (slugErr) { setSlugError(slugErr); toast(slugErr, 'error'); return; }
-        const res = await fetch('/api/icebergs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: iceberg.title, description: iceberg.description, slug: customSlug }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          setIceberg(data.data);
-          localStorage.removeItem(LOCALSTORAGE_KEY);
-        } else {
-          toast(data.error?.message || '保存失败', 'error');
+        const created = await createTempIcebergOnServer('manual');
+        if (created) {
+          setDirty(false);
+          setLastSaved(new Date());
+          pushVersionSnapshot(created, 'manual');
+          localStorage.removeItem(getDraftStorageKey(iceberg));
+          toast('草稿已保存');
         }
       } else {
+        const payload = {
+          title: iceberg.title,
+          description: iceberg.description,
+          topic: iceberg.topic,
+          status: iceberg.status,
+        };
         const res = await fetch(`/api/icebergs/${iceberg.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: iceberg.title, description: iceberg.description, status: iceberg.status }),
+          body: JSON.stringify(payload),
         });
-        const data = await res.json();
-        localStorage.removeItem(LOCALSTORAGE_KEY);
-        if (data.success) {
+        const data = await res.json().catch(() => null);
+        if (res.ok && data?.success) {
+          localStorage.removeItem(getDraftStorageKey(iceberg));
+          setDirty(false);
+          setLastSaved(new Date());
+          pushVersionSnapshot(iceberg, 'manual');
+          clearSyncFailure(`iceberg:update:${iceberg.id}`);
           toast('草稿已保存');
         } else {
+          queueSyncFailure({
+            key: `iceberg:update:${iceberg.id}`,
+            message: data?.error?.message || '保存失败，等待重试',
+            method: 'PUT',
+            url: `/api/icebergs/${iceberg.id}`,
+            body: payload,
+          });
           toast(data.error?.message || '保存失败', 'error');
         }
       }
     } catch (err) {
       console.error('保存失败:', err);
+      if (!iceberg.id.startsWith('temp_')) {
+        queueSyncFailure({
+          key: `iceberg:update:${iceberg.id}`,
+          message: '保存失败，等待重试',
+          method: 'PUT',
+          url: `/api/icebergs/${iceberg.id}`,
+          body: {
+            title: iceberg.title,
+            description: iceberg.description,
+            topic: iceberg.topic,
+            status: iceberg.status,
+          },
+        });
+      }
       toast('保存失败，请重试', 'error');
     }
   };
@@ -570,22 +1149,27 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     try {
       // 确保 iceberg 已持久化
       let icebergId = iceberg.id;
+      let redirectKey = iceberg.slug || iceberg.id;
+      let submitSnapshot: Iceberg = iceberg;
       if (icebergId.startsWith('temp_')) {
         const slugErr = validateSlug(customSlug);
         if (slugErr) { setSlugError(slugErr); toast(slugErr, 'error'); return; }
         const res = await fetch('/api/icebergs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: iceberg.title, description: iceberg.description, slug: customSlug }),
+          body: JSON.stringify(buildCreatePayload(iceberg, customSlug)),
         });
         const data = await res.json();
         if (!data.success) {
           toast(data.error?.message || '创建草稿失败', 'error');
           return;
         }
-        setIceberg(data.data);
-        localStorage.removeItem(LOCALSTORAGE_KEY);
+        const persisted = withTopic(data.data);
+        setIceberg(persisted);
+        localStorage.removeItem(getDraftStorageKey(iceberg));
         icebergId = data.data.id;
+        redirectKey = data.data.slug || data.data.id;
+        submitSnapshot = persisted;
       }
 
       const res = await fetch(`/api/icebergs/${icebergId}/submit`, {
@@ -604,8 +1188,9 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
       if (data.success) {
         setShowChecklist(false);
+        pushVersionSnapshot({ ...submitSnapshot }, 'submit');
         toast(data.data.message || '已提交，等待编辑审核');
-        window.location.href = `/iceberg/${iceberg.slug || icebergId}`;
+        window.location.href = `/iceberg/${redirectKey || icebergId}`;
       } else {
         toast(data.error?.message || '提交失败', 'error');
       }
@@ -623,7 +1208,8 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       const res = await fetch(`/api/icebergs/${iceberg.id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
-        localStorage.removeItem(LOCALSTORAGE_KEY);
+        localStorage.removeItem(getDraftStorageKey(iceberg));
+        localStorage.removeItem(getHistoryKey(iceberg));
         window.location.href = '/iceberg/list';
       } else {
         toast(data.error?.message || '删除失败', 'error');
@@ -696,6 +1282,19 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     );
   }
 
+  const canSubmit = iceberg.status === 'DRAFT' || iceberg.status === 'REJECTED';
+  const submitButtonText = isSubmitting
+    ? '[ 提交中... ]'
+    : iceberg.status === 'REJECTED'
+      ? '[ 重新提交审核 ]'
+      : iceberg.status === 'PENDING_REVIEW'
+        ? '[ 审核中 ]'
+        : iceberg.status === 'PUBLISHED'
+          ? '[ 已发布 ]'
+          : iceberg.status === 'ARCHIVED'
+            ? '[ 已归档 ]'
+            : '[ 提交审核 ]';
+
   return (
     <div className="max-w-5xl mx-auto px-2">
       {/* ── 编辑器头部 ── */}
@@ -706,20 +1305,77 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
             <span className="text-[#00FF41] font-mono text-xs">▶</span>
             <span className="font-mono text-xs text-[#cdd9e5] tracking-widest">冰山图::编辑器</span>
           </div>
-          <div className="font-mono text-[11px]">
-            {isSaving ? (
-              <span className="text-[#3b82f6]">[ ● 保存中... ]</span>
-            ) : isDirty ? (
-              <span className="text-[#f59e0b]">[ ● 未保存 ]</span>
-            ) : (
-              <span className="text-[#22c55e]">
-                [ ● 已保存{lastSaved ? ` ${lastSaved.toLocaleTimeString()}` : ''} ]
-              </span>
-            )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const prev = versionHistory[Math.min(1, versionHistory.length - 1)] ?? versionHistory[0];
+                if (prev) restoreVersion(prev);
+              }}
+              disabled={versionHistory.length === 0}
+              className="font-mono text-[10px] border border-[#30363d] px-2 py-1 text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              title="恢复到上一保存版本"
+            >
+              恢复上一版
+            </button>
+            <button
+              onClick={() => setShowVersionHistory(true)}
+              className="font-mono text-[10px] border border-[#30363d] px-2 py-1 text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+              title="查看历史版本"
+            >
+              版本历史 ({versionHistory.length})
+            </button>
+            <div className="font-mono text-[11px]">
+              {isSaving ? (
+                <span className="text-[#3b82f6]">[ ● 保存中... ]</span>
+              ) : isDirty ? (
+                <span className="text-[#f59e0b]">[ ● 未保存 ]</span>
+              ) : (
+                <span className="text-[#22c55e]">
+                  [ ● 已保存{lastSaved ? ` ${lastSaved.toLocaleTimeString()}` : ''} ]
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="p-4 space-y-4">
+          <div className="flex flex-wrap items-center gap-2 border border-[#21262d] bg-[#0A0A0A] px-3 py-2">
+            <span className="font-mono text-[11px] text-[#6e7681]">// 审核状态</span>
+            <span
+              className={`font-mono text-[11px] px-2 py-0.5 border ${
+                iceberg.status === 'PUBLISHED'
+                  ? 'text-[#22c55e] border-[#22c55e]/40 bg-[#22c55e]/10'
+                  : iceberg.status === 'PENDING_REVIEW'
+                    ? 'text-[#f59e0b] border-[#f59e0b]/40 bg-[#f59e0b]/10'
+                    : iceberg.status === 'REJECTED'
+                      ? 'text-[#ef4444] border-[#ef4444]/40 bg-[#ef4444]/10'
+                      : 'text-[#8b949e] border-[#30363d] bg-[#161b22]'
+              }`}
+            >
+              {iceberg.status === 'PUBLISHED'
+                ? '已发布'
+                : iceberg.status === 'PENDING_REVIEW'
+                  ? '待审核'
+                  : iceberg.status === 'REJECTED'
+                    ? '已驳回'
+                    : iceberg.status === 'ARCHIVED'
+                      ? '已归档'
+                      : '草稿'}
+            </span>
+            {iceberg.status === 'PENDING_REVIEW' && (
+              <span className="font-mono text-[11px] text-[#f59e0b]">已提交，等待编辑审核</span>
+            )}
+          </div>
+
+          {iceberg.status === 'REJECTED' && (
+            <div className="border border-[#ef444440] bg-[#ef444408] px-3 py-2">
+              <p className="font-mono text-[11px] text-[#ef4444] mb-1">// 审核反馈</p>
+              <p className="font-mono text-xs text-[#cdd9e5] leading-relaxed whitespace-pre-wrap">
+                {iceberg.review?.note?.trim() || '本次驳回未附加文字说明，请根据规范调整后重新提交。'}
+              </p>
+            </div>
+          )}
+
           {/* METADATA 区 */}
           <div>
             <p className="text-[10px] font-mono text-[#3d444d] mb-1.5">// 元数据</p>
@@ -784,6 +1440,50 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
           {/* DESCRIPTION 区 */}
           <div>
+            <p className="text-[10px] font-mono text-[#3d444d] mb-1.5">// 主题分类</p>
+            <select
+              value={useCustomTopic ? '__custom__' : normalizeIcebergTopic(iceberg.topic)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '__custom__') {
+                  setUseCustomTopic(true);
+                  const seed = isPresetIcebergTopic(iceberg.topic) ? '' : iceberg.topic;
+                  setCustomTopicInput(seed);
+                  return;
+                }
+                setUseCustomTopic(false);
+                setCustomTopicInput('');
+                updateTopic(normalizeIcebergTopic(val));
+              }}
+              className="w-full px-3 py-2 bg-[#0A0A0A] border border-[#21262d] focus:border-[#00FF41] focus:outline-none font-mono text-sm text-[#cdd9e5] transition-colors"
+            >
+              {ICEBERG_TOPICS.map((topic) => (
+                <option key={topic.value} value={topic.value}>
+                  {topic.label}
+                </option>
+              ))}
+              <option value="__custom__">自定义分类...</option>
+            </select>
+            {useCustomTopic && (
+              <div className="mt-2">
+                <input
+                  type="text"
+                  value={customTopicInput}
+                  onChange={(e) => {
+                    const next = e.target.value.slice(0, 24);
+                    setCustomTopicInput(next);
+                    updateTopic(next.trim() || 'other');
+                  }}
+                  placeholder="例如：动漫、冷知识、互联网谜团"
+                  className="w-full px-3 py-2 bg-[#050608] border border-[#21262d] focus:border-[#00FF41] focus:outline-none font-mono text-sm text-[#cdd9e5] placeholder:text-[#3d444d] transition-colors"
+                />
+                <p className="mt-1 text-[11px] font-mono text-[#3d444d]">最多 24 字，保存后会作为该冰山图的主题分类</p>
+              </div>
+            )}
+          </div>
+
+          {/* DESCRIPTION 区 */}
+          <div>
             <p className="text-[10px] font-mono text-[#3d444d] mb-1.5">// 简介</p>
             <textarea
               value={iceberg.description || ''}
@@ -797,32 +1497,66 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       </header>
 
       {/* ── 层级列表 ── */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        modifiers={[restrictToVerticalAxis]}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={iceberg.tiers.map((t) => t.id)}
-          strategy={verticalListSortingStrategy}
+      <div className="relative">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToVerticalAxis]}
+          onDragEnd={handleDragEnd}
         >
-          <div className="space-y-4">
-            {iceberg.tiers.map((tier, index) => (
-              <TierCard
-                key={tier.id}
-                tier={tier}
-                tierIndex={index}
-                onUpdateTier={handleUpdateTier}
-                onDeleteTier={handleDeleteTier}
-                onAddItem={handleAddItem}
-                onUpdateItem={handleUpdateItem}
-                onDeleteItem={handleDeleteItem}
-              />
-            ))}
+          <SortableContext
+            items={iceberg.tiers.map((t) => t.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div
+              ref={tiersScrollRef}
+              className="editor-scroll-shell max-h-[72vh] overflow-y-auto overscroll-contain pr-1"
+            >
+              <div className="space-y-4">
+                {iceberg.tiers.map((tier, index) => (
+                  <TierCard
+                    key={tier.id}
+                    tier={tier}
+                    tierIndex={index}
+                    onUpdateTier={handleUpdateTier}
+                    onDeleteTier={handleDeleteTier}
+                    onAddItem={handleAddItem}
+                    onUpdateItem={handleUpdateItem}
+                    onDeleteItem={handleDeleteItem}
+                  />
+                ))}
+              </div>
+            </div>
+          </SortableContext>
+        </DndContext>
+
+        {(canScrollTiersDown || canScrollTiersUp) && (
+          <div className="absolute right-3 bottom-3 z-20 flex flex-col gap-2 pointer-events-none">
+            <button
+              type="button"
+              onClick={scrollTiersToTop}
+              className={`editor-scroll-quick editor-scroll-quick-top ${
+                canScrollTiersUp ? 'is-active' : 'is-disabled'
+              }`}
+              disabled={!canScrollTiersUp}
+              title="回到顶部"
+            >
+              顶部
+            </button>
+            <button
+              type="button"
+              onClick={scrollTiersToBottom}
+              className={`editor-scroll-quick editor-scroll-quick-bottom ${
+                canScrollTiersDown ? 'is-active' : 'is-disabled'
+              }`}
+              disabled={!canScrollTiersDown}
+              title="一键滚动到底部"
+            >
+              到底
+            </button>
           </div>
-        </SortableContext>
-      </DndContext>
+        )}
+      </div>
 
       {/* ── 添加层级 ── */}
       <button
@@ -853,13 +1587,133 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           </button>
           <button
             onClick={() => handleSubmit()}
-            disabled={isSubmitting}
-            className="font-mono text-xs bg-[#00FF41] text-[#0A0A0A] font-bold px-4 py-2 hover:bg-[#00CC33] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            disabled={isSubmitting || !canSubmit}
+            className="font-mono text-xs bg-[#00FF41] text-[#0A0A0A] font-bold px-4 py-2 hover:bg-[#00CC33] transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[#00FF41]"
           >
-            {isSubmitting ? '[ 提交中... ]' : '[ 提交审核 ]'}
+            {submitButtonText}
           </button>
         </div>
       </div>
+
+      {syncFailures.length > 0 && (
+        <section className="mt-4 border border-[#ef444440] bg-[#0d1117]">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-[#ef444430] bg-[#ef444408]">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs text-[#ef4444]">!</span>
+              <span className="font-mono text-xs text-[#ef4444]">
+                同步异常::{syncFailures.length}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void retryAllSyncFailures()}
+                className="font-mono text-[11px] px-2 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+              >
+                全部重试
+              </button>
+              <button
+                type="button"
+                onClick={clearAllSyncFailures}
+                className="font-mono text-[11px] px-2 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#ef4444] hover:text-[#ef4444] transition-colors"
+              >
+                清空记录
+              </button>
+            </div>
+          </div>
+          <div className="p-3 space-y-2">
+            {syncFailures.map((failure) => (
+              <div
+                key={failure.key}
+                className="border border-[#21262d] bg-[#161b22] px-3 py-2"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-mono text-xs text-[#cdd9e5] break-all">{failure.message}</p>
+                    <p className="font-mono text-[10px] text-[#6e7681] mt-1 break-all">
+                      {failure.method} {failure.url}
+                    </p>
+                    <p className="font-mono text-[10px] text-[#3d444d] mt-1">
+                      重试次数 {failure.attempts} · 最近 {new Date(failure.lastAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void retrySyncFailure(failure.key)}
+                    className="shrink-0 font-mono text-[11px] px-2 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+                  >
+                    重试
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── 版本历史 ── */}
+      {historyMounted && (
+        <div className={`${historyLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4`}>
+          <div className={`${historyLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d1117] border border-[#30363d] w-full max-w-xl font-mono`}>
+            <div className="flex items-center justify-between px-4 py-2 border-b border-[#21262d] bg-[#161b22]">
+              <div className="flex items-center gap-2">
+                <span className="text-[#00FF41] text-xs">⧗</span>
+                <span className="text-xs text-[#cdd9e5]">编辑器::版本历史</span>
+              </div>
+              <button
+                onClick={() => setShowVersionHistory(false)}
+                className="text-xs text-[#6e7681] hover:text-[#8b949e] transition-colors"
+              >
+                [ 关闭 ]
+              </button>
+            </div>
+            <div className="p-4">
+              {versionHistory.length === 0 ? (
+                <div className="py-10 text-center border border-[#21262d] text-xs text-[#6e7681]">
+                  // 还没有历史版本，保存后会自动记录
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                  {versionHistory.map((entry, index) => {
+                    const sourceText = entry.source === 'manual'
+                      ? '手动保存'
+                      : entry.source === 'submit'
+                        ? '提交前快照'
+                        : '自动保存';
+                    return (
+                      <div key={entry.id} className="border border-[#21262d] bg-[#161b22] px-3 py-2.5">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="text-xs text-[#cdd9e5] truncate">
+                              {entry.snapshot.title || '未命名冰山图'}
+                            </div>
+                            <div className="text-[10px] text-[#6e7681] mt-1">
+                              {new Date(entry.savedAt).toLocaleString()} · {sourceText}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {index === 0 && (
+                              <span className="text-[10px] px-2 py-0.5 border border-[#00FF4140] text-[#00FF41] bg-[#00FF4110]">
+                                最新
+                              </span>
+                            )}
+                            <button
+                              onClick={() => restoreVersion(entry)}
+                              className="text-[10px] px-2.5 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+                            >
+                              恢复
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── 删除确认弹窗 ── */}
       {deleteMounted && (

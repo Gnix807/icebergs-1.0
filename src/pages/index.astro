@@ -1,13 +1,17 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { prisma } from '../lib/prisma';
+import { getSessionById } from '../lib/auth';
 
 let recentIcebergs: any[] = [];
 let topDeep: any[] = [];
 let trendingIcebergs: any[] = [];
 let featuredIcebergs: any[] = [];
 let latestAnnouncements: any[] = [];
+let continueBrowsing: any[] = [];
+let followingUpdates: any[] = [];
 let stats = { total: 0, totalViews: 0, totalItems: 0 };
+const session = await getSessionById(Astro.cookies.get('session')?.value);
 
 const ICEBERG_SELECT = {
   id: true,
@@ -16,6 +20,7 @@ const ICEBERG_SELECT = {
   description: true,
   viewCount: true,
   createdAt: true,
+  updatedAt: true,
   author: { select: { nickname: true, username: true } },
   _count: { select: { tiers: true } },
   tiers: {
@@ -103,6 +108,59 @@ try {
       })
       .filter(Boolean);
   }
+
+  // 登录用户：首页个性化区块（继续浏览 + 关注更新）
+  if (session) {
+    const [recentReads, watchlistRows] = await Promise.all([
+      prisma.itemRead.groupBy({
+        by: ['icebergId'],
+        where: { userId: session.userId },
+        _max: { createdAt: true },
+        orderBy: { _max: { createdAt: 'desc' } },
+        take: 6,
+      }),
+      prisma.watchlist.findMany({
+        where: { userId: session.userId },
+        take: 12,
+        select: {
+          iceberg: {
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              updatedAt: true,
+              viewCount: true,
+              _count: { select: { tiers: true } },
+            },
+          },
+        },
+      }),
+    ]);
+
+    if (recentReads.length > 0) {
+      const ids = recentReads.map((r: any) => r.icebergId);
+      const rows = await prisma.iceberg.findMany({
+        where: { id: { in: ids }, status: 'PUBLISHED' },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          updatedAt: true,
+          viewCount: true,
+          _count: { select: { tiers: true } },
+        },
+      });
+      continueBrowsing = ids
+        .map((id: string) => rows.find((r: any) => r.id === id))
+        .filter(Boolean);
+    }
+
+    followingUpdates = watchlistRows
+      .map((w: any) => w.iceberg)
+      .filter(Boolean)
+      .sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, 6);
+  }
 } catch (err) {
   console.error('首页数据加载失败:', err);
 }
@@ -111,6 +169,10 @@ function formatDate(date: Date | string) {
   const d = new Date(date);
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
+  if (diffMs < 0) {
+    const futureDays = Math.ceil(Math.abs(diffMs) / (1000 * 60 * 60 * 24));
+    return futureDays <= 1 ? '今天' : `${futureDays} 天后`;
+  }
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   if (diffDays === 0) return '今天';
   if (diffDays === 1) return '昨天';
@@ -128,6 +190,79 @@ const ANN_TYPE_COLOR: Record<string, string> = {
 const ANN_TYPE_LABEL: Record<string, string> = {
   info: '公告', update: '更新', warning: '注意', maintenance: '维护',
 };
+
+const KNOWLEDGE_ENTRANCES = [
+  {
+    title: '冰山广场',
+    desc: '按主题、热度和时间浏览全部公开冰山图。',
+    href: '/iceberg/list',
+    tag: '探索',
+  },
+  {
+    title: '排行榜',
+    desc: '查看本周趋势与长期热门内容。',
+    href: '/leaderboard',
+    tag: '趋势',
+  },
+  {
+    title: '机构与架构',
+    desc: '查看站点管理架构、职责分工与协作流程说明。',
+    href: '/org',
+    tag: '架构',
+  },
+  {
+    title: '公告中心',
+    desc: '快速了解版本更新、维护安排与站务信息。',
+    href: '/announcements',
+    tag: '站务',
+  },
+  {
+    title: '规则索引',
+    desc: '提交、审核、互动与社区治理规则一站查阅。',
+    href: '/rules',
+    tag: '规范',
+  },
+  {
+    title: '反馈入口',
+    desc: '提交问题与建议，持续参与站点共建。',
+    href: '/feedback',
+    tag: '共建',
+  },
+  {
+    title: '反馈进展',
+    desc: '跟踪反馈处理状态，查看已解决与待处理问题。',
+    href: '/feedback/progress',
+    tag: '追踪',
+  },
+  {
+    title: '更新日志',
+    desc: '按时间线查看版本更新、功能改动与维护记录。',
+    href: '/changelog',
+    tag: '版本',
+  },
+];
+
+const QUICK_QA = [
+  {
+    q: '想快速找某个主题的冰山图？',
+    a: '先去冰山广场，再用关键词和分类筛选，定位会更快。',
+    href: '/iceberg/list',
+    action: '进入冰山广场',
+  },
+  {
+    q: '想看最近更新和热门内容？',
+    a: '可先看排行榜，再回到首页的最新发布区追踪动态。',
+    href: '/leaderboard',
+    action: '查看排行榜',
+  },
+  {
+    q: '不确定如何投稿与通过审核？',
+    a: '建议先浏览规则页与指南页，避免被格式或流程卡住。',
+    href: '/guide',
+    action: '查看指南',
+  },
+];
+
 ---
 
 <Layout title="冰山图宇宙 | 首页">
@@ -210,6 +345,40 @@ const ANN_TYPE_LABEL: Record<string, string> = {
       </div>
     </header>
 
+    <!-- 门户入口（借鉴知识库式信息架构） -->
+    <section class="mb-10 reveal">
+      <div class="text-center mb-5">
+        <h2 class="text-sm font-mono text-[#00FF41]">
+          <span class="text-[#3d444d]">// </span>你可以在这里找到什么
+        </h2>
+        <p class="text-xs font-mono text-[#6e7681] mt-2">按入口浏览，比盲搜更快</p>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {KNOWLEDGE_ENTRANCES.map((entry, index) => (
+          <a
+            href={entry.href}
+            class="archive-card reveal-grid block p-4 group"
+            data-reveal-delay={`${index * 45}`}
+          >
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-mono text-[#cdd9e5] group-hover:text-[#00FF41] transition-colors">
+                {entry.title}
+              </h3>
+              <span class="text-[10px] font-mono text-[#6e7681] border border-[#30363d] px-1.5 py-0.5">
+                {entry.tag}
+              </span>
+            </div>
+            <p class="text-xs text-[#8b949e] leading-relaxed mb-3">
+              {entry.desc}
+            </p>
+            <div class="text-[10px] font-mono text-[#6e7681] group-hover:text-[#8b949e] transition-colors">
+              继续浏览 →
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
     <!-- Stats Bar -->
     <div class="flex justify-center gap-8 md:gap-16 mb-8 font-mono reveal">
       <div class="text-center">
@@ -265,6 +434,80 @@ const ANN_TYPE_LABEL: Record<string, string> = {
       <kbd class="mx-1 text-xs font-mono text-[#8b949e] bg-[#161b22] border border-[#30363d] px-1.5 py-0.5">Ctrl+K</kbd>
       <span class="text-xs font-mono text-[#6e7681]">快速搜索</span>
     </div>
+
+    <!-- 常见搜索 / 索引问答 -->
+    <section class="mb-10 reveal">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-mono text-[#00FF41]">
+          <span class="text-[#3d444d]">// </span>热门问题与常见搜索
+        </h2>
+      </div>
+      <div class="grid gap-3 md:grid-cols-3">
+        {QUICK_QA.map((item, index) => (
+          <a
+            href={item.href}
+            class="reveal-grid block border border-[#21262d] bg-[#161b22] p-4 hover:border-[#00FF41] hover:bg-[#0d1117] transition-colors"
+            data-reveal-delay={`${index * 50}`}
+          >
+            <div class="text-xs font-mono text-[#cdd9e5] mb-2">{item.q}</div>
+            <p class="text-xs text-[#8b949e] leading-relaxed mb-3">{item.a}</p>
+            <div class="text-[10px] font-mono text-[#6e7681]">{item.action} →</div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    {/* 个性化区块（仅登录用户） */}
+    {session && (
+      <section class="mb-10 reveal">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-mono text-[#00FF41]">
+            <span class="text-[#3d444d]">// </span>为你准备
+          </h2>
+          <a href={`/user/${session.userId}`} class="text-xs font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors">
+            前往个人中心 →
+          </a>
+        </div>
+        <div class="grid gap-4 md:grid-cols-2">
+          <div class="border border-[#21262d] bg-[#161b22] p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xs font-mono text-[#cdd9e5]">继续浏览</h3>
+              <span class="text-[10px] font-mono text-[#6e7681]">RECENT</span>
+            </div>
+            {continueBrowsing.length === 0 ? (
+              <p class="text-xs font-mono text-[#6e7681] py-4">// 暂无阅读记录</p>
+            ) : (
+              <div class="space-y-1.5">
+                {continueBrowsing.map((iceberg: any) => (
+                  <a href={`/iceberg/${iceberg.slug || iceberg.id}`} class="block px-2.5 py-2 border border-[#21262d] hover:border-[#00FF41] hover:bg-[#0d1117] transition-colors">
+                    <div class="text-xs font-mono text-[#cdd9e5] truncate">{iceberg.title}</div>
+                    <div class="text-[10px] font-mono text-[#6e7681] mt-1">{iceberg._count.tiers} 层 · {iceberg.viewCount} 次探索</div>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+          <div class="border border-[#21262d] bg-[#161b22] p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xs font-mono text-[#cdd9e5]">你关注的更新</h3>
+              <a href={`/user/${session.userId}?tab=watchlist`} class="text-[10px] font-mono text-[#6e7681] hover:text-[#00FF41] transition-colors">查看全部</a>
+            </div>
+            {followingUpdates.length === 0 ? (
+              <p class="text-xs font-mono text-[#6e7681] py-4">// 先去收藏一些冰山图吧</p>
+            ) : (
+              <div class="space-y-1.5">
+                {followingUpdates.map((iceberg: any) => (
+                  <a href={`/iceberg/${iceberg.slug || iceberg.id}`} class="block px-2.5 py-2 border border-[#21262d] hover:border-[#00FF41] hover:bg-[#0d1117] transition-colors">
+                    <div class="text-xs font-mono text-[#cdd9e5] truncate">{iceberg.title}</div>
+                    <div class="text-[10px] font-mono text-[#6e7681] mt-1">最近更新于 {formatDate(iceberg.updatedAt)}</div>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    )}
 
 
     <!-- 编辑精选（有数据才显示）-->

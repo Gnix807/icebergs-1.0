@@ -29,6 +29,5 @@ if (session) {
   checkAchievements(session.userId, { type: 'random' });
 }
 
-const target = encodeURIComponent(iceberg!.slug || iceberg!.id);
-return Astro.redirect(`/iceberg/${target}`);
+return Astro.redirect(`/iceberg/${encodeURIComponent(iceberg!.slug || iceberg!.id)}`);
 ---

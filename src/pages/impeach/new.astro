@@ -117,7 +117,7 @@ const targetDisplay = target.nickname ?? target.username;
   </main>
 </Layout>
 
-<script define:vars={{ targetId }}>
+<script is:inline define:vars={{ targetId }}>
   const textarea = document.getElementById('impeach-reason');
   const counter  = document.getElementById('char-count');
   const form     = document.getElementById('impeach-form');

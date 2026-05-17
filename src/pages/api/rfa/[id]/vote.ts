@@ -3,7 +3,7 @@
  * body: { vote: 'APPROVE' | 'OPPOSE' | 'ABSTAIN', comment?: string }
  * 重复投票视为修改；申请人不能给自己投票
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../../lib/api';
@@ -21,7 +21,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -85,3 +85,4 @@ export async function POST(event: APIEvent) {
 
   return json(success({ vote, weight }), existing ? 200 : 201);
 }
+

@@ -2,13 +2,13 @@
  * GET /api/admin/users?q=&role=&status=&page=&limit=
  * ADMIN only — search / list users with pagination.
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 import { can } from '../../../lib/permissions';
 
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -71,3 +71,4 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
+

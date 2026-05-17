@@ -2,7 +2,7 @@
  * GET  /api/admin/reports          EDITOR/ADMIN — list reports
  * Query: ?status=PENDING&type=iceberg&page=1
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
@@ -15,7 +15,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -24,11 +24,19 @@ export async function GET(event: APIEvent) {
     const url = new URL(event.request.url);
     const status = url.searchParams.get('status') ?? 'PENDING';
     const type   = url.searchParams.get('type') ?? undefined;
+    const q      = (url.searchParams.get('q') ?? '').trim();
     const page   = Math.max(1, Number(url.searchParams.get('page') ?? 1));
     const take   = 20;
 
     const where: Record<string, unknown> = { status };
     if (type) where.type = type;
+    if (q.length > 0) {
+      where.OR = [
+        { reason:   { contains: q } },
+        { detail:   { contains: q } },
+        { targetId: { contains: q } },
+      ];
+    }
 
     const [reports, total] = await Promise.all([
       prisma.report.findMany({
@@ -50,3 +58,4 @@ export async function GET(event: APIEvent) {
     return json(error(ErrorCodes.INTERNAL_ERROR, '获取失败'), 500);
   }
 }
+

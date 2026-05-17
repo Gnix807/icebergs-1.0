@@ -1,4 +1,4 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth/index';
@@ -9,7 +9,7 @@ import { notifyAggregated } from '../../../../lib/notify';
 
 // POST /api/icebergs/:id/vote  body: { value: 1 | -1 }
 // Toggle: if same value exists → delete (un-vote); else upsert
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -38,7 +38,7 @@ export async function POST(event: APIEvent) {
 
     // Find iceberg (include authorId for quality score update)
     const iceberg = await prisma.iceberg.findFirst({
-      where: { OR: [{ id }, { slug: id }] },
+      where: { OR: [{ id }, { slug: id }], status: 'PUBLISHED' },
       select: { id: true, authorId: true },
     });
     if (!iceberg) {
@@ -123,3 +123,4 @@ export async function POST(event: APIEvent) {
     });
   }
 }
+

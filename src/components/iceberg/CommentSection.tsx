@@ -6,6 +6,7 @@ interface CommentUser {
   id: string;
   username: string;
   nickname: string | null;
+  avatar: string | null;
 }
 
 interface ReplyItem {
@@ -35,6 +36,7 @@ function formatDate(iso: string) {
   const d = new Date(iso);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
+  if (diff < 0) return '刚刚';
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return '刚刚';
   if (mins < 60) return `${mins} 分钟前`;
@@ -56,14 +58,57 @@ function getDisplayName(c: ReplyItem): string {
   return c.guestName ?? '匿名游客';
 }
 
-function Avatar({ name, isGuest }: { name: string; isGuest: boolean }) {
+function getProfileHref(c: ReplyItem): string | null {
+  return c.user ? `/user/${c.user.id}` : null;
+}
+
+function Avatar({
+  name,
+  isGuest,
+  avatar,
+  profileHref,
+}: {
+  name: string;
+  isGuest: boolean;
+  avatar?: string | null;
+  profileHref?: string | null;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const imageSrc = !isGuest && typeof avatar === 'string' && avatar.trim() && !imgError ? avatar : null;
+  const showImage = imageSrc !== null;
+  const baseClass = `shrink-0 w-7 h-7 border flex items-center justify-center ${
+    isGuest ? 'border-[#3d444d] bg-[#0d1117]' : 'border-[#30363d] bg-[#161b22]'
+  }`;
+  const content = showImage ? (
+    <img
+      src={imageSrc ?? ''}
+      alt={name}
+      className="w-full h-full object-cover block"
+      loading="lazy"
+      onError={() => setImgError(true)}
+    />
+  ) : (
+    <span className={`text-[10px] font-mono ${isGuest ? 'text-[#6e7681]' : 'text-[#3d444d]'}`}>
+      {isGuest ? '游' : name.charAt(0).toUpperCase()}
+    </span>
+  );
+
+  if (profileHref) {
+    return (
+      <a
+        href={profileHref}
+        className={`${baseClass} transition-colors hover:border-[#00FF41]`}
+        title={`查看 ${name} 的主页`}
+        aria-label={`查看 ${name} 的主页`}
+      >
+        {content}
+      </a>
+    );
+  }
+
   return (
-    <div className={`shrink-0 w-7 h-7 border flex items-center justify-center ${
-      isGuest ? 'border-[#3d444d] bg-[#0d1117]' : 'border-[#30363d] bg-[#161b22]'
-    }`}>
-      <span className={`text-[10px] font-mono ${isGuest ? 'text-[#6e7681]' : 'text-[#3d444d]'}`}>
-        {isGuest ? '游' : name.charAt(0).toUpperCase()}
-      </span>
+    <div className={baseClass}>
+      {content}
     </div>
   );
 }
@@ -326,16 +371,30 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
           {comments.map(comment => {
             const isGuestComment = !comment.user;
             const displayName = getDisplayName(comment);
+            const commentProfileHref = getProfileHref(comment);
             return (
               <div key={comment.id}>
                 {/* 顶层评论 */}
                 <div className="flex gap-3 group">
-                  <Avatar name={displayName} isGuest={isGuestComment} />
+                  <Avatar
+                    name={displayName}
+                    isGuest={isGuestComment}
+                    avatar={comment.user?.avatar}
+                    profileHref={commentProfileHref}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-mono ${isGuestComment ? 'text-[#6e7681]' : 'text-[#8b949e]'}`}>
-                        {displayName}
-                      </span>
+                      {commentProfileHref ? (
+                        <a
+                          href={commentProfileHref}
+                          className="text-xs font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors"
+                          title={`查看 ${displayName} 的主页`}
+                        >
+                          {displayName}
+                        </a>
+                      ) : (
+                        <span className="text-xs font-mono text-[#6e7681]">{displayName}</span>
+                      )}
                       {isGuestComment && (
                         <span className="text-[9px] font-mono text-[#3d444d] border border-[#21262d] px-1">游客</span>
                       )}
@@ -420,14 +479,28 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                     {comment.replies.map(reply => {
                       const isGuestReply = !reply.user;
                       const replyName = getDisplayName(reply);
+                      const replyProfileHref = getProfileHref(reply);
                       return (
                         <div key={reply.id} className="flex gap-2.5 group">
-                          <Avatar name={replyName} isGuest={isGuestReply} />
+                          <Avatar
+                            name={replyName}
+                            isGuest={isGuestReply}
+                            avatar={reply.user?.avatar}
+                            profileHref={replyProfileHref}
+                          />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className={`text-xs font-mono ${isGuestReply ? 'text-[#6e7681]' : 'text-[#8b949e]'}`}>
-                                {replyName}
-                              </span>
+                              {replyProfileHref ? (
+                                <a
+                                  href={replyProfileHref}
+                                  className="text-xs font-mono text-[#8b949e] hover:text-[#00FF41] transition-colors"
+                                  title={`查看 ${replyName} 的主页`}
+                                >
+                                  {replyName}
+                                </a>
+                              ) : (
+                                <span className="text-xs font-mono text-[#6e7681]">{replyName}</span>
+                              )}
                               {isGuestReply && (
                                 <span className="text-[9px] font-mono text-[#3d444d] border border-[#21262d] px-1">游客</span>
                               )}

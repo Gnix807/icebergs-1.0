@@ -1,17 +1,14 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../lib/api';
-import { createSession, getSession, github, google, oauthProviderEnabled, type OAuthProvider } from '../../../lib/auth';
-import { saveOAuthChallengeWithIntent, type OAuthIntent } from '../../../lib/auth/oauthChallenge';
-import { generateCodeVerifier } from 'arctic';
+import { createSession, getSession } from '../../../lib/auth';
+import type { OAuthIntent } from '../../../lib/auth/oauthChallenge';
+import { enforceAuthRateLimit, getClientIp } from '../../../lib/auth/rateLimit';
+import { isOAuthProvider, startOAuthLogin } from '../../../lib/auth/oauthStart';
 import { pbkdf2 } from 'crypto';
 import { promisify } from 'util';
 
 const pbkdf2Async = promisify(pbkdf2);
-
-function isOAuthProvider(value: string): value is OAuthProvider {
-  return value === 'github' || value === 'google';
-}
 
 function normalizeEmail(raw: unknown): string {
   if (typeof raw !== 'string') return '';
@@ -19,7 +16,7 @@ function normalizeEmail(raw: unknown): string {
 }
 
 // GET /api/auth/login?provider=github|google - OAuth 登录入口
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   const rawProvider = event.url.searchParams.get('provider');
   const rawIntent = event.url.searchParams.get('intent');
   if (!rawProvider) {
@@ -35,12 +32,6 @@ export async function GET(event: APIEvent) {
       headers: { Location: '/?error=unsupported_oauth_provider' },
     });
   }
-  if (!oauthProviderEnabled[rawProvider]) {
-    return new Response(null, {
-      status: 302,
-      headers: { Location: '/?error=oauth_provider_not_configured' },
-    });
-  }
   const intent: OAuthIntent = rawIntent === 'link' ? 'link' : 'login';
   let linkUserId: string | null = null;
   if (intent === 'link') {
@@ -54,68 +45,10 @@ export async function GET(event: APIEvent) {
     linkUserId = session.userId;
   }
 
-  // 把 provider 编进 state，回调时即使 provider cookie 丢失也可回退识别
-  const state = `${rawProvider}:${intent}:${crypto.randomUUID()}`;
-  event.cookies.set('oauth_state', state, {
-    httpOnly: true,
-    secure: import.meta.env.PROD,
-    sameSite: 'lax',
-    maxAge: 60 * 10,
-    path: '/',
-  });
-  event.cookies.set('oauth_provider', rawProvider, {
-    httpOnly: true,
-    secure: import.meta.env.PROD,
-    sameSite: 'lax',
-    maxAge: 60 * 10,
-    path: '/',
-  });
-  event.cookies.set('oauth_intent', intent, {
-    httpOnly: true,
-    secure: import.meta.env.PROD,
-    sameSite: 'lax',
-    maxAge: 60 * 10,
-    path: '/',
-  });
-  if (linkUserId) {
-    event.cookies.set('oauth_link_user', linkUserId, {
-      httpOnly: true,
-      secure: import.meta.env.PROD,
-      sameSite: 'lax',
-      maxAge: 60 * 10,
-      path: '/',
-    });
-  } else {
-    event.cookies.delete('oauth_link_user', { path: '/' });
-  }
-
-  let authUrl: URL;
-  let codeVerifier: string | undefined;
-  if (rawProvider === 'github') {
-    const scopes = ['read:user', 'user:email'];
-    authUrl = github.createAuthorizationURL(state, scopes);
-  } else {
-    codeVerifier = generateCodeVerifier();
-    event.cookies.set('oauth_code_verifier', codeVerifier, {
-      httpOnly: true,
-      secure: import.meta.env.PROD,
-      sameSite: 'lax',
-      maxAge: 60 * 10,
-      path: '/',
-    });
-    const scopes = ['openid', 'profile', 'email'];
-    authUrl = google.createAuthorizationURL(state, codeVerifier, scopes);
-  }
-  saveOAuthChallengeWithIntent(state, {
+  return await startOAuthLogin(event, {
     provider: rawProvider,
-    codeVerifier,
     intent,
     linkUserId,
-  });
-
-  return new Response(null, {
-    status: 302,
-    headers: { Location: authUrl.toString() },
   });
 }
 
@@ -127,7 +60,7 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
 }
 
 // POST /api/auth/login - 邮箱密码登录
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   try {
     const body = await event.request.json();
     const email = normalizeEmail(body.email);
@@ -137,6 +70,33 @@ export async function POST(event: APIEvent) {
       return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '邮箱和密码不能为空')), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const loginClientIp = getClientIp(event) || 'unknown';
+    const loginRate = await enforceAuthRateLimit([
+      {
+        action: 'auth_login_ip',
+        key: loginClientIp,
+        limit: 30,
+        windowSec: 10 * 60,
+        message: '登录请求过于频繁，请稍后再试',
+      },
+      {
+        action: 'auth_login_email',
+        key: email,
+        limit: 12,
+        windowSec: 10 * 60,
+        message: '该邮箱登录尝试过多，请稍后再试',
+      },
+    ]);
+    if (!loginRate.ok) {
+      return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, loginRate.message)), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(loginRate.retryAfterSec),
+        },
       });
     }
 
@@ -187,3 +147,4 @@ export async function POST(event: APIEvent) {
     });
   }
 }
+

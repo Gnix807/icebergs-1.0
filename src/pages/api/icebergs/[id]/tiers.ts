@@ -1,9 +1,9 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   try {
     const { id } = event.params;
 
@@ -32,7 +32,7 @@ export async function GET(event: APIEvent) {
   }
 }
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -52,7 +52,7 @@ export async function POST(event: APIEvent) {
     }
 
     const body = await event.request.json();
-    const { name, order } = body;
+    const { name, order, desc } = body;
 
     if (!name || name.trim() === '') {
       return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '层级名称不能为空')), {
@@ -72,7 +72,8 @@ export async function POST(event: APIEvent) {
       });
     }
 
-    if (iceberg.authorId !== session.userId) {
+    const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
+    if (iceberg.authorId !== session.userId && !canManageAny) {
       return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -89,6 +90,7 @@ export async function POST(event: APIEvent) {
     const tier = await prisma.tier.create({
       data: {
         name: name.trim(),
+        desc: typeof desc === 'string' ? desc : '',
         order: newOrder,
         icebergId: iceberg.id,
       },
@@ -106,3 +108,4 @@ export async function POST(event: APIEvent) {
     });
   }
 }
+

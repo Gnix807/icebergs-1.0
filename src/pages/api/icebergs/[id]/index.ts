@@ -1,13 +1,17 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { checkAchievements, updateDailyStreak } from '../../../../lib/achievementService';
+import { normalizeIcebergTopic } from '../../../../lib/icebergTopic';
 
 // GET /api/icebergs/:id - 获取冰山图详情
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   try {
     const { id } = event.params;
+    const url = new URL(event.request.url);
+    const context = (url.searchParams.get('context') || '').toLowerCase();
+    const session = await getSession(event);
 
     if (!id) {
       return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '缺少 ID')), {
@@ -31,6 +35,9 @@ export async function GET(event: APIEvent) {
         author: {
           select: { id: true, username: true, nickname: true },
         },
+        review: {
+          select: { status: true, note: true, reviewedAt: true },
+        },
       },
     });
 
@@ -41,9 +48,19 @@ export async function GET(event: APIEvent) {
       });
     }
 
-    // 追踪 visitedIcebergCount（首次访问该图）
-    const session = await getSession(event);
-    if (session) {
+    const isOwner = !!session && iceberg.authorId === session.userId;
+    const isPrivileged = !!session && (session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR');
+    const canViewUnpublished = isOwner || isPrivileged;
+
+    if (iceberg.status !== 'PUBLISHED' && !canViewUnpublished) {
+      return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '冰山图不存在')), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // 追踪 visitedIcebergCount（首次访问该图，仅公开阅读场景）
+    if (session && iceberg.status === 'PUBLISHED' && context !== 'editor') {
       const alreadyRead = await prisma.itemRead.findFirst({
         where: { userId: session.userId, icebergId: iceberg.id },
       });
@@ -65,6 +82,7 @@ export async function GET(event: APIEvent) {
     // Parse labels from JSON string to array for the editor
     const processed = {
       ...iceberg,
+      review: canViewUnpublished ? iceberg.review : null,
       tiers: iceberg.tiers.map((t: any) => ({
         ...t,
         items: t.items.map((i: any) => ({
@@ -88,7 +106,7 @@ export async function GET(event: APIEvent) {
 }
 
 // PUT /api/icebergs/:id - 更新冰山图
-export async function PUT(event: APIEvent) {
+export async function PUT(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -108,7 +126,7 @@ export async function PUT(event: APIEvent) {
     }
 
     const body = await event.request.json();
-    const { title, description, status } = body;
+    const { title, description, status, topic } = body;
 
     // 检查冰山图是否存在且属于当前用户
     const existing = await prisma.iceberg.findFirst({
@@ -122,17 +140,19 @@ export async function PUT(event: APIEvent) {
       });
     }
 
-    if (existing.authorId !== session.userId) {
+    const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
+    if (existing.authorId !== session.userId && !canManageAny) {
       return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const updateData: { title?: string; description?: string; status?: string } = {};
+    const updateData: { title?: string; description?: string; status?: string; topic?: string } = {};
     if (title !== undefined) updateData.title = title.trim();
     if (description !== undefined) updateData.description = description;
     if (status !== undefined) updateData.status = status;
+    if (topic !== undefined) updateData.topic = normalizeIcebergTopic(topic);
 
     const iceberg = await prisma.iceberg.update({
       where: { id: existing.id },
@@ -162,7 +182,7 @@ export async function PUT(event: APIEvent) {
 }
 
 // DELETE /api/icebergs/:id - 删除冰山图
-export async function DELETE(event: APIEvent) {
+export async function DELETE(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -194,8 +214,8 @@ export async function DELETE(event: APIEvent) {
     }
 
     const isOwner = existing.authorId === session.userId;
-    const isAdmin = session.role === 'ADMIN' || session.role === 'EDITOR';
-    if (!isOwner && !isAdmin) {
+    const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
+    if (!isOwner && !canManageAny) {
       return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -219,3 +239,4 @@ export async function DELETE(event: APIEvent) {
     });
   }
 }
+

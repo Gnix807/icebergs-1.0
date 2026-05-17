@@ -3,7 +3,7 @@
  * POST /api/elections  — ADMIN/FOUNDER，发起新选举
  *   body: { title?, description?, applyDays?, voteDays? }
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
@@ -27,7 +27,7 @@ export async function GET() {
   return json(success({ elections }));
 }
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   if (session.role !== 'ADMIN' && !session.isFounder) {
@@ -73,3 +73,4 @@ export async function POST(event: APIEvent) {
 
   return json(success({ election }), 201);
 }
+

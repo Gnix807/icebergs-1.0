@@ -52,6 +52,7 @@ model User {
 
   icebergs           Iceberg[]
   sessions           Session[]
+  oauthIdentities    OAuthIdentity[]
   votes              Vote[]
   watchlist          Watchlist[]
   warnings           UserWarning[]
@@ -79,6 +80,52 @@ model User {
   announcements        Announcement[]
 
   @@map("users")
+}
+
+// ── OAuth 账号绑定（运行时兼容表）─────────────────────────────
+model OAuthIdentity {
+  id             String  @id
+  userId         String  @map("user_id")
+  provider       String
+  providerUserId String  @map("provider_user_id")
+  email          String?
+  createdAt      String  @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId], map: "idx_oauth_identity_unique")
+  @@unique([userId, provider], map: "idx_oauth_identity_user_provider")
+  @@index([userId], map: "idx_oauth_identity_user")
+  @@map("oauth_identities")
+}
+
+// ── 登录/注册限流事件（运行时兼容表）──────────────────────────
+model AuthRateLimitEvent {
+  id        String @id
+  action    String
+  rateKey   String @map("rate_key")
+  createdAt String @map("created_at")
+
+  @@index([action, rateKey, createdAt], map: "idx_auth_rate_limit_action_key_created")
+  @@index([createdAt], map: "idx_auth_rate_limit_created")
+  @@map("auth_rate_limit_events")
+}
+
+// ── OAuth 临时挑战（跨重启持久化）────────────────────────────
+model OAuthChallenge {
+  id           String    @id @default(cuid())
+  stateHash    String    @unique @map("state_hash")
+  provider     String
+  intent       String
+  codeVerifier String?   @map("code_verifier")
+  linkUserId   String?   @map("link_user_id")
+  expiresAt    DateTime  @map("expires_at")
+  consumedAt   DateTime? @map("consumed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([expiresAt], map: "idx_oauth_challenges_expires")
+  @@index([consumedAt], map: "idx_oauth_challenges_consumed")
+  @@map("oauth_challenges")
 }
 
 // ── 管理员/站长授予勋章 ────────────────────────────────────────
@@ -114,6 +161,7 @@ model Iceberg {
   slug        String   @unique
   title       String
   description String?
+  topic       String   @default("general") // 主题分类：game / urban_legend / conspiracy ...
   authorId    String
   author      User     @relation(fields: [authorId], references: [id])
 
@@ -133,7 +181,7 @@ model Iceberg {
   comments    Comment[]
 
   @@index([authorId])
-  @@index([status, createdAt])
+  @@index([status, topic, createdAt])
   @@map("icebergs")
 }
 

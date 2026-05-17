@@ -1,0 +1,129 @@
+---
+import { prisma } from '../../lib/prisma';
+
+const now = new Date();
+const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+const [
+  weeklyTotal,
+  weeklyResolved,
+  weeklyWontfix,
+  openPending,
+  todayTotal,
+] = await Promise.all([
+  prisma.feedback.count({ where: { createdAt: { gte: weekAgo } } }),
+  prisma.feedback.count({
+    where: {
+      status: 'resolved',
+      resolvedAt: { gte: weekAgo },
+    },
+  }),
+  prisma.feedback.count({
+    where: {
+      status: 'wontfix',
+      resolvedAt: { gte: weekAgo },
+    },
+  }),
+  prisma.feedback.count({ where: { status: 'pending' } }),
+  prisma.feedback.count({
+    where: {
+      createdAt: {
+        gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+      },
+    },
+  }),
+]);
+
+const weeklyHandled = weeklyResolved + weeklyWontfix;
+const weeklyPending = Math.max(weeklyTotal - weeklyHandled, 0);
+---
+
+<section class="week-stats reveal">
+  <div class="week-stats-head">
+    <h2><span class="slash">// </span>最近 7 天处理概览</h2>
+  </div>
+  <div class="week-stats-grid">
+    <div class="week-card">
+      <div class="num">{weeklyTotal}</div>
+      <div class="label">新增反馈</div>
+    </div>
+    <div class="week-card">
+      <div class="num">{weeklyHandled}</div>
+      <div class="label">已处理</div>
+    </div>
+    <div class="week-card">
+      <div class="num">{weeklyPending}</div>
+      <div class="label">7天内待处理</div>
+    </div>
+    <div class="week-card">
+      <div class="num">{openPending}</div>
+      <div class="label">当前总待处理</div>
+    </div>
+    <div class="week-card">
+      <div class="num">{todayTotal}</div>
+      <div class="label">今日新提交</div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .week-stats {
+    margin-top: 0.95rem;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    padding: 0.75rem 0.85rem;
+  }
+
+  .week-stats-head h2 {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .week-stats-head .slash {
+    color: var(--text-muted);
+  }
+
+  .week-stats-grid {
+    margin-top: 0.55rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 900px) {
+    .week-stats-grid {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
+
+  .week-card {
+    border: 1px solid var(--border);
+    background: var(--bg-base);
+    padding: 0.55rem 0.62rem;
+  }
+
+  .week-card .num {
+    color: var(--terminal-green);
+    font-weight: 700;
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .week-card .label {
+    margin-top: 0.25rem;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+  }
+
+  html.light .week-stats {
+    background: #ffffff;
+    border-color: #d6dbe5;
+  }
+
+  html.light .week-card {
+    background: #f8fafc;
+    border-color: #d6dbe5;
+  }
+</style>

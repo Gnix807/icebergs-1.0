@@ -6,14 +6,14 @@
  * Level 1 (WARNED_1): note only, auto-clears in 90 days.
  * Level 2 (WARNED_2): visible badge, requires manual/appeal clearance.
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { can } from '../../../../lib/permissions';
 import { notify } from '../../../../lib/notify';
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -90,3 +90,4 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
+

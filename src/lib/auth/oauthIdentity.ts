@@ -121,3 +121,12 @@ export async function linkOAuthIdentity(
   `;
   return 'linked';
 }
+
+export async function unlinkOAuthIdentity(userId: string, provider: OAuthProvider): Promise<number> {
+  await ensureOAuthIdentityTable();
+  const affected = await prisma.$executeRaw`
+    DELETE FROM oauth_identities
+    WHERE user_id = ${userId} AND provider = ${provider}
+  `;
+  return Number(affected ?? 0);
+}

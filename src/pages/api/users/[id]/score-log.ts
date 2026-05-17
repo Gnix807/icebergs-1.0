@@ -4,12 +4,12 @@
  * 返回该用户的质量分流水记录（分页）。
  * 仅本人或 ADMIN/FOUNDER 可查看。
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth/index';
 
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   try {
     const { id } = event.params;
     if (!id) {
@@ -54,3 +54,4 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
+

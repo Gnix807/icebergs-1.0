@@ -78,6 +78,7 @@ interface Props {
   user: User;
   icebergs: Iceberg[];
   isOwner: boolean;
+  presenceStatus?: 'online' | 'active' | 'offline';
   viewerRole?: string;
   viewerIsFounder?: boolean;
   appealEligible?: boolean;
@@ -109,6 +110,13 @@ const ROLE_BADGES: Record<string, { label: string; color: string }> = {
   EDITOR:      { label: 'EDITOR',  color: '#3b82f6' },
   CONTRIBUTOR: { label: 'CONTRIB', color: '#22c55e' },
   USER:        { label: 'USER',    color: '#6b7280' },
+};
+
+type PresenceStatus = 'online' | 'active' | 'offline';
+const PRESENCE_META: Record<PresenceStatus, { label: string; dot: string; text: string; pulse: boolean; hint: string }> = {
+  online:  { label: 'ONLINE', dot: '#22c55e', text: '#86efac', pulse: true,  hint: '当前登录中' },
+  active:  { label: 'ACTIVE', dot: '#f59e0b', text: '#fbbf24', pulse: false, hint: '今日有访问记录' },
+  offline: { label: 'OFFLINE', dot: '#6e7681', text: '#6e7681', pulse: false, hint: '暂无今日访问记录' },
 };
 
 const NOTIF_ICONS: Record<string, { icon: string; color: string }> = {
@@ -150,7 +158,7 @@ const SCORE_REASON_META: Record<string, { label: string; icon: string; color: st
   comment:         { label: '发表评论',     icon: '◎', color: '#22c55e'  },
   vote_cast:       { label: '投票',         icon: '○', color: '#3b82f6'  },
   comment_liked:   { label: '评论被点赞',   icon: '★', color: '#f59e0b'  },
-  iceberg_created: { label: '创建冰山图',   icon: '◈', color: '#00FF41'  },
+  iceberg_created: { label: '提交审核（新稿）', icon: '◈', color: '#00FF41'  },
   iceberg_voted:   { label: '冰山图投票',   icon: '◆', color: '#8b5cf6'  },
   promoted:        { label: '晋升奖励',     icon: '▲', color: '#f59e0b'  },
   weekly_bonus:    { label: '周活跃奖励',   icon: '◉', color: '#ec4899'  },
@@ -432,6 +440,7 @@ function ExploreTab({
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
+  if (diff < 0) return '刚刚';
   const d    = Math.floor(diff / 86400000);
   if (d > 30) return `${Math.floor(d / 30)} 月前`;
   if (d >= 1) return `${d} 天前`;
@@ -452,6 +461,7 @@ export function UserCenter({
   socialStats,
   achievements = [], achievementDefs = [], userReadCount = 0,
   awards = [], userboxIds = [],
+  presenceStatus = 'offline',
 }: Props) {
   const [activeTab, setActiveTab]     = useState<Tab>('icebergs');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -481,11 +491,13 @@ export function UserCenter({
   const [promotionStatement, setPromotionStatement] = useState('');
   const [promotionBusy, setPromotionBusy]           = useState(false);
   const [promotionSent, setPromotionSent]           = useState(false);
+  const [activeUserboxIndex, setActiveUserboxIndex] = useState<number | null>(null);
 
   const qLevel      = getQualityLevel(user.qualityScore, user.role);
   const levelColor  = LEVEL_COLORS[qLevel.level] ?? '#6b7280';
   const displayName = user.nickname || user.username;
   const roleBadge   = ROLE_BADGES[user.role] ?? { label: user.role, color: '#6b7280' };
+  const presence = PRESENCE_META[presenceStatus] ?? PRESENCE_META.offline;
 
   const isEditorViewer = viewerRole === 'EDITOR' || viewerRole === 'ADMIN';
   const isAdminViewer  = viewerRole === 'ADMIN';
@@ -523,6 +535,67 @@ export function UserCenter({
       ? [{ id: 'admin' as Tab, label: '管理', code: 'RESTRICTED', amber: true }]
       : []),
   ];
+
+  const setTabAndSyncUrl = (nextTab: Tab) => {
+    setActiveTab(nextTab);
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (nextTab === 'icebergs') url.searchParams.delete('tab');
+    else url.searchParams.set('tab', nextTab);
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const queryTab = url.searchParams.get('tab');
+    const linked = url.searchParams.get('linked');
+    const queryError = url.searchParams.get('error');
+    let mutated = false;
+    let nextTab: Tab | null = null;
+
+    if (queryTab && tabs.some((t) => t.id === queryTab)) {
+      nextTab = queryTab as Tab;
+    }
+
+    const linkedProvider = linked === 'github' || linked === 'google' ? linked : null;
+    if (linkedProvider) {
+      if (tabs.some((t) => t.id === 'settings')) {
+        nextTab = 'settings';
+        url.searchParams.set('tab', 'settings');
+      }
+      url.searchParams.delete('linked');
+      mutated = true;
+
+      void (async () => {
+        try {
+          const res = await fetch('/api/auth/sessions');
+          const data = await res.json().catch(() => ({}));
+          const reallyLinked = Boolean(data?.success && data?.data?.authMethods?.[linkedProvider]);
+          if (reallyLinked) {
+            toast(`${linkedProvider === 'github' ? 'GitHub' : 'Google'} 绑定成功`);
+          } else {
+            toast(`${linkedProvider === 'github' ? 'GitHub' : 'Google'} 绑定未完成，请重试`, 'error');
+          }
+        } catch {
+          toast('第三方绑定状态校验失败，请刷新后重试', 'error');
+        }
+      })();
+    }
+
+    if (queryError === 'oauth_provider_already_linked') {
+      toast('当前账号已绑定该第三方，请勿重复绑定', 'error');
+      url.searchParams.delete('error');
+      mutated = true;
+    }
+
+    if (nextTab) {
+      setActiveTab(nextTab);
+    }
+    if (mutated) {
+      window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+    }
+  }, []);
 
   // 加载通知
   useEffect(() => {
@@ -623,29 +696,53 @@ export function UserCenter({
     const levelNames = ['访客', '研究员', '分析师', '督察员'];
     const unlockedTotal = unlockedCommunityCount + unlockedExploreCount;
 
-    const userboxes: Array<{ leftBg: string; leftFg: string; leftText: string; text: string }> = [];
+    const userboxes: Array<{ leftBg: string; leftFg: string; leftText: string; name: string; text: string }> = [];
+    const CUSTOM_USERBOX_NAME: Record<string, string> = {
+      interest_history: '历史',
+      interest_science: '科学',
+      interest_culture: '文化',
+      interest_tech: '技术',
+      interest_art: '艺术',
+      interest_geo: '地缘',
+      interest_nature: '自然',
+      interest_mystery: '谜团',
+      style_creator: '创作',
+      style_researcher: '研究',
+      style_explorer: '漫游',
+      style_editor: '审阅',
+      style_voter: '投票',
+      persona_nightowl: '夜猫',
+      persona_perfectionist: '严谨',
+      persona_wikifan: '维基',
+      persona_deepdiver: '深潜',
+      persona_veteran: '元老',
+    };
     if (user.isFounder) {
-      userboxes.push({ leftBg: '#f59e0b', leftFg: '#0a0a0a', leftText: 'ROOT', text: '该用户拥有平台全局访问与控制权限' });
+      userboxes.push({ leftBg: '#f59e0b', leftFg: '#0a0a0a', leftText: 'ROOT', name: '站长', text: '该用户拥有平台全局访问与控制权限' });
     }
     userboxes.push({
       leftBg: roleBadge.color, leftFg: '#0a0a0a',
       leftText: roleBadge.label,
+      name: '角色',
       text: `该用户是${roleLabels[user.role] ?? user.role}`,
     });
     userboxes.push({
       leftBg: '#111827', leftFg: '#6b7280',
       leftText: String(new Date(user.createdAt).getFullYear()),
+      name: '资历',
       text: `注册时长 ${memberStr}`,
     });
     userboxes.push({
       leftBg: `${levelColor}1a`, leftFg: levelColor,
       leftText: String(user.qualityScore),
+      name: '质量',
       text: `质量等级：${levelNames[qLevel.level] ?? qLevel.label}`,
     });
     if (user._count.icebergs > 0) {
       userboxes.push({
         leftBg: '#001a00', leftFg: '#00FF41',
         leftText: String(user._count.icebergs),
+        name: '作品',
         text: `发布了 ${user._count.icebergs} 篇冰山图`,
       });
     }
@@ -653,6 +750,7 @@ export function UserCenter({
       userboxes.push({
         leftBg: '#1a1020', leftFg: '#8b5cf6',
         leftText: String(unlockedTotal),
+        name: '成就',
         text: `已解锁 ${unlockedTotal} 枚成就`,
       });
     }
@@ -663,6 +761,7 @@ export function UserCenter({
           leftBg: badge.founderOnly ? `${badge.color}44` : `${badge.color}22`,
           leftFg: badge.color,
           leftText: badge.icon,
+          name: badge.labelZh,
           text: `${badge.labelZh} — ${badge.desc}`,
         });
       }
@@ -670,7 +769,14 @@ export function UserCenter({
     // 用户自选框
     userboxIds.forEach(bid => {
       const def = getUserboxDef(bid);
-      if (def) userboxes.push(def);
+      if (!def) return;
+      userboxes.push({
+        leftBg: def.leftBg,
+        leftFg: def.leftFg,
+        leftText: def.leftText,
+        name: CUSTOM_USERBOX_NAME[bid] ?? def.leftText,
+        text: def.text,
+      });
     });
 
     return (
@@ -682,20 +788,49 @@ export function UserCenter({
             <div className="px-3.5 pt-3 pb-2.5 border-b border-[#111518]">
               <div className="text-[11px] font-mono text-[#6e7681] tracking-[0.2em]">// USERBOX</div>
             </div>
-            <div className="divide-y divide-[#0d0f14]">
-              {userboxes.map((box, i) => (
-                <div key={i} className="flex items-stretch" style={{ minHeight: '36px' }}>
-                  <div
-                    className="w-[52px] flex items-center justify-center flex-shrink-0 text-[11px] font-mono font-bold leading-tight px-1 text-center"
-                    style={{ background: box.leftBg, color: box.leftFg }}
-                  >
-                    {box.leftText}
-                  </div>
-                  <div className="flex-1 flex items-center px-2.5 bg-[#050608] min-w-0 border-l border-[#111518]">
-                    <span className="text-[11px] font-mono text-[#8b949e] truncate">{box.text}</span>
-                  </div>
-                </div>
-              ))}
+            <div className="p-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {userboxes.map((box, i) => {
+                  const codeText = String(box.leftText ?? '');
+                  const codeSizeClass = codeText.length >= 5
+                    ? 'text-[11px] sm:text-[12px]'
+                    : codeText.length >= 4
+                      ? 'text-[13px]'
+                      : 'text-[14px]';
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      title={box.text}
+                      aria-label={`${box.leftText}：${box.text}`}
+                      onMouseEnter={() => setActiveUserboxIndex(i)}
+                      onFocus={() => setActiveUserboxIndex(i)}
+                      onClick={() => setActiveUserboxIndex(prev => (prev === i ? null : i))}
+                      className="group relative min-h-[4.8rem] min-w-0 border border-[#111518] transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-1 focus:ring-[#00FF41]"
+                      style={{ background: box.leftBg, color: box.leftFg }}
+                    >
+                      <span className="flex h-full w-full flex-col items-center justify-center gap-1 px-1 py-1.5">
+                        <span className={`block w-full ${codeSizeClass} font-mono font-bold leading-tight text-center whitespace-nowrap tracking-normal`}>
+                          {box.leftText}
+                        </span>
+                        <span className="block w-full text-[14px] font-mono leading-tight text-center opacity-90 whitespace-nowrap tracking-tight">
+                          {box.name}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-2 px-0.5 min-h-[28px]">
+                {activeUserboxIndex !== null ? (
+                  <p className="text-[11px] font-mono text-[#8b949e] leading-relaxed">
+                    {userboxes[activeUserboxIndex]?.text}
+                  </p>
+                ) : (
+                  <p className="text-[10px] font-mono text-[#6e7681]">// 悬停或点击徽章查看说明</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -948,7 +1083,7 @@ export function UserCenter({
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 md:px-6 py-8">
+    <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
 
       {/* ── 账户状态栏 ───────────────────────────────────────────────────── */}
       {isOwner && user.status !== 'ACTIVE' && (() => {
@@ -1002,6 +1137,18 @@ export function UserCenter({
         </div>
       )}
 
+      {isOwner && viewerIsFounder && (
+        <div className="border border-[#21262d] bg-[#161b22] mb-5 px-4 py-3 flex items-center gap-3 flex-wrap boot-animate" style={{ animationDelay: '0ms' }}>
+          <span className="text-xs font-mono text-[#6e7681] mr-auto tracking-wider">站长操作</span>
+          <button
+            onClick={() => setShowAwardModal(true)}
+            className="px-3 py-1.5 text-xs font-mono border border-[#f59e0b40] text-[#f59e0b] hover:bg-[#f59e0b15] transition-colors"
+          >
+            ✦ 自授勋章
+          </button>
+        </div>
+      )}
+
       {/* ── HUD 档案头部 ──────────────────────────────────────────────────── */}
       <div className="relative border border-[#21262d] bg-[#161b22] mb-6 overflow-hidden boot-animate" style={{ animationDelay: '20ms' }}>
         <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
@@ -1010,9 +1157,12 @@ export function UserCenter({
           <span className="text-[11px] font-mono text-[#6e7681] tracking-[0.18em]">
             PERSONNEL FILE — SUBJECT #{user.username.toUpperCase()}
           </span>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-            <span className="text-[11px] font-mono text-[#3d444d] tracking-wider">ONLINE</span>
+          <div className="flex items-center gap-2" title={presence.hint}>
+            <span
+              className={`inline-block w-2 h-2 rounded-full ${presence.pulse ? 'animate-pulse' : ''}`}
+              style={{ backgroundColor: presence.dot }}
+            />
+            <span className="text-[11px] font-mono tracking-wider" style={{ color: presence.text }}>{presence.label}</span>
           </div>
         </div>
 
@@ -1114,7 +1264,7 @@ export function UserCenter({
       {/* ── 两栏布局 ──────────────────────────────────────────────────────── */}
       <div className="flex gap-6 items-start">
 
-        <div className="hidden md:flex flex-col gap-4 w-[230px] flex-shrink-0">
+        <div className="hidden md:flex flex-col gap-4 w-[280px] lg:w-[300px] flex-shrink-0">
           {renderSidebar()}
         </div>
 
@@ -1132,7 +1282,7 @@ export function UserCenter({
             {tabs.map(tab => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => setTabAndSyncUrl(tab.id)}
                 className={`px-4 md:px-5 py-3 text-sm font-mono transition-colors border-b-2 -mb-px ${
                   activeTab === tab.id
                     ? tab.amber ? 'border-[#f59e0b] text-[#f59e0b]' : 'border-[#00FF41] text-[#00FF41]'
@@ -1327,7 +1477,7 @@ export function UserCenter({
           userId={user.id}
           isLeaving={awardLeaving}
           onClose={() => setShowAwardModal(false)}
-          existingTypes={awards.map(a => a.type)}
+          existingAwards={awards}
         />
       )}
 
@@ -1361,17 +1511,21 @@ export function UserCenter({
 
 
 // ── 授予勋章弹窗 ──────────────────────────────────────────────────────────
-function AwardModal({ userId, isLeaving, onClose, existingTypes }: {
+function AwardModal({ userId, isLeaving, onClose, existingAwards }: {
   userId: string;
   isLeaving: boolean;
   onClose: () => void;
-  existingTypes: string[];
+  existingAwards: { id: string; type: string }[];
 }) {
   const [selectedType, setSelectedType] = useState('');
   const [message, setMessage]           = useState('');
   const [busy, setBusy]                 = useState(false);
+  const [revokingType, setRevokingType] = useState<string | null>(null);
   const [error, setError]               = useState<string | null>(null);
   const [isLight, setIsLight]           = useState(false);
+  const [awardedByType, setAwardedByType] = useState<Record<string, string>>(
+    () => Object.fromEntries(existingAwards.map((a) => [a.type, a.id])),
+  );
   useEffect(() => {
     const update = () => setIsLight(document.documentElement.classList.contains('light'));
     update();
@@ -1379,7 +1533,6 @@ function AwardModal({ userId, isLeaving, onClose, existingTypes }: {
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => obs.disconnect();
   }, []);
-
   const submit = async () => {
     if (!selectedType) return;
     setBusy(true); setError(null);
@@ -1390,43 +1543,88 @@ function AwardModal({ userId, isLeaving, onClose, existingTypes }: {
         body: JSON.stringify({ type: selectedType, message: message.trim() || undefined }),
       });
       const data = await res.json();
-      if (data.success) { onClose(); window.location.reload(); }
+      if (data.success) {
+        const awardId = data.data?.id as string | undefined;
+        if (awardId) {
+          setAwardedByType((prev) => ({ ...prev, [selectedType]: awardId }));
+        }
+        setSelectedType('');
+        setMessage('');
+      }
       else setError(data.error?.message ?? '授予失败');
     } finally { setBusy(false); }
   };
 
+  const revoke = async (type: string, awardId: string) => {
+    if (!window.confirm('确认撤回该勋章？')) return;
+    setRevokingType(type);
+    setError(null);
+    try {
+      const res = await fetch(`/api/users/${userId}/awards?awardId=${encodeURIComponent(awardId)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.error?.message ?? '撤回失败');
+        return;
+      }
+      setAwardedByType((prev) => {
+        const next = { ...prev };
+        delete next[type];
+        return next;
+      });
+      if (selectedType === type) setSelectedType('');
+    } catch {
+      setError('撤回失败，请稍后重试');
+    } finally {
+      setRevokingType(null);
+    }
+  };
+
   return (
-    <div className={`${isLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-      <div className={`${isLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] border-l-4 border-l-[#f59e0b] w-full max-w-md p-6 font-mono`}>
+    <div className={`${isLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3 sm:p-4`}>
+      <div className={`${isLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] border-l-4 border-l-[#f59e0b] w-full max-w-[26rem] max-h-[82vh] overflow-y-auto p-4 sm:p-5 font-mono`}>
         <div className="text-[10px] text-[#6e7681] mb-1.5 tracking-widest">[ AWARD SYSTEM ]</div>
         <div className="text-base text-[#cdd9e5] mb-1.5"><span className="text-[#f59e0b]">#</span> 授予勋章</div>
-        <div className="text-xs text-[#3d444d] mb-5">选择勋章类型并填写颁奖留言（可选）</div>
+        <div className="text-xs text-[#3d444d] mb-3">选择勋章类型并填写颁奖留言（可选）。已授予的勋章可直接撤回。</div>
 
         {error && (
-          <div className="mb-4 p-3 bg-[#1a0808] border border-[#ef444440] text-[#ef4444] text-xs">&gt; ERROR: {error}</div>
+          <div className="mb-3 p-2.5 bg-[#1a0808] border border-[#ef444440] text-[#ef4444] text-[11px]">&gt; ERROR: {error}</div>
         )}
 
-        <div className="space-y-2 mb-5">
+        <div className="space-y-1.5 mb-4 max-h-64 overflow-y-auto pr-1">
           {AWARD_TYPES.map(a => {
-            const already = existingTypes.includes(a.id);
+            const awardId = awardedByType[a.id];
+            const already = Boolean(awardId);
             return (
-              <button
-                key={a.id}
-                disabled={already}
-                onClick={() => setSelectedType(a.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 border transition-all text-left ${
-                  already ? 'opacity-30 cursor-not-allowed border-[#21262d]' :
-                  selectedType === a.id ? 'border-[#f59e0b] bg-[#f59e0b0d]' : 'border-[#21262d] hover:border-[#30363d]'
-                }`}
-              >
-                <span className="text-lg flex-shrink-0" style={{ color: a.color }}>{a.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-semibold" style={{ color: selectedType === a.id ? a.color : (isLight ? '#374151' : '#e5e5e5') }}>{a.labelZh}</div>
-                  <div className="text-[10px] text-[#3d444d]">{a.desc}</div>
-                </div>
-                {already && <span className="text-[10px] text-[#6e7681]">已授予</span>}
-                {selectedType === a.id && !already && <span className="text-[10px]" style={{ color: a.color }}>✓</span>}
-              </button>
+              <div key={a.id} className="flex items-center gap-2">
+                <button
+                  disabled={already || busy || revokingType === a.id}
+                  onClick={() => setSelectedType(a.id)}
+                  className={`flex-1 flex items-center gap-2.5 px-2.5 py-2 border transition-all text-left ${
+                    already ? 'opacity-60 cursor-not-allowed border-[#21262d] bg-[#11141a]' :
+                    selectedType === a.id ? 'border-[#f59e0b] bg-[#f59e0b0d]' : 'border-[#21262d] hover:border-[#30363d]'
+                  }`}
+                >
+                  <span className="text-base flex-shrink-0" style={{ color: a.color }}>{a.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-semibold" style={{ color: selectedType === a.id ? a.color : (isLight ? '#374151' : '#e5e5e5') }}>{a.labelZh}</div>
+                    <div className="text-[10px] text-[#3d444d] truncate">{a.desc}</div>
+                  </div>
+                  {already && <span className="text-[10px] text-[#6e7681]">已授予</span>}
+                  {selectedType === a.id && !already && <span className="text-[10px]" style={{ color: a.color }}>✓</span>}
+                </button>
+                {already && awardId && (
+                  <button
+                    type="button"
+                    onClick={() => revoke(a.id, awardId)}
+                    disabled={busy || revokingType === a.id}
+                    className="px-2 py-1.5 text-[10px] border border-[#7f1d1d] text-[#ef4444] hover:bg-[#ef444415] transition-colors disabled:opacity-50"
+                  >
+                    {revokingType === a.id ? '撤回中...' : '撤回'}
+                  </button>
+                )}
+              </div>
             );
           })}
         </div>
@@ -1437,16 +1635,16 @@ function AwardModal({ userId, isLeaving, onClose, existingTypes }: {
         </div>
         <textarea
           value={message} onChange={e => setMessage(e.target.value.slice(0, 200))}
-          rows={3}
-          className="w-full px-3 py-2.5 bg-[#161b22] border border-[#30363d] text-sm text-[#cdd9e5] focus:border-[#f59e0b] focus:outline-none resize-none mb-5"
+          rows={2}
+          className="w-full px-3 py-2.5 bg-[#161b22] border border-[#30363d] text-sm text-[#cdd9e5] focus:border-[#f59e0b] focus:outline-none resize-none mb-4"
           placeholder="写下对该用户贡献的认可…"
         />
 
         <div className="flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-[#30363d] text-sm text-[#8b949e] hover:border-[#30363d] transition-colors">取消</button>
+          <button onClick={onClose} className="flex-1 py-2 border border-[#30363d] text-sm text-[#8b949e] hover:border-[#30363d] transition-colors">取消</button>
           <button
             onClick={submit} disabled={busy || !selectedType}
-            className="flex-1 py-2.5 text-sm font-bold transition-colors disabled:opacity-40"
+            className="flex-1 py-2 text-sm font-bold transition-colors disabled:opacity-40"
             style={{
               background: selectedType ? `${AWARD_TYPES.find(a=>a.id===selectedType)?.color}15` : '',
               borderWidth: 1, borderStyle: 'solid',

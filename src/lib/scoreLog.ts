@@ -8,7 +8,7 @@ export type ScoreReason =
   | 'comment'        // 发表评论
   | 'vote_cast'      // 首次投票
   | 'comment_liked'  // 评论被点赞
-  | 'iceberg_created'// 创建冰山图
+  | 'iceberg_created'// 提交审核的新冰山图
   | 'iceberg_voted'  // 冰山图被投票（作者获得/扣除）
   | 'promoted'       // 晋升奖励
   | 'weekly_bonus';  // 周活跃奖励

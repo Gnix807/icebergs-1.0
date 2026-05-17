@@ -1,9 +1,9 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   try {
     const { id } = event.params;
 
@@ -41,7 +41,7 @@ export async function GET(event: APIEvent) {
   }
 }
 
-export async function PUT(event: APIEvent) {
+export async function PUT(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -71,7 +71,8 @@ export async function PUT(event: APIEvent) {
       });
     }
 
-    if (existing.iceberg.authorId !== session.userId) {
+    const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
+    if (existing.iceberg.authorId !== session.userId && !canManageAny) {
       return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -101,7 +102,7 @@ export async function PUT(event: APIEvent) {
   }
 }
 
-export async function DELETE(event: APIEvent) {
+export async function DELETE(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -128,7 +129,8 @@ export async function DELETE(event: APIEvent) {
       });
     }
 
-    if (existing.iceberg.authorId !== session.userId) {
+    const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
+    if (existing.iceberg.authorId !== session.userId && !canManageAny) {
       return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -149,3 +151,4 @@ export async function DELETE(event: APIEvent) {
     });
   }
 }
+

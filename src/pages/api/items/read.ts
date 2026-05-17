@@ -1,9 +1,9 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { getSession } from '../../../lib/auth/index';
 import { prisma } from '../../../lib/prisma';
 import { checkAchievements, updateDailyStreak } from '../../../lib/achievementService';
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   const session = await getSession(event);
   if (!session) {
     return new Response(JSON.stringify({ success: true }), {
@@ -114,3 +114,4 @@ export async function POST(event: APIEvent) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
+

@@ -2,7 +2,7 @@
  * GET  /api/admin/achievements  — ADMIN: list all achievement definitions
  * POST /api/admin/achievements  — ADMIN: create new achievement definition
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
@@ -15,7 +15,7 @@ function json(body: unknown, status: number) {
   });
 }
 
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -29,7 +29,7 @@ export async function GET(event: APIEvent) {
   }
 }
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -71,3 +71,4 @@ export async function POST(event: APIEvent) {
     return json(error(ErrorCodes.INTERNAL_ERROR, '创建失败'), 500);
   }
 }
+

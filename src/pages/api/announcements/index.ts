@@ -2,7 +2,7 @@
  * GET  /api/announcements        — 公开列表（pinned 优先 + 时间倒序）
  * POST /api/announcements        — ADMIN：新建公告
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../lib/api';
@@ -24,7 +24,7 @@ export async function GET() {
   });
 }
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   if (!can(session, 'user:ban')) return json(error(ErrorCodes.FORBIDDEN, '需要管理员权限'), 403);
@@ -70,3 +70,4 @@ function json(body: unknown, status: number) {
     status, headers: { 'Content-Type': 'application/json' },
   });
 }
+

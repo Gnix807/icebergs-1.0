@@ -9,6 +9,7 @@ const session = await getSessionById(Astro.cookies.get('session')?.value);
 const isAdmin = session ? can(session, 'user:ban') : false;
 
 const announcements = await prisma.announcement.findMany({
+  where: { type: 'info' },
   orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
   select: {
     id: true, title: true, content: true, type: true,
@@ -30,12 +31,13 @@ const initialList = announcements.map((a: any) => ({
     <div class="mb-8">
       <div class="text-[10px] font-mono text-[#6e7681] tracking-widest mb-2">// ANNOUNCEMENTS · 公告</div>
       <h1 class="text-2xl font-mono text-[#cdd9e5] mb-2">站点公告</h1>
-      <p class="text-xs font-mono text-[#8b949e]">平台更新、规则变动与重要通知。</p>
+      <p class="text-xs font-mono text-[#8b949e]">仅展示站务公告；功能变更请前往更新日志查看。</p>
     </div>
 
     <AnnouncementManager
       client:load
       isAdmin={isAdmin}
+      mode="announcements"
       initialList={initialList}
     />
 

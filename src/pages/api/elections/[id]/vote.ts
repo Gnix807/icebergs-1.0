@@ -5,7 +5,7 @@
  *
  * 投票权重：USER=1 CONTRIBUTOR=2 EDITOR=3 MODERATOR=5 ADMIN=7
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
@@ -20,7 +20,7 @@ const VOTE_WEIGHTS: Record<string, number> = {
   USER: 1, CONTRIBUTOR: 2, EDITOR: 3, MODERATOR: 5, ADMIN: 7,
 };
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -76,3 +76,4 @@ export async function POST(event: APIEvent) {
 
   return json(success({ message: '投票成功', weight }));
 }
+

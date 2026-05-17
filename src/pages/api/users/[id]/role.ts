@@ -8,7 +8,7 @@
  * - Cannot set role to ADMIN (election only)
  * - Setting to MODERATOR checks moderator_max cap
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
@@ -26,7 +26,7 @@ const ROLE_LABELS: Record<AllowedRole, string> = {
   ADMIN:       '管理员',
 };
 
-export async function PATCH(event: APIEvent) {
+export async function PATCH(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -41,12 +41,13 @@ export async function PATCH(event: APIEvent) {
     const { role, reason } = body;
 
     const effectiveAllowed = session.isFounder ? FOUNDER_ALLOWED_ROLES : ALLOWED_ROLES;
-    if (!role || !effectiveAllowed.includes(role as AllowedRole)) {
+    if (!role || !(effectiveAllowed as readonly string[]).includes(role)) {
       const hint = session.isFounder
         ? 'USER / CONTRIBUTOR / EDITOR / MODERATOR / ADMIN'
         : 'USER / CONTRIBUTOR / EDITOR / MODERATOR';
       return json(error(ErrorCodes.BAD_REQUEST, `无效角色，可选：${hint}`), 400);
     }
+    const targetRole = role as AllowedRole;
 
     const target = await prisma.user.findUnique({
       where: { id },
@@ -54,10 +55,10 @@ export async function PATCH(event: APIEvent) {
     });
     if (!target) return json(error(ErrorCodes.NOT_FOUND, '用户不存在'), 404);
     if (target.isFounder) return json(error(ErrorCodes.FORBIDDEN, '无法修改创始人角色'), 403);
-    if (target.role === role) return json(error(ErrorCodes.BAD_REQUEST, '角色未发生变化'), 400);
+    if (target.role === targetRole) return json(error(ErrorCodes.BAD_REQUEST, '角色未发生变化'), 400);
 
     // 上限检查（MODERATOR / ADMIN）
-    if (role === 'MODERATOR') {
+    if (targetRole === 'MODERATOR') {
       const capSetting = await prisma.systemSettings.findUnique({ where: { key: 'moderator_max' } });
       const cap = parseInt(capSetting?.value ?? '5', 10);
       const currentCount = await prisma.user.count({ where: { role: 'MODERATOR' } });
@@ -65,7 +66,7 @@ export async function PATCH(event: APIEvent) {
         return json(error(ErrorCodes.FORBIDDEN, `版主已达上限（${cap} 人），请先在系统配置中调整 moderator_max`), 403);
       }
     }
-    if (role === 'ADMIN') {
+    if (targetRole === 'ADMIN') {
       const capSetting = await prisma.systemSettings.findUnique({ where: { key: 'admin_max' } });
       const cap = parseInt(capSetting?.value ?? '3', 10);
       const currentCount = await prisma.user.count({ where: { role: 'ADMIN' } });
@@ -75,21 +76,21 @@ export async function PATCH(event: APIEvent) {
     }
 
     const oldRole = target.role;
-    await prisma.user.update({ where: { id }, data: { role } });
+    await prisma.user.update({ where: { id }, data: { role: targetRole } });
 
-    const isPromotion = ['USER','CONTRIBUTOR','EDITOR','MODERATOR'].indexOf(role) >
+    const isPromotion = ['USER','CONTRIBUTOR','EDITOR','MODERATOR'].indexOf(targetRole) >
                         ['USER','CONTRIBUTOR','EDITOR','MODERATOR'].indexOf(oldRole);
 
     const notifyTitle = isPromotion
-      ? `你的角色已晋升为 ${ROLE_LABELS[role as AllowedRole]}`
-      : `你的角色已调整为 ${ROLE_LABELS[role as AllowedRole]}`;
+      ? `你的角色已晋升为 ${ROLE_LABELS[targetRole]}`
+      : `你的角色已调整为 ${ROLE_LABELS[targetRole]}`;
     const notifyBody = reason?.trim()
       ? `管理员备注：${reason.trim()}`
       : `由管理员 @${session.userId} 直接操作。`;
 
     await notify(id, isPromotion ? 'promotion_approved' : 'warned', notifyTitle, notifyBody, `/user/${id}`);
 
-    return json(success({ userId: id, oldRole, newRole: role }), 200);
+    return json(success({ userId: id, oldRole, newRole: targetRole }), 200);
   } catch (err) {
     console.error('角色变更失败:', err);
     return json(error(ErrorCodes.INTERNAL_ERROR, '操作失败'), 500);
@@ -102,3 +103,4 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
+

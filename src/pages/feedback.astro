@@ -2,29 +2,39 @@
 import Layout from '../layouts/Layout.astro';
 import { prisma } from '../lib/prisma';
 
-// 处理 POST 提交
 let submitted = false;
 let submitError: string | null = null;
+
+let draftType = '';
+let draftContent = '';
+let draftContact = '';
 
 if (Astro.request.method === 'POST') {
   try {
     const formData = await Astro.request.formData();
-    const type     = formData.get('type')?.toString()     || 'bug';
-    const content  = formData.get('content')?.toString()  || '';
-    const contact  = formData.get('contact')?.toString()  || '';
+    const type = formData.get('type')?.toString() || 'bug';
+    const content = formData.get('content')?.toString() || '';
+    const contact = formData.get('contact')?.toString() || '';
     const icebergId = formData.get('icebergId')?.toString() || '';
-    const itemName  = formData.get('itemName')?.toString()  || '';
+    const itemName = formData.get('itemName')?.toString() || '';
 
-    if (!content.trim()) {
+    draftType = type;
+    draftContent = content;
+    draftContact = contact;
+
+    const cleanContent = content.trim();
+    if (!cleanContent) {
       submitError = '请填写反馈内容';
+    } else if (cleanContent.length > 2000) {
+      submitError = '反馈内容不能超过 2000 字';
     } else {
       await prisma.feedback.create({
         data: {
           type,
-          content: content.trim(),
+          content: cleanContent,
           contact: contact.trim() || null,
           icebergId: icebergId || null,
-          itemName:  itemName  || null,
+          itemName: itemName || null,
         },
       });
       submitted = true;
@@ -35,194 +45,220 @@ if (Astro.request.method === 'POST') {
   }
 }
 
-// 从 URL 参数读取上下文（从冰山图详情页跳转过来时带入）
-const icebergId    = Astro.url.searchParams.get('id')    || '';
+const icebergId = Astro.url.searchParams.get('id') || '';
 const icebergTitle = Astro.url.searchParams.get('title') || '';
-const itemName     = Astro.url.searchParams.get('item')  || '';
+const itemName = Astro.url.searchParams.get('item') || '';
 
 const hasContext = !!(icebergId || itemName);
 const defaultType = itemName ? 'error' : 'bug';
+const selectedType = ['error', 'bug', 'feature', 'other'].includes(draftType) ? draftType : defaultType;
+const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
 ---
 
-<Layout title="异常反馈 | 冰山图宇宙">
-  <main class="max-w-2xl mx-auto px-4 md:px-6 py-12">
-
-    <!-- Header -->
-    <header class="mb-10 reveal">
-      <div class="text-xs font-mono text-[#6e7681] mb-3 tracking-widest">
-        [ FEEDBACK ]
-      </div>
-      <h1 class="text-3xl font-mono font-semibold">
-        <span class="text-[#ef4444]">!</span> 异常反馈
-      </h1>
-      <p class="mt-2 text-sm text-[#8b949e] font-mono">
-        遇到问题？发现 Bug？想提建议？告诉我们。
+<Layout title="反馈建议 | 冰山图宇宙">
+  <main class="feedback-page max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-14">
+    <header class="feedback-hero reveal">
+      <p class="feedback-eyebrow">// 共建计划 · FEEDBACK</p>
+      <h1 class="feedback-title">反馈建议</h1>
+      <p class="feedback-subtitle">
+        你可以在这里提交 Bug、内容纠错或功能建议。我们会按优先级处理，并在站内公告同步关键进展。
       </p>
     </header>
 
     {submitted ? (
-      <!-- 成功状态 -->
-      <div class="p-8 border border-[#22c55e] feedback-success text-center reveal">
-        <div class="text-4xl mb-4">✓</div>
-        <h2 class="font-mono text-[#22c55e] text-lg mb-2">反馈已收到</h2>
-        <p class="text-sm text-[#8b949e] font-mono mb-6">感谢你的反馈，我们会认真处理。</p>
-        <a href="/" class="text-[#00FF41] font-mono text-sm hover:underline">
-          返回首页 →
-        </a>
-      </div>
+      <section class="feedback-success reveal">
+        <div class="feedback-success-mark">✓</div>
+        <h2>反馈已提交</h2>
+        <p>感谢你的建议，我们会尽快评估并处理。</p>
+        <div class="feedback-success-actions">
+          <a href="/feedback/progress">查看反馈进展</a>
+          <a href="/changelog">查看更新日志</a>
+          <a href="/feedback">继续提交</a>
+          <a href={returnHref}>返回上一页</a>
+        </div>
+      </section>
     ) : (
-      <form method="POST" class="space-y-6 reveal">
-
-        <!-- 上下文信息 -->
-        {hasContext && (
-          <div class="p-4 border border-[#21262d] bg-[#161b22] font-mono text-xs space-y-1">
-            <div class="text-[#6e7681] mb-2">// 反馈上下文</div>
-            {icebergId && (
-              <div class="flex gap-3">
-                <span class="text-[#8b949e]">图谱:</span>
-                <span class="text-[#8b949e]">{icebergTitle || icebergId}</span>
-              </div>
-            )}
-            {itemName && (
-              <div class="flex gap-3">
-                <span class="text-[#8b949e]">词条:</span>
-                <span class="text-[#ef4444]">{itemName}</span>
-              </div>
-            )}
+      <div class="feedback-layout reveal">
+        <section class="feedback-form-panel">
+          <div class="feedback-panel-head">
+            <h2>发送反馈</h2>
+            <p>内容越具体，越容易快速定位问题。</p>
           </div>
-        )}
 
-        <!-- 隐藏字段 -->
-        <input type="hidden" name="icebergId" value={icebergId} />
-        <input type="hidden" name="itemName"  value={itemName}  />
+          <form method="POST" class="feedback-form">
+            <input type="hidden" name="icebergId" value={icebergId} />
+            <input type="hidden" name="itemName" value={itemName} />
 
-        <!-- 反馈类型 -->
-        <div>
-          <label class="block text-xs font-mono text-[#8b949e] mb-3">反馈类型</label>
-          <div class="flex flex-wrap gap-3" id="type-chips">
-            {[
-              { value: 'error',   label: '❌ 内容有误' },
-              { value: 'bug',     label: '🐛 Bug 报告' },
-              { value: 'feature', label: '✨ 功能建议' },
-              { value: 'other',   label: '💬 其他'     },
-            ].map(({ value, label }) => (
-              <label class="cursor-pointer">
-                <input
-                  type="radio"
-                  name="type"
-                  value={value}
-                  checked={value === defaultType}
-                  class="sr-only"
-                  data-type-radio
-                />
-                <span class="type-chip block px-3 py-1.5 text-xs font-mono border transition-colors cursor-pointer select-none">
-                  {label}
-                </span>
+            {hasContext && (
+              <div class="feedback-context">
+                <div class="feedback-context-title">当前反馈上下文</div>
+                {icebergId && (
+                  <div class="feedback-context-row">
+                    <span>图谱</span>
+                    <strong>{icebergTitle || icebergId}</strong>
+                  </div>
+                )}
+                {itemName && (
+                  <div class="feedback-context-row">
+                    <span>词条</span>
+                    <strong>{itemName}</strong>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div class="feedback-field">
+              <label>反馈类型</label>
+              <div class="feedback-chips" id="type-chips">
+                {[
+                  { value: 'error', label: '内容有误' },
+                  { value: 'bug', label: '功能异常' },
+                  { value: 'feature', label: '功能建议' },
+                  { value: 'other', label: '其他问题' },
+                ].map(({ value, label }) => (
+                  <label class="feedback-chip-wrap">
+                    <input
+                      type="radio"
+                      name="type"
+                      value={value}
+                      checked={value === selectedType}
+                      class="sr-only"
+                      data-type-radio
+                    />
+                    <span class="feedback-chip">{label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div class="feedback-field">
+              <label for="content">
+                反馈内容 <span class="required">*</span>
               </label>
-            ))}
-          </div>
-        </div>
+              <textarea
+                id="content"
+                name="content"
+                rows="8"
+                required
+                maxlength="2000"
+                placeholder={itemName
+                  ? `请描述「${itemName}」的具体问题，例如错误位置、预期内容、实际显示等。`
+                  : '请描述你遇到的问题或建议，建议包含：发生位置、复现步骤、设备/浏览器信息。'}
+              >{draftContent}</textarea>
+              <div class="feedback-meta">
+                <span>建议填写可复现步骤或样例链接</span>
+                <span id="content-count">0/2000</span>
+              </div>
+            </div>
 
-        <!-- 反馈内容 -->
-        <div>
-          <label for="content" class="block text-xs font-mono text-[#8b949e] mb-2">
-            反馈内容 <span class="text-[#ef4444]">*</span>
-          </label>
-          <textarea
-            id="content"
-            name="content"
-            rows="6"
-            placeholder={itemName
-              ? `请描述「${itemName}」词条中发现的问题...`
-              : '请描述你遇到的问题或建议...'}
-            required
-            class="w-full bg-[#161b22] border border-[#21262d] text-sm text-[#cdd9e5] font-mono p-3 resize-none
-                   focus:outline-none focus:border-[#ef4444] transition-colors placeholder:text-[#3d444d]"
-          ></textarea>
-        </div>
+            <div class="feedback-field">
+              <label for="contact">联系方式（可选）</label>
+              <input
+                id="contact"
+                name="contact"
+                type="text"
+                value={draftContact}
+                placeholder="邮箱 / GitHub / QQ（仅用于处理反馈，不公开展示）"
+              />
+            </div>
 
-        <!-- 联系方式 -->
-        <div>
-          <label for="contact" class="block text-xs font-mono text-[#8b949e] mb-2">
-            联系方式 <span class="text-[#3d444d]">（可选）</span>
-          </label>
-          <input
-            id="contact"
-            name="contact"
-            type="text"
-            placeholder="邮箱 / GitHub 用户名 / 任意联系方式"
-            class="w-full bg-[#161b22] border border-[#21262d] text-sm text-[#cdd9e5] font-mono p-3
-                   focus:outline-none focus:border-[#ef4444] transition-colors placeholder:text-[#3d444d]"
-          />
-        </div>
+            {submitError && <div class="feedback-error">{submitError}</div>}
 
-        {submitError && (
-          <div class="p-3 border border-[#ef4444] text-xs font-mono text-[#ef4444]">
-            {submitError}
-          </div>
-        )}
+            <div class="feedback-actions">
+              <a href={returnHref} class="feedback-back-link">返回上一页</a>
+              <button type="submit">提交反馈</button>
+            </div>
+          </form>
+        </section>
 
-        <div class="flex items-center justify-between pt-2">
-          {icebergId ? (
-            <a
-              href={`/iceberg/${icebergId}`}
-              class="text-xs font-mono text-[#8b949e] hover:text-[#8b949e] transition-colors"
-            >
-              ← 返回冰山图
-            </a>
-          ) : <div />}
-          <button
-            type="submit"
-            class="px-6 py-2.5 bg-[#ef4444] text-white font-mono font-semibold text-sm
-                   hover:bg-[#dc2626] transition-colors"
-          >
-            提交反馈
-          </button>
-        </div>
+        <aside class="feedback-side">
+          <section class="feedback-card">
+            <h3>处理流程</h3>
+            <ol>
+              <li>确认反馈是否可复现，必要时补充信息。</li>
+              <li>按严重程度排期修复或纳入迭代计划。</li>
+              <li>处理状态会同步到反馈进展页。</li>
+            </ol>
+            <a href="/feedback/progress" class="feedback-card-link">查看反馈进展</a>
+          </section>
 
-      </form>
+          <section class="feedback-card">
+            <h3>提交建议</h3>
+            <ul>
+              <li>描述清楚“预期行为”和“实际行为”。</li>
+              <li>若是内容纠错，建议附上可信来源。</li>
+              <li>若是 UI 问题，可附截图和分辨率信息。</li>
+            </ul>
+          </section>
+
+          <section class="feedback-card">
+            <h3>常见问题</h3>
+            <details>
+              <summary>多久会处理？</summary>
+              <p>高优先级问题会优先处理，其余建议按版本节奏推进。</p>
+            </details>
+            <details>
+              <summary>会公开我的联系方式吗？</summary>
+              <p>不会。联系方式仅用于必要沟通，不会在前台公开。</p>
+            </details>
+          </section>
+        </aside>
+      </div>
     )}
-
   </main>
 </Layout>
 
 <script is:inline>
   (function () {
-    var ACTIVE_COLOR = '#ef4444';
-    var INACTIVE_BORDER = '#30363d';
-    var INACTIVE_TEXT   = '#8b949e';
+    var ACTIVE_BORDER = 'var(--terminal-green)';
+    var ACTIVE_TEXT = 'var(--text-primary)';
+    var INACTIVE_BORDER = 'var(--border)';
+    var INACTIVE_TEXT = 'var(--text-secondary)';
 
-    function syncChips() {
+    function syncTypeChips() {
       var radios = document.querySelectorAll('[data-type-radio]');
-      radios.forEach(function (r) {
-        var span = r.nextElementSibling;
-        if (!span) return;
-        if (r.checked) {
-          span.style.borderColor = ACTIVE_COLOR;
-          span.style.color       = ACTIVE_COLOR;
+      radios.forEach(function (radio) {
+        var chip = radio.nextElementSibling;
+        if (!chip) return;
+        if (radio.checked) {
+          chip.style.borderColor = ACTIVE_BORDER;
+          chip.style.color = ACTIVE_TEXT;
+          chip.style.background = 'color-mix(in srgb, var(--terminal-green) 10%, transparent)';
         } else {
-          span.style.borderColor = INACTIVE_BORDER;
-          span.style.color       = INACTIVE_TEXT;
+          chip.style.borderColor = INACTIVE_BORDER;
+          chip.style.color = INACTIVE_TEXT;
+          chip.style.background = 'transparent';
         }
       });
     }
 
+    function syncCount() {
+      var textarea = document.getElementById('content');
+      var counter = document.getElementById('content-count');
+      if (!textarea || !counter) return;
+      var current = textarea.value.length;
+      counter.textContent = current + '/2000';
+    }
+
     function init() {
       var radios = document.querySelectorAll('[data-type-radio]');
-      // 初始化样式
-      syncChips();
-      // 绑定 change 事件
-      radios.forEach(function (r) {
-        r.addEventListener('change', syncChips);
+      radios.forEach(function (radio) {
+        radio.addEventListener('change', syncTypeChips);
       });
-      // 绑定 label 点击（解决某些浏览器 change 不触发的边缘情况）
-      var labels = document.querySelectorAll('#type-chips label');
-      labels.forEach(function (label) {
+      var chipLabels = document.querySelectorAll('#type-chips label');
+      chipLabels.forEach(function (label) {
         label.addEventListener('click', function () {
-          // 延迟一个 tick 确保 checked 状态已更新
-          setTimeout(syncChips, 0);
+          setTimeout(syncTypeChips, 0);
         });
       });
+
+      var textarea = document.getElementById('content');
+      if (textarea) {
+        textarea.addEventListener('input', syncCount);
+      }
+
+      syncTypeChips();
+      syncCount();
     }
 
     if (document.readyState === 'loading') {
@@ -234,28 +270,333 @@ const defaultType = itemName ? 'error' : 'bug';
 </script>
 
 <style>
-  /* 成功面板 */
-  .feedback-success {
-    background-color: #0d1a0d;
-  }
-  html.light .feedback-success {
-    background-color: #f0fdf4;
-    border-color: #22c55e;
+  .feedback-page {
+    color: var(--text-primary);
   }
 
-  /* 浅色下 textarea/input */
-  html.light #content,
-  html.light #contact {
-    background-color: #f8fafc !important;
-    color: #0f172a !important;
-    border-color: #e2e8f0 !important;
+  .feedback-hero {
+    margin-bottom: 1.5rem;
   }
-  html.light #content:focus,
-  html.light #contact:focus {
-    border-color: #ef4444 !important;
+
+  .feedback-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
   }
-  html.light #content::placeholder,
-  html.light #contact::placeholder {
-    color: #94a3b8;
+
+  .feedback-title {
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    line-height: 1.1;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .feedback-subtitle {
+    margin-top: 0.75rem;
+    max-width: 64ch;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .feedback-layout {
+    display: grid;
+    gap: 1rem;
+  }
+
+  @media (min-width: 1024px) {
+    .feedback-layout {
+      grid-template-columns: minmax(0, 1fr) 320px;
+      align-items: start;
+    }
+  }
+
+  .feedback-form-panel,
+  .feedback-card,
+  .feedback-success {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+  }
+
+  .feedback-form-panel {
+    padding: 1.2rem;
+  }
+
+  .feedback-panel-head h2 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+
+  .feedback-panel-head p {
+    margin: 0.4rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .feedback-form {
+    margin-top: 1rem;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .feedback-context {
+    border: 1px solid var(--border);
+    background: var(--bg-base);
+    padding: 0.9rem;
+  }
+
+  .feedback-context-title {
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin-bottom: 0.55rem;
+  }
+
+  .feedback-context-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    padding: 0.2rem 0;
+  }
+
+  .feedback-context-row strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .feedback-field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+  }
+
+  .feedback-field .required {
+    color: #ef4444;
+  }
+
+  .feedback-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  .feedback-chip-wrap {
+    cursor: pointer;
+  }
+
+  .feedback-chip {
+    display: block;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    padding: 0.38rem 0.68rem;
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .feedback-field textarea,
+  .feedback-field input {
+    width: 100%;
+    border: 1px solid var(--border);
+    background: var(--bg-base);
+    color: var(--text-primary);
+    padding: 0.75rem 0.8rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+    font-size: 0.95rem;
+  }
+
+  .feedback-field textarea:focus,
+  .feedback-field input:focus {
+    border-color: var(--terminal-green);
+  }
+
+  .feedback-field textarea::placeholder,
+  .feedback-field input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .feedback-meta {
+    margin-top: 0.45rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.7rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+  }
+
+  .feedback-error {
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    background: color-mix(in srgb, #ef4444 10%, transparent);
+    padding: 0.65rem 0.75rem;
+    font-size: 0.86rem;
+  }
+
+  .feedback-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 0.2rem;
+  }
+
+  .feedback-back-link {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+
+  .feedback-back-link:hover {
+    color: var(--text-primary);
+  }
+
+  .feedback-actions button {
+    border: 1px solid var(--terminal-green);
+    background: var(--terminal-green);
+    color: #03170a;
+    font-weight: 700;
+    padding: 0.58rem 1.05rem;
+    cursor: pointer;
+    transition: filter 0.2s ease;
+  }
+
+  .feedback-actions button:hover {
+    filter: brightness(1.08);
+  }
+
+  .feedback-side {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .feedback-card {
+    padding: 0.95rem 1rem;
+  }
+
+  .feedback-card h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-primary);
+  }
+
+  .feedback-card p,
+  .feedback-card li {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 0.9rem;
+  }
+
+  .feedback-card ol,
+  .feedback-card ul {
+    margin: 0.7rem 0 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .feedback-card-link {
+    display: inline-block;
+    margin-top: 0.75rem;
+    color: var(--terminal-green);
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .feedback-card-link:hover {
+    text-decoration: underline;
+  }
+
+  .feedback-card details {
+    border-top: 1px dashed var(--border);
+    padding-top: 0.6rem;
+    margin-top: 0.6rem;
+  }
+
+  .feedback-card details:first-of-type {
+    margin-top: 0.7rem;
+  }
+
+  .feedback-card summary {
+    cursor: pointer;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+  }
+
+  .feedback-card details p {
+    margin: 0.5rem 0 0;
+  }
+
+  .feedback-success {
+    text-align: center;
+    padding: 2rem 1.25rem;
+  }
+
+  .feedback-success-mark {
+    font-size: 2.2rem;
+    line-height: 1;
+    color: var(--terminal-green);
+  }
+
+  .feedback-success h2 {
+    margin: 0.85rem 0 0.45rem;
+  }
+
+  .feedback-success p {
+    margin: 0;
+    color: var(--text-secondary);
+  }
+
+  .feedback-success-actions {
+    margin-top: 1.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.55rem;
+  }
+
+  .feedback-success-actions a {
+    text-decoration: none;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 0.35rem 0.65rem;
+    font-size: 0.85rem;
+  }
+
+  .feedback-success-actions a:hover {
+    border-color: var(--terminal-green);
+    color: var(--text-primary);
+  }
+
+  html.light .feedback-form-panel,
+  html.light .feedback-card,
+  html.light .feedback-success {
+    background: #ffffff;
+    border-color: #d6dbe5;
+  }
+
+  html.light .feedback-context,
+  html.light .feedback-field textarea,
+  html.light .feedback-field input {
+    background: #f7f9fc;
+    border-color: #d6dbe5;
+    color: #1f2937;
+  }
+
+  html.light .feedback-field textarea::placeholder,
+  html.light .feedback-field input::placeholder {
+    color: #7b8797;
+  }
+
+  html.light .feedback-card-link {
+    color: #1d4ed8;
+  }
+
+  html.light .feedback-actions button {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #ffffff;
   }
 </style>

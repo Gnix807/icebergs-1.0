@@ -17,6 +17,8 @@ interface Props {
 export function UserIcebergs({ icebergs, isOwner }: Props) {
   const published = icebergs.filter(i => i.status === 'PUBLISHED');
   const drafts = icebergs.filter(i => i.status === 'DRAFT');
+  const pendingReview = icebergs.filter(i => i.status === 'PENDING_REVIEW');
+  const rejected = icebergs.filter(i => i.status === 'REJECTED');
   const archived = icebergs.filter(i => i.status === 'ARCHIVED');
 
   if (icebergs.length === 0) {
@@ -31,6 +33,22 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
       </div>
     );
   }
+
+  const statusLabel = (status: string) => {
+    if (status === 'PUBLISHED') return 'published';
+    if (status === 'PENDING_REVIEW') return 'pending';
+    if (status === 'REJECTED') return 'rejected';
+    if (status === 'ARCHIVED') return 'archived';
+    return 'draft';
+  };
+
+  const statusClass = (status: string) => {
+    if (status === 'PUBLISHED') return 'text-[#22c55e] border border-[#22c55e]/30';
+    if (status === 'PENDING_REVIEW') return 'text-[#f59e0b] border border-[#f59e0b]/30';
+    if (status === 'REJECTED') return 'text-[#ef4444] border border-[#ef4444]/30';
+    if (status === 'ARCHIVED') return 'text-[#8b949e] border border-[#6b7280]/30';
+    return 'text-[#60a5fa] border border-[#60a5fa]/30';
+  };
 
   const renderList = (items: Iceberg[], label?: string) => {
     if (items.length === 0) return null;
@@ -62,14 +80,8 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
                 </div>
               </div>
               <div className="flex-shrink-0 text-right">
-                <span className={`text-xs font-mono px-1.5 py-0.5 ${
-                  iceberg.status === 'PUBLISHED'
-                    ? 'text-[#22c55e] border border-[#22c55e]/30'
-                    : iceberg.status === 'ARCHIVED'
-                    ? 'text-[#8b949e] border border-[#6b7280]/30'
-                    : 'text-[#f59e0b] border border-[#f59e0b]/30'
-                }`}>
-                  {iceberg.status === 'PUBLISHED' ? 'published' : iceberg.status === 'ARCHIVED' ? 'archived' : 'draft'}
+                <span className={`text-xs font-mono px-1.5 py-0.5 ${statusClass(iceberg.status)}`}>
+                  {statusLabel(iceberg.status)}
                 </span>
                 <div className="text-xs text-[#6e7681] font-mono mt-1">
                   {new Date(iceberg.createdAt).toLocaleDateString('zh-CN')}
@@ -97,8 +109,15 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
 
   return (
     <div>
-      {renderList(published, published.length > 0 && (drafts.length > 0 || archived.length > 0) ? '// 已发布' : undefined)}
+      {renderList(
+        published,
+        published.length > 0 && (drafts.length > 0 || pendingReview.length > 0 || rejected.length > 0 || archived.length > 0)
+          ? '// 已发布'
+          : undefined,
+      )}
       {renderList(drafts, '// 草稿')}
+      {renderList(pendingReview, '// 待审核')}
+      {renderList(rejected, '// 需修改后重提')}
       {renderList(archived, '// 已归档')}
       <div className="mt-4 pt-4 border-t border-[#21262d]">
         <a href="/iceberg/new" className="text-xs text-[#00FF41] font-mono hover:underline">

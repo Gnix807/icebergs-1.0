@@ -1,10 +1,10 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../lib/prisma';
 import { success } from '../../lib/api';
 import { getSession } from '../../lib/auth/index';
 import { checkAchievements, updateDailyStreak } from '../../lib/achievementService';
 
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   const q = event.url.searchParams.get('q')?.trim() || '';
 
   if (q.length < 2) {
@@ -58,3 +58,4 @@ export async function GET(event: APIEvent) {
     });
   }
 }
+

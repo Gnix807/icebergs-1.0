@@ -2,7 +2,7 @@
  * PUT /api/admin/reports/[id]   EDITOR/ADMIN — resolve a report
  * Body: { action: 'RESOLVED_ACTION' | 'RESOLVED_DISMISSED', resolution: string }
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
@@ -16,7 +16,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function PUT(event: APIEvent) {
+export async function PUT(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -67,3 +67,4 @@ export async function PUT(event: APIEvent) {
     return json(error(ErrorCodes.INTERNAL_ERROR, '操作失败'), 500);
   }
 }
+

@@ -31,20 +31,97 @@ const bannerAnn = await prisma.announcement.findFirst({
     <title>{title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Serif:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" />
     <ViewTransitions />
   </head>
-  <body class="bg-[#0d1117] text-[#cdd9e5] font-sans antialiased">
+  <body class="bg-[#0d1117] text-[var(--text-primary)] antialiased">
+    <!-- ViewTransitions 页面切换进度条 -->
+    <div id="page-progress" class="page-progress-bar"></div>
+
     <!-- 导航栏 -->
     <NavBar client:load />
 
     <!-- 主内容区域（pt-14 抵消固定导航栏高度） -->
-    <div class="pt-14 pb-16 md:pb-0">
+    <div class="pt-14 pb-16 lg:pb-0">
       <!-- 全站横幅公告（必须在 pt-14 容器内，否则被固定导航栏遮盖） -->
       <AnnouncementBanner client:load initial={bannerAnn} />
       <slot />
     </div>
+
+    <!-- 全站 Footer -->
+    <footer class="hidden md:block relative z-10 border-t border-[#21262d] bg-[#0d1117] mt-16">
+      <!-- ASCII 装饰线 -->
+      <div class="max-w-7xl mx-auto px-4 md:px-6 font-mono">
+        <div class="text-[10px] text-[#21262d] select-none overflow-hidden leading-none py-3 tracking-widest">
+          ─────────────────────────────────────────────────────────────────────────────────────
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 pb-8">
+          <!-- 品牌 -->
+          <div>
+            <div class="flex items-center gap-1 mb-3">
+              <span class="text-[#00FF41] font-bold text-sm">Iceberg</span>
+              <span class="text-[#3d444d] font-bold text-sm">::</span>
+              <span class="text-[#8b949e] font-bold text-sm">DB</span>
+            </div>
+            <p class="text-[11px] text-[#3d444d] leading-relaxed mb-3">
+              任何话题的表面之下，<br />都藏着冰山。
+            </p>
+            <div class="text-[10px] text-[#21262d]">
+              <span class="text-[#3d444d]">STATUS</span> <span class="text-[#22c55e]">ONLINE</span>
+            </div>
+          </div>
+
+          <!-- 探索 -->
+          <div>
+            <div class="text-[10px] text-[#6e7681] tracking-widest mb-3">// 探索</div>
+            <nav class="space-y-1.5">
+              <a href="/iceberg/list" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">冰山广场</a>
+              <a href="/iceberg/random" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">随机漫游</a>
+              <a href="/leaderboard" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">排行榜</a>
+              <a href="/iceberg/new" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">创建冰山图</a>
+            </nav>
+          </div>
+
+          <!-- 社区 -->
+          <div>
+            <div class="text-[10px] text-[#6e7681] tracking-widest mb-3">// 社区</div>
+            <nav class="space-y-1.5">
+              <a href="/announcements" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">公告</a>
+              <a href="/org" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">机构</a>
+              <a href="/rules" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">规则</a>
+              <a href="/feedback" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">反馈建议</a>
+              <a href="/feedback/progress" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">反馈进展</a>
+            </nav>
+          </div>
+
+          <!-- 帮助 -->
+          <div>
+            <div class="text-[10px] text-[#6e7681] tracking-widest mb-3">// 帮助</div>
+            <nav class="space-y-1.5">
+              <a href="/guide" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">使用指南</a>
+              <a href="/about" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">关于本站</a>
+              <a href="/changelog" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">更新日志</a>
+              <a href="/terms" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">服务条款</a>
+              <a href="/privacy" class="block text-xs text-[#8b949e] hover:text-[#00FF41] transition-colors">隐私政策</a>
+            </nav>
+          </div>
+        </div>
+
+        <!-- 底部版权行 -->
+        <div class="border-t border-[#21262d] py-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div class="text-[10px] text-[#3d444d]">
+            <span class="text-[#6e7681]">&copy; {new Date().getFullYear()}</span> 冰山图宇宙
+            <span class="text-[#21262d] mx-2">│</span>
+            Astro + React + Prisma
+          </div>
+          <div class="text-[10px] text-[#21262d] font-mono">
+            v1.0.0 <span class="terminal-cursor-blink">_</span>
+          </div>
+        </div>
+      </div>
+    </footer>
 
     <!-- 噪点纹理叠加层 -->
     <div class="noise-overlay pointer-events-none fixed inset-0 z-[9996]"></div>
@@ -60,19 +137,54 @@ const bannerAnn = await prisma.announcement.findFirst({
 
     <style is:global>
       :root {
+        /* ── V1 旧令牌（保留兼容，逐步废弃） ──────────────── */
         --bg-base: #0d1117;
         --bg-elevated: #161b22;
         --bg-surface: #21262d;
         --bg-hover: #1c2128;
         --border: #30363d;
         --border-muted: #21262d;
-        --text-primary: #cdd9e5;
-        --text-secondary: #8b949e;
-        --text-muted: #6e7681;
-        --text-dim: #3d444d;
+        --text-primary: #f2f6fd;
+        --text-secondary: #d8e1ee;
+        --text-muted: #b8c6d8;
+        --text-dim: #8ea0b6;
         --terminal-green: #00FF41;
         --terminal-green-dim: #00CC33;
         --terminal-green-glow: rgba(0, 255, 65, 0.12);
+
+        /* ── V2 语义化颜色令牌 ────────────────────────────── */
+        --color-surface-0: #050608;
+        --color-surface-1: #0d1117;
+        --color-surface-2: #161b22;
+        --color-surface-3: #1c2128;
+        --color-surface-4: #0d0f14;
+        --color-text-hi:   #cdd9e5;
+        --color-text-body: #8b949e;
+        --color-text-mid:  #6e7681;
+        --color-text-lo:   #3d444d;
+        --color-border:    #30363d;
+        --color-border-2:  #21262d;
+        --color-border-3:  #1a1a1a;
+        --color-brand:     #00FF41;
+        --color-brand-2:   #00CC33;
+        --color-danger:    #ef4444;
+        --color-warning:   #f59e0b;
+        --color-success:   #22c55e;
+        --color-info:      #3b82f6;
+        --color-purple:    #8b5cf6;
+        --color-gold:      #FFD700;
+        --color-silver:    #C0C0C0;
+        --color-bronze:    #CD7F32;
+
+        --cursor-dot-color: #00ff41;
+        --cursor-ring-color: rgba(0, 255, 65, 0.22);
+        --cursor-link-fill: rgba(0, 255, 65, 0.08);
+        --cursor-base-opacity: 0.82;
+        --font-size-xs: clamp(0.84rem, 0.81rem + 0.09vw, 0.9rem);
+        --font-size-sm: clamp(0.96rem, 0.92rem + 0.12vw, 1.04rem);
+        --font-size-base: clamp(1.06rem, 1.01rem + 0.16vw, 1.16rem);
+        --font-size-lg: clamp(1.16rem, 1.08rem + 0.22vw, 1.3rem);
+        --font-size-xl: clamp(1.28rem, 1.18rem + 0.3vw, 1.46rem);
       }
 
       * {
@@ -80,22 +192,95 @@ const bannerAnn = await prisma.announcement.findFirst({
       }
 
       html {
-        font-family: 'IBM Plex Sans', 'Noto Serif SC', system-ui, sans-serif;
-        font-weight: 400;
+        font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Noto Serif', serif;
+        font-size: clamp(17px, 16.4px + 0.24vw, 18.2px);
+        font-weight: 500;
+        font-synthesis: none;
         scroll-behavior: smooth;
         transition: background-color 0.3s ease, color 0.3s ease;
       }
 
-      /* 中文衬线体字重加深：IBM Plex Sans 无中文字形，中文字符自动回落至 Noto Serif SC */
-      p, li, td, th, blockquote,
-      h1, h2, h3, h4, h5, h6 {
+      body,
+      .font-sans,
+      input,
+      textarea,
+      select,
+      button {
+        font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Noto Serif', serif;
         font-weight: 500;
+      }
+
+      /* 思源宋体系字重增强 */
+      p, li, td, th, blockquote {
+        font-weight: 500;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        font-weight: 600;
       }
 
       body {
         min-height: 100vh;
+        max-width: 100%;
+        overflow-x: hidden;
+        overflow-x: clip;
         background-color: var(--bg-base);
+        color: var(--text-primary);
+        font-size: var(--font-size-base);
+        line-height: 1.65;
         transition: background-color 0.3s ease;
+      }
+
+      /* 全局字号映射：提升 125% 缩放下的可读性 */
+      .text-xs {
+        font-size: var(--font-size-xs) !important;
+        line-height: 1.55 !important;
+      }
+      .text-sm {
+        font-size: var(--font-size-sm) !important;
+        line-height: 1.62 !important;
+      }
+      .text-base {
+        font-size: var(--font-size-base) !important;
+        line-height: 1.68 !important;
+      }
+      .text-lg {
+        font-size: var(--font-size-lg) !important;
+        line-height: 1.58 !important;
+      }
+      .text-xl {
+        font-size: var(--font-size-xl) !important;
+        line-height: 1.5 !important;
+      }
+
+      /* 补齐大量精确像素小字类（Tailwind arbitrary values） */
+      .text-\[10px\] {
+        font-size: clamp(0.72rem, 0.7rem + 0.06vw, 0.78rem) !important;
+        line-height: 1.5 !important;
+      }
+      .text-\[11px\] {
+        font-size: clamp(0.76rem, 0.74rem + 0.06vw, 0.82rem) !important;
+        line-height: 1.52 !important;
+      }
+      .text-\[12px\] {
+        font-size: clamp(0.8rem, 0.78rem + 0.06vw, 0.87rem) !important;
+        line-height: 1.56 !important;
+      }
+
+      /* 浏览器缩放适配：高缩放时防止容器子项撑破布局 */
+      :where(main, section, article, aside, header, footer, nav) {
+        min-width: 0;
+      }
+      :where(.flex, .inline-flex, .grid) > * {
+        min-width: 0;
+      }
+      img,
+      video {
+        max-width: 100%;
+        height: auto;
+      }
+      iframe,
+      canvas {
+        max-width: 100%;
       }
 
       /* 等宽字体：标题、层级编号、标签 */
@@ -154,6 +339,106 @@ const bannerAnn = await prisma.announcement.findFirst({
         background: var(--terminal-green-dim);
       }
 
+      /* 编辑器层级滚动条（明显可见） */
+      .editor-scroll-shell {
+        scrollbar-width: auto;
+        scrollbar-color: #00ff41 #0d1117;
+        scrollbar-gutter: stable;
+      }
+      .editor-scroll-shell::-webkit-scrollbar {
+        width: 12px;
+      }
+      .editor-scroll-shell::-webkit-scrollbar-track {
+        background: #0d1117;
+        border-left: 1px solid #21262d;
+      }
+      .editor-scroll-shell::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #00ff41 0%, #00c834 100%);
+        border: 2px solid #0d1117;
+        border-radius: 999px;
+      }
+      .editor-scroll-shell::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #38ff74 0%, #00e046 100%);
+      }
+      html.light .editor-scroll-shell {
+        scrollbar-color: #2563eb #e2e8f0;
+      }
+      html.light .editor-scroll-shell::-webkit-scrollbar-track {
+        background: #e2e8f0;
+        border-left-color: #cbd5e1;
+      }
+      html.light .editor-scroll-shell::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+        border-color: #e2e8f0;
+      }
+      html.light .editor-scroll-shell::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+      }
+
+      .editor-scroll-quick {
+        pointer-events: auto;
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: 12px;
+        line-height: 1.2;
+        font-weight: 600;
+        min-width: 58px;
+        padding: 8px 14px;
+        border: 1px solid #30363d;
+        background: rgba(13, 17, 23, 0.92);
+        color: #3d444d;
+        transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+      }
+      .editor-scroll-quick.is-disabled {
+        cursor: not-allowed;
+      }
+      .editor-scroll-quick.is-active.editor-scroll-quick-bottom {
+        border-color: rgba(0, 255, 65, 0.25);
+        color: #00ff41;
+        background: rgba(13, 17, 23, 0.95);
+      }
+      .editor-scroll-quick.is-active.editor-scroll-quick-bottom:hover {
+        border-color: #00ff41;
+        background: rgba(0, 255, 65, 0.08);
+      }
+      .editor-scroll-quick.is-active.editor-scroll-quick-top {
+        border-color: rgba(59, 130, 246, 0.25);
+        color: #60a5fa;
+        background: rgba(13, 17, 23, 0.95);
+      }
+      .editor-scroll-quick.is-active.editor-scroll-quick-top:hover {
+        border-color: #60a5fa;
+        background: rgba(59, 130, 246, 0.1);
+      }
+
+      html.light .editor-scroll-quick {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        color: #64748b;
+      }
+      html.light .editor-scroll-quick.is-disabled {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        color: #94a3b8;
+      }
+      html.light .editor-scroll-quick.is-active.editor-scroll-quick-bottom {
+        background: #ffffff;
+        border-color: #86efac;
+        color: #15803d;
+      }
+      html.light .editor-scroll-quick.is-active.editor-scroll-quick-bottom:hover {
+        background: #f0fdf4;
+        border-color: #4ade80;
+      }
+      html.light .editor-scroll-quick.is-active.editor-scroll-quick-top {
+        background: #ffffff;
+        border-color: #93c5fd;
+        color: #1d4ed8;
+      }
+      html.light .editor-scroll-quick.is-active.editor-scroll-quick-top:hover {
+        background: #eff6ff;
+        border-color: #60a5fa;
+      }
+
       /* 投票按钮样式 */
       .vote-btn.active-up {
         border-color: #22c55e !important;
@@ -194,6 +479,56 @@ const bannerAnn = await prisma.announcement.findFirst({
       }
       .modal-content-out {
         animation: modal-panel-out 0.2s ease forwards;
+      }
+
+      /* 搜索弹窗主题样式 */
+      .search-modal-overlay {
+        background: rgba(2, 6, 12, 0.82);
+      }
+      .search-modal-panel {
+        background: #161b22;
+        border: 1px solid #30363d;
+      }
+      .search-modal-header {
+        border-color: #21262d;
+      }
+      .search-modal-input {
+        color: #cdd9e5;
+      }
+      .search-modal-input::placeholder {
+        color: #6e7681;
+      }
+      .search-modal-close {
+        color: #8b949e;
+      }
+      .search-modal-close:hover {
+        color: #cdd9e5;
+      }
+      .search-modal-footer {
+        border-color: #21262d;
+        color: #3d444d;
+      }
+
+      .search-quick-links {
+        background: #0f141b;
+        border-color: #21262d;
+      }
+      .search-quick-links-title {
+        color: #6e7681;
+      }
+      .search-quick-link-chip {
+        border-color: #30363d;
+        color: #8b949e;
+      }
+      .search-quick-link-chip:hover {
+        color: #00ff41;
+        border-color: #00ff41;
+      }
+      .search-quick-link-dot {
+        color: #3d444d;
+      }
+      .search-quick-link-hint {
+        color: #6e7681;
       }
 
       /* ── 通用按钮交互反馈 ────────────────────────────────── */
@@ -253,6 +588,29 @@ const bannerAnn = await prisma.announcement.findFirst({
       }
 
       /* Markdown 内容样式 */
+      .markdown-content {
+        overflow-wrap: anywhere;
+        font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Noto Serif', serif;
+        font-kerning: normal;
+        font-feature-settings: 'palt' 1;
+        font-variant-east-asian: proportional-width;
+        /* 全站关闭了 font-synthesis；在 Markdown 内重新允许粗体/斜体合成，
+           以保证 **bold** / *italic* 在单字重中文字体回落时仍可见。 */
+        font-synthesis: weight style;
+      }
+      .markdown-content strong,
+      .markdown-content b {
+        font-weight: 700;
+      }
+      .markdown-content em,
+      .markdown-content i {
+        font-style: italic;
+      }
+      .markdown-content strong em,
+      .markdown-content em strong {
+        font-weight: 700;
+        font-style: italic;
+      }
       .markdown-content h1,
       .markdown-content h2,
       .markdown-content h3 {
@@ -267,7 +625,7 @@ const bannerAnn = await prisma.announcement.findFirst({
       }
       .markdown-content p {
         margin-bottom: 0.8em;
-        color: #9ca3af;
+        color: var(--text-secondary);
       }
       .markdown-content a {
         color: #00FF41;
@@ -281,13 +639,13 @@ const bannerAnn = await prisma.announcement.findFirst({
         list-style-type: disc;
         padding-left: 1.5em;
         margin-bottom: 0.8em;
-        color: #6b7280;
+        color: var(--text-secondary);
       }
       .markdown-content ol {
         list-style-type: decimal;
         padding-left: 1.5em;
         margin-bottom: 0.8em;
-        color: #6b7280;
+        color: var(--text-secondary);
       }
       .markdown-content li {
         margin-bottom: 0.3em;
@@ -310,12 +668,49 @@ const bannerAnn = await prisma.announcement.findFirst({
         background: #1a1a1a;
         padding: 1em;
         border-radius: 4px;
+        max-width: 100%;
         overflow-x: auto;
         margin-bottom: 0.8em;
       }
       .markdown-content pre code {
         background: none;
         padding: 0;
+      }
+      .markdown-content table {
+        display: block;
+        width: max-content;
+        min-width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        border-collapse: collapse;
+        margin-bottom: 1em;
+        font-size: 0.85em;
+      }
+      .markdown-content th {
+        text-align: left;
+        color: var(--text-primary);
+        font-weight: 600;
+        padding: 0.5em 0.75em;
+        border-bottom: 2px solid #30363d;
+        background: #161b22;
+      }
+      .markdown-content td {
+        padding: 0.45em 0.75em;
+        border-bottom: 1px solid #21262d;
+        color: var(--text-secondary);
+      }
+      .markdown-content tr:hover td {
+        background: rgba(0, 255, 65, 0.03);
+      }
+      .markdown-content hr {
+        border: none;
+        border-top: 1px solid #21262d;
+        margin: 1.5em 0;
+      }
+      .katex-display-block {
+        text-align: center;
+        margin: 1rem 0;
+        overflow-x: auto;
       }
 
       /* ============================================
@@ -401,10 +796,34 @@ const bannerAnn = await prisma.announcement.findFirst({
          ============================================ */
       html.light {
         background-color: #f6f8fa;
+        /* ── V1 旧令牌亮色 ─────────────────────────────── */
+        --text-primary: #0f172a;
+        --text-secondary: #334155;
+        --text-muted: #64748b;
+        --text-dim: #94a3b8;
+        --cursor-dot-color: #1e40af;
+        --cursor-ring-color: rgba(30, 64, 175, 0.38);
+        --cursor-link-fill: rgba(30, 64, 175, 0.2);
+        --cursor-base-opacity: 0.95;
+        /* ── V2 语义化颜色令牌亮色 ──────────────────────── */
+        --color-surface-0: #f0f4f8;
+        --color-surface-1: #f8fafc;
+        --color-surface-2: #ffffff;
+        --color-surface-3: #f1f5f9;
+        --color-surface-4: #f8fafc;
+        --color-text-hi:   #0f172a;
+        --color-text-body: #475569;
+        --color-text-mid:  #64748b;
+        --color-text-lo:   #94a3b8;
+        --color-border:    #cbd5e1;
+        --color-border-2:  #e2e8f0;
+        --color-border-3:  #e2e8f0;
+        --color-brand:     #2563eb;
+        --color-brand-2:   #1d4ed8;
       }
       html.light body {
         background-color: #f6f8fa;
-        color: #1c2128;
+        color: #0f172a;
       }
       /* 浅色模式下正文段落文字强制深色，确保宋体衬线在白底有足够对比度 */
       html.light p,
@@ -412,14 +831,19 @@ const bannerAnn = await prisma.announcement.findFirst({
       html.light td,
       html.light th,
       html.light blockquote {
-        color: #1c2128;
+        color: #334155;
         font-weight: 500;
       }
 
-      /* 导航栏 */
-      html.light nav {
+      /* 顶部主导航栏（避免误伤 footer / 其它 nav） */
+      html.light nav.site-navbar {
         background: rgba(255, 255, 255, 0.95) !important;
         border-color: #e2e8f0 !important;
+      }
+      /* footer 内导航保持透明，避免浅色模式出现色块 */
+      html.light footer nav {
+        background: transparent !important;
+        border-color: transparent !important;
       }
 
       /* ── 背景色：新调色盘 (GitHub Dark → Light) ── */
@@ -485,17 +909,17 @@ const bannerAnn = await prisma.announcement.findFirst({
       /* 偏暗中灰 → 灰蓝 */
       html.light .text-\[\#6e7681\],
       html.light .text-\[\#4b5563\] {
-        color: #64748b !important;
+        color: #475569 !important;
       }
       /* 最暗灰（极弱提示文字） → 浅灰 */
       html.light .text-\[\#3d444d\],
       html.light .text-\[\#374151\],
       html.light .text-\[\#484f58\],
       html.light .text-\[\#1f2937\] {
-        color: #94a3b8 !important;
+        color: #64748b !important;
       }
       html.light .text-\[\#21262d\] {
-        color: #cbd5e1 !important;
+        color: #64748b !important;
       }
 
       /* hover 文字色 */
@@ -509,27 +933,76 @@ const bannerAnn = await prisma.announcement.findFirst({
 
       /* ── 终端绿 → 蓝色 ── */
       html.light .text-\[\#00FF41\] {
-        color: #2563eb !important;
+        color: #1d4ed8 !important;
       }
       html.light .border-\[\#00FF41\] {
-        border-color: #2563eb !important;
+        border-color: #1d4ed8 !important;
       }
       html.light .bg-\[\#00FF41\] {
-        background-color: #2563eb !important;
+        background-color: #1d4ed8 !important;
         color: #ffffff !important;
       }
       html.light .hover\:text-\[\#00FF41\]:hover {
-        color: #2563eb !important;
+        color: #1d4ed8 !important;
       }
       html.light .hover\:border-\[\#00FF41\]:hover {
-        border-color: #2563eb !important;
+        border-color: #1d4ed8 !important;
       }
       html.light .hover\:bg-\[\#00FF41\]:hover {
-        background-color: #2563eb !important;
+        background-color: #1d4ed8 !important;
         color: #ffffff !important;
       }
       html.light .group:hover .group-hover\:text-\[\#00FF41\] {
-        color: #2563eb !important;
+        color: #1d4ed8 !important;
+      }
+
+      html.light .search-modal-overlay {
+        background: rgba(148, 163, 184, 0.22);
+      }
+      html.light .search-modal-panel {
+        background: #ffffff;
+        border-color: #e2e8f0;
+      }
+      html.light .search-modal-header {
+        border-color: #e2e8f0;
+      }
+      html.light .search-modal-input {
+        color: #0f172a;
+      }
+      html.light .search-modal-input::placeholder {
+        color: #94a3b8;
+      }
+      html.light .search-modal-close {
+        color: #64748b;
+      }
+      html.light .search-modal-close:hover {
+        color: #0f172a;
+      }
+      html.light .search-modal-footer {
+        border-color: #e2e8f0;
+        color: #64748b;
+      }
+
+      html.light .search-quick-links {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+      }
+      html.light .search-quick-links-title {
+        color: #64748b;
+      }
+      html.light .search-quick-link-chip {
+        border-color: #cbd5e1;
+        color: #475569;
+      }
+      html.light .search-quick-link-chip:hover {
+        color: #1d4ed8;
+        border-color: #1d4ed8;
+      }
+      html.light .search-quick-link-dot {
+        color: #94a3b8;
+      }
+      html.light .search-quick-link-hint {
+        color: #64748b;
       }
 
       /* 红色适配 */
@@ -637,25 +1110,73 @@ const bannerAnn = await prisma.announcement.findFirst({
 
       /* ── 自定义光标 ─────────────────────────────────────── */
       #cursor-dot {
-        width: 5px;
-        height: 5px;
-        background: var(--terminal-green);
-        opacity: 0.72;
-        will-change: transform;
-        mix-blend-mode: screen;
-        transition: width 0.18s ease, height 0.18s ease, opacity 0.2s ease, border-radius 0.18s ease;
+        left: 0;
+        top: 0;
+        width: 6px;
+        height: 6px;
+        background: var(--cursor-dot-color);
+        opacity: var(--cursor-base-opacity);
+        border: 1px solid transparent;
+        transform: translate(-50%, -50%);
+        will-change: left, top;
+        mix-blend-mode: normal;
+        box-shadow: 0 0 0 2px var(--cursor-ring-color), 0 0 10px var(--cursor-ring-color);
+        transition: width 0.18s ease, height 0.18s ease, opacity 0.2s ease, border-radius 0.18s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
       }
       #cursor-dot.cursor-link {
         width: 18px;
         height: 18px;
-        background: transparent;
-        border: 1.5px solid var(--terminal-green);
-        opacity: 0.55;
+        background: var(--cursor-link-fill);
+        border: 1.5px solid var(--cursor-dot-color);
+        opacity: 0.62;
         border-radius: 0;
+        box-shadow: 0 0 0 1px var(--cursor-ring-color);
       }
-      html.light #cursor-dot { background: #2563eb; }
-      html.light #cursor-dot.cursor-link { border-color: #2563eb; }
       @media (pointer: coarse) { #cursor-dot { display: none !important; } }
+
+      /* ── ViewTransitions 页面导航进度条 ──────────────────── */
+      .page-progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--terminal-green);
+        box-shadow: 0 0 8px var(--terminal-green), 0 0 16px rgba(0, 255, 65, 0.3);
+        z-index: 9998;
+        pointer-events: none;
+        opacity: 0;
+        transition: width 0.4s ease-out, opacity 0.2s ease;
+      }
+      .page-progress-bar.active {
+        opacity: 1;
+      }
+      .page-progress-bar.done {
+        width: 100% !important;
+        opacity: 0;
+        transition: width 0.15s ease-out, opacity 0.3s ease 0.15s;
+      }
+      html.light .page-progress-bar {
+        background: #2563eb;
+        box-shadow: 0 0 8px rgba(37, 99, 235, 0.5), 0 0 16px rgba(37, 99, 235, 0.2);
+      }
+
+      /* ── 终端光标闪烁（更真实的 step 跳闪，非渐变 pulse） ── */
+      @keyframes terminalBlink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0; }
+      }
+      .terminal-cursor-blink {
+        animation: terminalBlink 1.2s steps(1) infinite;
+        color: var(--terminal-green);
+      }
+
+      /* ── 档案卡片键盘导航 focus-visible ────────────────── */
+      .archive-card:focus-visible {
+        outline: 2px solid var(--terminal-green);
+        outline-offset: 2px;
+        border-left-color: var(--terminal-green);
+      }
 
       /* ── Skeleton shimmer ────────────────────────────────── */
       @keyframes shimmer {
@@ -690,6 +1211,7 @@ const bannerAnn = await prisma.announcement.findFirst({
         mix-blend-mode: overlay;
       }
       html.light .noise-overlay { opacity: 0.016; }
+      html.light .noise-overlay { display: none !important; }
 
       /* ── 滚动触发进场动画 ────────────────────────────────── */
       .reveal {
@@ -778,6 +1300,21 @@ const bannerAnn = await prisma.announcement.findFirst({
       html.light .markdown-content pre {
         background: #f1f5f9;
       }
+      html.light .markdown-content th {
+        color: #0f172a;
+        border-color: #cbd5e1;
+        background: #f1f5f9;
+      }
+      html.light .markdown-content td {
+        color: #475569;
+        border-color: #e2e8f0;
+      }
+      html.light .markdown-content tr:hover td {
+        background: rgba(37, 99, 235, 0.04);
+      }
+      html.light .markdown-content hr {
+        border-color: #e2e8f0;
+      }
 
       /* terminal-glow 浅色 */
       html.light .terminal-glow {
@@ -816,8 +1353,8 @@ const bannerAnn = await prisma.announcement.findFirst({
       /* bg-grid 浅色 */
       html.light .bg-grid {
         background-image:
-          linear-gradient(rgba(37, 99, 235, 0.04) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(37, 99, 235, 0.04) 1px, transparent 1px);
+          linear-gradient(rgba(100, 116, 139, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(100, 116, 139, 0.035) 1px, transparent 1px);
       }
 
       /* glitch-hover 浅色 */
@@ -827,7 +1364,7 @@ const bannerAnn = await prisma.announcement.findFirst({
 
       /* vignette 浅色减淡 */
       html.light .vignette {
-        opacity: 0.3;
+        opacity: 0.08;
       }
 
       /* 浅色模式选中 */
@@ -962,6 +1499,28 @@ const bannerAnn = await prisma.announcement.findFirst({
         border-color: #e2e8f0 !important;
       }
 
+      /* ── prefers-reduced-motion：尊重用户无障碍偏好 ──── */
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+        .crt-scanlines, .noise-overlay, .vignette {
+          display: none !important;
+        }
+        .reveal, .reveal-grid {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+        .iceberg-float {
+          animation: none !important;
+        }
+        #cursor-dot {
+          display: none !important;
+        }
+      }
+
       /* NavBar 通知下拉 / 用户下拉（class 已覆盖，确保 shadow 合适） */
       html.light .shadow-2xl {
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.12) !important;
@@ -974,41 +1533,94 @@ const bannerAnn = await prisma.announcement.findFirst({
     <script>
       // ── 自定义光标追随点 ────────────────────────────────────
       function initCursor() {
+        const prevCleanup = (window as any).__cursorCleanup;
+        if (typeof prevCleanup === 'function') {
+          prevCleanup();
+        }
+
         const dotEl = document.getElementById('cursor-dot') as HTMLElement | null;
         if (!dotEl || !window.matchMedia('(pointer: fine)').matches) return;
         const dot = dotEl;
 
-        let tx = -20, ty = -20, cx = -20, cy = -20;
-        let raf: number;
         let visible = false;
+        let lastClientX = 0;
+        let lastClientY = 0;
+        let hasPointer = false;
+        const baseOpacity = () =>
+          getComputedStyle(document.documentElement).getPropertyValue('--cursor-base-opacity').trim() || '0.82';
 
-        function tick() {
-          cx += (tx - cx) * 0.2;
-          cy += (ty - cy) * 0.2;
-          dot.style.transform = `translate(${cx - dot.offsetWidth / 2}px, ${cy - dot.offsetHeight / 2}px)`;
-          raf = requestAnimationFrame(tick);
-        }
+        const placeCursorDot = (clientX: number, clientY: number) => {
+          dot.style.left = `${clientX}px`;
+          dot.style.top = `${clientY}px`;
+        };
 
-        document.addEventListener('mousemove', (e) => {
-          tx = e.clientX; ty = e.clientY;
+        const onPointerMove = (e: PointerEvent) => {
+          lastClientX = e.clientX;
+          lastClientY = e.clientY;
+          hasPointer = true;
+          placeCursorDot(lastClientX, lastClientY);
+          dot.style.opacity = baseOpacity();
           if (!visible) {
             dot.classList.remove('hidden');
             visible = true;
           }
-        });
-        document.addEventListener('mouseleave', () => { dot.style.opacity = '0'; });
-        document.addEventListener('mouseenter', () => { dot.style.opacity = '0.72'; });
+        };
+        const onViewportResize = () => {
+          if (hasPointer) placeCursorDot(lastClientX, lastClientY);
+        };
+        const onViewportScroll = () => {
+          if (hasPointer) placeCursorDot(lastClientX, lastClientY);
+        };
+        const onMouseLeave = () => {
+          dot.style.opacity = '0';
+        };
+        const onMouseEnter = () => {
+          if (hasPointer && !visible) {
+            dot.classList.remove('hidden');
+            visible = true;
+          }
+          dot.style.opacity = baseOpacity();
+        };
 
-        document.addEventListener('mouseover', (e) => {
+        const onMouseOver = (e: MouseEvent) => {
           const t = e.target as Element;
           if (t.closest('a, button, [role="button"], label, select')) {
             dot.classList.add('cursor-link');
           } else {
             dot.classList.remove('cursor-link');
           }
+        };
+        const refreshByTheme = () => {
+          if (hasPointer) {
+            placeCursorDot(lastClientX, lastClientY);
+            dot.classList.remove('hidden');
+            visible = true;
+          }
+          if (visible && dot.style.opacity !== '0') {
+            dot.style.opacity = baseOpacity();
+          }
+        };
+        const themeObserver = new MutationObserver(() => {
+          refreshByTheme();
         });
 
-        tick();
+        document.addEventListener('pointermove', onPointerMove);
+        window.visualViewport?.addEventListener('resize', onViewportResize);
+        window.visualViewport?.addEventListener('scroll', onViewportScroll);
+        document.addEventListener('mouseleave', onMouseLeave);
+        document.addEventListener('mouseenter', onMouseEnter);
+        document.addEventListener('mouseover', onMouseOver);
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+        (window as any).__cursorCleanup = () => {
+          document.removeEventListener('pointermove', onPointerMove);
+          window.visualViewport?.removeEventListener('resize', onViewportResize);
+          window.visualViewport?.removeEventListener('scroll', onViewportScroll);
+          document.removeEventListener('mouseleave', onMouseLeave);
+          document.removeEventListener('mouseenter', onMouseEnter);
+          document.removeEventListener('mouseover', onMouseOver);
+          themeObserver.disconnect();
+        };
       }
 
       // ── 滚动触发进场动画（IntersectionObserver） ──────────────
@@ -1033,6 +1645,34 @@ const bannerAnn = await prisma.announcement.findFirst({
       // Astro ViewTransitions 每次导航后重新初始化
       document.addEventListener('astro:page-load', initReveal);
       document.addEventListener('astro:page-load', initCursor);
+      initReveal();
+      initCursor();
+
+      // ── ViewTransitions 页面导航进度条 ───────────────────
+      (function initProgress() {
+        const bar = document.getElementById('page-progress');
+        if (!bar) return;
+
+        document.addEventListener('astro:before-preparation', () => {
+          bar.classList.remove('done');
+          bar.style.width = '0%';
+          void bar.offsetWidth; // force reflow
+          bar.classList.add('active');
+          bar.style.width = '70%';
+        });
+
+        document.addEventListener('astro:before-swap', () => {
+          bar.style.width = '90%';
+        });
+
+        document.addEventListener('astro:page-load', () => {
+          bar.classList.add('done');
+          setTimeout(() => {
+            bar.classList.remove('active', 'done');
+            bar.style.width = '0%';
+          }, 500);
+        });
+      })();
     </script>
   </body>
 </html>

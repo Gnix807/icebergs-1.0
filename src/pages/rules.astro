@@ -33,9 +33,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
     <div class="mb-10">
       <div class="text-[10px] font-mono text-[#30363d] tracking-widest mb-2">// RULES · 平台规则</div>
       <h1 class="text-2xl font-mono text-[#cdd9e5] mb-2">冰山图宇宙 · 平台规则</h1>
-      <p class="text-xs font-mono text-[#3d444d]">
-        本页说明角色体系、晋升路径、RfA 制度与社区行为准则。所有数值均从当前系统设置动态读取。
-      </p>
+      <p class="text-xs font-mono text-[#3d444d]">本页说明角色体系、晋升路径、RfA 制度与社区行为准则。所有数值均从当前系统设置动态读取。</p>
     </div>
 
     <!-- 一、角色体系 -->
@@ -52,10 +50,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
             <span class="font-mono text-sm" style="color:#f59e0b">◆ FOUNDER</span>
             <span class="text-[10px] font-mono text-[#30363d]">平台创始人 · 永久席位</span>
           </div>
-          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">
-            对平台拥有最终权力。永久免疫封禁、警告等操作，不参与换届选举。
-            可以任命 ADMIN，可以直接提升或降级任意用户。
-          </p>
+          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">对平台拥有最终权力。永久免疫封禁、警告等操作，不参与换届选举。可以任命 ADMIN，可以直接提升或降级任意用户。</p>
         </div>
 
         <!-- ADMIN -->
@@ -64,10 +59,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
             <span class="font-mono text-sm" style="color:#f59e0b">★ ADMIN</span>
             <span class="text-[10px] font-mono text-[#30363d]">管理员 · 上限 {c('admin_max','3')} 席</span>
           </div>
-          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">
-            由 FOUNDER 任命或通过全站选举产生。负责平台日常治理：审批版主任命、处理申诉、管理选举。
-            任期无硬性限制，可通过新一轮选举更换。
-          </p>
+          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">由 FOUNDER 任命或通过全站选举产生。负责平台日常治理：审批版主任命、处理申诉、管理选举。任期无硬性限制，可通过新一轮选举更换。</p>
         </div>
 
         <!-- MODERATOR -->
@@ -76,10 +68,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
             <span class="font-mono text-sm" style="color:#3b82f6">▲ MODERATOR</span>
             <span class="text-[10px] font-mono text-[#30363d]">版主 · 上限 {c('moderator_max','5')} 席</span>
           </div>
-          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">
-            由 ADMIN 任命，协助内容审核与社区维护。可警告用户、处理举报。
-            晋升门槛：质量分 ≥ {c('moderator_min_score','300')} · 注册 ≥ {c('moderator_min_days','60')} 天。
-          </p>
+          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">由 ADMIN 任命，协助内容审核与社区维护。可警告用户、处理举报。晋升门槛：质量分 ≥ {c('moderator_min_score','300')} · 注册 ≥ {c('moderator_min_days','60')} 天。</p>
         </div>
 
         <!-- EDITOR -->
@@ -88,10 +77,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
             <span class="font-mono text-sm" style="color:#22c55e">● EDITOR</span>
             <span class="text-[10px] font-mono text-[#30363d]">编辑 · 申请制（RfA）</span>
           </div>
-          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">
-            由 CONTRIBUTOR 通过公开 RfA 投票晋升。负责审核冰山图、管理词条内容。
-            申请门槛：质量分 ≥ {c('editor_min_score','100')} · 注册 ≥ {c('editor_min_days','30')} 天。
-          </p>
+          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">由 CONTRIBUTOR 通过公开 RfA 投票晋升。负责审核冰山图、管理词条内容。申请门槛：质量分 ≥ {c('editor_min_score','100')} · 注册 ≥ {c('editor_min_days','30')} 天。</p>
         </div>
 
         <!-- CONTRIBUTOR -->
@@ -100,10 +86,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
             <span class="font-mono text-sm text-[#8b949e]">◎ CONTRIBUTOR</span>
             <span class="text-[10px] font-mono text-[#30363d]">贡献者 · 自动晋升</span>
           </div>
-          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">
-            注册后满足条件自动晋升：质量分 ≥ {c('contributor_min_score','20')} · 冰山图 ≥ {c('contributor_min_icebergs','2')} 篇 · 注册 ≥ {c('contributor_min_days','7')} 天。
-            可发布冰山图、投 RfA 票（权重 1）。
-          </p>
+          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">注册后满足条件自动晋升：质量分 ≥ {c('contributor_min_score','20')} · 冰山图 ≥ {c('contributor_min_icebergs','2')} 篇 · 注册 ≥ {c('contributor_min_days','7')} 天。可发布冰山图、投 RfA 票（权重 1）。</p>
         </div>
 
         <!-- USER -->
@@ -112,9 +95,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
             <span class="font-mono text-sm text-[#8b949e]">○ USER</span>
             <span class="text-[10px] font-mono text-[#30363d]">普通用户 · 初始角色</span>
           </div>
-          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">
-            注册后默认角色。可浏览内容、收藏冰山图、发表评论、为冰山图点赞。
-          </p>
+          <p class="text-[11px] font-mono text-[#3d444d] leading-relaxed">注册后默认角色。可浏览内容、收藏冰山图、发表评论、为冰山图点赞。</p>
         </div>
       </div>
     </section>
@@ -255,9 +236,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
         <div class="flex-1 border-t border-[#1a1a1a]"></div>
       </div>
 
-      <p class="text-[11px] font-mono text-[#3d444d] mb-4">
-        质量分决定晋升资格与 RfA 申请门槛，通过以下行为积累。所有数值均由管理员动态配置。
-      </p>
+      <p class="text-[11px] font-mono text-[#3d444d] mb-4">质量分决定晋升资格与 RfA 申请门槛，通过以下行为积累。所有数值均由管理员动态配置。</p>
 
       <div class="space-y-3 text-[11px] font-mono text-[#3d444d]">
 
@@ -266,7 +245,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
           <div class="text-[#8b949e] mb-3">内容创作</div>
           <div class="space-y-2">
             <div class="flex items-start justify-between gap-4">
-              <span>创建冰山图草稿</span>
+              <span>提交审核的新冰山图（每日最多 2 次计分）</span>
               <span class="text-[#22c55e] flex-shrink-0">+5</span>
             </div>
             <div class="flex items-start justify-between gap-4">

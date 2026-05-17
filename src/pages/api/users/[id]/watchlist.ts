@@ -1,11 +1,11 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth/index';
 
 // GET /api/users/:id/watchlist
 // Requires session; only the owner may view their own watchlist
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -57,3 +57,4 @@ export async function GET(event: APIEvent) {
     });
   }
 }
+

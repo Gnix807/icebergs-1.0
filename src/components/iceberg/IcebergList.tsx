@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { getIcebergList } from '../../lib/api-client';
+import { ICEBERG_TOPICS, getIcebergTopicLabel, isPresetIcebergTopic } from '../../lib/icebergTopic';
 
 interface IcebergListItem {
   id: string;
   slug: string;
   title: string;
   description?: string;
+  topic: string;
   viewCount: number;
   status: string;
   createdAt: string;
@@ -63,6 +65,8 @@ export function IcebergList() {
   const [sort,     setSort]     = useState<Sort>('newest');
   const [page,     setPage]     = useState(1);
   const [showNsfw, setShowNsfw] = useState(false);
+  const [topic,    setTopic]    = useState<'all' | string>('all');
+  const [customTopicInput, setCustomTopicInput] = useState('');
 
   // 防抖搜索
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -77,6 +81,14 @@ export function IcebergList() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [q]);
 
+  useEffect(() => {
+    if (topic !== 'all' && !isPresetIcebergTopic(topic)) {
+      setCustomTopicInput(topic);
+    } else {
+      setCustomTopicInput('');
+    }
+  }, [topic]);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -88,6 +100,7 @@ export function IcebergList() {
         page,
         limit: 18,
         nsfw: showNsfw ? 'show' : 'hide',
+        topic: topic === 'all' ? undefined : topic,
       });
       setIcebergs(res.items);
       setMeta(res.meta);
@@ -96,7 +109,7 @@ export function IcebergList() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedQ, sort, page, showNsfw]);
+  }, [debouncedQ, sort, page, showNsfw, topic]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -136,6 +149,58 @@ export function IcebergList() {
           )}
         </div>
 
+        {/* 分类 */}
+        <div className="flex items-center gap-1 flex-wrap">
+          <button
+            onClick={() => { setTopic('all'); setPage(1); }}
+            className={`px-3 py-1.5 text-[10px] font-mono border transition-colors ${
+              topic === 'all'
+                ? 'border-[#00FF4140] text-[#00FF41] bg-[#00FF4108]'
+                : 'border-[#21262d] text-[#6e7681] hover:border-[#30363d] hover:text-[#adbac7]'
+            }`}
+          >
+            全部
+          </button>
+          {ICEBERG_TOPICS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => { setTopic(opt.value); setPage(1); }}
+              className={`px-3 py-1.5 text-[10px] font-mono border transition-colors ${
+                topic === opt.value
+                  ? 'border-[#3b82f640] text-[#3b82f6] bg-[#3b82f608]'
+                  : 'border-[#21262d] text-[#6e7681] hover:border-[#30363d] hover:text-[#adbac7]'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+          <div className="flex items-center gap-1 ml-2">
+            <input
+              type="text"
+              value={customTopicInput}
+              onChange={(e) => setCustomTopicInput(e.target.value.slice(0, 24))}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return;
+                const next = customTopicInput.trim();
+                setTopic(next || 'all');
+                setPage(1);
+              }}
+              placeholder="自定义分类"
+              className="w-[120px] px-2 py-1.5 bg-[#161b22] border border-[#30363d] text-[10px] font-mono text-[#cdd9e5] placeholder-[#3d444d] focus:border-[#00FF41] focus:outline-none transition-colors"
+            />
+            <button
+              onClick={() => {
+                const next = customTopicInput.trim();
+                setTopic(next || 'all');
+                setPage(1);
+              }}
+              className="px-2.5 py-1.5 text-[10px] font-mono border border-[#21262d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+            >
+              筛选
+            </button>
+          </div>
+        </div>
+
         {/* 排序 + NSFW 开关 */}
         <div className="flex items-center gap-1 ml-auto flex-wrap">
           {SORT_OPTIONS.map(opt => (
@@ -172,6 +237,9 @@ export function IcebergList() {
             ? `"${debouncedQ}" — 找到 ${meta.total} 条结果`
             : `共 ${meta.total} 篇冰山图`
           }
+          {topic !== 'all' && (
+            <span className="ml-2">· 分类：{getIcebergTopicLabel(topic)}</span>
+          )}
           {meta.totalPages > 1 && (
             <span className="ml-2">· 第 {meta.page}/{meta.totalPages} 页</span>
           )}
@@ -203,7 +271,9 @@ export function IcebergList() {
             </>
           ) : (
             <>
-              <p className="text-[#8b949e] font-mono text-sm mb-1">// 暂无冰山图</p>
+              <p className="text-[#8b949e] font-mono text-sm mb-1">
+                // {topic === 'all' ? '暂无冰山图' : `暂无「${getIcebergTopicLabel(topic)}」分类冰山图`}
+              </p>
               <p className="text-[#484f58] font-mono text-xs mb-5">成为第一个探索者</p>
               <a
                 href="/iceberg/new"
@@ -237,6 +307,11 @@ export function IcebergList() {
                 </div>
 
                 {/* 标题 */}
+                <div className="mb-1.5">
+                  <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-mono border border-[#3b82f640] text-[#3b82f6] bg-[#3b82f608]">
+                    {getIcebergTopicLabel(iceberg.topic || 'other')}
+                  </span>
+                </div>
                 <h3 className="font-mono text-sm font-semibold text-[#cdd9e5] group-hover:text-[#00FF41] transition-colors mb-2 line-clamp-1">
                   <span className="text-[#3d444d] mr-1">#</span>
                   {debouncedQ ? highlightMatch(iceberg.title, debouncedQ) : iceberg.title}
@@ -344,6 +419,10 @@ export function IcebergList() {
 
 function relativeTime(date: string): string {
   const diff = Date.now() - new Date(date).getTime();
+  if (diff < 0) {
+    const futureDays = Math.ceil(Math.abs(diff) / 86400000);
+    return futureDays <= 1 ? '今天' : `${futureDays} 天后`;
+  }
   const days = Math.floor(diff / 86400000);
   if (days === 0) return '今天';
   if (days === 1) return '昨天';

@@ -1,12 +1,11 @@
 /**
  * PATCH /api/admin/feedback/[id]  — 更新反馈处理状态
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { getSession } from '../../../../lib/auth/index';
 import { prisma } from '../../../../lib/prisma';
-import { notify } from '../../../../lib/notify';
 
-export async function PATCH(event: APIEvent) {
+export async function PATCH(event: APIContext) {
   const session = await getSession(event);
   if (!session || (session.role !== 'EDITOR' && session.role !== 'ADMIN')) {
     return new Response(
@@ -28,8 +27,6 @@ export async function PATCH(event: APIEvent) {
     );
   }
 
-  const feedback = await prisma.feedback.findUnique({ where: { id }, select: { userId: true } });
-
   const updated = await prisma.feedback.update({
     where: { id },
     data: {
@@ -39,19 +36,48 @@ export async function PATCH(event: APIEvent) {
     },
   });
 
-  if (feedback?.userId && body.status !== 'pending') {
-    const statusText = body.status === 'resolved' ? '已解决' : '暂不处理';
-    const noteText = body.resolvedNote?.trim() ? `：${body.resolvedNote.trim()}` : '';
-    notify(
-      feedback.userId,
-      'feedback_resolved',
-      '你的反馈已被处理',
-      `处理结果：${statusText}${noteText}`,
-    );
-  }
-
   return new Response(
     JSON.stringify({ success: true, data: updated }),
     { headers: { 'Content-Type': 'application/json' } },
   );
 }
+
+/**
+ * DELETE /api/admin/feedback/[id]  — 删除反馈
+ */
+export async function DELETE(event: APIContext) {
+  const session = await getSession(event);
+  if (!session || (session.role !== 'EDITOR' && session.role !== 'ADMIN')) {
+    return new Response(
+      JSON.stringify({ success: false, error: { message: '无权限' } }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
+  const { id } = event.params as { id: string };
+  if (!id) {
+    return new Response(
+      JSON.stringify({ success: false, error: { message: '缺少反馈 ID' } }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
+  const existed = await prisma.feedback.findUnique({
+    where: { id },
+    select: { id: true },
+  });
+  if (!existed) {
+    return new Response(
+      JSON.stringify({ success: false, error: { message: '反馈不存在' } }),
+      { status: 404, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+
+  await prisma.feedback.delete({ where: { id } });
+
+  return new Response(
+    JSON.stringify({ success: true, data: { id } }),
+    { headers: { 'Content-Type': 'application/json' } },
+  );
+}
+

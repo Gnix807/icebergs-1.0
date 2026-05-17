@@ -8,8 +8,9 @@ import { AdminReports } from './AdminReports';
 import { AdminFeedback } from './AdminFeedback';
 import { AdminAchievements } from './AdminAchievements';
 import { AdminElections } from './AdminElections';
+import { AdminAnnouncements } from './AdminAnnouncements';
 
-type AdminTab = 'reviews' | 'users' | 'settings' | 'appeals' | 'promotions' | 'reports' | 'feedback' | 'achievements' | 'elections';
+type AdminTab = 'reviews' | 'users' | 'settings' | 'appeals' | 'promotions' | 'reports' | 'feedback' | 'achievements' | 'elections' | 'announcements';
 
 interface Props {
   role: string;
@@ -24,6 +25,7 @@ const TABS: { id: AdminTab; label: string; code: string; minRole: string }[] = [
   { id: 'users',      label: '用户管理', code: 'USERS',      minRole: 'ADMIN'  },
   { id: 'appeals',    label: '申诉处理', code: 'APPEALS',    minRole: 'ADMIN'  },
   { id: 'elections',  label: '站长选举', code: 'ELECTIONS',  minRole: 'ADMIN'  },
+  { id: 'announcements', label: '公告发布', code: 'ANNOUNCE', minRole: 'ADMIN' },
   { id: 'achievements', label: '成就配置', code: 'ACHIEVEMENTS', minRole: 'ADMIN' },
   { id: 'settings',     label: '系统配置', code: 'SETTINGS',     minRole: 'ADMIN' },
 ];
@@ -122,6 +124,7 @@ export function AdminPanel({ role, isFounder }: Props) {
       {activeTab === 'users'      && <AdminUsers />}
       {activeTab === 'appeals'      && <AdminAppeals />}
       {activeTab === 'elections'    && <AdminElections />}
+      {activeTab === 'announcements' && <AdminAnnouncements />}
       {activeTab === 'achievements' && <AdminAchievements />}
       {activeTab === 'settings'     && <AdminSettings />}
     </div>

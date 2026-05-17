@@ -43,7 +43,7 @@ export function ElectionVotePanel({
   myVote: initMyVote,
   userId, userRole,
   userIsCandidate: initIsCandidate,
-  userCandidateId: initCandidateId,
+  userCandidateId: _initCandidateId,
 }: Props) {
   const [candidates, setCandidates] = useState(initCandidates);
   const [myVote,      setMyVote]     = useState(initMyVote);

@@ -1,5 +1,5 @@
 import { GitHub, Google } from 'arctic';
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../prisma';
 import type { Role, AccountStatus } from '../types';
 import 'dotenv/config';
@@ -33,7 +33,7 @@ export interface GitHubUser {
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 天
 
-export async function createSession(userId: string, event: APIEvent): Promise<string> {
+export async function createSession(userId: string, event: APIContext): Promise<string> {
   const sessionId = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + SESSION_TTL_MS);
 
@@ -71,7 +71,7 @@ export async function getSessionById(sessionId: string | undefined): Promise<Ses
 }
 
 /** Resolve a session from an API request cookie to a SessionUser (API routes). */
-export async function getSession(event: APIEvent): Promise<SessionUser | null> {
+export async function getSession(event: APIContext): Promise<SessionUser | null> {
   const sessionId = event.cookies.get('session')?.value;
   if (!sessionId) return null;
 
@@ -114,10 +114,11 @@ async function resolveSessionUser(userId: string): Promise<SessionUser | null> {
   return { userId, role: user.role as Role, status, isFounder };
 }
 
-export async function deleteSession(event: APIEvent): Promise<void> {
+export async function deleteSession(event: APIContext): Promise<void> {
   const sessionId = event.cookies.get('session')?.value;
   if (sessionId) {
     await prisma.session.delete({ where: { id: sessionId } }).catch(() => {});
   }
   event.cookies.delete('session', { path: '/' });
 }
+

@@ -1,7 +1,7 @@
 import { createHash, randomInt } from 'crypto';
 import { prisma } from '../prisma';
 
-export type EmailVerificationPurpose = 'register';
+export type EmailVerificationPurpose = 'register' | 'password_reset';
 
 export type VerifyEmailCodeResult =
   | 'valid'
@@ -26,11 +26,25 @@ const SEND_COOLDOWN_SECONDS = Math.max(10, Number(process.env.EMAIL_SEND_COOLDOW
 const MAX_SEND_PER_EMAIL_DAY = Math.max(1, Number(process.env.EMAIL_MAX_SEND_PER_EMAIL_DAY || 20));
 const MAX_SEND_PER_IP_DAY = Math.max(1, Number(process.env.EMAIL_MAX_SEND_PER_IP_DAY || 60));
 const MAX_VERIFY_ATTEMPTS = Math.max(1, Number(process.env.EMAIL_CODE_MAX_ATTEMPTS || 5));
+const DEV_SECRET_FALLBACK = 'dev-email-secret-change-me';
 
 let ensurePromise: Promise<void> | null = null;
+let cachedSecret: string | null = null;
 
 function getSecret(): string {
-  return process.env.EMAIL_VERIFICATION_SECRET || 'dev-email-secret-change-me';
+  if (cachedSecret) return cachedSecret;
+
+  const configured = (process.env.EMAIL_VERIFICATION_SECRET || '').trim();
+  if (process.env.NODE_ENV === 'production') {
+    if (!configured || configured === DEV_SECRET_FALLBACK) {
+      throw new Error('Missing EMAIL_VERIFICATION_SECRET in production');
+    }
+    cachedSecret = configured;
+    return cachedSecret;
+  }
+
+  cachedSecret = configured || DEV_SECRET_FALLBACK;
+  return cachedSecret;
 }
 
 function hashCode(email: string, purpose: EmailVerificationPurpose, code: string): string {

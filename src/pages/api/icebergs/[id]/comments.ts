@@ -1,4 +1,4 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../../lib/api';
@@ -18,7 +18,7 @@ function checkGuestRate(ip: string): boolean {
   return true;
 }
 
-function getIp(event: APIEvent): string {
+function getIp(event: APIContext): string {
   return (
     event.request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
     event.request.headers.get('x-real-ip') ??
@@ -27,7 +27,7 @@ function getIp(event: APIEvent): string {
 }
 
 // GET /api/icebergs/[id]/comments?sort=time|hot
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   const id = event.params.id!;
   const sort = (event.url.searchParams.get('sort') ?? 'time') as 'time' | 'hot';
 
@@ -52,13 +52,13 @@ export async function GET(event: APIEvent) {
     orderBy,
     select: {
       id: true, content: true, createdAt: true, guestName: true,
-      user: { select: { id: true, username: true, nickname: true } },
+      user: { select: { id: true, username: true, nickname: true, avatar: true } },
       _count: { select: { likes: true } },
       replies: {
         orderBy: { createdAt: 'asc' },
         select: {
           id: true, content: true, createdAt: true, guestName: true,
-          user: { select: { id: true, username: true, nickname: true } },
+          user: { select: { id: true, username: true, nickname: true, avatar: true } },
           _count: { select: { likes: true } },
         },
       },
@@ -105,7 +105,7 @@ export async function GET(event: APIEvent) {
 }
 
 // POST /api/icebergs/[id]/comments
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   const session = await getSession(event);
 
   // 已登录用户：检查封禁状态
@@ -193,7 +193,7 @@ export async function POST(event: APIEvent) {
     },
     select: {
       id: true, content: true, createdAt: true, parentId: true, guestName: true,
-      user: { select: { id: true, username: true, nickname: true } },
+      user: { select: { id: true, username: true, nickname: true, avatar: true } },
     },
   });
 
@@ -215,3 +215,4 @@ export async function POST(event: APIEvent) {
     comment: { ...comment, likeCount: 0, isLikedByMe: false, replies: [] },
   })), { status: 201, headers: { 'Content-Type': 'application/json' } });
 }
+

@@ -32,4 +32,5 @@ export const ErrorCodes = {
   FORBIDDEN: 'FORBIDDEN',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   BAD_REQUEST: 'BAD_REQUEST',
+  CONFLICT: 'CONFLICT',
 } as const;

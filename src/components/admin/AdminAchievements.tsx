@@ -384,7 +384,7 @@ export function AdminAchievements() {
 
   useEffect(() => { load(); }, []);
 
-  const toggle = (id: string, ach?: AchievementDef) => {
+  const toggle = (id: string) => {
     setExpandedId(prev => prev === id ? null : id);
   };
 
@@ -482,7 +482,7 @@ export function AdminAchievements() {
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <button
-                      onClick={() => toggle(ach.id, ach)}
+                      onClick={() => toggle(ach.id)}
                       className={`flex items-center gap-1 text-[10px] font-mono transition-colors ${isOpen ? 'text-[#00FF41]' : 'text-[#8b949e] hover:text-[#00FF41]'}`}
                     >
                       编辑

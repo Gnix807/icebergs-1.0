@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 type AnnType = 'info' | 'warning' | 'maintenance' | 'update';
 
@@ -35,7 +35,7 @@ export function AnnouncementBanner({ initial }: Props) {
       // 稍微延迟出现，避免与页面渲染抢帧
       setTimeout(() => setVisible(true), 80);
     }
-  }, []);
+  }, [initial]);
 
   function dismiss() {
     setLeaving(true);

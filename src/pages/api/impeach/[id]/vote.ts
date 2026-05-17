@@ -3,7 +3,7 @@
  * body: { vote: "SUPPORT" | "OPPOSE" | "ABSTAIN", comment?: string }
  * 支持改票（upsert）
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../../lib/api';
@@ -16,11 +16,13 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
   const { id } = event.params;
+  if (!id) return json(error(ErrorCodes.BAD_REQUEST, '缺少弹劾案 ID'), 400);
+  const requestId = id;
   const body = await event.request.json().catch(() => ({}));
   const vote: string    = body.vote ?? '';
   const comment: string = (typeof body.comment === 'string' ? body.comment.trim() : '').slice(0, 300);
@@ -55,13 +57,13 @@ export async function POST(event: APIEvent) {
   });
 
   const existing = await prisma.impeachVote.findUnique({
-    where: { requestId_voterId: { requestId: id, voterId: session.userId } },
+    where: { requestId_voterId: { requestId, voterId: session.userId } },
     select: { id: true },
   });
 
   await prisma.impeachVote.upsert({
-    where: { requestId_voterId: { requestId: id, voterId: session.userId } },
-    create: { requestId: id, voterId: session.userId, vote, weight, comment: comment || null },
+    where: { requestId_voterId: { requestId, voterId: session.userId } },
+    create: { requestId, voterId: session.userId, vote, weight, comment: comment || null },
     update: { vote, comment: comment || null },
   });
 
@@ -74,9 +76,10 @@ export async function POST(event: APIEvent) {
       'impeach_vote',
       '弹劾案收到新投票',
       `${voterDisplay} 投了${VOTE_ZH[vote]}票`,
-      `/impeach/${id}`,
+      `/impeach/${requestId}`,
     );
   }
 
   return json(success({ vote, weight }));
 }
+

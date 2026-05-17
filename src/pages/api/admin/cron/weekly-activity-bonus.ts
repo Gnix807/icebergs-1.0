@@ -10,13 +10,13 @@
  *   curl -X POST https://yourdomain.com/api/admin/cron/weekly-activity-bonus \
  *        -H "Authorization: Bearer $CRON_SECRET"
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { success, error } from '../../../../lib/api';
 import { notify } from '../../../../lib/notify';
 import { logScore } from '../../../../lib/scoreLog';
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   const secret = process.env.CRON_SECRET;
   const auth = event.request.headers.get('Authorization') ?? '';
   if (!secret || auth !== `Bearer ${secret}`) {
@@ -95,3 +95,4 @@ export async function POST(event: APIEvent) {
     { status: 200, headers: { 'Content-Type': 'application/json' } },
   );
 }
+

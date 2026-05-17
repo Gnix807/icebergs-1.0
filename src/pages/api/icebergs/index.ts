@@ -1,14 +1,86 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
-import { logScore } from '../../../lib/scoreLog';
+import { normalizeIcebergTopic } from '../../../lib/icebergTopic';
+import { can } from '../../../lib/permissions';
 
 const SLUG_RE = /^[a-zA-Z0-9_-]{2,60}$/;
 
+function sanitizeLabels(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return (raw as unknown[])
+    .filter((l): l is string => typeof l === 'string')
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0 && l.length <= 20 && !/["\\\n\r<>{}]/.test(l))
+    .slice(0, 10);
+}
+
+type SeedTierCreate = {
+  name: string;
+  desc: string;
+  order: number;
+  items: { create: { title: string; desc: string; order: number; labels: string }[] };
+};
+
+function normalizeSeedTiers(raw: unknown): SeedTierCreate[] {
+  if (!Array.isArray(raw)) {
+    return [
+      { name: 'Tier 1', desc: '', order: 0, items: { create: [] } },
+      { name: 'Tier 2', desc: '', order: 1, items: { create: [] } },
+      { name: 'Tier 3', desc: '', order: 2, items: { create: [] } },
+    ];
+  }
+
+  const tiers = (raw as unknown[])
+    .filter((t): t is Record<string, unknown> => !!t && typeof t === 'object')
+    .slice(0, 20)
+    .map((tier, idx) => {
+      const nameRaw = typeof tier.name === 'string' ? tier.name.trim() : '';
+      const descRaw = typeof tier.desc === 'string' ? tier.desc : '';
+      const orderRaw = typeof tier.order === 'number' && Number.isFinite(tier.order) ? tier.order : idx;
+      const itemsRaw = Array.isArray(tier.items) ? tier.items : [];
+
+      const items = itemsRaw
+        .filter((it): it is Record<string, unknown> => !!it && typeof it === 'object')
+        .map((it, itemIdx) => {
+          const title = typeof it.title === 'string' ? it.title.trim() : '';
+          if (!title) return null;
+          const desc = typeof it.desc === 'string' ? it.desc : '';
+          const itemOrder = typeof it.order === 'number' && Number.isFinite(it.order) ? it.order : itemIdx;
+          return {
+            title: title.slice(0, 120),
+            desc,
+            order: itemOrder,
+            labels: JSON.stringify(sanitizeLabels(it.labels)),
+          };
+        })
+        .filter((it): it is { title: string; desc: string; order: number; labels: string } => !!it)
+        .sort((a, b) => a.order - b.order)
+        .map((it, orderedIdx) => ({ ...it, order: orderedIdx }));
+
+      return {
+        name: (nameRaw || `Tier ${idx + 1}`).slice(0, 80),
+        desc: descRaw.slice(0, 240),
+        order: orderRaw,
+        items: { create: items },
+      };
+    })
+    .sort((a, b) => a.order - b.order)
+    .map((tier, orderedIdx) => ({ ...tier, order: orderedIdx }));
+
+  if (tiers.length > 0) return tiers;
+
+  return [
+    { name: 'Tier 1', desc: '', order: 0, items: { create: [] } },
+    { name: 'Tier 2', desc: '', order: 1, items: { create: [] } },
+    { name: 'Tier 3', desc: '', order: 2, items: { create: [] } },
+  ];
+}
+
 // GET /api/icebergs - 获取冰山图列表
-// 支持参数：page, limit, status, q（关键词搜索）, sort（newest/oldest/popular）
-export async function GET(event: APIEvent) {
+// 支持参数：page, limit, status, q（关键词搜索）, sort（newest/oldest/popular）, topic
+export async function GET(event: APIContext) {
   try {
     const url = new URL(event.request.url);
     const page  = Math.max(1, parseInt(url.searchParams.get('page')  || '1'));
@@ -17,6 +89,8 @@ export async function GET(event: APIEvent) {
     const q    = url.searchParams.get('q')?.trim() || '';
     const sort = url.searchParams.get('sort') || 'newest';
     const nsfw = url.searchParams.get('nsfw') || 'hide'; // 'show' | 'hide'
+    const rawTopic = url.searchParams.get('topic');
+    const topic = rawTopic ? normalizeIcebergTopic(rawTopic, '') : '';
 
     // 非公开状态需要登录且只能看自己的
     let status = requestedStatus;
@@ -44,6 +118,7 @@ export async function GET(event: APIEvent) {
 
     const where = {
       status,
+      ...(topic ? { topic } : {}),
       ...(authorFilter ? { authorId: authorFilter } : {}),
       ...searchFilter,
       ...nsfwFilter,
@@ -54,35 +129,38 @@ export async function GET(event: APIEvent) {
       sort === 'oldest'  ? { createdAt: 'asc'  as const } :
                            { createdAt: 'desc' as const };
 
+    const listSelect: any = {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      topic: true,
+      viewCount: true,
+      status: true,
+      createdAt: true,
+      author: {
+        select: { id: true, username: true, nickname: true },
+      },
+      _count: {
+        select: { tiers: true },
+      },
+      tiers: {
+        take: 1,
+        orderBy: { order: 'asc' as const },
+        select: {
+          items: {
+            take: 3,
+            orderBy: { order: 'asc' as const },
+            select: { title: true },
+          },
+        },
+      },
+    };
+
     const [icebergs, total] = await Promise.all([
       prisma.iceberg.findMany({
         where,
-        select: {
-          id: true,
-          slug: true,
-          title: true,
-          description: true,
-          viewCount: true,
-          status: true,
-          createdAt: true,
-          author: {
-            select: { id: true, username: true, nickname: true },
-          },
-          _count: {
-            select: { tiers: true },
-          },
-          tiers: {
-            take: 1,
-            orderBy: { order: 'asc' as const },
-            select: {
-              items: {
-                take: 3,
-                orderBy: { order: 'asc' as const },
-                select: { title: true },
-              },
-            },
-          },
-        },
+        select: listSelect,
         orderBy,
         skip: (page - 1) * limit,
         take: limit,
@@ -117,12 +195,18 @@ export async function GET(event: APIEvent) {
 }
 
 // POST /api/icebergs - 创建冰山图
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
       return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
         status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (!can(session, 'content:create')) {
+      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '账户受限，无法创建冰山图')), {
+        status: 403,
         headers: { 'Content-Type': 'application/json' },
       });
     }
@@ -153,31 +237,24 @@ export async function POST(event: APIEvent) {
       });
     }
 
+    const topic = normalizeIcebergTopic(body.topic);
     const authorId = session.userId;
 
-    // +5 质量分
-    prisma.user.update({
-      where: { id: authorId },
-      data: { qualityScore: { increment: 5 } },
-    }).catch(() => {});
-    logScore(authorId, 5, 'iceberg_created', title);
+    const createData: any = {
+      id: slug,
+      slug,
+      title,
+      description: body.description || '',
+      topic,
+      status: 'DRAFT',
+      authorId,
+      tiers: {
+        create: normalizeSeedTiers(body.tiers),
+      },
+    };
 
     const iceberg = await prisma.iceberg.create({
-      data: {
-        id: slug,
-        slug,
-        title,
-        description: body.description || '',
-        status: 'DRAFT',
-        authorId,
-        tiers: {
-          create: [
-            { name: 'Tier 1', order: 0 },
-            { name: 'Tier 2', order: 1 },
-            { name: 'Tier 3', order: 2 },
-          ],
-        },
-      },
+      data: createData,
       include: {
         tiers: {
           orderBy: { order: 'asc' },
@@ -198,3 +275,4 @@ export async function POST(event: APIEvent) {
     });
   }
 }
+

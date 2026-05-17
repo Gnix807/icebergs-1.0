@@ -25,6 +25,29 @@ const TYPE_LABEL: Record<string, string> = {
   PERM_BAN:       '申请解除永久封禁',
 };
 
+const APPEAL_NOTE_TEMPLATES: Record<'approve' | 'reject', Array<{ label: string; text: string }>> = {
+  approve: [
+    {
+      label: '标准恢复',
+      text: '经核查情况属实，现已为你解除对应限制，请后续继续遵守社区规则。',
+    },
+    {
+      label: '充分采纳',
+      text: '申诉理由充分，管理组已批准并恢复账号相关权限。',
+    },
+  ],
+  reject: [
+    {
+      label: '证据不足',
+      text: '经复核后维持原处理，当前证据不足以支持解除限制。',
+    },
+    {
+      label: '需补充材料',
+      text: '申诉说明未能证明误判，建议补充更具体证据后再提交。',
+    },
+  ],
+};
+
 export function AdminAppeals() {
   const [appeals, setAppeals] = useState<AppealRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,7 +168,7 @@ export function AdminAppeals() {
 
       {modalMounted && modal && (
         <div className={`${modalLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-sm p-5 font-mono`}>
+          <div className={`${modalLeaving ? 'modal-content-out' : 'modal-content'} bg-[#0d0f14] border border-[#30363d] w-full max-w-lg p-5 font-mono`}>
             <div className="text-sm text-[#cdd9e5] mb-1">
               {modal.action === 'approve' ? '批准申诉' : '驳回申诉'}
             </div>
@@ -155,6 +178,23 @@ export function AdminAppeals() {
 
             <div className="mb-4">
               <div className="text-[10px] text-[#3d444d] mb-1">处理意见</div>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {APPEAL_NOTE_TEMPLATES[modal.action].map((tpl) => (
+                  <button
+                    key={tpl.label}
+                    type="button"
+                    onClick={() => setNote(tpl.text)}
+                    className={`text-[10px] px-2 py-1 border transition-colors ${
+                      note === tpl.text
+                        ? 'border-[#00FF41] text-[#00FF41] bg-[#00FF4115]'
+                        : 'border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41]'
+                    }`}
+                    title={tpl.text}
+                  >
+                    {tpl.label}
+                  </button>
+                ))}
+              </div>
               <textarea
                 value={note}
                 onChange={e => setNote(e.target.value)}

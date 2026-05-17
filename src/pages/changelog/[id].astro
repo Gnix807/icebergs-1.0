@@ -1,0 +1,102 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+import { getSessionById } from '../../lib/auth';
+import { can } from '../../lib/permissions';
+import { renderMarkdown } from '../../lib/markdown';
+
+const { id } = Astro.params;
+
+const entry = await prisma.announcement.findUnique({
+  where: { id },
+  select: {
+    id: true, title: true, content: true, type: true,
+    pinned: true, createdAt: true, updatedAt: true,
+    author: { select: { id: true, username: true, nickname: true } },
+  },
+});
+
+if (!entry) return Astro.redirect('/changelog');
+if (entry.type === 'info') return Astro.redirect(`/announcements/${entry.id}`);
+
+const session = await getSessionById(Astro.cookies.get('session')?.value);
+const isAdmin = session ? can(session, 'user:ban') : false;
+
+const TYPE_META: Record<string, { label: string; color: string; border: string; bg: string }> = {
+  update:      { label: '功能更新', color: '#22c55e', border: '#22c55e20', bg: '#22c55e08' },
+  warning:     { label: '风险提示', color: '#f59e0b', border: '#f59e0b20', bg: '#f59e0b08' },
+  maintenance: { label: '维护调整', color: '#ef4444', border: '#ef444420', bg: '#ef444408' },
+  info:        { label: '站务信息', color: '#3b82f6', border: '#3b82f620', bg: '#3b82f608' },
+};
+
+const meta = TYPE_META[entry.type] ?? TYPE_META.update;
+const isEdited = entry.updatedAt.toISOString() !== entry.createdAt.toISOString();
+const contentHtml = renderMarkdown(entry.content);
+
+function formatDate(d: Date) {
+  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
+    + ' ' + d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+}
+---
+
+<Layout title={`${entry.title} — 更新日志`}>
+  <main class="max-w-3xl mx-auto px-4 py-8 reveal">
+    <div class="flex items-center gap-2 font-mono text-[10px] text-[#6e7681] mb-6">
+      <a href="/changelog" class="hover:text-[#8b949e] transition-colors">更新日志</a>
+      <span class="text-[#3d444d]">/</span>
+      <span class="text-[#8b949e] truncate">{entry.title}</span>
+    </div>
+
+    <article
+      class="border bg-[#161b22]"
+      style={`border-color: ${entry.pinned ? meta.color + '40' : '#21262d'}; background: ${entry.pinned ? meta.bg : ''}`}
+    >
+      <div class="flex items-start justify-between gap-3 px-5 py-4 border-b border-[#21262d]">
+        <div class="flex items-center gap-2 flex-wrap min-w-0">
+          {entry.pinned && <span class="font-mono text-[10px] text-[#6e7681] flex-shrink-0">📌</span>}
+          <span
+            class="font-mono text-[10px] px-1.5 py-0.5 border flex-shrink-0"
+            style={`color:${meta.color}; border-color:${meta.border}`}
+          >
+            {meta.label}
+          </span>
+          <h1 class="font-mono text-base text-[#cdd9e5]">{entry.title}</h1>
+        </div>
+
+        {isAdmin && (
+          <a
+            href="/changelog/manage"
+            class="font-mono text-[10px] text-[#6e7681] hover:text-[#8b949e] transition-colors flex-shrink-0"
+            title="前往更新日志管理"
+          >
+            [ 管理 ]
+          </a>
+        )}
+      </div>
+
+      <div class="px-5 py-5 markdown-content" set:html={contentHtml} />
+
+      <div class="px-5 py-3 border-t border-[#21262d] flex items-center gap-3 font-mono text-[10px] text-[#3d444d]">
+        <span>{entry.author.nickname ?? entry.author.username}</span>
+        <span>·</span>
+        <span>{formatDate(entry.createdAt)}</span>
+        {isEdited && (
+          <>
+            <span>·</span>
+            <span>已编辑 · {formatDate(entry.updatedAt)}</span>
+          </>
+        )}
+      </div>
+    </article>
+
+    <div class="mt-6">
+      <a
+        href="/changelog"
+        class="font-mono text-xs text-[#6e7681] hover:text-[#8b949e] transition-colors"
+      >
+        ‹ 返回更新日志
+      </a>
+    </div>
+  </main>
+</Layout>
+

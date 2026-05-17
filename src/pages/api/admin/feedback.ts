@@ -1,8 +1,8 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { getSession } from '../../../lib/auth/index';
 import { prisma } from '../../../lib/prisma';
 
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   const session = await getSession(event);
   if (!session || (session.role !== 'EDITOR' && session.role !== 'ADMIN')) {
     return new Response(
@@ -21,3 +21,4 @@ export async function GET(event: APIEvent) {
     { headers: { 'Content-Type': 'application/json' } },
   );
 }
+

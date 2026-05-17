@@ -2,7 +2,7 @@
  * GET    /api/impeach/:id  — 弹劾案详情（含票数汇总）
  * DELETE /api/impeach/:id  — 撤销（仅发起人或 FOUNDER，OPEN 状态）
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../../lib/api';
@@ -13,7 +13,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   const { id } = event.params;
   const req = await prisma.impeachRequest.findUnique({
     where: { id },
@@ -52,7 +52,7 @@ export async function GET(event: APIEvent) {
   return json(success({ request: req, summary }));
 }
 
-export async function DELETE(event: APIEvent) {
+export async function DELETE(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -74,3 +74,4 @@ export async function DELETE(event: APIEvent) {
 
   return json(success({ cancelled: true }));
 }
+

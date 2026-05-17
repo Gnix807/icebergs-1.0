@@ -1,11 +1,11 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth/index';
 
 // GET /api/icebergs/:id/social
 // Returns: { score, userVote, inWatchlist }
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   try {
     const { id } = event.params;
     if (!id) {
@@ -17,7 +17,7 @@ export async function GET(event: APIEvent) {
 
     // Find iceberg (by id or slug)
     const iceberg = await prisma.iceberg.findFirst({
-      where: { OR: [{ id }, { slug: id }] },
+      where: { OR: [{ id }, { slug: id }], status: 'PUBLISHED' },
       select: { id: true },
     });
 
@@ -67,3 +67,4 @@ export async function GET(event: APIEvent) {
     });
   }
 }
+

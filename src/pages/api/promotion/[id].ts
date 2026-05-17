@@ -1,7 +1,7 @@
 /**
  * PUT /api/promotion/[id]   EDITOR/ADMIN — approve or reject a request
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
@@ -9,7 +9,7 @@ import { can } from '../../../lib/permissions';
 import { notify } from '../../../lib/notify';
 import { logScore } from '../../../lib/scoreLog';
 
-export async function PUT(event: APIEvent) {
+export async function PUT(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -80,3 +80,4 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
+

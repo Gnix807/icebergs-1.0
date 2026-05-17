@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   SortableContext,
   verticalListSortingStrategy,
+  useSortable,
 } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { ItemCard } from './ItemCard';
 import type { Tier, Item } from '../../stores/icebergStore';
 
@@ -50,11 +52,35 @@ export function TierCard({
     return () => obs.disconnect();
   }, []);
 
-  const { setNodeRef, isOver } = useDroppable({
+  const { setNodeRef: setDropNodeRef, isOver } = useDroppable({
     id: tier.id,
+    data: { type: 'tier-drop', tierId: tier.id },
+  });
+  const {
+    attributes: tierDragAttributes,
+    listeners: tierDragListeners,
+    setNodeRef: setSortableNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: tier.id,
+    data: { type: 'tier', tierId: tier.id },
   });
 
+  const setNodeRef = useCallback((node: HTMLDivElement | null) => {
+    setDropNodeRef(node);
+    setSortableNodeRef(node);
+  }, [setDropNodeRef, setSortableNodeRef]);
+
   const tierColor = TIER_COLORS[Math.min(tierIndex, TIER_COLORS.length - 1)];
+  const tierStyle = {
+    borderLeftColor: tierColor,
+    borderLeftWidth: '3px',
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.75 : 1,
+  };
 
   const handleSaveName = () => {
     onUpdateTier(tier.id, { name: editName });
@@ -84,12 +110,21 @@ export function TierCard({
     <div
       ref={setNodeRef}
       className={`border border-[#21262d] bg-[#0d1117] transition-colors ${isOver ? 'border-[#00FF41]/30' : ''}`}
-      style={{ borderLeftColor: tierColor, borderLeftWidth: '3px' }}
+      style={tierStyle}
     >
       {/* ── Tier 标题栏 ── */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#21262d]"
            style={{ background: `linear-gradient(90deg, ${tierColor}0d 0%, transparent 60%)` }}>
         <div className="flex items-center gap-2 min-w-0">
+          <button
+            type="button"
+            {...tierDragAttributes}
+            {...tierDragListeners}
+            className="font-mono text-[10px] px-1 text-[#3d444d] hover:text-[#8b949e] cursor-grab active:cursor-grabbing"
+            title="拖拽排序层级"
+          >
+            ⋮⋮
+          </button>
           <button onClick={() => setIsCollapsed(!isCollapsed)}
             className="font-mono text-xs transition-colors flex-shrink-0"
             style={{ color: tierColor }}>
@@ -155,6 +190,15 @@ export function TierCard({
       {/* ── Items ── */}
       {!isCollapsed && (
         <div className="p-3">
+          {tier.items.length === 0 && (
+            <div
+              className={`mb-2 rounded border border-dashed px-3 py-2 text-[11px] font-mono transition-colors ${
+                isOver ? 'border-[#00FF41] text-[#00FF41] bg-[#00FF41]/5' : 'border-[#30363d] text-[#6e7681]'
+              }`}
+            >
+              {isOver ? '释放以移动词条到此层' : '将词条拖到这里'}
+            </div>
+          )}
           <SortableContext items={tier.items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
               {tier.items.map((item) => (

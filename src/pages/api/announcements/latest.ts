@@ -10,6 +10,7 @@ const db = prisma;
 
 export async function GET() {
   const latest = await db.announcement.findFirst({
+    where: { type: 'info' },
     orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
     select: { id: true, createdAt: true },
   });

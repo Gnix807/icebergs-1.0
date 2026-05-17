@@ -1,7 +1,10 @@
+import type { EmailVerificationPurpose } from './emailVerification';
+
 interface SendVerificationEmailArgs {
   to: string;
   code: string;
   ttlMinutes: number;
+  purpose: EmailVerificationPurpose;
 }
 
 function escapeHtml(raw: string): string {
@@ -13,14 +16,20 @@ function escapeHtml(raw: string): string {
     .replace(/'/g, '&#39;');
 }
 
-function buildEmailContent(code: string, ttlMinutes: number): { subject: string; text: string; html: string } {
+function buildEmailContent(
+  code: string,
+  ttlMinutes: number,
+  purpose: EmailVerificationPurpose
+): { subject: string; text: string; html: string } {
   const safeCode = escapeHtml(code);
-  const subject = '[冰山图宇宙] 邮箱验证码';
-  const text = `你的验证码是 ${code}，${ttlMinutes} 分钟内有效。若非本人操作请忽略此邮件。`;
+  const isReset = purpose === 'password_reset';
+  const title = isReset ? '重置密码验证码' : '邮箱验证码';
+  const subject = `[冰山图宇宙] ${title}`;
+  const text = `你的${title}是 ${code}，${ttlMinutes} 分钟内有效。若非本人操作请忽略此邮件。`;
   const html = `
     <div style="font-family:Segoe UI,Helvetica,Arial,sans-serif;line-height:1.6;color:#111">
-      <h2 style="margin:0 0 12px">冰山图宇宙 - 邮箱验证码</h2>
-      <p style="margin:0 0 10px">你的验证码是：</p>
+      <h2 style="margin:0 0 12px">冰山图宇宙 - ${title}</h2>
+      <p style="margin:0 0 10px">你的${title}是：</p>
       <div style="display:inline-block;padding:8px 14px;border:1px solid #ddd;border-radius:6px;font-size:22px;letter-spacing:3px;font-weight:700">
         ${safeCode}
       </div>
@@ -30,9 +39,9 @@ function buildEmailContent(code: string, ttlMinutes: number): { subject: string;
   return { subject, text, html };
 }
 
-export async function sendVerificationEmail({ to, code, ttlMinutes }: SendVerificationEmailArgs): Promise<void> {
+export async function sendVerificationEmail({ to, code, ttlMinutes, purpose }: SendVerificationEmailArgs): Promise<void> {
   const provider = (process.env.EMAIL_PROVIDER || 'console').toLowerCase();
-  const { subject, text, html } = buildEmailContent(code, ttlMinutes);
+  const { subject, text, html } = buildEmailContent(code, ttlMinutes, purpose);
 
   if (provider === 'console') {
     console.info(`[EmailVerification][Console] to=${to} code=${code} ttl=${ttlMinutes}m`);

@@ -1,4 +1,4 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { getSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../../lib/api';
@@ -18,7 +18,7 @@ function json(body: unknown, status: number) {
   });
 }
 
-export async function PUT(event: APIEvent) {
+export async function PUT(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   if (session.userId !== event.params.id) return json(error(ErrorCodes.FORBIDDEN, '无权限'), 403);
@@ -61,3 +61,4 @@ export async function PUT(event: APIEvent) {
 
   return json(success({ ids }), 200);
 }
+

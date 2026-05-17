@@ -2,7 +2,7 @@
  * GET  /api/impeach  — 列出所有 OPEN 弹劾案（公开）
  * POST /api/impeach  — 发起弹劾（ADMIN/FOUNDER 对 MODERATOR；FOUNDER 对 ADMIN）
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../lib/api';
@@ -30,7 +30,7 @@ export async function GET() {
   return json(success({ requests }));
 }
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -90,3 +90,4 @@ export async function POST(event: APIEvent) {
 
   return json(success({ request: req }), 201);
 }
+

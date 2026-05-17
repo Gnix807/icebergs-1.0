@@ -41,6 +41,7 @@ export function AdminFeedback() {
   const [resolving, setResolving]       = useState<string | null>(null);
   const [noteMap, setNoteMap]           = useState<Record<string, string>>({});
   const [saving, setSaving]             = useState<string | null>(null);
+  const [deleting, setDeleting]         = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/admin/feedback')
@@ -71,6 +72,32 @@ export function AdminFeedback() {
       }
     } finally {
       setSaving(null);
+    }
+  }
+
+  async function deleteFeedback(id: string) {
+    if (!window.confirm('确认删除这条反馈？删除后不可恢复。')) return;
+
+    setDeleting(id);
+    try {
+      const res = await fetch(`/api/admin/feedback/${id}`, { method: 'DELETE' });
+      const d = await res.json();
+      if (!d.success) {
+        alert(d.error?.message || '删除失败');
+        return;
+      }
+
+      setList(prev => prev.filter(f => f.id !== id));
+      setNoteMap(prev => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      if (resolving === id) setResolving(null);
+    } catch {
+      alert('删除失败，请稍后重试');
+    } finally {
+      setDeleting(null);
     }
   }
 
@@ -215,6 +242,13 @@ export function AdminFeedback() {
                         → 处理
                       </button>
                     )}
+                    <button
+                      onClick={() => deleteFeedback(fb.id)}
+                      disabled={deleting === fb.id}
+                      className="text-xs font-mono px-3 py-1 border border-[#7f1d1d] text-[#ef4444] hover:bg-[#ef444415] transition-colors disabled:opacity-50"
+                    >
+                      {deleting === fb.id ? '删除中...' : '删除'}
+                    </button>
                   </div>
                 )}
               </div>

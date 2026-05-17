@@ -1,0 +1,430 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { prisma } from '../lib/prisma';
+import { renderMarkdown } from '../lib/markdown';
+import ChangelogTypeFilter from '../components/changelog/ChangelogTypeFilter.astro';
+import { getSessionById } from '../lib/auth';
+import { can } from '../lib/permissions';
+import type { Prisma } from '@prisma/client';
+
+const TYPE_META: Record<string, { label: string; color: string }> = {
+  update: { label: '功能更新', color: '#22c55e' },
+  maintenance: { label: '维护调整', color: '#f59e0b' },
+  warning: { label: '风险提示', color: '#ef4444' },
+  info: { label: '站务信息', color: '#3b82f6' },
+};
+
+const typeFromQuery = Astro.url.searchParams.get('type') ?? 'all';
+const session = await getSessionById(Astro.cookies.get('session')?.value);
+const canPublishChangelog = session ? can(session, 'user:ban') : false;
+const allowedTypes = ['all', 'update', 'maintenance', 'warning'] as const;
+
+function isAllowedType(v: string): v is (typeof allowedTypes)[number] {
+  return (allowedTypes as readonly string[]).includes(v);
+}
+
+const currentType: (typeof allowedTypes)[number] = isAllowedType(typeFromQuery)
+  ? typeFromQuery
+  : 'all';
+
+const baseWhere: Prisma.AnnouncementWhereInput = {
+  OR: [{ type: 'update' }, { type: 'maintenance' }, { type: 'warning' }],
+};
+
+const where: Prisma.AnnouncementWhereInput = currentType === 'all'
+  ? baseWhere
+  : { ...baseWhere, type: currentType };
+
+const [rows, updateCount, maintenanceCount, warningCount] = await Promise.all([
+  prisma.announcement.findMany({
+    where,
+    orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
+    take: 200,
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      type: true,
+      pinned: true,
+      createdAt: true,
+      updatedAt: true,
+      author: {
+        select: { username: true, nickname: true },
+      },
+    },
+  }),
+  prisma.announcement.count({ where: { type: 'update' } }),
+  prisma.announcement.count({ where: { type: 'maintenance' } }),
+  prisma.announcement.count({ where: { type: 'warning' } }),
+]);
+
+const filterCounts = {
+  all: updateCount + maintenanceCount + warningCount,
+  update: updateCount,
+  maintenance: maintenanceCount,
+  warning: warningCount,
+};
+
+function filterHref(type: 'all' | 'update' | 'maintenance' | 'warning') {
+  if (type === 'all') return '/changelog';
+  return `/changelog?type=${type}`;
+}
+
+const filterHrefs = {
+  all: filterHref('all'),
+  update: filterHref('update'),
+  maintenance: filterHref('maintenance'),
+  warning: filterHref('warning'),
+};
+
+const entries = rows.map((row) => ({
+  ...row,
+  rendered: renderMarkdown((row.content || '').trim() || '暂无详细说明。'),
+}));
+
+type Entry = typeof entries[number];
+
+const grouped = new Map<string, Entry[]>();
+for (const entry of entries) {
+  const d = new Date(entry.createdAt);
+  const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  if (!grouped.has(key)) grouped.set(key, []);
+  grouped.get(key)!.push(entry);
+}
+
+const monthGroups = Array.from(grouped.entries()).map(([key, items]) => {
+  const [year, month] = key.split('-');
+  return {
+    key,
+    label: `${year} 年 ${month} 月`,
+    items: items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+  };
+});
+
+monthGroups.sort((a, b) => b.key.localeCompare(a.key));
+
+function fmtDate(date: Date) {
+  return new Date(date).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+}
+
+function fmtDateTime(date: Date) {
+  return new Date(date).toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+---
+
+<Layout title="更新日志 | 冰山图宇宙">
+  <main class="changelog-page max-w-5xl mx-auto px-4 md:px-6 py-10 md:py-12">
+    <header class="changelog-hero reveal">
+      <p class="changelog-eyebrow">// RELEASE NOTES · CHANGELOG</p>
+      <h1>更新日志</h1>
+      <p>
+        记录站点功能更新、体验优化和维护变更。每次版本迭代都会持续补充在这里。
+      </p>
+      <div class="changelog-hero-actions">
+        <a href="/feedback">提交反馈建议</a>
+        <a href="/feedback/progress">查看反馈进展</a>
+        {canPublishChangelog && <a href="/changelog/manage?create=1&type=update">发布更新日志</a>}
+      </div>
+    </header>
+
+    <ChangelogTypeFilter
+      currentType={currentType}
+      counts={filterCounts}
+      hrefs={filterHrefs}
+    />
+
+    <section class="changelog-summary reveal">
+      <div class="changelog-summary-card">
+        <div class="num">{entries.length}</div>
+        <div class="label">更新条目</div>
+      </div>
+      <div class="changelog-summary-card">
+        <div class="num">{monthGroups.length}</div>
+        <div class="label">覆盖月份</div>
+      </div>
+      <div class="changelog-summary-card">
+        <div class="num">{entries.filter((x) => x.type === 'update').length}</div>
+        <div class="label">功能更新</div>
+      </div>
+      <div class="changelog-summary-card">
+        <div class="num">{entries.filter((x) => x.type !== 'update').length}</div>
+        <div class="label">维护/提示</div>
+      </div>
+    </section>
+
+    {entries.length === 0 ? (
+      <section class="changelog-empty reveal">
+        <p>当前还没有更新日志条目。</p>
+        <a href="/announcements">先查看公告列表 →</a>
+      </section>
+    ) : (
+      <section class="changelog-timeline reveal">
+        {monthGroups.map((group) => (
+          <div class="changelog-group">
+            <h2>{group.label}</h2>
+            <div class="changelog-group-list">
+              {group.items.map((item) => {
+                const meta = TYPE_META[item.type] ?? TYPE_META.info;
+                const edited = item.updatedAt.toISOString() !== item.createdAt.toISOString();
+                return (
+                  <article class="changelog-item">
+                    <div class="changelog-item-dot" style={`background:${meta.color};`}></div>
+                    <div class="changelog-item-body">
+                      <div class="changelog-item-head">
+                        <div class="changelog-item-main">
+                          <span class="changelog-badge" style={`color:${meta.color};border-color:${meta.color}55;`}>{meta.label}</span>
+                          {item.pinned && <span class="changelog-pin">置顶</span>}
+                          <h3><a href={`/changelog/${item.id}`}>{item.title}</a></h3>
+                        </div>
+                        <time title={fmtDateTime(item.createdAt)}>{fmtDate(item.createdAt)}</time>
+                      </div>
+
+                      <div class="changelog-content markdown-content" set:html={item.rendered}></div>
+
+                      <div class="changelog-meta">
+                        <span>发布者：{item.author.nickname ?? item.author.username}</span>
+                        {edited && <span>已编辑：{fmtDateTime(item.updatedAt)}</span>}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </section>
+    )}
+  </main>
+</Layout>
+
+<style>
+  .changelog-page {
+    color: var(--text-primary);
+  }
+
+  .changelog-eyebrow {
+    margin: 0 0 0.45rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .changelog-hero h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+  }
+
+  .changelog-hero p {
+    margin: 0.75rem 0 0;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 58ch;
+  }
+
+  .changelog-hero-actions {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .changelog-hero-actions a {
+    text-decoration: none;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 0.38rem 0.72rem;
+    font-size: 0.84rem;
+  }
+
+  .changelog-hero-actions a:hover {
+    border-color: var(--terminal-green);
+    color: var(--text-primary);
+  }
+
+  .changelog-summary {
+    margin-top: 1.2rem;
+    display: grid;
+    gap: 0.7rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 900px) {
+    .changelog-summary {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .changelog-summary-card {
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    padding: 0.9rem 0.95rem;
+  }
+
+  .changelog-summary-card .num {
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--terminal-green);
+    font-weight: 700;
+  }
+
+  .changelog-summary-card .label {
+    margin-top: 0.35rem;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+  }
+
+  .changelog-empty {
+    margin-top: 1rem;
+    border: 1px dashed var(--border);
+    background: var(--bg-elevated);
+    text-align: center;
+    color: var(--text-muted);
+    padding: 1.8rem 1rem;
+  }
+
+  .changelog-empty p {
+    margin: 0;
+  }
+
+  .changelog-empty a {
+    display: inline-block;
+    margin-top: 0.65rem;
+    text-decoration: none;
+    color: var(--terminal-green);
+    font-size: 0.88rem;
+  }
+
+  .changelog-timeline {
+    margin-top: 1rem;
+    display: grid;
+    gap: 1.05rem;
+  }
+
+  .changelog-group h2 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+  }
+
+  .changelog-group-list {
+    margin-top: 0.55rem;
+    border-left: 1px dashed var(--border);
+    margin-left: 0.45rem;
+    padding-left: 0.9rem;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .changelog-item {
+    position: relative;
+    display: flex;
+    gap: 0.55rem;
+  }
+
+  .changelog-item-dot {
+    position: absolute;
+    left: -1.36rem;
+    top: 0.88rem;
+    width: 0.48rem;
+    height: 0.48rem;
+    border-radius: 999px;
+    border: 1px solid var(--bg-base);
+  }
+
+  .changelog-item-body {
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    padding: 0.85rem 0.9rem;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .changelog-item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .changelog-item-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.42rem;
+    min-width: 0;
+  }
+
+  .changelog-item-main h3 {
+    margin: 0;
+    font-size: 1rem;
+    min-width: 0;
+  }
+
+  .changelog-item-main h3 a {
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+
+  .changelog-item-main h3 a:hover {
+    color: var(--terminal-green);
+  }
+
+  .changelog-item-head time {
+    color: var(--text-muted);
+    font-size: 0.74rem;
+    white-space: nowrap;
+  }
+
+  .changelog-badge,
+  .changelog-pin {
+    border: 1px solid var(--border);
+    font-size: 0.72rem;
+    padding: 0.16rem 0.38rem;
+  }
+
+  .changelog-pin {
+    color: #f59e0b;
+    border-color: #f59e0b66;
+  }
+
+  .changelog-content {
+    margin-top: 0.55rem;
+    color: var(--text-secondary);
+  }
+
+  .changelog-meta {
+    margin-top: 0.58rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+  }
+
+  html.light .changelog-summary-card,
+  html.light .changelog-item-body {
+    background: #ffffff;
+    border-color: #d6dbe5;
+  }
+
+  html.light .changelog-empty {
+    border-color: #d6dbe5;
+    background: #f8fafc;
+  }
+
+  html.light .changelog-group-list {
+    border-left-color: #c8d1dc;
+  }
+</style>

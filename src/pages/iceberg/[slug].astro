@@ -14,16 +14,26 @@ const { slug } = Astro.params;
 const sessionId = Astro.cookies.get('session')?.value;
 const session   = await getSessionById(sessionId);
 const isLoggedIn = !!session;
+const canPreviewUnpublished = !!session && (session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR');
 
 let iceberg: any = null;
 let error = null;
 
 try {
   if (slug) {
+    const whereClause: any = {
+      OR: [{ slug }, { id: slug }],
+    };
+    if (!canPreviewUnpublished) {
+      if (session?.userId) {
+        whereClause.AND = [{ OR: [{ status: 'PUBLISHED' }, { authorId: session.userId }] }];
+      } else {
+        whereClause.status = 'PUBLISHED';
+      }
+    }
+
     iceberg = await prisma.iceberg.findFirst({
-      where: {
-        OR: [{ slug }, { id: slug }],
-      },
+      where: whereClause,
       include: {
         tiers: {
           orderBy: { order: 'asc' },
@@ -38,38 +48,38 @@ try {
     });
 
     if (iceberg) {
-      // 更新浏览计数 + 写入浏览日志（并发，不阻塞渲染）
-      await Promise.all([
-        prisma.iceberg.update({
-          where: { id: iceberg.id },
-          data: { viewCount: { increment: 1 } },
-        }),
-        iceberg.status === 'PUBLISHED'
-          ? prisma.viewLog.create({ data: { icebergId: iceberg.id } }).catch(() => {})
-          : Promise.resolve(),
-      ]);
+      if (iceberg.status === 'PUBLISHED') {
+        // 更新浏览计数 + 写入浏览日志（并发，不阻塞渲染）
+        await Promise.all([
+          prisma.iceberg.update({
+            where: { id: iceberg.id },
+            data: { viewCount: { increment: 1 } },
+          }),
+          prisma.viewLog.create({ data: { icebergId: iceberg.id } }).catch(() => {}),
+        ]);
 
-      // 追踪首次访问该冰山图（visitedIcebergCount）
-      if (session) {
-        const alreadyRead = await prisma.itemRead.findFirst({
-          where: { userId: session.userId, icebergId: iceberg.id },
-        });
-        if (!alreadyRead) {
-          updateDailyStreak(session.userId).catch(() => {});
-          prisma.userStats.upsert({
-            where: { userId: session.userId },
-            create: { userId: session.userId, visitedIcebergCount: 1 },
-            update: { visitedIcebergCount: { increment: 1 } },
-          }).catch(() => {});
-          checkAchievements(session.userId, {
-            type: 'visit',
-            currentIceberg: {
-              id: iceberg.id,
-              tierCount: iceberg.tiers?.length ?? 0,
-              itemCount: iceberg.tiers?.reduce((s: number, t: any) => s + (t.items?.length ?? 0), 0) ?? 0,
-            },
-            isFirstVisitIceberg: true,
+        // 追踪首次访问该冰山图（visitedIcebergCount）
+        if (session) {
+          const alreadyRead = await prisma.itemRead.findFirst({
+            where: { userId: session.userId, icebergId: iceberg.id },
           });
+          if (!alreadyRead) {
+            updateDailyStreak(session.userId).catch(() => {});
+            prisma.userStats.upsert({
+              where: { userId: session.userId },
+              create: { userId: session.userId, visitedIcebergCount: 1 },
+              update: { visitedIcebergCount: { increment: 1 } },
+            }).catch(() => {});
+            checkAchievements(session.userId, {
+              type: 'visit',
+              currentIceberg: {
+                id: iceberg.id,
+                tierCount: iceberg.tiers?.length ?? 0,
+                itemCount: iceberg.tiers?.reduce((s: number, t: any) => s + (t.items?.length ?? 0), 0) ?? 0,
+              },
+              isFirstVisitIceberg: true,
+            });
+          }
         }
       }
 
@@ -94,7 +104,7 @@ try {
   }
 
   if (!iceberg) {
-    error = '冰山图不存在';
+    error = '冰山图不存在或未发布';
   }
 } catch (err) {
   console.error('加载冰山图失败:', err);
@@ -103,6 +113,13 @@ try {
 
 const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
 const tierBg     = ['#052e16', '#172554', '#451a03', '#450a0a', '#4a044e', '#2e1065'];
+const statusLabelMap: Record<string, string> = {
+  DRAFT: 'DRAFT',
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  PUBLISHED: 'PUBLISHED',
+  REJECTED: 'REJECTED',
+  ARCHIVED: 'ARCHIVED',
+};
 
 // 展平所有词条，用于抽屉导航
 interface FlatItem {
@@ -173,13 +190,21 @@ for (const lbl of allLabels) {
       </div>
     ) : (
       <>
+        {iceberg.tiers.length > 0 && (
+          <div id="reading-progress-top" class="fixed top-14 inset-x-0 z-40 pointer-events-none">
+            <div id="read-progress-track" class="h-1 bg-[#0d1117]/95 border-b border-[#21262d]">
+              <div id="read-progress-fill" class="h-full bg-[#00FF41]" style="width: 0%"></div>
+            </div>
+          </div>
+        )}
+
         {/* ── Header ─────────────────────────────────────── */}
         <header class="mb-10 reveal">
           <div class="text-xs text-[#8b949e] font-mono mb-3 flex items-center gap-2">
             <a href="/iceberg/list" class="hover:text-[#00FF41] transition-colors">冰山图列表</a>
             <span class="text-[#3d444d]">/</span>
-            <span class={iceberg.status === 'PUBLISHED' ? 'text-[#22c55e]' : 'text-[#8b949e]'}>
-              {iceberg.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT'}
+            <span class={iceberg.status === 'PUBLISHED' ? 'text-[#22c55e]' : iceberg.status === 'PENDING_REVIEW' ? 'text-[#f59e0b]' : 'text-[#8b949e]'}>
+              {statusLabelMap[iceberg.status] ?? iceberg.status}
             </span>
           </div>
 
@@ -207,7 +232,7 @@ for (const lbl of allLabels) {
                 </a>
               </span>
             </div>
-            <SocialBar client:load icebergId={iceberg.id} />
+            {iceberg.status === 'PUBLISHED' && <SocialBar client:load icebergId={iceberg.id} />}
             {iceberg.status === 'PUBLISHED' && (
               <ExportButton
                 client:load
@@ -222,6 +247,34 @@ for (const lbl of allLabels) {
             )}
           </div>
         </header>
+
+        {/* ── 阅读工具：目录 / 进度 / 续读 ───────────────────── */}
+        {iceberg.tiers.length > 0 && (
+          <section id="reading-tools" class="mb-6 border border-[#21262d] bg-[#0d1117] p-4 space-y-3">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="text-[10px] font-mono text-[#6e7681] tracking-widest mb-1">目录</div>
+                <div class="flex flex-wrap gap-1.5">
+                  {iceberg.tiers.map((tier: any, ti: number) => (
+                    <a
+                      href={`#tier-${ti}`}
+                      data-tier-jump={String(ti)}
+                      class="toc-link text-[10px] font-mono px-2 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+                    >
+                      {tier.name}
+                    </a>
+                  ))}
+                </div>
+              </div>
+              <button
+                id="resume-reading-btn"
+                class="hidden text-[10px] font-mono px-2 py-1 border border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41] transition-colors"
+              >
+                回到上次阅读位置
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* ── Filter Bar ──────────────────────────────────── */}
         {(iceberg.tiers.length > 1 || allLabels.length > 0) && (
@@ -276,7 +329,7 @@ for (const lbl of allLabels) {
             const color = tierColors[ti % 6];
             const bg = tierBg[ti % 6];
             return (
-              <div class="reveal tier-section" data-tier-idx={String(ti)}>
+              <div id={`tier-${ti}`} class="reveal tier-section" data-tier-idx={String(ti)}>
                 {/* Tier header */}
                 <div
                   class="tier-header border-l-4 px-4 py-2.5"
@@ -451,6 +504,8 @@ for (const lbl of allLabels) {
   let currentIndex = -1;
   let activeTier   = null;   // null = all; or tier index as number
   let activeLabels = new Set();
+  const progressKey = `iceberg_reader_progress_${icebergId}`;
+  let scrollSaveTimer = null;
 
   // ── 探索成就上报 ──────────────────────────────────────────
   function reportRead(item) {
@@ -479,6 +534,67 @@ for (const lbl of allLabels) {
   const drawerLabelsRow  = document.getElementById('drawer-labels-row');
   const drawerLabels     = document.getElementById('drawer-labels');
   const drawerFeedback   = document.getElementById('drawer-feedback-link');
+  const progressText = document.getElementById('read-progress-text');
+  const progressFill = document.getElementById('read-progress-fill');
+  const resumeBtn = document.getElementById('resume-reading-btn');
+
+  function saveReaderState() {
+    try {
+      const payload = {
+        scrollY: window.scrollY,
+        currentIndex: currentIndex >= 0 ? currentIndex : null,
+        updatedAt: Date.now(),
+      };
+      localStorage.setItem(progressKey, JSON.stringify(payload));
+    } catch (_) {}
+  }
+
+  function updateReadingProgress() {
+    const sections = Array.from(document.querySelectorAll('.tier-section'));
+    if (sections.length === 0) return;
+    var passed = 0;
+    sections.forEach(function (sec) {
+      var rect = sec.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.45) passed += 1;
+    });
+    var progress = Math.max(0, Math.min(100, Math.round((passed / sections.length) * 100)));
+    if (progressText) progressText.textContent = progress + '%';
+    if (progressFill) progressFill.style.width = progress + '%';
+
+    var activeTierIndex = -1;
+    for (var i = 0; i < sections.length; i++) {
+      var rect = sections[i].getBoundingClientRect();
+      if (rect.top <= 120 && rect.bottom > 140) {
+        activeTierIndex = i;
+        break;
+      }
+    }
+    document.querySelectorAll('[data-tier-jump]').forEach(function (el) {
+      var isActive = parseInt(el.getAttribute('data-tier-jump') || '-1', 10) === activeTierIndex;
+      el.classList.toggle('toc-link-active', isActive);
+    });
+  }
+
+  function restoreReaderState() {
+    if (!resumeBtn) return;
+    var raw = null;
+    try { raw = localStorage.getItem(progressKey); } catch (_) {}
+    if (!raw) return;
+    var saved = null;
+    try { saved = JSON.parse(raw); } catch (_) { return; }
+    if (!saved || typeof saved.scrollY !== 'number' || saved.scrollY < 120) return;
+
+    var agoMin = Math.max(1, Math.round((Date.now() - Number(saved.updatedAt || Date.now())) / 60000));
+    resumeBtn.textContent = '回到上次阅读位置（' + agoMin + ' 分钟前）';
+    resumeBtn.classList.remove('hidden');
+    resumeBtn.addEventListener('click', function () {
+      window.scrollTo({ top: saved.scrollY, behavior: 'smooth' });
+      if (typeof saved.currentIndex === 'number' && saved.currentIndex >= 0 && saved.currentIndex < ITEMS.length) {
+        openDrawer(saved.currentIndex);
+        highlightChip(saved.currentIndex);
+      }
+    });
+  }
 
   function renderDrawer(idx) {
     const item = ITEMS[idx];
@@ -532,9 +648,11 @@ for (const lbl of allLabels) {
     overlay.classList.add('opacity-100');
     drawer.classList.remove('translate-x-full');
     document.body.style.overflow = 'hidden';
+    saveReaderState();
   }
 
   window.closeDrawer = function () {
+    saveReaderState();
     overlay.classList.add('opacity-0', 'pointer-events-none');
     overlay.classList.remove('opacity-100');
     drawer.classList.add('translate-x-full');
@@ -556,6 +674,7 @@ for (const lbl of allLabels) {
     renderDrawer(next);
     highlightChip(next);
     reportRead(ITEMS[next]);
+    saveReaderState();
   };
 
   function highlightChip(idx) {
@@ -576,6 +695,7 @@ for (const lbl of allLabels) {
       openDrawer(idx);
       highlightChip(idx);
       reportRead(ITEMS[idx]);
+      saveReaderState();
     });
   });
 
@@ -716,9 +836,41 @@ for (const lbl of allLabels) {
 
   // Initialise — sets "全部" as active
   applyFilters();
+  restoreReaderState();
+  updateReadingProgress();
+  window.addEventListener('scroll', function () {
+    updateReadingProgress();
+    if (scrollSaveTimer) window.clearTimeout(scrollSaveTimer);
+    scrollSaveTimer = window.setTimeout(saveReaderState, 220);
+  }, { passive: true });
+  window.addEventListener('beforeunload', saveReaderState);
 </script>
 
 <style>
+  /* ── 阅读工具 ── */
+  .toc-link {
+    border-color: #30363d;
+    color: #8b949e;
+  }
+  .toc-link-active {
+    border-color: #00FF41 !important;
+    color: #00FF41 !important;
+    background: rgba(0, 255, 65, 0.08);
+  }
+  #read-progress-track {
+    box-shadow: inset 0 -1px 0 rgba(33, 38, 45, 0.9);
+  }
+  #read-progress-fill {
+    transition: width 0.2s ease;
+  }
+  html.light #read-progress-track {
+    background: rgba(248, 250, 252, 0.96);
+    border-color: #e2e8f0;
+  }
+  html.light #read-progress-fill {
+    background: #2563eb;
+  }
+
   /* ── Filter bar ── */
   .filter-btn {
     border-color: #30363d;

@@ -1,8 +1,9 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { createSession } from '../../../lib/auth';
 import { verifyAndConsumeEmailCode } from '../../../lib/auth/emailVerification';
+import { enforceAuthRateLimit, getClientIp } from '../../../lib/auth/rateLimit';
 import { pbkdf2, randomBytes } from 'crypto';
 import { promisify } from 'util';
 
@@ -25,7 +26,7 @@ function normalizeUsername(raw: unknown): string {
 }
 
 // POST /api/auth/register - 邮箱注册
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   try {
     const body = await event.request.json();
     const email = normalizeEmail(body.email);
@@ -40,6 +41,34 @@ export async function POST(event: APIEvent) {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    const clientIp = getClientIp(event) || 'unknown';
+    const authRate = await enforceAuthRateLimit([
+      {
+        action: 'auth_register_ip',
+        key: clientIp,
+        limit: 20,
+        windowSec: 10 * 60,
+        message: '注册请求过于频繁，请稍后再试',
+      },
+      {
+        action: 'auth_register_email',
+        key: email,
+        limit: 6,
+        windowSec: 60 * 60,
+        message: '该邮箱注册尝试过多，请稍后再试',
+      },
+    ]);
+    if (!authRate.ok) {
+      return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, authRate.message)), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(authRate.retryAfterSec),
+        },
+      });
+    }
+
     if (!verificationCode) {
       return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '请先填写邮箱验证码')), {
         status: 400,
@@ -166,3 +195,4 @@ export async function POST(event: APIEvent) {
     });
   }
 }
+

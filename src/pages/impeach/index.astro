@@ -1,10 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
-import { getSessionById } from '../../lib/auth';
-
-const sessionId = Astro.cookies.get('session')?.value;
-const session   = await getSessionById(sessionId);
 
 const openRequests = await prisma.impeachRequest.findMany({
   where: { status: 'OPEN' },
@@ -56,10 +52,7 @@ const STATUS_COLOR: Record<string, string> = {
 
     <div class="mb-8">
       <h1 class="text-xl font-mono text-[#cdd9e5] mb-1">弹劾案记录</h1>
-      <p class="text-[11px] font-mono text-[#3d444d]">
-        ADMIN/FOUNDER 可对 MODERATOR 发起弹劾；FOUNDER 可对 ADMIN 发起弹劾。
-        通过后目标角色降级。
-      </p>
+      <p class="text-[11px] font-mono text-[#3d444d]">ADMIN/FOUNDER 可对 MODERATOR 发起弹劾；FOUNDER 可对 ADMIN 发起弹劾。通过后目标角色降级。</p>
     </div>
 
     <!-- 进行中 -->
@@ -90,7 +83,7 @@ const STATUS_COLOR: Record<string, string> = {
                       </span>
                       <a href={`/user/${req.target.id}`}
                         class="text-sm font-mono text-[#cdd9e5] group-hover:text-[#ef4444] transition-colors"
-                        onclick="(arguments[0]||window.event).stopPropagation()">
+                        onclick="event.stopPropagation()">
                         @{req.target.nickname ?? req.target.username}
                       </a>
                     </div>

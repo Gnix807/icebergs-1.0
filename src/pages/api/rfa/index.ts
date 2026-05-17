@@ -2,11 +2,11 @@
  * GET  /api/rfa  — 列出所有 OPEN 状态的 RfA（公开）
  * POST /api/rfa  — 提交 EDITOR 资格申请（需 CONTRIBUTOR）
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../lib/api';
-import { getRfaSettings, getRfaWeight } from '../../../lib/rfa';
+import { getRfaSettings } from '../../../lib/rfa';
 import { notify } from '../../../lib/notify';
 
 const db = prisma;
@@ -30,7 +30,7 @@ export async function GET() {
   return json(success({ requests }));
 }
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   if (session.role !== 'CONTRIBUTOR') {
@@ -75,7 +75,7 @@ export async function POST(event: APIEvent) {
 
   if (openRfa) return json(error(ErrorCodes.CONFLICT, '你已有进行中的 RfA'), 409);
 
-  if (recentRejected) {
+  if (recentRejected?.resolvedAt) {
     const cooldownEnds = new Date(recentRejected.resolvedAt.getTime() + settings.cooldownDays * 86400_000);
     const daysLeft = Math.ceil((cooldownEnds.getTime() - Date.now()) / 86400_000);
     return json(error(ErrorCodes.FORBIDDEN, `冷却期内，还需等待 ${daysLeft} 天`), 403);
@@ -95,3 +95,4 @@ export async function POST(event: APIEvent) {
 
   return json(success({ rfa }), 201);
 }
+

@@ -40,7 +40,7 @@ npm run dev
 复制 `.env.example` 为 `.env` 并填写：
 
 ```
-DATABASE_URL="file:./prisma/dev.db"
+DATABASE_URL="file:./dev.db"
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 GOOGLE_CLIENT_ID=

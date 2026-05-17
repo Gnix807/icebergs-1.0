@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { IcebergTopic } from '../lib/icebergTopic';
 
 export interface Item {
   id: string;
@@ -23,10 +24,16 @@ export interface Iceberg {
   slug: string;
   title: string;
   description?: string;
+  topic: IcebergTopic;
   authorId: string;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  status: 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED' | 'ARCHIVED';
   viewCount: number;
   tiers: Tier[];
+  review?: {
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'OVERRIDDEN';
+    note?: string | null;
+    reviewedAt?: string | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -40,6 +47,7 @@ interface IcebergStore {
   setIceberg: (iceberg: Iceberg | null) => void;
   updateTitle: (title: string) => void;
   updateDescription: (description: string) => void;
+  updateTopic: (topic: IcebergTopic) => void;
   addTier: (tier: Tier) => void;
   updateTier: (tierId: string, updates: Partial<Tier>) => void;
   removeTier: (tierId: string) => void;
@@ -68,6 +76,12 @@ export const useIcebergStore = create<IcebergStore>((set) => ({
   updateDescription: (description) =>
     set((state) => ({
       iceberg: state.iceberg ? { ...state.iceberg, description } : null,
+      isDirty: true,
+    })),
+
+  updateTopic: (topic) =>
+    set((state) => ({
+      iceberg: state.iceberg ? { ...state.iceberg, topic } : null,
       isDirty: true,
     })),
 

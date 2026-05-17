@@ -3,6 +3,12 @@
  * /guide — 平台使用指南与冰山图撰写细则
  */
 import Layout from '../layouts/Layout.astro';
+import { renderMarkdownWithMath } from '../lib/markdown';
+
+const latexInlineExampleSource = '质能等价 $E = mc^2$ 由爱因斯坦提出';
+const latexBlockExampleSource = '$$\n\\int_{-\\infty}^{\\infty} e^{-x^2} \\, dx = \\sqrt{\\pi}\n$$';
+const latexInlineExampleHtml = renderMarkdownWithMath(latexInlineExampleSource);
+const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
 ---
 
 <Layout title="使用指南 — 冰山图宇宙">
@@ -12,9 +18,7 @@ import Layout from '../layouts/Layout.astro';
     <div class="mb-10">
       <div class="text-[10px] font-mono text-[#6e7681] tracking-widest mb-2">// GUIDE · 使用指南</div>
       <h1 class="text-2xl font-mono text-[#cdd9e5] mb-2">冰山图宇宙 · 使用指南</h1>
-      <p class="text-xs font-mono text-[#8b949e]">
-        本页介绍平台核心功能与冰山图撰写规范，帮助你快速上手并创作高质量内容。
-      </p>
+      <p class="text-xs font-mono text-[#8b949e]">本页介绍平台核心功能与冰山图撰写规范，帮助你快速上手并创作高质量内容。</p>
       <!-- 跳转索引 -->
       <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1">
         {[
@@ -43,15 +47,8 @@ import Layout from '../layouts/Layout.astro';
       </div>
 
       <div class="border border-[#1a1a1a] bg-[#161b22] p-4 mb-3">
-        <p class="text-[11px] font-mono text-[#8b949e] leading-relaxed mb-3">
-          冰山图是一种将某一主题的知识按"大众认知 → 深层奥秘"分层呈现的结构化内容形式。
-          就像冰山一样，浮出水面的只是表层，而真正庞大而有趣的部分藏在水面之下。
-        </p>
-        <p class="text-[11px] font-mono text-[#8b949e] leading-relaxed">
-          例如，一张关于"宇宙"的冰山图，顶层可能是"太阳系""银河系"这样的常识；
-          往下则是"暗物质""弦理论"；更深处是"时间的本质""多宇宙猜想"……
-          每一层都比上一层更冷门、更深入、更令人震惊。
-        </p>
+        <p class="text-[11px] font-mono text-[#8b949e] leading-relaxed mb-3">冰山图是一种将某一主题的知识按"大众认知 → 深层奥秘"分层呈现的结构化内容形式。就像冰山一样，浮出水面的只是表层，而真正庞大而有趣的部分藏在水面之下。</p>
+        <p class="text-[11px] font-mono text-[#8b949e] leading-relaxed">例如，一张关于"宇宙"的冰山图，顶层可能是"太阳系""银河系"这样的常识；往下则是"暗物质""弦理论"；更深处是"时间的本质""多宇宙猜想"……每一层都比上一层更冷门、更深入、更令人震惊。</p>
       </div>
 
       <!-- 视觉结构示意 -->
@@ -452,7 +449,7 @@ import Layout from '../layouts/Layout.astro';
                 </div>
                 <div class="bg-[#0d1117] border border-[#21262d] px-3 py-2">
                   <div class="text-[10px] text-[#6e7681] mb-1">效果</div>
-                  <span class="text-[#8b949e]">质能等价 <em>E = mc²</em> 由爱因斯坦提出</span>
+                  <div class="markdown-content text-[#8b949e]" set:html={latexInlineExampleHtml}></div>
                 </div>
               </div>
             </div>
@@ -467,7 +464,7 @@ import Layout from '../layouts/Layout.astro';
                 </div>
                 <div class="bg-[#0d1117] border border-[#21262d] px-3 py-2">
                   <div class="text-[10px] text-[#6e7681] mb-1">效果</div>
-                  <span class="text-[#8b949e] italic">居中渲染的高斯积分公式</span>
+                  <div class="markdown-content text-[#8b949e]" set:html={latexBlockExampleHtml}></div>
                 </div>
               </div>
             </div>
@@ -602,6 +599,10 @@ import Layout from '../layouts/Layout.astro';
           {
             q: '质量分会不会下降？',
             a: '会。他人对你的冰山图投踩，或撤回对你冰山图的赞，都会扣分（每次 -1）。质量分直接影响晋升资格，请保持内容质量。',
+          },
+          {
+            q: '创建分是在什么时候发放？',
+            a: '不是新建草稿就给分。仅在“新冰山图首次提交审核”时发放 +5，且每日最多计 2 次；驳回后再次提交不重复发放。',
           },
           {
             q: '我已经是 CONTRIBUTOR，什么时候可以申请 RfA？',

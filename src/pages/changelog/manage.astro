@@ -1,0 +1,50 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+import { getSessionById } from '../../lib/auth';
+import { can } from '../../lib/permissions';
+import { AnnouncementManager } from '../../components/AnnouncementManager';
+
+const session = await getSessionById(Astro.cookies.get('session')?.value);
+const isAdmin = session ? can(session, 'user:ban') : false;
+
+if (!isAdmin) {
+  return Astro.redirect('/changelog', 302);
+}
+
+const announcements = await prisma.announcement.findMany({
+  where: { OR: [{ type: 'update' }, { type: 'maintenance' }, { type: 'warning' }] },
+  orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
+  select: {
+    id: true, title: true, content: true, type: true,
+    pinned: true, banner: true, createdAt: true, updatedAt: true,
+    author: { select: { id: true, username: true, nickname: true } },
+  },
+});
+
+const initialList = announcements.map((a: any) => ({
+  ...a,
+  createdAt: a.createdAt.toISOString(),
+  updatedAt: a.updatedAt.toISOString(),
+}));
+---
+
+<Layout title="更新日志发布 — 冰山图宇宙">
+  <main class="max-w-3xl mx-auto px-4 py-8 reveal">
+
+    <div class="mb-8">
+      <div class="text-[10px] font-mono text-[#6e7681] tracking-widest mb-2">// CHANGELOG MANAGEMENT</div>
+      <h1 class="text-2xl font-mono text-[#cdd9e5] mb-2">更新日志发布</h1>
+      <p class="text-xs font-mono text-[#8b949e]">仅管理更新日志类型：更新、维护、风险提示。</p>
+    </div>
+
+    <AnnouncementManager
+      client:load
+      isAdmin={isAdmin}
+      mode="changelog"
+      initialList={initialList}
+    />
+
+  </main>
+</Layout>
+

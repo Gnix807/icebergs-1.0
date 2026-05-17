@@ -7,7 +7,7 @@
  *   OPEN_APPLY → VOTING → CLOSED
  *   自动懒判断：若截止时间已过自动推进
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
@@ -32,7 +32,7 @@ async function maybeAdvance(election: { id: string; status: string; applyDeadlin
   return election.status;
 }
 
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   const { id } = event.params;
   const election = await prisma.election.findUnique({
     where: { id },
@@ -96,7 +96,7 @@ export async function GET(event: APIEvent) {
   }));
 }
 
-export async function PATCH(event: APIEvent) {
+export async function PATCH(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   if (session.role !== 'ADMIN' && !session.isFounder) {
@@ -124,3 +124,4 @@ export async function PATCH(event: APIEvent) {
   await prisma.election.update({ where: { id }, data: { status: newStatus } });
   return json(success({ id, status: newStatus }));
 }
+

@@ -78,6 +78,10 @@ const topItem      = ranked[0];
 
 function formatDate(date: Date | string) {
   const diff = Date.now() - new Date(date).getTime();
+  if (diff < 0) {
+    const futureDays = Math.ceil(Math.abs(diff) / 86400000);
+    return futureDays <= 1 ? '今天' : `${futureDays} 天后`;
+  }
   const days = Math.floor(diff / 86400000);
   if (days === 0) return '今天';
   if (days === 1) return '昨天';

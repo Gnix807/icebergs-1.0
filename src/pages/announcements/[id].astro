@@ -17,6 +17,7 @@ const ann = await prisma.announcement.findUnique({
 });
 
 if (!ann) return Astro.redirect('/announcements');
+if (ann.type !== 'info') return Astro.redirect(`/changelog/${ann.id}`);
 
 const session = await getSessionById(Astro.cookies.get('session')?.value);
 const isAdmin = session ? can(session, 'user:ban') : false;

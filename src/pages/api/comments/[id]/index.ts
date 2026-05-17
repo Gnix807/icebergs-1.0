@@ -1,11 +1,11 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { hasRole } from '../../../../lib/permissions';
 
 // DELETE /api/comments/[id] — 删除自己的评论，或 EDITOR+ 删除任意评论
-export async function DELETE(event: APIEvent) {
+export async function DELETE(event: APIContext) {
   const session = await getSession(event);
   if (!session) {
     return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
@@ -37,3 +37,4 @@ export async function DELETE(event: APIEvent) {
     status: 200, headers: { 'Content-Type': 'application/json' },
   });
 }
+

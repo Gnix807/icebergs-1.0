@@ -19,6 +19,7 @@ export function useApiSave(icebergId: string | null) {
         const created = await api.createIceberg({
           title: iceberg.title || '未命名冰山图',
           description: iceberg.description || '',
+          topic: iceberg.topic,
         });
         createdRef.current = true;
 
@@ -39,6 +40,7 @@ export function useApiSave(icebergId: string | null) {
         await api.updateIceberg(realId, {
           title: iceberg.title,
           description: iceberg.description,
+          topic: iceberg.topic,
           status: iceberg.status,
         });
 

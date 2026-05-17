@@ -45,7 +45,7 @@ export function getQualityLevel(score: number, role: string): QualityLevel {
 
 // 积分操作（简化版 Q1-B）
 export const SCORE_ACTIONS = {
-  iceberg_created:  5,   // 创建冰山图
+  iceberg_created:  5,   // 提交审核的新冰山图（每日上限由业务侧控制）
   vote_received_up: 1,   // 收到上投票
   vote_received_down: -1, // 收到下投票
 } as const;

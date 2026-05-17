@@ -1,11 +1,11 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth/index';
 import { notify } from '../../../../lib/notify';
 
 // POST /api/icebergs/:id/watchlist — toggle (add if absent, remove if present)
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -24,7 +24,7 @@ export async function POST(event: APIEvent) {
     }
 
     const iceberg = await prisma.iceberg.findFirst({
-      where: { OR: [{ id }, { slug: id }] },
+      where: { OR: [{ id }, { slug: id }], status: 'PUBLISHED' },
       select: { id: true, title: true, authorId: true, slug: true },
     });
     if (!iceberg) {
@@ -73,3 +73,4 @@ export async function POST(event: APIEvent) {
     });
   }
 }
+

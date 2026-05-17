@@ -1,7 +1,7 @@
-import type { APIEvent } from '@astrojs/node';
-import { generateCodeVerifier } from 'arctic';
+import type { APIContext } from 'astro';
 import { github, google, oauthProviderEnabled, createSession, getSession, deleteSession, type OAuthProvider } from '../../../lib/auth';
-import { saveOAuthChallengeWithIntent, consumeOAuthChallenge, type OAuthIntent } from '../../../lib/auth/oauthChallenge';
+import { consumeOAuthChallenge, type OAuthIntent } from '../../../lib/auth/oauthChallenge';
+import { isOAuthProvider, startOAuthLogin } from '../../../lib/auth/oauthStart';
 import {
   findOAuthIdentityUserId,
   getLinkedOAuthProviders,
@@ -10,10 +10,7 @@ import {
 } from '../../../lib/auth/oauthIdentity';
 import { prisma } from '../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../lib/api';
-
-function isOAuthProvider(value: string): value is OAuthProvider {
-  return value === 'github' || value === 'google';
-}
+import { enforceAuthRateLimit, getClientIp } from '../../../lib/auth/rateLimit';
 
 function parseProviderFromState(rawState: string | null | undefined): OAuthProvider | null {
   if (!rawState) return null;
@@ -125,82 +122,25 @@ async function resolveOrCreateOAuthUser(profile: OAuthProfile): Promise<string> 
   return created.id;
 }
 
-// 登录发起（或已登录态绑定）
-async function handleLogin(
-  event: APIEvent,
-  provider: OAuthProvider,
-  intent: OAuthIntent = 'login',
-  linkUserId: string | null = null
-) {
-  const state = `${provider}:${intent}:${crypto.randomUUID()}`;
-
-  event.cookies.set('oauth_state', state, {
-    httpOnly: true,
-    secure: import.meta.env.PROD,
-    sameSite: 'lax',
-    maxAge: 60 * 10,
-    path: '/',
-  });
-
-  // 保存 provider 到 cookie 以便回调时识别
-  event.cookies.set('oauth_provider', provider, {
-    httpOnly: true,
-    secure: import.meta.env.PROD,
-    sameSite: 'lax',
-    maxAge: 60 * 10,
-    path: '/',
-  });
-  event.cookies.set('oauth_intent', intent, {
-    httpOnly: true,
-    secure: import.meta.env.PROD,
-    sameSite: 'lax',
-    maxAge: 60 * 10,
-    path: '/',
-  });
-  if (linkUserId) {
-    event.cookies.set('oauth_link_user', linkUserId, {
-      httpOnly: true,
-      secure: import.meta.env.PROD,
-      sameSite: 'lax',
-      maxAge: 60 * 10,
-      path: '/',
-    });
-  } else {
-    event.cookies.delete('oauth_link_user', { path: '/' });
-  }
-
-  let authUrl: URL;
-  let codeVerifier: string | undefined;
-  if (provider === 'github') {
-    const scopes = ['read:user', 'user:email'];
-    authUrl = github.createAuthorizationURL(state, scopes);
-  } else {
-    codeVerifier = generateCodeVerifier();
-    event.cookies.set('oauth_code_verifier', codeVerifier, {
-      httpOnly: true,
-      secure: import.meta.env.PROD,
-      sameSite: 'lax',
-      maxAge: 60 * 10,
-      path: '/',
-    });
-    const scopes = ['openid', 'profile', 'email'];
-    authUrl = google.createAuthorizationURL(state, codeVerifier, scopes);
-  }
-  saveOAuthChallengeWithIntent(state, {
-    provider,
-    codeVerifier,
-    intent,
-    linkUserId,
-  });
-
-  return new Response(null, {
-    status: 302,
-    headers: { Location: authUrl.toString() },
-  });
-}
-
 // OAuth 回调处理
-async function handleCallback(event: APIEvent) {
+async function handleCallback(event: APIContext) {
+  const oauthClientIp = getClientIp(event) || 'unknown';
+  const callbackRate = await enforceAuthRateLimit([
+    {
+      action: 'auth_oauth_callback_ip',
+      key: oauthClientIp,
+      limit: 30,
+      windowSec: 10 * 60,
+      message: '第三方回调请求过于频繁，请稍后重试',
+    },
+  ]);
+  if (!callbackRate.ok) {
+    return new Response(null, {
+      status: 302,
+      headers: { Location: '/?error=oauth_rate_limited' },
+    });
+  }
+
   const oauthError = event.url.searchParams.get('error');
   if (oauthError) {
     return new Response(null, {
@@ -236,7 +176,7 @@ async function handleCallback(event: APIEvent) {
     });
   }
 
-  const challenge = consumeOAuthChallenge(state);
+  const challenge = await consumeOAuthChallenge(state);
 
   if (!storedState && !challenge) {
     return new Response(null, {
@@ -360,8 +300,9 @@ async function handleCallback(event: APIEvent) {
         });
       }
 
+      let linkResult: 'linked' | 'already_linked';
       try {
-        await linkOAuthIdentity(targetUserId, provider, profile.externalId, profile.email);
+        linkResult = await linkOAuthIdentity(targetUserId, provider, profile.externalId, profile.email);
       } catch (linkErr) {
         if (linkErr instanceof OAuthIdentityError) {
           if (linkErr.code === 'IDENTITY_TAKEN') {
@@ -378,6 +319,13 @@ async function handleCallback(event: APIEvent) {
           }
         }
         throw linkErr;
+      }
+
+      if (linkResult === 'already_linked') {
+        return new Response(null, {
+          status: 302,
+          headers: { Location: `/user/${targetUserId}?error=oauth_provider_already_linked` },
+        });
       }
 
       const current = await prisma.user.findUnique({
@@ -415,7 +363,7 @@ async function handleCallback(event: APIEvent) {
   }
 }
 
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   const pathname = event.url.pathname;
   const action = pathname.split('/').pop();
 
@@ -450,7 +398,11 @@ export async function GET(event: APIEvent) {
     }
 
     try {
-      return await handleLogin(event, rawProvider, intent, linkUserId);
+      return await startOAuthLogin(event, {
+        provider: rawProvider,
+        intent,
+        linkUserId,
+      });
     } catch (err) {
       console.error('Login error:', err);
       return new Response('Login failed', { status: 500 });
@@ -552,3 +504,4 @@ export async function GET(event: APIEvent) {
 
   return new Response('Not Found', { status: 404 });
 }
+

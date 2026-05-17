@@ -27,6 +27,7 @@ let achievementDefs: { key: string; icon: string; label: string; labelZh: string
 let userReadCount = 0;
 let awards: { id: string; type: string; message: string | null; createdAt: string; giver: { id: string; username: string; nickname: string | null } }[] = [];
 let userboxIds: string[] = [];
+let presenceStatus: 'online' | 'active' | 'offline' = 'offline';
 let error = null;
 
 try {
@@ -146,7 +147,7 @@ try {
     }
 
     if (user) {
-      const [fetchedIcebergs, totalVotes, fetchedAchDefs, readCount, fetchedAwards] = await Promise.all([
+      const [fetchedIcebergs, totalVotes, fetchedAchDefs, readCount, fetchedAwards, userStats] = await Promise.all([
         prisma.iceberg.findMany({
           where: isOwner
             ? { authorId: id }
@@ -174,6 +175,10 @@ try {
             giver: { select: { id: true, username: true, nickname: true } },
           },
         }),
+        prisma.userStats.findUnique({
+          where: { userId: id },
+          select: { lastVisitDate: true },
+        }),
       ]);
       userIcebergs = fetchedIcebergs;
       achievementDefs = fetchedAchDefs;
@@ -182,6 +187,9 @@ try {
       userboxIds = JSON.parse(user.userboxIds ?? '[]');
       const totalViews = fetchedIcebergs.reduce((sum, ic) => sum + ic.viewCount, 0);
       socialStats = { totalViews, totalVotes };
+      const today = new Date().toISOString().slice(0, 10);
+      const activeToday = userStats?.lastVisitDate === today;
+      presenceStatus = isOwner ? 'online' : (activeToday ? 'active' : 'offline');
 
       // ── 成就系统：计算 + 持久化 ──────────────────────────────
       const accountAgeDays = (Date.now() - new Date(user.createdAt).getTime()) / 86400000;
@@ -259,6 +267,7 @@ try {
         userReadCount={userReadCount}
         awards={awards}
         userboxIds={userboxIds}
+        presenceStatus={presenceStatus}
       />
     )}
   </div>

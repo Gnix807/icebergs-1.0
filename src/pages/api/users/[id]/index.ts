@@ -1,10 +1,10 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth/index';
 
 // GET /api/users/:id - 获取用户信息
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   try {
     const { id } = event.params;
 
@@ -51,7 +51,7 @@ export async function GET(event: APIEvent) {
 }
 
 // PUT /api/users/:id — 更新个人资料（仅本人）
-export async function PUT(event: APIEvent) {
+export async function PUT(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -99,3 +99,4 @@ export async function PUT(event: APIEvent) {
     });
   }
 }
+

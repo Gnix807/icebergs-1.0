@@ -1,4 +1,4 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { getSession } from '../../../../lib/auth';
 import { prisma } from '../../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../../lib/api';
@@ -14,10 +14,12 @@ function json(body: unknown, status: number) {
   });
 }
 
-export async function GET({ params }: APIEvent) {
+export async function GET({ params }: APIContext) {
   try {
+    if (!params.id) return json(error(ErrorCodes.BAD_REQUEST, '缺少用户 ID'), 400);
+    const userId = params.id;
     const awards = await db.userAward.findMany({
-      where: { receiverId: params.id },
+      where: { receiverId: userId },
       orderBy: { createdAt: 'desc' },
       select: {
         id: true, type: true, message: true, createdAt: true,
@@ -30,14 +32,19 @@ export async function GET({ params }: APIEvent) {
   }
 }
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   const session = await getSession(event);
   if (!session?.isFounder && session?.role !== 'ADMIN') {
     return json(error(ErrorCodes.FORBIDDEN, '需要管理员或站长权限'), 403);
   }
 
   const { id } = event.params;
-  if (id === session.userId) return json(error(ErrorCodes.FORBIDDEN, '不能授予自己勋章'), 403);
+  if (!id) return json(error(ErrorCodes.BAD_REQUEST, '缺少用户 ID'), 400);
+  const userId = id;
+  const isSelfAward = userId === session.userId;
+  if (isSelfAward && !session.isFounder) {
+    return json(error(ErrorCodes.FORBIDDEN, '仅站长可自授勋章'), 403);
+  }
 
   let body: { type?: string; message?: string };
   try { body = await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '请求格式错误'), 400); }
@@ -50,24 +57,24 @@ export async function POST(event: APIEvent) {
     return json(error(ErrorCodes.VALIDATION_ERROR, '留言不超过 200 字'), 400);
   }
 
-  const existing = await db.userAward.findFirst({ where: { receiverId: id, type } });
+  const existing = await db.userAward.findFirst({ where: { receiverId: userId, type } });
   if (existing) return json(error(ErrorCodes.BAD_REQUEST, '已授予过该类型勋章'), 409);
 
-  const receiver = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+  const receiver = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
   if (!receiver) return json(error(ErrorCodes.NOT_FOUND, '用户不存在'), 404);
 
   const awardDef = AWARD_TYPES.find(a => a.id === type)!;
   const award = await db.userAward.create({
-    data: { receiverId: id, giverId: session.userId, type, message: message?.trim() || null },
+    data: { receiverId: userId, giverId: session.userId, type, message: message?.trim() || null },
     select: { id: true, type: true },
   });
 
-  await notify(id, 'award_received', `获得勋章：${awardDef.labelZh}`, message ?? undefined, undefined);
+  await notify(userId, 'award_received', `获得勋章：${awardDef.labelZh}`, message ?? undefined, undefined);
 
   return json(success(award), 200);
 }
 
-export async function DELETE(event: APIEvent) {
+export async function DELETE(event: APIContext) {
   const session = await getSession(event);
   if (!session?.isFounder && session?.role !== 'ADMIN') {
     return json(error(ErrorCodes.FORBIDDEN, '需要管理员或站长权限'), 403);
@@ -76,11 +83,23 @@ export async function DELETE(event: APIEvent) {
   const url = new URL(event.request.url);
   const awardId = url.searchParams.get('awardId');
   if (!awardId) return json(error(ErrorCodes.BAD_REQUEST, '缺少 awardId'), 400);
+  const { id } = event.params;
+  if (!id) return json(error(ErrorCodes.BAD_REQUEST, '缺少用户 ID'), 400);
 
   try {
+    const award = await db.userAward.findUnique({
+      where: { id: awardId },
+      select: { id: true, receiverId: true },
+    });
+    if (!award) return json(error(ErrorCodes.NOT_FOUND, '勋章记录不存在'), 404);
+    if (award.receiverId !== id) {
+      return json(error(ErrorCodes.BAD_REQUEST, '勋章不属于该用户'), 400);
+    }
+
     await db.userAward.delete({ where: { id: awardId } });
     return json(success({ deleted: true }), 200);
   } catch {
     return json(error(ErrorCodes.INTERNAL_ERROR, '删除失败'), 500);
   }
 }
+

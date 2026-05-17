@@ -3,7 +3,7 @@
  *   body: { statement? }
  * DELETE /api/elections/[id]/candidates  — 撤回参选（本人或 ADMIN/FOUNDER）
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
@@ -15,7 +15,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -81,7 +81,7 @@ export async function POST(event: APIEvent) {
   return json(success({ candidate }), 201);
 }
 
-export async function DELETE(event: APIEvent) {
+export async function DELETE(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -118,3 +118,4 @@ export async function DELETE(event: APIEvent) {
 
   return json(success({ message: '已撤回参选' }));
 }
+

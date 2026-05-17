@@ -1,4 +1,4 @@
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../../lib/api';
@@ -6,7 +6,7 @@ import { awardCommentLikeScore } from '../../../../lib/activityScore';
 import { notifyAggregated } from '../../../../lib/notify';
 
 // POST /api/comments/[id]/like — 点赞/取消点赞
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   const session = await getSession(event);
   if (!session) {
     return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
@@ -37,7 +37,7 @@ export async function POST(event: APIEvent) {
     });
   } else {
     await prisma.commentLike.create({ data: { commentId, userId: session.userId } });
-    if (comment.userId !== session.userId) {
+    if (comment.userId && comment.userId !== session.userId) {
       awardCommentLikeScore(comment.userId);
       notifyAggregated(
         comment.userId,
@@ -51,3 +51,4 @@ export async function POST(event: APIEvent) {
     });
   }
 }
+

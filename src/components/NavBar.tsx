@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { LoginForm } from './LoginForm';
 import { useModalAnimation } from '../hooks/useModalAnimation';
-import { User, LayoutDashboard, Plus, LogOut, Lock } from 'lucide-react';
+import { User, LayoutDashboard, Plus, LogOut, Lock, Settings } from 'lucide-react';
 import { enqueueAchievements } from './ui/AchievementToast';
+import { SearchQuickLinks } from './nav/SearchQuickLinks';
 
 interface User {
   id: string;
@@ -34,12 +35,22 @@ const navLinks = [
   { href: '/iceberg/list', label: '冰山广场' },
   { href: '/leaderboard', label: '排行榜' },
   { href: '/org', label: '机构' },
-  { href: '/guide', label: '指南' },
-  { href: '/rules', label: '规则' },
   { href: '/announcements', label: '公告' },
-  { href: '/about', label: '关于' },
-  { href: '/feedback', label: '反馈' },
 ];
+
+const moreLinks = [
+  { href: '/changelog', label: '更新日志' },
+  { href: '/feedback', label: '反馈' },
+  { href: '/guide', label: '使用指南' },
+  { href: '/rules', label: '平台规则' },
+  { href: '/terms', label: '服务条款' },
+  { href: '/privacy', label: '隐私政策' },
+  { href: '/about', label: '关于本站' },
+  { href: '/feedback/progress', label: '反馈进展' },
+];
+
+// 移动端菜单仍然展示全部链接
+const allLinks = [...navLinks, ...moreLinks];
 
 export function NavBar() {
   const [user, setUser] = useState<User | null>(null);
@@ -68,29 +79,35 @@ export function NavBar() {
   const [searchIndex, setSearchIndex] = useState(-1);
   const [currentPath, setCurrentPath] = useState('');
   const [hasNewAnnouncement, setHasNewAnnouncement] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const moreRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const searchTimer = useRef<ReturnType<typeof setTimeout>>();
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userRef = useRef<User | null>(null);
 
   // ── 用户 ──────────────────────────────────────
-  const fetchUser = () => {
-    fetch('/api/auth/me')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.success) {
-          setUser(d.data);
-          fetchUnreadCount();
-          // 处理待展示的成就
-          if (d.data.pendingAchievements?.length > 0) {
-            enqueueAchievements(d.data.pendingAchievements);
-            fetch('/api/auth/achievements/ack', { method: 'POST' }).catch(() => {});
-          }
+  const fetchUser = async () => {
+    try {
+      const r = await fetch('/api/auth/me');
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && d.success) {
+        setUser(d.data);
+        fetchUnreadCount();
+        // 处理待展示的成就
+        if (d.data.pendingAchievements?.length > 0) {
+          enqueueAchievements(d.data.pendingAchievements);
+          fetch('/api/auth/achievements/ack', { method: 'POST' }).catch(() => {});
         }
-        else setUser(null);
-      })
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchUnreadCount = () => {
@@ -143,6 +160,10 @@ export function NavBar() {
   };
 
   useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  useEffect(() => {
     setCurrentPath(window.location.pathname);
     fetchUser();
     checkNewAnnouncement();
@@ -161,24 +182,33 @@ export function NavBar() {
       }
     };
     document.addEventListener('astro:page-load', onPageLoad);
-    // 定时轮询（含成就检查）
-    const timer = setInterval(fetchUser, 15000);
     return () => {
-      clearInterval(timer);
       document.removeEventListener('astro:page-load', onPageLoad);
     };
   }, []);
 
+  // 仅登录态轮询，避免游客持续 401 噪音
+  useEffect(() => {
+    if (!user) return;
+    const timer = setInterval(() => {
+      fetchUser();
+    }, 15000);
+    return () => clearInterval(timer);
+  }, [user]);
+
   useEffect(() => {
     const fn = () => {
       if (document.visibilityState === 'visible') {
-        fetchUser();
-        if (user) fetchUnreadCount();
+        // 登录态唤醒同步，未登录不重复打 /api/auth/me
+        if (userRef.current) {
+          fetchUser();
+          fetchUnreadCount();
+        }
       }
     };
     document.addEventListener('visibilitychange', fn);
     return () => document.removeEventListener('visibilitychange', fn);
-  }, [user]);
+  }, []);
 
   // 点击外部关闭下拉菜单 / 通知面板
   useEffect(() => {
@@ -187,6 +217,8 @@ export function NavBar() {
         setShowDropdown(false);
       if (notifRef.current && !notifRef.current.contains(e.target as Node))
         setShowNotif(false);
+      if (moreRef.current && !moreRef.current.contains(e.target as Node))
+        setShowMore(false);
     };
     document.addEventListener('mousedown', fn);
     return () => document.removeEventListener('mousedown', fn);
@@ -228,7 +260,7 @@ export function NavBar() {
   const handleSearch = (q: string) => {
     setSearchQuery(q);
     setSearchIndex(-1);
-    clearTimeout(searchTimer.current);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
     if (q.length < 2) { setSearchResults([]); return; }
     setSearchLoading(true);
     searchTimer.current = setTimeout(async () => {
@@ -241,7 +273,7 @@ export function NavBar() {
     }, 300);
   };
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSearchKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
     if (searchResults.length === 0) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -267,48 +299,83 @@ export function NavBar() {
   // ── render ─────────────────────────────────────
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-40 bg-[#0d1117]/96 backdrop-blur-sm border-b border-[#21262d]">
-        <div className="max-w-7xl mx-auto px-3 md:px-4">
-          <div className="flex items-center justify-between h-14">
+      <nav className="site-navbar fixed top-0 left-0 right-0 z-40 bg-[#0d1117]/96 backdrop-blur-sm border-b border-[#21262d]">
+        <div className="w-full max-w-none px-3 md:px-4 lg:px-6 xl:px-8">
+          <div className="flex items-center justify-between h-14 gap-2 lg:gap-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2 lg:gap-4">
+              {/* Logo */}
+              <a href="/" className="flex items-center gap-1 font-mono group glitch-hover flex-shrink-0">
+                <span className="text-[#00FF41] font-bold text-[15px] transition-colors">Iceberg</span>
+                <span className="text-[#3d444d] font-bold text-[15px] group-hover:text-[#6b7280] transition-colors">::</span>
+                <span className="text-[#8b949e] font-bold text-[15px] group-hover:text-[#cdd9e5] transition-colors">DB</span>
+                <span className="text-[#00FF41] text-[15px] terminal-cursor-blink">_</span>
+              </a>
 
-            {/* Logo */}
-            <a href="/" className="flex items-center gap-1 font-mono group glitch-hover flex-shrink-0">
-              <span className="text-[#00FF41] font-bold text-sm transition-colors">Iceberg</span>
-              <span className="text-[#3d444d] font-bold text-sm group-hover:text-[#6b7280] transition-colors">::</span>
-              <span className="text-[#8b949e] font-bold text-sm group-hover:text-[#cdd9e5] transition-colors">DB</span>
-              <span className="text-[#00FF41] text-sm animate-pulse opacity-70">_</span>
-            </a>
+              {/* Desktop nav */}
+              <div className="hidden lg:flex min-w-0 flex-1 items-center justify-start gap-0 xl:gap-0.5">
+                {navLinks.map(({ href, label }) => {
+                  const active = isActive(href);
+                  const isAnn = href === '/announcements';
+                  return (
+                    <a key={href} href={href}
+                      className={`relative px-2.5 xl:px-3 py-2 text-[15px] transition-all font-mono border-b-2 ${
+                        active
+                          ? 'text-[#00FF41] border-[#00FF41]'
+                          : 'text-[#adbac7] hover:text-[#00FF41] border-transparent hover:border-[#00FF41]/25'
+                      }`}>
+                      {label}
+                      {isAnn && hasNewAnnouncement && (
+                        <span className="absolute top-1.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[#00FF41]" />
+                      )}
+                    </a>
+                  );
+                })}
 
-            {/* Desktop nav */}
-            <div className="hidden md:flex items-center gap-1">
-              {navLinks.map(({ href, label }) => {
-                const active = isActive(href);
-                const isAnn = href === '/announcements';
-                return (
-                  <a key={href} href={href}
-                    className={`relative px-5 py-2 text-sm transition-all font-mono border-b-2 ${
-                      active
+                {/* 更多下拉 */}
+                <div className="relative" ref={moreRef}>
+                  <button
+                    onClick={() => setShowMore(v => !v)}
+                    className={`relative px-2.5 xl:px-3 py-2 text-[15px] transition-all font-mono border-b-2 ${
+                      moreLinks.some(l => isActive(l.href))
                         ? 'text-[#00FF41] border-[#00FF41]'
                         : 'text-[#adbac7] hover:text-[#00FF41] border-transparent hover:border-[#00FF41]/25'
-                    }`}>
-                    {label}
-                    {isAnn && hasNewAnnouncement && (
-                      <span className="absolute top-1.5 right-1 w-1.5 h-1.5 rounded-full bg-[#00FF41]" />
-                    )}
-                  </a>
-                );
-              })}
+                    }`}
+                  >
+                    更多
+                    <span className="ml-0.5 text-[10px]">{showMore ? '▲' : '▼'}</span>
+                  </button>
+
+                  {showMore && (
+                    <div className="absolute top-full left-0 mt-1 w-36 bg-[#161b22] border border-[#30363d] shadow-xl z-50 nav-dropdown-in">
+                      {moreLinks.map(({ href, label }) => {
+                        const active = isActive(href);
+                        return (
+                          <a key={href} href={href}
+                            onClick={() => setShowMore(false)}
+                            className={`block px-4 py-2.5 text-xs font-mono transition-colors border-b border-[#21262d] last:border-0 ${
+                              active
+                                ? 'text-[#00FF41] bg-[#00FF41]/5'
+                                : 'text-[#8b949e] hover:text-[#00FF41] hover:bg-[#0d1117]'
+                            }`}>
+                            {label}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* 右侧工具栏 */}
-            <div className="flex items-center gap-2">
+            <div className="ml-2 flex flex-shrink-0 items-center gap-1.5 xl:gap-2">
 
               {/* 搜索按钮（桌面端） */}
-              <button
-                onClick={() => setShowSearch(true)}
-                className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-[#8b949e] bg-[#161b22] border border-[#30363d] hover:border-[#00FF41] transition-all font-mono w-40 lg:w-48"
-                title="搜索 (Ctrl+K)"
-              >
+                <button
+                  onClick={() => setShowSearch(true)}
+                  className="hidden lg:flex items-center gap-2 px-2.5 xl:px-3 py-1.5 text-[15px] text-[#8b949e] bg-[#161b22] border border-[#30363d] hover:border-[#00FF41] transition-all font-mono w-32 xl:w-40"
+                  title="搜索 (Ctrl+K)"
+                >
                 <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="9" cy="9" r="6"/><path d="M13 13l4 4"/>
                 </svg>
@@ -426,7 +493,7 @@ export function NavBar() {
                   {user ? (
                     <div className="relative" ref={dropdownRef}>
                       <button onClick={() => setShowDropdown(!showDropdown)}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-[#adbac7] hover:text-[#00FF41] border border-[#30363d] hover:border-[#00FF41] transition-all font-mono">
+                        className="flex items-center gap-2 px-3 py-1.5 text-[15px] text-[#adbac7] hover:text-[#00FF41] border border-[#30363d] hover:border-[#00FF41] transition-all font-mono">
                         <User size={14} strokeWidth={1.5} className="text-[#00FF41]" />
                         <span className="hidden sm:inline max-w-20 truncate">{user.nickname || user.username}</span>
                         <span
@@ -436,7 +503,7 @@ export function NavBar() {
                       </button>
 
                       {dropdownMounted && (
-                        <div className={`absolute right-0 top-full mt-2 w-48 bg-[#161b22] border border-[#30363d] shadow-xl overflow-hidden z-50 ${dropdownLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
+                        <div className={`absolute right-0 top-full mt-2 w-52 bg-[#161b22] border border-[#30363d] shadow-xl overflow-hidden z-50 ${dropdownLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
                           <div className="px-4 py-3 border-b border-[#30363d]">
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-mono text-[#cdd9e5]">{user.nickname || user.username}</p>
@@ -454,6 +521,11 @@ export function NavBar() {
                               className="flex items-center gap-2 px-4 py-2 text-sm text-[#adbac7] hover:text-[#00FF41] hover:bg-[#1c2128] transition-colors font-mono"
                               onClick={() => setShowDropdown(false)}>
                               <LayoutDashboard size={14} strokeWidth={1.5} /> 我的主页
+                            </a>
+                            <a href={`/user/${user.id}?tab=settings`}
+                              className="flex items-center gap-2 px-4 py-2 text-sm text-[#adbac7] hover:text-[#00FF41] hover:bg-[#1c2128] transition-colors font-mono"
+                              onClick={() => setShowDropdown(false)}>
+                              <Settings size={14} strokeWidth={1.5} /> 账号设置
                             </a>
                             <a href="/iceberg/new"
                               className="flex items-center gap-2 px-4 py-2 text-sm text-[#adbac7] hover:text-[#00FF41] hover:bg-[#1c2128] transition-colors font-mono"
@@ -482,7 +554,7 @@ export function NavBar() {
 
               {/* 移动端搜索图标 */}
               <button onClick={() => setShowSearch(true)}
-                className="md:hidden w-9 h-9 flex items-center justify-center text-[#8b949e] hover:text-[#00FF41] transition-colors">
+                className="lg:hidden w-9 h-9 flex items-center justify-center text-[#8b949e] hover:text-[#00FF41] transition-colors">
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="9" cy="9" r="6"/><path d="M13 13l4 4"/>
                 </svg>
@@ -490,7 +562,7 @@ export function NavBar() {
 
               {/* 移动端汉堡 */}
               <button onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="md:hidden w-9 h-9 flex items-center justify-center text-[#8b949e] hover:text-[#00FF41] transition-colors"
+                className="lg:hidden w-9 h-9 flex items-center justify-center text-[#8b949e] hover:text-[#00FF41] transition-colors"
                 aria-label="菜单">
                 {showMobileMenu ? (
                   <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2">
@@ -508,8 +580,8 @@ export function NavBar() {
 
         {/* 移动端展开菜单 */}
         {showMobileMenu && (
-          <div className="md:hidden border-t border-[#21262d] bg-[#0d1117]/98 mobile-menu-animate">
-            {navLinks.map(({ href, label }) => {
+          <div className="lg:hidden border-t border-[#21262d] bg-[#0d1117]/98 mobile-menu-animate">
+            {allLinks.map(({ href, label }) => {
               const active = isActive(href);
               const isAnn = href === '/announcements';
               return (
@@ -540,31 +612,31 @@ export function NavBar() {
       </nav>
 
       {/* ── 移动端底部导航栏 ── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d1117]/96 backdrop-blur-sm border-t border-[#21262d] mobile-bottom-nav">
-        <div className="flex items-stretch">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d1117]/96 backdrop-blur-sm border-t border-[#21262d] mobile-bottom-nav">
+        <div className="flex items-stretch min-h-[64px]">
           {/* 首页 */}
-          <a href="/" className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-mono transition-colors ${isActive('/') ? 'text-[#00FF41]' : 'text-[#8b949e]'}`}>
+          <a href="/" className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/') ? 'text-[#00FF41]' : 'text-[#8b949e]'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
             首页
           </a>
           {/* 广场 */}
-          <a href="/iceberg/list" className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-mono transition-colors ${isActive('/iceberg/list') ? 'text-[#00FF41]' : 'text-[#8b949e]'}`}>
+          <a href="/iceberg/list" className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/iceberg/list') ? 'text-[#00FF41]' : 'text-[#8b949e]'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
             </svg>
             广场
           </a>
           {/* 搜索 */}
-          <button onClick={() => setShowSearch(true)} className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-mono text-[#8b949e] transition-colors">
+          <button onClick={() => setShowSearch(true)} className="flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-[#8b949e] transition-colors">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
             </svg>
             搜索
           </button>
           {/* 机构 */}
-          <a href="/org" className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-mono transition-colors ${isActive('/org') ? 'text-[#00FF41]' : 'text-[#8b949e]'}`}>
+          <a href="/org" className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/org') ? 'text-[#00FF41]' : 'text-[#8b949e]'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><line x1="9" y1="22" x2="9" y2="12"/><line x1="15" y1="22" x2="15" y2="12"/><line x1="12" y1="2" x2="12" y2="12"/>
             </svg>
@@ -572,14 +644,14 @@ export function NavBar() {
           </a>
           {/* 我的 / 登录 */}
           {user ? (
-            <a href={`/user/${user.id}`} className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-mono transition-colors ${currentPath.startsWith('/user/') ? 'text-[#00FF41]' : 'text-[#8b949e]'}`}>
+            <a href={`/user/${user.id}`} className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${currentPath.startsWith('/user/') ? 'text-[#00FF41]' : 'text-[#8b949e]'}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
               </svg>
               我的
             </a>
           ) : (
-            <button onClick={() => setShowLogin(true)} className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-mono text-[#8b949e] transition-colors">
+            <button onClick={() => setShowLogin(true)} className="flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-[#8b949e] transition-colors">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
@@ -592,15 +664,15 @@ export function NavBar() {
       {/* ── 全局搜索覆盖层 ── */}
       {searchMounted && (
         <div
-          className={`${searchLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/90 z-[60] flex items-start justify-center pt-20 px-4`}
+          className={`${searchLeaving ? 'modal-overlay-out' : 'modal-overlay'} search-modal-overlay fixed inset-0 z-[60] flex items-start justify-center pt-20 px-4`}
           onClick={() => setShowSearch(false)}
         >
           <div
-            className={`${searchLeaving ? 'modal-content-out' : 'modal-content'} w-full max-w-2xl bg-[#161b22] border border-[#30363d] shadow-2xl`}
+            className={`${searchLeaving ? 'modal-content-out' : 'modal-content'} search-modal-panel w-full max-w-2xl shadow-2xl`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* 搜索输入框 */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-[#21262d]">
+            <div className="search-modal-header flex items-center gap-3 px-4 py-3 border-b">
               <svg className="text-[#00FF41] flex-shrink-0" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <circle cx="9" cy="9" r="6"/><path d="M13 13l4 4"/>
               </svg>
@@ -611,18 +683,21 @@ export function NavBar() {
                 onChange={(e) => handleSearch(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
                 placeholder="搜索冰山图..."
-                className="flex-1 bg-transparent text-[#cdd9e5] text-base focus:outline-none placeholder:text-[#6e7681] font-mono"
+                className="search-modal-input flex-1 bg-transparent text-base focus:outline-none font-mono"
               />
               <button
                 onClick={() => setShowSearch(false)}
-                className="text-[#8b949e] hover:text-[#cdd9e5] text-lg transition-colors font-mono"
+                className="search-modal-close text-lg transition-colors font-mono"
               >
                 ×
               </button>
             </div>
 
             {/* 搜索结果 */}
-            <div className="max-h-[60vh] overflow-y-auto">
+            <div className="search-modal-results max-h-[60vh] overflow-y-auto">
+              {searchQuery.length < 2 && (
+                <SearchQuickLinks onNavigate={() => setShowSearch(false)} />
+              )}
               {searchLoading && (
                 <div className="px-4 py-6 text-center text-[#8b949e] font-mono text-sm animate-pulse">
                   搜索中...
@@ -664,7 +739,7 @@ export function NavBar() {
             </div>
 
             {/* 底部提示 */}
-            <div className="px-4 py-2 border-t border-[#21262d] flex items-center justify-end gap-4 text-xs text-[#3d444d] font-mono">
+            <div className="search-modal-footer px-4 py-2 border-t flex items-center justify-end gap-4 text-xs font-mono">
               <span>↑↓ 导航</span>
               <span>↵ 打开</span>
               <span>Esc 关闭</span>

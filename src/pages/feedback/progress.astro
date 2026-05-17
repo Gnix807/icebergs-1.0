@@ -1,0 +1,429 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+import FeedbackWeekStats from '../../components/feedback/FeedbackWeekStats.astro';
+
+const STATUS_META = {
+  pending: { label: '待处理', color: '#f59e0b' },
+  resolved: { label: '已处理', color: '#22c55e' },
+  wontfix: { label: '不处理', color: '#6b7280' },
+} as const;
+
+const TYPE_META = {
+  error: { label: '内容有误', color: '#ef4444' },
+  bug: { label: '功能异常', color: '#f59e0b' },
+  feature: { label: '功能建议', color: '#3b82f6' },
+  other: { label: '其他问题', color: '#6b7280' },
+} as const;
+
+const statusFromQuery = Astro.url.searchParams.get('status') ?? 'all';
+const typeFromQuery = Astro.url.searchParams.get('type') ?? 'all';
+
+const currentStatus =
+  statusFromQuery === 'all' || statusFromQuery in STATUS_META
+    ? statusFromQuery as 'all' | keyof typeof STATUS_META
+    : 'all';
+const currentType =
+  typeFromQuery === 'all' || typeFromQuery in TYPE_META
+    ? typeFromQuery as 'all' | keyof typeof TYPE_META
+    : 'all';
+
+const where: any = {};
+if (currentStatus !== 'all') where.status = currentStatus;
+if (currentType !== 'all') where.type = currentType;
+
+const [
+  rows,
+  totalCount,
+  pendingCount,
+  resolvedCount,
+  wontfixCount,
+  errorCount,
+  bugCount,
+  featureCount,
+  otherCount,
+] = await Promise.all([
+  prisma.feedback.findMany({
+    where,
+    orderBy: [{ createdAt: 'desc' }],
+    take: 180,
+    select: {
+      id: true,
+      type: true,
+      content: true,
+      status: true,
+      resolvedNote: true,
+      resolvedAt: true,
+      createdAt: true,
+      icebergId: true,
+      itemName: true,
+    },
+  }),
+  prisma.feedback.count(),
+  prisma.feedback.count({ where: { status: 'pending' } }),
+  prisma.feedback.count({ where: { status: 'resolved' } }),
+  prisma.feedback.count({ where: { status: 'wontfix' } }),
+  prisma.feedback.count({ where: { type: 'error' } }),
+  prisma.feedback.count({ where: { type: 'bug' } }),
+  prisma.feedback.count({ where: { type: 'feature' } }),
+  prisma.feedback.count({ where: { type: 'other' } }),
+]);
+
+function fmtDate(date: Date | null) {
+  if (!date) return '--';
+  return new Date(date).toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function preview(text: string) {
+  const oneLine = text.replace(/\s+/g, ' ').trim();
+  if (oneLine.length <= 220) return oneLine;
+  return `${oneLine.slice(0, 220)}...`;
+}
+
+function statusHref(status: 'all' | keyof typeof STATUS_META) {
+  const query = new URLSearchParams();
+  if (status !== 'all') query.set('status', status);
+  if (currentType !== 'all') query.set('type', currentType);
+  return query.toString() ? `/feedback/progress?${query.toString()}` : '/feedback/progress';
+}
+
+function typeHref(type: 'all' | keyof typeof TYPE_META) {
+  const query = new URLSearchParams();
+  if (currentStatus !== 'all') query.set('status', currentStatus);
+  if (type !== 'all') query.set('type', type);
+  return query.toString() ? `/feedback/progress?${query.toString()}` : '/feedback/progress';
+}
+---
+
+<Layout title="反馈进展 | 冰山图宇宙">
+  <main class="progress-page max-w-5xl mx-auto px-4 md:px-6 py-10 md:py-12">
+    <header class="progress-hero reveal">
+      <p class="progress-eyebrow">// COMMUNITY · FEEDBACK PROGRESS</p>
+      <h1>反馈进展</h1>
+      <p>
+        这里公开展示近期反馈处理状态。为保护隐私，页面不会展示提交者联系方式。
+      </p>
+      <div class="progress-hero-actions">
+        <a href="/feedback">提交新反馈</a>
+        <a href="/changelog">查看更新日志</a>
+      </div>
+    </header>
+
+    <FeedbackWeekStats />
+
+    <section class="progress-stats reveal">
+      <div class="progress-stat">
+        <div class="progress-stat-num">{totalCount}</div>
+        <div class="progress-stat-label">累计反馈</div>
+      </div>
+      <div class="progress-stat">
+        <div class="progress-stat-num">{pendingCount}</div>
+        <div class="progress-stat-label">待处理</div>
+      </div>
+      <div class="progress-stat">
+        <div class="progress-stat-num">{resolvedCount}</div>
+        <div class="progress-stat-label">已处理</div>
+      </div>
+      <div class="progress-stat">
+        <div class="progress-stat-num">{wontfixCount}</div>
+        <div class="progress-stat-label">不处理</div>
+      </div>
+    </section>
+
+    <section class="progress-filters reveal">
+      <div class="progress-filter-row">
+        <span class="progress-filter-label">状态</span>
+        <a href={statusHref('all')} class={`progress-chip ${currentStatus === 'all' ? 'active' : ''}`}>全部 ({totalCount})</a>
+        <a href={statusHref('pending')} class={`progress-chip ${currentStatus === 'pending' ? 'active pending' : ''}`}>待处理 ({pendingCount})</a>
+        <a href={statusHref('resolved')} class={`progress-chip ${currentStatus === 'resolved' ? 'active resolved' : ''}`}>已处理 ({resolvedCount})</a>
+        <a href={statusHref('wontfix')} class={`progress-chip ${currentStatus === 'wontfix' ? 'active wontfix' : ''}`}>不处理 ({wontfixCount})</a>
+      </div>
+      <div class="progress-filter-row">
+        <span class="progress-filter-label">类型</span>
+        <a href={typeHref('all')} class={`progress-chip ${currentType === 'all' ? 'active' : ''}`}>全部</a>
+        <a href={typeHref('error')} class={`progress-chip ${currentType === 'error' ? 'active error' : ''}`}>内容有误 ({errorCount})</a>
+        <a href={typeHref('bug')} class={`progress-chip ${currentType === 'bug' ? 'active bug' : ''}`}>功能异常 ({bugCount})</a>
+        <a href={typeHref('feature')} class={`progress-chip ${currentType === 'feature' ? 'active feature' : ''}`}>功能建议 ({featureCount})</a>
+        <a href={typeHref('other')} class={`progress-chip ${currentType === 'other' ? 'active other' : ''}`}>其他 ({otherCount})</a>
+      </div>
+    </section>
+
+    <section class="progress-list reveal">
+      {rows.length === 0 ? (
+        <div class="progress-empty">// 当前筛选下暂无反馈记录</div>
+      ) : (
+        rows.map((row) => {
+          const status = STATUS_META[row.status as keyof typeof STATUS_META] ?? STATUS_META.pending;
+          const type = TYPE_META[row.type as keyof typeof TYPE_META] ?? TYPE_META.other;
+          return (
+            <article class="progress-card">
+              <div class="progress-card-head">
+                <div class="progress-card-badges">
+                  <span class="progress-badge" style={`color:${type.color};border-color:${type.color}55;`}>{type.label}</span>
+                  <span class="progress-badge" style={`color:${status.color};border-color:${status.color}55;`}>{status.label}</span>
+                </div>
+                <time>{fmtDate(row.createdAt)}</time>
+              </div>
+
+              <p class="progress-card-content">{preview(row.content)}</p>
+
+              {(row.icebergId || row.itemName) && (
+                <div class="progress-context">
+                  {row.icebergId && (
+                    <a href={`/iceberg/${row.icebergId}`}>关联图谱：{row.icebergId.slice(-8)}</a>
+                  )}
+                  {row.itemName && <span>关联词条：{row.itemName}</span>}
+                </div>
+              )}
+
+              {(row.resolvedNote || row.status !== 'pending') && (
+                <div class="progress-note">
+                  <div class="progress-note-title">处理说明</div>
+                  <p>{row.resolvedNote?.trim() || '该反馈已归档处理。'}</p>
+                  <time>处理时间：{fmtDate(row.resolvedAt)}</time>
+                </div>
+              )}
+            </article>
+          );
+        })
+      )}
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .progress-page {
+    color: var(--text-primary);
+  }
+
+  .progress-hero h1 {
+    margin: 0;
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+  }
+
+  .progress-eyebrow {
+    margin: 0 0 0.4rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .progress-hero p {
+    margin: 0.75rem 0 0;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 58ch;
+  }
+
+  .progress-hero-actions {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .progress-hero-actions a {
+    text-decoration: none;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 0.38rem 0.72rem;
+    font-size: 0.84rem;
+  }
+
+  .progress-hero-actions a:hover {
+    border-color: var(--terminal-green);
+    color: var(--text-primary);
+  }
+
+  .progress-stats {
+    margin-top: 1.2rem;
+    display: grid;
+    gap: 0.7rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 900px) {
+    .progress-stats {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  .progress-stat {
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    padding: 0.9rem 0.95rem;
+  }
+
+  .progress-stat-num {
+    font-size: 1.45rem;
+    color: var(--terminal-green);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .progress-stat-label {
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+  }
+
+  .progress-filters {
+    margin-top: 0.9rem;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    padding: 0.8rem 0.9rem;
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .progress-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+  }
+
+  .progress-filter-label {
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    margin-right: 0.15rem;
+  }
+
+  .progress-chip {
+    text-decoration: none;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 0.28rem 0.55rem;
+    font-size: 0.78rem;
+    line-height: 1;
+  }
+
+  .progress-chip.active {
+    color: var(--text-primary);
+    border-color: var(--terminal-green);
+    background: color-mix(in srgb, var(--terminal-green) 8%, transparent);
+  }
+
+  .progress-chip.active.pending { border-color: #f59e0b; background: color-mix(in srgb, #f59e0b 13%, transparent); }
+  .progress-chip.active.resolved { border-color: #22c55e; background: color-mix(in srgb, #22c55e 12%, transparent); }
+  .progress-chip.active.wontfix { border-color: #6b7280; background: color-mix(in srgb, #6b7280 12%, transparent); }
+  .progress-chip.active.error { border-color: #ef4444; background: color-mix(in srgb, #ef4444 12%, transparent); }
+  .progress-chip.active.bug { border-color: #f59e0b; background: color-mix(in srgb, #f59e0b 12%, transparent); }
+  .progress-chip.active.feature { border-color: #3b82f6; background: color-mix(in srgb, #3b82f6 12%, transparent); }
+  .progress-chip.active.other { border-color: #6b7280; background: color-mix(in srgb, #6b7280 12%, transparent); }
+
+  .progress-list {
+    margin-top: 0.9rem;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .progress-card {
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    padding: 0.9rem;
+  }
+
+  .progress-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .progress-card-head time {
+    color: var(--text-muted);
+    font-size: 0.74rem;
+    white-space: nowrap;
+  }
+
+  .progress-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .progress-badge {
+    border: 1px solid var(--border);
+    font-size: 0.74rem;
+    padding: 0.2rem 0.42rem;
+  }
+
+  .progress-card-content {
+    margin: 0.66rem 0 0;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    font-size: 0.9rem;
+  }
+
+  .progress-context {
+    margin-top: 0.58rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+  }
+
+  .progress-context a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .progress-context a:hover {
+    color: var(--text-secondary);
+  }
+
+  .progress-note {
+    margin-top: 0.72rem;
+    border-left: 3px solid var(--border);
+    padding-left: 0.7rem;
+  }
+
+  .progress-note-title {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+  }
+
+  .progress-note p {
+    margin: 0.32rem 0 0;
+    color: var(--text-secondary);
+    font-size: 0.84rem;
+    line-height: 1.55;
+  }
+
+  .progress-note time {
+    margin-top: 0.25rem;
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+  }
+
+  .progress-empty {
+    border: 1px dashed var(--border);
+    color: var(--text-muted);
+    text-align: center;
+    padding: 2rem 1rem;
+    background: var(--bg-elevated);
+  }
+
+  html.light .progress-stat,
+  html.light .progress-filters,
+  html.light .progress-card {
+    background: #ffffff;
+    border-color: #d6dbe5;
+  }
+
+  html.light .progress-empty {
+    border-color: #d6dbe5;
+    background: #f8fafc;
+  }
+</style>

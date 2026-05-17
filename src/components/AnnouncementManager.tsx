@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { renderMarkdown } from '../lib/markdown';
 
 type AnnType = 'info' | 'warning' | 'maintenance' | 'update';
@@ -216,6 +216,7 @@ interface Announcement {
 interface Props {
   isAdmin: boolean;
   initialList: Announcement[];
+  mode?: 'all' | 'announcements' | 'changelog';
 }
 
 const TYPE_META: Record<AnnType, { label: string; color: string; border: string; bg: string }> = {
@@ -237,31 +238,58 @@ function formatDate(iso: string) {
 
 const EMPTY_FORM = { title: '', content: '', type: 'info' as AnnType, pinned: false, banner: false };
 
-export function AnnouncementManager({ isAdmin, initialList }: Props) {
+function isAnnType(value: string | null): value is AnnType {
+  return value === 'info' || value === 'warning' || value === 'maintenance' || value === 'update';
+}
+
+export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Props) {
+  const allowedTypes: AnnType[] = mode === 'announcements'
+    ? ['info']
+    : mode === 'changelog'
+      ? ['update', 'maintenance', 'warning']
+      : ['info', 'update', 'warning', 'maintenance'];
+
+  const defaultCreateType: AnnType = allowedTypes.includes('update') ? 'update' : allowedTypes[0];
+  const createMainLabel = mode === 'changelog' ? '+ 发布更新日志' : '+ 新建公告';
+  const detailBasePath = mode === 'changelog' ? '/changelog' : '/announcements';
+
   const [list, setList] = useState<Announcement[]>(initialList);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState(() => ({ ...EMPTY_FORM, type: defaultCreateType }));
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [err, setErr] = useState('');
   const [showTemplates, setShowTemplates] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<'all' | AnnType>('all');
+  const [pinnedOnly, setPinnedOnly] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
+  const autoOpenFromUrlDone = useRef(false);
 
   useEffect(() => {
     if (showForm) setTimeout(() => titleRef.current?.focus(), 50);
   }, [showForm]);
 
-  function openCreate() {
+  function buildDefaultForm(type: AnnType) {
+    const safeType = allowedTypes.includes(type) ? type : defaultCreateType;
+    if (safeType === 'update') {
+      const tpl = TEMPLATES.find((t) => t.type === 'update');
+      if (tpl) return { title: tpl.title, content: tpl.content, type: safeType, pinned: false, banner: false };
+    }
+    return { ...EMPTY_FORM, type: safeType };
+  }
+
+  function openCreate(type: AnnType = defaultCreateType) {
     setEditingId(null);
-    setForm(EMPTY_FORM);
+    setForm(buildDefaultForm(type));
     setErr('');
     setShowForm(true);
   }
 
   function openEdit(ann: Announcement) {
     setEditingId(ann.id);
-    setForm({ title: ann.title, content: ann.content, type: ann.type, pinned: ann.pinned, banner: ann.banner ?? false });
+    const safeType = allowedTypes.includes(ann.type) ? ann.type : defaultCreateType;
+    setForm({ title: ann.title, content: ann.content, type: safeType, pinned: ann.pinned, banner: ann.banner ?? false });
     setErr('');
     setShowForm(true);
   }
@@ -272,7 +300,18 @@ export function AnnouncementManager({ isAdmin, initialList }: Props) {
     setErr('');
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  useEffect(() => {
+    if (!isAdmin || autoOpenFromUrlDone.current || typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('create') !== '1') return;
+    const typeParam = url.searchParams.get('type');
+    const picked: AnnType = isAnnType(typeParam) ? typeParam : defaultCreateType;
+    const defaultType: AnnType = allowedTypes.includes(picked) ? picked : defaultCreateType;
+    openCreate(defaultType);
+    autoOpenFromUrlDone.current = true;
+  }, [isAdmin, defaultCreateType, mode]);
+
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitting(true);
     setErr('');
@@ -314,16 +353,23 @@ export function AnnouncementManager({ isAdmin, initialList }: Props) {
     }
   }
 
+  const visibleList = list.filter((ann) => {
+    if (!allowedTypes.includes(ann.type)) return false;
+    if (typeFilter !== 'all' && ann.type !== typeFilter) return false;
+    if (pinnedOnly && !ann.pinned) return false;
+    return true;
+  });
+
   return (
     <div>
       {/* 管理员：新建按钮 */}
       {isAdmin && !showForm && (
-        <div className="mb-6">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
           <button
-            onClick={openCreate}
+            onClick={() => openCreate(defaultCreateType)}
             className="font-mono text-xs px-4 py-2 border border-[#00FF41] text-[#00FF41] bg-[#0d1117] hover:bg-[#00FF4110] transition-colors"
           >
-            + 新建公告
+            {createMainLabel}
           </button>
         </div>
       )}
@@ -340,7 +386,7 @@ export function AnnouncementManager({ isAdmin, initialList }: Props) {
           <form onSubmit={handleSubmit} className="p-4 space-y-4">
 
             {/* 模板选择器（仅新建时显示） */}
-            {!editingId && (
+            {!editingId && mode !== 'announcements' && (
               <div>
                 <button
                   type="button"
@@ -352,13 +398,14 @@ export function AnnouncementManager({ isAdmin, initialList }: Props) {
 
                 {showTemplates && (
                   <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {TEMPLATES.map(tpl => {
+                    {TEMPLATES.filter((tpl) => allowedTypes.includes(tpl.type)).map(tpl => {
                       const m = TYPE_META[tpl.type];
                       return (
                         <button
                           key={tpl.label}
                           type="button"
                           onClick={() => {
+                            if (!allowedTypes.includes(tpl.type)) return;
                             setForm({ title: tpl.title, content: tpl.content, type: tpl.type, pinned: false, banner: false });
                             setShowTemplates(false);
                             setTimeout(() => titleRef.current?.focus(), 50);
@@ -409,12 +456,16 @@ export function AnnouncementManager({ isAdmin, initialList }: Props) {
                   onChange={e => setForm(f => ({ ...f, type: e.target.value as AnnType }))}
                   className="w-full bg-[#0d1117] border border-[#30363d] text-[#cdd9e5] font-mono text-xs px-3 py-2 focus:outline-none focus:border-[#00FF41]"
                 >
-                  <option value="info">公告</option>
-                  <option value="update">更新</option>
-                  <option value="warning">注意</option>
-                  <option value="maintenance">维护</option>
+                  {allowedTypes.map((typeKey) => (
+                    <option key={typeKey} value={typeKey}>{TYPE_META[typeKey].label}</option>
+                  ))}
                 </select>
               </div>
+              <p className="mt-1 font-mono text-[10px] text-[#3d444d]">
+                {mode === 'announcements'
+                  ? '提示：公告页仅展示“公告”类型；更新日志请前往日志管理发布。'
+                  : '提示：更新 / 注意 / 维护 类型会同步显示在「更新日志」页面。'}
+              </p>
               <div className="flex flex-col gap-2 pt-4">
                 <div className="flex items-center gap-2">
                   <input
@@ -466,7 +517,11 @@ export function AnnouncementManager({ isAdmin, initialList }: Props) {
                 disabled={submitting}
                 className="font-mono text-xs px-4 py-2 border border-[#00FF41] text-[#00FF41] bg-[#0d1117] hover:bg-[#00FF4110] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {submitting ? '[ 保存中... ]' : editingId ? '[ 保存修改 ]' : '[ 发布公告 ]'}
+                {submitting
+                  ? '[ 保存中... ]'
+                  : editingId
+                    ? '[ 保存修改 ]'
+                    : (form.type === 'info' ? '[ 发布公告 ]' : '[ 发布日志 ]')}
               </button>
               <button
                 type="button"
@@ -480,27 +535,91 @@ export function AnnouncementManager({ isAdmin, initialList }: Props) {
         </div>
       )}
 
+      {/* 筛选条 */}
+      <div className="mb-4 border border-[#21262d] bg-[#161b22] p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-mono text-[#6e7681] tracking-widest mr-1">FILTER</span>
+          <button
+            type="button"
+            onClick={() => setTypeFilter('all')}
+            className={`text-[10px] font-mono px-2 py-1 border transition-colors ${
+              typeFilter === 'all'
+                ? 'border-[#00FF41] text-[#00FF41] bg-[#00FF4110]'
+                : 'border-[#30363d] text-[#8b949e] hover:border-[#00FF41] hover:text-[#00FF41]'
+            }`}
+          >
+            全部
+          </button>
+          {(Object.keys(TYPE_META) as AnnType[]).map((key) => {
+            if (!allowedTypes.includes(key)) return null;
+            const meta = TYPE_META[key];
+            const active = typeFilter === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setTypeFilter(key)}
+                className="text-[10px] font-mono px-2 py-1 border transition-colors"
+                style={
+                  active
+                    ? { color: meta.color, borderColor: meta.color, background: `${meta.color}18` }
+                    : { color: '#8b949e', borderColor: '#30363d' }
+                }
+              >
+                {meta.label}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setPinnedOnly((v) => !v)}
+            className={`text-[10px] font-mono px-2 py-1 border transition-colors ${
+              pinnedOnly
+                ? 'border-[#f59e0b] text-[#f59e0b] bg-[#f59e0b10]'
+                : 'border-[#30363d] text-[#8b949e] hover:border-[#f59e0b] hover:text-[#f59e0b]'
+            }`}
+          >
+            仅看置顶
+          </button>
+          <span className="ml-auto text-[10px] font-mono text-[#6e7681]">
+            共 {visibleList.length} 条
+          </span>
+        </div>
+      </div>
+
       {/* 公告列表 */}
-      {list.length === 0 ? (
+      {visibleList.length === 0 ? (
         <div className="border border-[#21262d] bg-[#161b22] p-8 text-center">
-          <p className="font-mono text-xs text-[#3d444d]">// 暂无公告</p>
+          <p className="font-mono text-xs text-[#3d444d]">// 当前筛选下暂无公告</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {list.map(ann => {
+          {visibleList.map(ann => {
             const meta = TYPE_META[ann.type] ?? TYPE_META.info;
             const isEdited = ann.updatedAt !== ann.createdAt;
             return (
               <div
                 key={ann.id}
-                className="border bg-[#161b22]"
+                className="border bg-[#161b22] relative overflow-hidden"
                 style={{ borderColor: ann.pinned ? meta.color + '40' : '#21262d', background: ann.pinned ? meta.bg : undefined }}
               >
+                {ann.pinned && (
+                  <div
+                    className="absolute left-0 top-0 bottom-0 w-1"
+                    style={{ backgroundColor: meta.color }}
+                    aria-hidden="true"
+                  />
+                )}
                 {/* 头部 */}
                 <div className="flex items-start justify-between gap-3 px-4 py-3 border-b border-[#21262d]">
                   <div className="flex items-center gap-2 flex-wrap min-w-0">
                     {ann.pinned && (
-                      <span className="font-mono text-[10px] text-[#6e7681] flex-shrink-0">📌</span>
+                      <span className="font-mono text-[10px] text-[#f59e0b] flex-shrink-0">📌</span>
+                    )}
+                    {ann.pinned && (
+                      <span className="font-mono text-[9px] px-1.5 py-0.5 border border-[#f59e0b40] text-[#f59e0b] bg-[#f59e0b10] flex-shrink-0">
+                        置顶
+                      </span>
                     )}
                     <span
                       className="font-mono text-[10px] px-1.5 py-0.5 border flex-shrink-0"
@@ -509,7 +628,7 @@ export function AnnouncementManager({ isAdmin, initialList }: Props) {
                       {meta.label}
                     </span>
                     <a
-                      href={`/announcements/${ann.id}`}
+                      href={`${detailBasePath}/${ann.id}`}
                       className="font-mono text-sm text-[#cdd9e5] hover:text-[#00FF41] transition-colors truncate"
                     >
                       {ann.title}
@@ -563,7 +682,7 @@ export function AnnouncementManager({ isAdmin, initialList }: Props) {
                       {isLong && (
                         <div className="mt-1">
                           <a
-                            href={`/announcements/${ann.id}`}
+                            href={`${detailBasePath}/${ann.id}`}
                             className="font-mono text-[11px] text-[#00FF41] hover:underline"
                           >
                             阅读全文 →

@@ -83,8 +83,9 @@ export function AchievementToast() {
 
   return (
     <div
-      className="fixed top-6 right-6 z-[9999] w-80 transition-all duration-300 ease-out"
+      className="fixed top-6 right-6 z-[9999] transition-all duration-300 ease-out"
       style={{
+        width: 'min(92vw, 36rem)',
         transform: visible ? 'translateX(0)' : 'translateX(110%)',
         opacity: visible ? 1 : 0,
       }}
@@ -94,15 +95,15 @@ export function AchievementToast() {
         style={{ borderLeftColor: current.color, borderLeftWidth: '4px' }}
       >
         {/* 顶部标签 */}
-        <div className="px-3 py-1.5 bg-[#161b22] border-b border-[#21262d]">
+        <div className="px-4 py-1.5 bg-[#161b22] border-b border-[#21262d]">
           <span className="text-[10px] font-mono text-[#00FF41] tracking-widest animate-pulse">
             ▶ 隐藏权限已解锁 // ACHIEVEMENT UNLOCKED
           </span>
         </div>
         {/* 内容 */}
-        <div className="flex items-start gap-3 px-3 py-3">
+        <div className="flex items-start gap-3.5 px-4 py-3.5">
           <span className="text-2xl mt-0.5 flex-shrink-0">{current.icon}</span>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="text-sm font-bold text-[#e5e7eb] font-mono truncate">
               {current.labelZh}
             </div>

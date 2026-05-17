@@ -2,7 +2,7 @@
  * PATCH  /api/announcements/[id]  — ADMIN：编辑公告
  * DELETE /api/announcements/[id]  — ADMIN：删除公告
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../lib/api';
@@ -16,14 +16,14 @@ function json(body: unknown, status: number) {
   });
 }
 
-async function requireAdmin(event: APIEvent) {
+async function requireAdmin(event: APIContext) {
   const session = await getSession(event);
   if (!session) return { session: null, resp: json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401) };
   if (!can(session, 'user:ban')) return { session: null, resp: json(error(ErrorCodes.FORBIDDEN, '需要管理员权限'), 403) };
   return { session, resp: null };
 }
 
-export async function PATCH(event: APIEvent) {
+export async function PATCH(event: APIContext) {
   const { session, resp } = await requireAdmin(event);
   if (resp) return resp;
 
@@ -78,7 +78,7 @@ export async function PATCH(event: APIEvent) {
   return json(success({ announcement }), 200);
 }
 
-export async function DELETE(event: APIEvent) {
+export async function DELETE(event: APIContext) {
   const { resp } = await requireAdmin(event);
   if (resp) return resp;
 
@@ -89,3 +89,4 @@ export async function DELETE(event: APIEvent) {
   await db.announcement.delete({ where: { id } });
   return json(success(null), 200);
 }
+

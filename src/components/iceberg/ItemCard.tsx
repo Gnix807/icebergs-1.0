@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type TouchEvent } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Item } from '../../stores/icebergStore';
@@ -53,12 +53,12 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
   const longPressTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStartPos   = useRef<{ x: number; y: number } | null>(null);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = (e: TouchEvent) => {
     const t = e.touches[0];
     touchStartPos.current = { x: t.clientX, y: t.clientY };
     longPressTimer.current = setTimeout(() => { setIsEditing(true); }, 600);
   };
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = (e: TouchEvent) => {
     if (!touchStartPos.current || !longPressTimer.current) return;
     const t = e.touches[0];
     if (Math.abs(t.clientX - touchStartPos.current.x) > 10 ||
@@ -77,7 +77,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
   const {
     attributes, listeners, setNodeRef,
     transform, transition, isDragging,
-  } = useSortable({ id: item.id });
+  } = useSortable({ id: item.id, data: { type: 'item', tierId: item.tierId } });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -179,7 +179,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
 
           {/* 预设标签 */}
           <div className="flex gap-2 flex-wrap">
-            {ITEM_LABELS.map(({ key, color, borderColor }) => {
+            {ITEM_LABELS.map(({ key, color }) => {
               const active = editLabels.includes(key);
               return (
                 <button key={key} type="button" onClick={() => toggleLabel(key)}

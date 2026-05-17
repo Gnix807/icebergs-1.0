@@ -1,8 +1,32 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
 import { IcebergEditor } from '../../../components/iceberg/IcebergEditor';
+import { prisma } from '../../../lib/prisma';
+import { getSessionById } from '../../../lib/auth/index';
 
 const { id } = Astro.params;
+const sessionId = Astro.cookies.get('session')?.value;
+const session = await getSessionById(sessionId);
+
+if (!id) {
+  return Astro.redirect('/iceberg/list');
+}
+if (!session) {
+  return Astro.redirect('/login');
+}
+
+const iceberg = await prisma.iceberg.findFirst({
+  where: { OR: [{ id }, { slug: id }] },
+  select: { id: true, authorId: true },
+});
+if (!iceberg) {
+  return Astro.redirect('/iceberg/list');
+}
+
+const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
+if (!canManageAny && iceberg.authorId !== session.userId) {
+  return Astro.redirect('/iceberg/list');
+}
 ---
 
 <Layout title="编辑冰山图 | 冰山图宇宙">

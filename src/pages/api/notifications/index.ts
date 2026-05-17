@@ -1,7 +1,7 @@
 /**
  * GET /api/notifications   获取当前用户通知列表（最近 50 条）+ 未读数
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
@@ -13,7 +13,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -36,3 +36,4 @@ export async function GET(event: APIEvent) {
     return json(error(ErrorCodes.INTERNAL_ERROR, '获取失败'), 500);
   }
 }
+

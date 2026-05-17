@@ -39,6 +39,7 @@ export async function getIcebergList(params?: {
   q?: string;
   sort?: 'newest' | 'oldest' | 'popular';
   nsfw?: 'show' | 'hide';
+  topic?: string;
 }) {
   const searchParams = new URLSearchParams();
   if (params?.page)   searchParams.set('page',   String(params.page));
@@ -47,6 +48,7 @@ export async function getIcebergList(params?: {
   if (params?.q)      searchParams.set('q',      params.q);
   if (params?.sort)   searchParams.set('sort',   params.sort);
   if (params?.nsfw)   searchParams.set('nsfw',   params.nsfw);
+  if (params?.topic)  searchParams.set('topic',  params.topic);
 
   const query = searchParams.toString();
   return request<IcebergListResponse>(`/icebergs${query ? `?${query}` : ''}`);
@@ -56,14 +58,14 @@ export async function getIceberg(id: string) {
   return request<Iceberg>(`/icebergs/${id}`);
 }
 
-export async function createIceberg(data: { title: string; description?: string }) {
+export async function createIceberg(data: { title: string; description?: string; topic?: string }) {
   return request<Iceberg>('/icebergs', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-export async function updateIceberg(id: string, data: { title?: string; description?: string; status?: string }) {
+export async function updateIceberg(id: string, data: { title?: string; description?: string; topic?: string; status?: string }) {
   return request<Iceberg>(`/icebergs/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),

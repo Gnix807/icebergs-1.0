@@ -2,7 +2,7 @@
  * GET  /api/rfa/[id]  — 获取 RfA 详情（含投票列表）
  * DELETE /api/rfa/[id]  — 撤销自己的 OPEN 状态 RfA
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../../lib/api';
@@ -15,7 +15,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function GET(event: APIEvent) {
+export async function GET(event: APIContext) {
   const id = event.params.id!;
   const rfa = await db.rfaRequest.findUnique({
     where: { id },
@@ -57,7 +57,7 @@ export async function GET(event: APIEvent) {
   }));
 }
 
-export async function DELETE(event: APIEvent) {
+export async function DELETE(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -80,3 +80,4 @@ export async function DELETE(event: APIEvent) {
 
   return json(success(null));
 }
+

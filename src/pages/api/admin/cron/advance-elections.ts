@@ -11,12 +11,12 @@
  *   curl -X POST https://yourdomain.com/api/admin/cron/advance-elections \
  *        -H "Authorization: Bearer $CRON_SECRET"
  */
-import type { APIEvent } from '@astrojs/node';
+import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { success, error } from '../../../../lib/api';
 import { notify } from '../../../../lib/notify';
 
-export async function POST(event: APIEvent) {
+export async function POST(event: APIContext) {
   // 鉴权
   const secret = process.env.CRON_SECRET;
   const auth = event.request.headers.get('Authorization') ?? '';
@@ -75,3 +75,4 @@ export async function POST(event: APIEvent) {
     { status: 200, headers: { 'Content-Type': 'application/json' } },
   );
 }
+
