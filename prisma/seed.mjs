@@ -49,7 +49,8 @@ const DEFAULTS = [
   { key: 'promotion_expire',         value: '30'   }, // 天，晋升申请过期
 ];
 
-// 探索成就默认定义（管理员可在后台增删改）
+/*
+// 探索成就默认定义 — 已废弃，成就统一由 seed-achievements.mjs 管理
 const EXPLORE_ACHIEVEMENTS = [
   {
     key: 'explore_first',
@@ -82,6 +83,7 @@ const EXPLORE_ACHIEVEMENTS = [
     color: '#f59e0b', triggerType: 'all_clear',   triggerTarget: 0, sortOrder: 5,
   },
 ];
+*/
 
 async function main() {
   for (const row of DEFAULTS) {
@@ -93,6 +95,8 @@ async function main() {
   }
   console.log(`Seeded ${DEFAULTS.length} SystemSettings entries.`);
 
+  // 已废弃：成就统一由 seed-achievements.mjs 管理
+  /*
   for (const ach of EXPLORE_ACHIEVEMENTS) {
     await prisma.achievement.upsert({
       where: { key: ach.key },
@@ -101,6 +105,7 @@ async function main() {
     });
   }
   console.log(`Seeded ${EXPLORE_ACHIEVEMENTS.length} Achievement definitions.`);
+  */
 }
 
 main()
