@@ -413,7 +413,7 @@ for (const lbl of allLabels) {
         {/* ── Comments ───────────────────────────────────── */}
         {iceberg.status === 'PUBLISHED' && (
           <CommentSection
-            client:load
+            client:visible
             icebergId={iceberg.id}
             currentUserId={session?.userId ?? null}
             currentUserRole={session?.role ?? null}

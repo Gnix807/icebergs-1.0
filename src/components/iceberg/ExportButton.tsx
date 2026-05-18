@@ -1,5 +1,4 @@
 ﻿import React from 'react';
-import QRCode from 'qrcode';
 
 interface TierData {
   name: string;
@@ -214,6 +213,7 @@ async function drawExport(
   // Footer
   const qrBg   = theme === 'dark' ? '#0A0A0A' : '#ffffff';
   const qrDark = theme === 'dark' ? '#00FF41' : '#0f172a';
+  const QRCode = (await import('qrcode')).default;
   const qrDataUrl = await QRCode.toDataURL(icebergUrl, {
     width: 120, margin: 1,
     color: { dark: qrDark, light: qrBg },
