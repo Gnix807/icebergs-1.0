@@ -122,12 +122,14 @@ export function TierCard({
             {...tierDragListeners}
             className="font-mono text-[10px] px-1 text-text-lo hover:text-text-body cursor-grab active:cursor-grabbing"
             title="拖拽排序层级"
+            aria-label="拖拽排序"
           >
             ⋮⋮
           </button>
           <button onClick={() => setIsCollapsed(!isCollapsed)}
             className="font-mono text-xs transition-colors flex-shrink-0"
-            style={{ color: tierColor }}>
+            style={{ color: tierColor }}
+            aria-label={isCollapsed ? '展开层级' : '折叠层级'}>
             {isCollapsed ? '▶' : '▼'}
           </button>
 
@@ -146,6 +148,7 @@ export function TierCard({
               onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
               className="bg-transparent border-b border-brand font-mono text-sm text-text-hi focus:outline-none min-w-0 flex-1"
               autoFocus
+              aria-label="层级名称"
             />
           ) : (
             <h3 className="font-mono text-sm text-text-hi cursor-pointer hover:text-brand transition-colors truncate"
@@ -177,6 +180,7 @@ export function TierCard({
             className="w-full bg-transparent border-b border-brand/40 font-mono text-xs text-text-body focus:outline-none placeholder:text-text-lo"
             placeholder="// 层级描述…"
             autoFocus
+            aria-label="层级描述"
           />
         ) : (
           <button onClick={() => setIsEditingDesc(true)}

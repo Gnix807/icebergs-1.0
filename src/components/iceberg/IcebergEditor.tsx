@@ -1396,8 +1396,9 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                     setSlugError(suggested ? validateSlug(suggested) : null);
                   }
                 }}
-                className="flex-1 pr-4 py-3 bg-transparent font-mono text-lg focus:outline-none text-text-hi placeholder:text-[#2d333b]"
+                className="flex-1 pr-4 py-3 bg-transparent font-mono text-lg focus:outline-none text-text-hi placeholder:text-text-mid"
                 placeholder="冰山图标题"
+                aria-label="冰山图标题"
               />
             </div>
           </div>
@@ -1422,6 +1423,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                   }`}
                   placeholder="my-iceberg-id"
                   spellCheck={false}
+                  aria-label="自定义地址"
                 />
               ) : (
                 <span className="flex-1 px-3 py-2 font-mono text-sm text-text-mid bg-surface-0 border border-border-subtle">
@@ -1454,6 +1456,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                 updateTopic(normalizeIcebergTopic(val));
               }}
               className="w-full px-3 py-2 bg-surface-0 border border-border-subtle focus:border-brand focus:outline-none font-mono text-sm text-text-hi transition-colors"
+              aria-label="主题分类"
             >
               {ICEBERG_TOPICS.map((topic) => (
                 <option key={topic.value} value={topic.value}>
@@ -1474,6 +1477,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                   }}
                   placeholder="例如：动漫、冷知识、互联网谜团"
                   className="w-full px-3 py-2 bg-surface-0 border border-border-subtle focus:border-brand focus:outline-none font-mono text-sm text-text-hi placeholder:text-text-lo transition-colors"
+                  aria-label="自定义主题"
                 />
                 <p className="mt-1 text-[11px] font-mono text-text-lo">最多 24 字，保存后会作为该冰山图的主题分类</p>
               </div>
@@ -1486,9 +1490,10 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
             <textarea
               value={iceberg.description || ''}
               onChange={(e) => updateDescription(e.target.value)}
-              className="w-full px-4 py-3 bg-surface-0 border border-border-subtle focus:border-brand focus:outline-none resize-none font-mono text-sm text-text-hi placeholder:text-[#2d333b] transition-colors"
+              className="w-full px-4 py-3 bg-surface-0 border border-border-subtle focus:border-brand focus:outline-none resize-none font-mono text-sm text-text-hi placeholder:text-text-mid transition-colors"
               rows={3}
               placeholder="// 冰山图简介（可选，支持 Markdown）"
+              aria-label="冰山图简介"
             />
           </div>
         </div>
@@ -1538,6 +1543,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
               }`}
               disabled={!canScrollTiersUp}
               title="回到顶部"
+              aria-label="回到顶部"
             >
               顶部
             </button>
@@ -1549,6 +1555,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
               }`}
               disabled={!canScrollTiersDown}
               title="一键滚动到底部"
+              aria-label="滚动到底部"
             >
               到底
             </button>
@@ -1734,8 +1741,9 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                 value={deleteConfirmText}
                 onChange={e => setDeleteConfirmText(e.target.value)}
                 placeholder="输入标题确认"
-                className="w-full px-3 py-2 mb-4 bg-surface-0 border border-border-subtle text-sm text-text-hi focus:border-danger focus:outline-none placeholder:text-[#2d333b]"
+                className="w-full px-3 py-2 mb-4 bg-surface-0 border border-border-subtle text-sm text-text-hi focus:border-danger focus:outline-none placeholder:text-text-mid"
                 autoFocus
+                aria-label="输入标题确认删除"
               />
               <div className="flex gap-3">
                 <button

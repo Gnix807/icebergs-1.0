@@ -319,9 +319,10 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder-[#3d444d] transition-colors"
+                className="w-full px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder:text-text-lo transition-colors"
                 placeholder="邮箱"
                 required
+                aria-label="邮箱地址"
               />
             </div>
 
@@ -331,12 +332,13 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                   type="text"
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value.replace(/[^\d]/g, '').slice(0, 6))}
-                  className="flex-1 px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder-[#3d444d] transition-colors"
+                  className="flex-1 px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder:text-text-lo transition-colors"
                   placeholder="邮箱验证码（6位）"
                   required
                   inputMode="numeric"
                   pattern="^\d{6}$"
                   maxLength={6}
+                  aria-label="邮箱验证码"
                 />
                 <button
                   type="button"
@@ -357,10 +359,11 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyUp={handlePasswordKeyState}
                   onKeyDown={handlePasswordKeyState}
-                  className="w-full px-3 py-2.5 pr-16 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder-[#3d444d] transition-colors"
+                  className="w-full px-3 py-2.5 pr-16 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder:text-text-lo transition-colors"
                   placeholder={mode === 'reset' ? '新密码' : '密码'}
                   required
                   minLength={6}
+                  aria-label="密码"
                 />
                 <button
                   type="button"
@@ -399,10 +402,11 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     onKeyUp={handlePasswordKeyState}
                     onKeyDown={handlePasswordKeyState}
-                    className="w-full px-3 py-2.5 pr-16 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder-[#3d444d] transition-colors"
+                    className="w-full px-3 py-2.5 pr-16 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder:text-text-lo transition-colors"
                     placeholder="确认新密码"
                     required
                     minLength={6}
+                    aria-label="确认新密码"
                   />
                   <button
                     type="button"
@@ -434,10 +438,11 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder-[#3d444d] transition-colors"
+                    className="w-full px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder:text-text-lo transition-colors"
                     placeholder="用户名"
                     required
                     pattern="^[a-zA-Z0-9_]{3,20}$"
+                    aria-label="用户名"
                   />
                 </div>
                 <div>
@@ -445,8 +450,9 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                     type="text"
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder-[#3d444d] transition-colors"
+                    className="w-full px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder:text-text-lo transition-colors"
                     placeholder="昵称 (选填)"
+                    aria-label="昵称"
                   />
                 </div>
               </>

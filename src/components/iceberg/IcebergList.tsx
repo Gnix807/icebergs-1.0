@@ -137,7 +137,8 @@ export function IcebergList() {
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder="搜索标题或描述…"
-            className="w-full pl-8 pr-3 py-1.5 bg-surface-2 border border-border text-xs font-mono text-text-hi placeholder-[#3d444d] focus:border-brand focus:outline-none transition-colors"
+            className="w-full pl-8 pr-3 py-1.5 bg-surface-2 border border-border text-xs font-mono text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none transition-colors"
+            aria-label="搜索冰山图"
           />
           {q && (
             <button
@@ -186,7 +187,7 @@ export function IcebergList() {
                 setPage(1);
               }}
               placeholder="自定义分类"
-              className="w-[120px] px-2 py-1.5 bg-surface-2 border border-border text-[10px] font-mono text-text-hi placeholder-[#3d444d] focus:border-brand focus:outline-none transition-colors"
+              className="w-[120px] px-2 py-1.5 bg-surface-2 border border-border text-[10px] font-mono text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none transition-colors"
             />
             <button
               onClick={() => {

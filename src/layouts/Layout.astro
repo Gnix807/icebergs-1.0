@@ -123,6 +123,25 @@ const bannerAnn = await prisma.announcement.findFirst({
       </div>
     </footer>
 
+    <!-- Mobile compact footer -->
+    <footer class="md:hidden border-t border-border-subtle bg-surface-1 mt-12">
+      <div class="max-w-7xl mx-auto px-4 py-4">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-brand font-bold text-xs">Iceberg<span class="text-text-lo">::</span><span class="text-text-body">DB</span></span>
+          <span class="text-[10px] text-text-lo">v1.0.0</span>
+        </div>
+        <nav class="flex flex-wrap gap-x-4 gap-y-1.5">
+          <a href="/feedback" class="text-[11px] text-text-body hover:text-brand transition-colors">反馈</a>
+          <a href="/rules" class="text-[11px] text-text-body hover:text-brand transition-colors">规则</a>
+          <a href="/terms" class="text-[11px] text-text-body hover:text-brand transition-colors">条款</a>
+          <a href="/privacy" class="text-[11px] text-text-body hover:text-brand transition-colors">隐私</a>
+          <a href="/about" class="text-[11px] text-text-body hover:text-brand transition-colors">关于</a>
+          <a href="/changelog" class="text-[11px] text-text-body hover:text-brand transition-colors">更新</a>
+        </nav>
+        <div class="text-[10px] text-text-lo mt-3">&copy; {new Date().getFullYear()} 冰山图宇宙 · Astro + React + Prisma</div>
+      </div>
+    </footer>
+
     <!-- 噪点纹理叠加层 -->
     <div class="noise-overlay pointer-events-none fixed inset-0 z-[9996]"></div>
     <!-- 自定义光标追随点（仅桌面端） -->

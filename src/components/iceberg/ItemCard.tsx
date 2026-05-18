@@ -126,6 +126,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
           className="w-full px-3 py-2 bg-surface-2 border border-border text-sm focus:border-brand focus:outline-none font-mono text-text-hi"
           placeholder="词条标题"
           autoFocus
+          aria-label="词条标题"
         />
 
         {/* 描述：Write / Preview 标签页 */}
@@ -169,6 +170,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
               className="w-full px-3 py-2 bg-surface-2 border border-border border-t-0 text-xs focus:border-brand focus:outline-none resize-none font-mono text-text-hi placeholder:text-text-lo"
               style={{ minHeight: '120px' }}
               placeholder={"描述（支持 Markdown 与 LaTeX 公式）\n\n例：行内公式 $E=mc^2$，块级公式 $$\\int_{-\\infty}^{\\infty}$$"}
+              aria-label="词条描述"
             />
           )}
         </div>
@@ -210,7 +212,8 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
               <input type="text" value={customInput} onChange={e => setCustomInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomLabel(); } }}
                 placeholder="自定义标签，回车添加…" maxLength={20}
-                className="flex-1 min-w-0 px-3 py-1.5 bg-surface-2 border border-border text-xs font-mono text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none" />
+                className="flex-1 min-w-0 px-3 py-1.5 bg-surface-2 border border-border text-xs font-mono text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none"
+                aria-label="自定义标签" />
               <button type="button" onClick={addCustomLabel} disabled={!customInput.trim()}
                 className="px-3 py-1.5 text-xs font-mono border border-border text-text-body hover:border-brand hover:text-brand disabled:opacity-30 transition-colors">
                 添加

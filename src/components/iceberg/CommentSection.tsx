@@ -309,7 +309,8 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
             maxLength={20}
             placeholder="游客昵称（2–20 字符）"
             className="w-full mb-2 px-3 py-2 bg-surface-2 border border-border text-sm font-mono
-                       text-text-hi placeholder-[#3d444d] focus:border-brand focus:outline-none transition-colors"
+                       text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none transition-colors"
+            aria-label="游客昵称"
           />
         )}
         <textarea
@@ -321,7 +322,8 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
           maxLength={1000}
           placeholder="写下你的想法... (Ctrl+Enter 发送)"
           className="w-full px-3 py-2.5 bg-surface-2 border border-border text-sm font-mono text-text-hi
-                     placeholder-[#3d444d] focus:border-brand focus:outline-none resize-none transition-colors"
+                     placeholder:text-text-lo focus:border-brand focus:outline-none resize-none transition-colors"
+          aria-label="评论内容"
         />
         <div className="flex items-center justify-between mt-2">
           {!currentUserId ? (
@@ -450,7 +452,8 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                       maxLength={500}
                       placeholder={`回复 @${displayName}... (Ctrl+Enter)`}
                       className="w-full px-3 py-2 bg-surface-2 border border-border text-xs font-mono text-text-hi
-                                 placeholder-[#3d444d] focus:border-brand focus:outline-none resize-none transition-colors"
+                                 placeholder:text-text-lo focus:border-brand focus:outline-none resize-none transition-colors"
+                      aria-label="回复内容"
                     />
                     <div className="flex justify-end gap-2 mt-1.5">
                       <button

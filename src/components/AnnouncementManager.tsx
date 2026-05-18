@@ -443,7 +443,7 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                 onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                 placeholder="公告标题"
                 maxLength={100}
-                className="w-full bg-surface-1 border border-border text-text-hi font-mono text-sm px-3 py-2 focus:outline-none focus:border-brand placeholder-[#3d444d]"
+                className="w-full bg-surface-1 border border-border text-text-hi font-mono text-sm px-3 py-2 focus:outline-none focus:border-brand placeholder:text-text-lo"
               />
             </div>
 
@@ -502,7 +502,7 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
                 placeholder="支持 Markdown 格式…"
                 rows={8}
                 maxLength={10000}
-                className="w-full bg-surface-1 border border-border text-text-hi font-mono text-xs px-3 py-2 focus:outline-none focus:border-brand placeholder-[#3d444d] resize-y"
+                className="w-full bg-surface-1 border border-border text-text-hi font-mono text-xs px-3 py-2 focus:outline-none focus:border-brand placeholder:text-text-lo resize-y"
               />
               <div className="text-right font-mono text-[10px] text-text-lo mt-0.5">
                 {form.content.length} / 10000
