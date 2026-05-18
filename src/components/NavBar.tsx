@@ -35,23 +35,40 @@ const navLinks = [
   { href: '/iceberg/list', label: '冰山广场' },
   { href: '/leaderboard', label: '排行榜' },
   { href: '/iceberg/new', label: '创建' },
-  { href: '/feedback', label: '反馈' },
-  { href: '/guide', label: '指南' },
-  { href: '/announcements', label: '公告' },
-  { href: '/org', label: '机构' },
-  { href: '/changelog', label: '更新日志' },
-  { href: '/rules', label: '规则' },
-  { href: '/feedback/progress', label: '进展' },
 ];
 
-const moreLinks = [
-  { href: '/terms', label: '服务条款' },
-  { href: '/privacy', label: '隐私政策' },
-  { href: '/about', label: '关于本站' },
+// 分类下拉菜单
+const dropdownMenus = [
+  {
+    label: '探索',
+    links: [
+      { href: '/iceberg/random', label: '随机漫游' },
+      { href: '/announcements', label: '公告' },
+      { href: '/changelog', label: '更新日志' },
+    ],
+  },
+  {
+    label: '帮助',
+    links: [
+      { href: '/guide', label: '使用指南' },
+      { href: '/feedback', label: '反馈建议' },
+      { href: '/feedback/progress', label: '反馈进展' },
+    ],
+  },
+  {
+    label: '关于',
+    links: [
+      { href: '/org', label: '机构' },
+      { href: '/rules', label: '平台规则' },
+      { href: '/terms', label: '服务条款' },
+      { href: '/privacy', label: '隐私政策' },
+      { href: '/about', label: '关于本站' },
+    ],
+  },
 ];
 
 // 移动端菜单仍然展示全部链接
-const allLinks = [...navLinks, ...moreLinks];
+const allLinks = [...navLinks, ...dropdownMenus.flatMap(m => m.links)];
 
 export function NavBar() {
   const [user, setUser] = useState<User | null>(null);
@@ -80,10 +97,9 @@ export function NavBar() {
   const [searchIndex, setSearchIndex] = useState(-1);
   const [currentPath, setCurrentPath] = useState('');
   const [hasNewAnnouncement, setHasNewAnnouncement] = useState(false);
-  const [showMore, setShowMore] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const moreRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userRef = useRef<User | null>(null);
@@ -219,8 +235,6 @@ export function NavBar() {
         setShowDropdown(false);
       if (notifRef.current && !notifRef.current.contains(e.target as Node))
         setShowNotif(false);
-      if (moreRef.current && !moreRef.current.contains(e.target as Node))
-        setShowMore(false);
     };
     document.addEventListener('mousedown', fn);
     return () => document.removeEventListener('mousedown', fn);
@@ -335,39 +349,49 @@ export function NavBar() {
                   );
                 })}
 
-                {/* 更多下拉 */}
-                <div className="relative" ref={moreRef}>
-                  <button
-                    onClick={() => setShowMore(v => !v)}
-                    className={`relative px-2.5 xl:px-3 py-2 text-[15px] transition-all font-mono border-b-2 ${
-                      moreLinks.some(l => isActive(l.href))
-                        ? 'text-brand border-brand'
-                        : 'text-text-hi hover:text-brand border-transparent hover:border-brand/25'
-                    }`}
-                  >
-                    更多
-                    <span className="ml-0.5 text-[10px]">{showMore ? '▲' : '▼'}</span>
-                  </button>
-
-                  {showMore && (
-                    <div className="absolute top-full left-0 mt-1 w-36 bg-surface-2 border border-border shadow-xl z-50 nav-dropdown-in">
-                      {moreLinks.map(({ href, label }) => {
-                        const active = isActive(href);
-                        return (
-                          <a key={href} href={href}
-                            onClick={() => setShowMore(false)}
-                            className={`block px-4 py-2.5 text-xs font-mono transition-colors border-b border-border-subtle last:border-0 ${
-                              active
-                                ? 'text-brand bg-brand/5'
-                                : 'text-text-body hover:text-brand hover:bg-surface-1'
-                            }`}>
-                            {label}
-                          </a>
-                        );
-                      })}
+                {/* 分类下拉菜单 */}
+                {dropdownMenus.map(menu => {
+                  const isOpen = openDropdown === menu.label;
+                  const hasActive = menu.links.some(l => isActive(l.href));
+                  return (
+                    <div className="relative" key={menu.label}>
+                      <button
+                        onClick={() => setOpenDropdown(isOpen ? null : menu.label)}
+                        className={`relative px-2.5 xl:px-3 py-2 text-[15px] transition-all font-mono border-b-2 ${
+                          hasActive
+                            ? 'text-brand border-brand'
+                            : 'text-text-hi hover:text-brand border-transparent hover:border-brand/25'
+                        }`}
+                      >
+                        {menu.label}
+                        <span className="ml-0.5 text-[10px]">{isOpen ? '▲' : '▼'}</span>
+                      </button>
+                      {isOpen && (
+                        <div className="absolute top-full left-0 mt-1 w-36 bg-surface-2 border border-border shadow-xl z-50 nav-dropdown-in"
+                          onMouseLeave={() => setOpenDropdown(null)}>
+                          {menu.links.map(({ href, label }) => {
+                            const active = isActive(href);
+                            const isAnn = href === '/announcements';
+                            return (
+                              <a key={href} href={href}
+                                onClick={() => setOpenDropdown(null)}
+                                className={`flex items-center justify-between px-4 py-2.5 text-xs font-mono transition-colors border-b border-border-subtle last:border-0 ${
+                                  active
+                                    ? 'text-brand bg-brand/5'
+                                    : 'text-text-body hover:text-brand hover:bg-surface-1'
+                                }`}>
+                                {label}
+                                {isAnn && hasNewAnnouncement && (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-brand" />
+                                )}
+                              </a>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
             </div>
 
