@@ -50,26 +50,27 @@ export default {
         silver:  { DEFAULT: 'var(--color-silver)' },
         bronze:  { DEFAULT: 'var(--color-bronze)' },
         // 向后兼容（逐步迁移）
-        'bg-base':      '#0A0A0A',
-        'bg-elevated':  '#121212',
-        'bg-surface':   '#1A1A1A',
-        'terminal-green':     '#00FF41',
-        'terminal-green-dim': '#00CC33',
+        'bg-base':      '#1c1c1c',
+        'bg-elevated':  '#242424',
+        'bg-surface':   '#2e2e2e',
+        'terminal-green':     '#3ecf8e',
+        'terminal-green-dim': '#24b47e',
       },
 
-      // ── 圆角层级 ──────────────────────────────────────────
+      // ── 圆角层级 (Supabase-inspired — 克制微圆角) ──────
       borderRadius: {
         'token':      '0',
         'token-sm':   '4px',
-        'token-md':   '8px',
+        'token-md':   '6px',
+        'token-lg':   '12px',
         'token-full': '9999px',
       },
 
-      // ── 阴影层级 ──────────────────────────────────────────
+      // ── 阴影层级 (Supabase elevation system) ──────────────
       boxShadow: {
-        'surface': '0 1px 3px rgba(0,0,0,0.4)',
-        'overlay': '0 8px 24px rgba(0,0,0,0.6)',
-        'modal':   '0 20px 60px rgba(0,0,0,0.7)',
+        'surface': '0 1px 3px rgba(0,0,0,0.06)',
+        'overlay': '0 8px 24px rgba(0,0,0,0.08)',
+        'modal':   '0 16px 48px rgba(0,0,0,0.12)',
       },
 
       // ── Z-Index 尺度 ──────────────────────────────────────

@@ -1,46 +1,46 @@
 ﻿:root {
   /* ── V1 旧令牌（保留兼容，逐步废弃） ──────────────── */
-  --bg-base: #0d1117;
-  --bg-elevated: #161b22;
-  --bg-surface: #21262d;
-  --bg-hover: #1c2128;
-  --border: #30363d;
-  --border-muted: #21262d;
-  --text-primary: #f2f6fd;
-  --text-secondary: #d8e1ee;
-  --text-muted: #b8c6d8;
-  --text-dim: #8ea0b6;
-  --terminal-green: #00FF41;
-  --terminal-green-dim: #00CC33;
-  --terminal-green-glow: rgba(0, 255, 65, 0.12);
+  --bg-base: #1c1c1c;
+  --bg-elevated: #242424;
+  --bg-surface: #2e2e2e;
+  --bg-hover: #2a2a2a;
+  --border: #333333;
+  --border-muted: #2a2a2a;
+  --text-primary: #ededed;
+  --text-secondary: #c0c0c0;
+  --text-muted: #8a8a8a;
+  --text-dim: #606060;
+  --terminal-green: #3ecf8e;
+  --terminal-green-dim: #24b47e;
+  --terminal-green-glow: rgba(62, 207, 142, 0.12);
 
-  /* ── V2 语义化颜色令牌 ────────────────────────────── */
-  --color-surface-0: #050608;
-  --color-surface-1: #0d1117;
-  --color-surface-2: #161b22;
-  --color-surface-3: #1c2128;
-  --color-surface-4: #0d0f14;
-  --color-text-hi:   #cdd9e5;
-  --color-text-body: #8b949e;
-  --color-text-mid:  #6e7681;
-  --color-text-lo:   #3d444d;
-  --color-border:    #30363d;
-  --color-border-2:  #21262d;
-  --color-border-3:  #1a1a1a;
-  --color-brand:     #00FF41;
-  --color-brand-2:   #00CC33;
-  --color-danger:    #ef4444;
-  --color-warning:   #f59e0b;
-  --color-success:   #22c55e;
-  --color-info:      #3b82f6;
-  --color-purple:    #8b5cf6;
+  /* ── V2 语义化颜色令牌 (Supabase-inspired) ──────── */
+  --color-surface-0: #161616;
+  --color-surface-1: #1c1c1c;
+  --color-surface-2: #242424;
+  --color-surface-3: #2e2e2e;
+  --color-surface-4: #242424;
+  --color-text-hi:   #ededed;
+  --color-text-body: #b0b0b0;
+  --color-text-mid:  #8a8a8a;
+  --color-text-lo:   #606060;
+  --color-border:    #333333;
+  --color-border-2:  #2a2a2a;
+  --color-border-3:  #222222;
+  --color-brand:     #3ecf8e;
+  --color-brand-2:   #24b47e;
+  --color-danger:    #ff4d4d;
+  --color-warning:   #f5a623;
+  --color-success:   #3ecf8e;
+  --color-info:      #3ecf8e;
+  --color-purple:    #6b01c2;
   --color-gold:      #FFD700;
   --color-silver:    #C0C0C0;
   --color-bronze:    #CD7F32;
 
-  --cursor-dot-color: #00ff41;
-  --cursor-ring-color: rgba(0, 255, 65, 0.22);
-  --cursor-link-fill: rgba(0, 255, 65, 0.08);
+  --cursor-dot-color: #3ecf8e;
+  --cursor-ring-color: rgba(62, 207, 142, 0.22);
+  --cursor-link-fill: rgba(62, 207, 142, 0.08);
   --cursor-base-opacity: 0.82;
   --font-size-xs: clamp(0.84rem, 0.81rem + 0.09vw, 0.9rem);
   --font-size-sm: clamp(0.96rem, 0.92rem + 0.12vw, 1.04rem);
@@ -215,26 +215,26 @@ input, textarea, [contenteditable] {
   border-left: 1px solid var(--color-border-2);
 }
 .editor-scroll-shell::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #00ff41 0%, #00c834 100%);
+  background: linear-gradient(180deg, #3ecf8e 0%, #24b47e 100%);
   border: 2px solid var(--color-surface-1);
   border-radius: 999px;
 }
 .editor-scroll-shell::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #38ff74 0%, #00e046 100%);
+  background: linear-gradient(180deg, #5ee8a0 0%, #2ed88a 100%);
 }
 html.light .editor-scroll-shell {
-  scrollbar-color: #2563eb #e2e8f0;
+  scrollbar-color: #3ecf8e #e2e8f0;
 }
 html.light .editor-scroll-shell::-webkit-scrollbar-track {
   background: #e2e8f0;
   border-left-color: #cbd5e1;
 }
 html.light .editor-scroll-shell::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(180deg, #3ecf8e 0%, #3ecf8e 100%);
   border-color: #e2e8f0;
 }
 html.light .editor-scroll-shell::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+  background: linear-gradient(180deg, #60a5fa 0%, #3ecf8e 100%);
 }
 
 .editor-scroll-quick {
@@ -245,9 +245,9 @@ html.light .editor-scroll-shell::-webkit-scrollbar-thumb:hover {
   font-weight: 600;
   min-width: 58px;
   padding: 8px 14px;
-  border: 1px solid #30363d;
+  border: 1px solid #333333;
   background: rgba(13, 17, 23, 0.92);
-  color: #3d444d;
+  color: #606060;
   transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 .editor-scroll-quick.is-disabled {
@@ -255,11 +255,11 @@ html.light .editor-scroll-shell::-webkit-scrollbar-thumb:hover {
 }
 .editor-scroll-quick.is-active.editor-scroll-quick-bottom {
   border-color: rgba(0, 255, 65, 0.25);
-  color: #00ff41;
+  color: #3ecf8e;
   background: rgba(13, 17, 23, 0.95);
 }
 .editor-scroll-quick.is-active.editor-scroll-quick-bottom:hover {
-  border-color: #00ff41;
+  border-color: #3ecf8e;
   background: rgba(0, 255, 65, 0.08);
 }
 .editor-scroll-quick.is-active.editor-scroll-quick-top {
@@ -294,7 +294,7 @@ html.light .editor-scroll-quick.is-active.editor-scroll-quick-bottom:hover {
 html.light .editor-scroll-quick.is-active.editor-scroll-quick-top {
   background: #ffffff;
   border-color: #93c5fd;
-  color: #1d4ed8;
+  color: #24b47e;
 }
 html.light .editor-scroll-quick.is-active.editor-scroll-quick-top:hover {
   background: #eff6ff;
@@ -349,48 +349,48 @@ html.light .editor-scroll-quick.is-active.editor-scroll-quick-top:hover {
 }
 .search-modal-panel {
   background: var(--color-surface-2);
-  border: 1px solid #30363d;
+  border: 1px solid #333333;
 }
 .search-modal-header {
-  border-color: #21262d;
+  border-color: #2a2a2a;
 }
 .search-modal-input {
-  color: #cdd9e5;
+  color: #ededed;
 }
 .search-modal-input::placeholder {
-  color: #6e7681;
+  color: #8a8a8a;
 }
 .search-modal-close {
-  color: #8b949e;
+  color: #b0b0b0;
 }
 .search-modal-close:hover {
-  color: #cdd9e5;
+  color: #ededed;
 }
 .search-modal-footer {
-  border-color: #21262d;
-  color: #3d444d;
+  border-color: #2a2a2a;
+  color: #606060;
 }
 
 .search-quick-links {
-  background: #0f141b;
-  border-color: #21262d;
+  background: #242424;
+  border-color: #2a2a2a;
 }
 .search-quick-links-title {
-  color: #6e7681;
+  color: #8a8a8a;
 }
 .search-quick-link-chip {
-  border-color: #30363d;
-  color: #8b949e;
+  border-color: #333333;
+  color: #b0b0b0;
 }
 .search-quick-link-chip:hover {
-  color: #00ff41;
-  border-color: #00ff41;
+  color: #3ecf8e;
+  border-color: #3ecf8e;
 }
 .search-quick-link-dot {
-  color: #3d444d;
+  color: #606060;
 }
 .search-quick-link-hint {
-  color: #6e7681;
+  color: #8a8a8a;
 }
 
 /* ── 通用按钮交互反馈 ────────────────────────────────── */
@@ -664,35 +664,35 @@ a:focus-visible,
    浅色主题 (html.light)
    ============================================ */
 html.light {
-  background-color: #f6f8fa;
+  background-color: #ffffff;
   /* ── V1 旧令牌亮色 ─────────────────────────────── */
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-  --text-dim: #94a3b8;
-  --cursor-dot-color: #1e40af;
-  --cursor-ring-color: rgba(30, 64, 175, 0.38);
-  --cursor-link-fill: rgba(30, 64, 175, 0.2);
+  --text-primary: #171717;
+  --text-secondary: #404040;
+  --text-muted: #707070;
+  --text-dim: #9a9a9a;
+  --cursor-dot-color: #3ecf8e;
+  --cursor-ring-color: rgba(62, 207, 142, 0.38);
+  --cursor-link-fill: rgba(62, 207, 142, 0.2);
   --cursor-base-opacity: 0.95;
-  /* ── V2 语义化颜色令牌亮色 ──────────────────────── */
-  --color-surface-0: #f0f4f8;
-  --color-surface-1: #f8fafc;
+  /* ── V2 语义化颜色令牌亮色 (Supabase light) ────── */
+  --color-surface-0: #f5f5f5;
+  --color-surface-1: #ffffff;
   --color-surface-2: #ffffff;
-  --color-surface-3: #f1f5f9;
-  --color-surface-4: #f8fafc;
-  --color-text-hi:   #0f172a;
-  --color-text-body: #475569;
-  --color-text-mid:  #64748b;
-  --color-text-lo:   #94a3b8;
-  --color-border:    #cbd5e1;
-  --color-border-2:  #e2e8f0;
-  --color-border-3:  #e2e8f0;
-  --color-brand:     #2563eb;
-  --color-brand-2:   #1d4ed8;
+  --color-surface-3: #fafafa;
+  --color-surface-4: #ffffff;
+  --color-text-hi:   #171717;
+  --color-text-body: #4a4a4a;
+  --color-text-mid:  #707070;
+  --color-text-lo:   #9a9a9a;
+  --color-border:    #dfdfdf;
+  --color-border-2:  #efefef;
+  --color-border-3:  #ededed;
+  --color-brand:     #3ecf8e;
+  --color-brand-2:   #24b47e;
 }
 html.light body {
-  background-color: #f6f8fa;
-  color: #0f172a;
+  background-color: #ffffff;
+  color: #171717;
 }
 /* 浅色模式下正文段落文字强制深色，确保宋体衬线在白底有足够对比度 */
 html.light p,
@@ -756,8 +756,8 @@ html.light .search-quick-link-chip {
   color: #475569;
 }
 html.light .search-quick-link-chip:hover {
-  color: #1d4ed8;
-  border-color: #1d4ed8;
+  color: #24b47e;
+  border-color: #24b47e;
 }
 html.light .search-quick-link-dot {
   color: #94a3b8;
@@ -827,7 +827,7 @@ html.light .item-chip:hover .chip-title {
 }
 /* 元数据文字 */
 html.light .iceberg-meta { color: #4b5563 !important; }
-html.light .iceberg-meta span { color: #1f2937 !important; }
+html.light .iceberg-meta span { color: #2e2e2e !important; }
 
 /* ── drawer 浅色模式 ── */
 html.light #drawer {
@@ -856,7 +856,7 @@ html.light ::-webkit-scrollbar-thumb {
   background: #e2e8f0;
 }
 html.light ::-webkit-scrollbar-thumb:hover {
-  background: #2563eb;
+  background: #3ecf8e;
 }
 
 /* ── 触屏设备：禁用位移动画（hover:none 媒体查询） ──── */
@@ -924,7 +924,7 @@ html.light ::-webkit-scrollbar-thumb:hover {
   transition: width 0.15s ease-out, opacity 0.3s ease 0.15s;
 }
 html.light .page-progress-bar {
-  background: #2563eb;
+  background: #3ecf8e;
   box-shadow: 0 0 8px rgba(37, 99, 235, 0.5), 0 0 16px rgba(37, 99, 235, 0.2);
 }
 
@@ -951,7 +951,7 @@ html.light .page-progress-bar {
   100% { background-position:  200% 0; }
 }
 .skeleton-shimmer {
-  background: linear-gradient(90deg, #21262d 25%, #2d333b 50%, #21262d 75%);
+  background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
   background-size: 200% 100%;
   animation: shimmer 1.6s ease infinite;
 }
@@ -1049,8 +1049,8 @@ html.light .markdown-content h2 {
   border-color: #e2e8f0;
 }
 html.light .markdown-content a {
-  color: #2563eb;
-  border-color: #2563eb;
+  color: #3ecf8e;
+  border-color: #3ecf8e;
 }
 html.light .markdown-content blockquote {
   border-color: #dc2626;
@@ -1095,7 +1095,7 @@ html.light .archive-card {
   border-left-color: #cbd5e1;
 }
 html.light .archive-card:hover {
-  border-left-color: #2563eb;
+  border-left-color: #3ecf8e;
   background: #f8fafc;
   box-shadow: -4px 0 15px rgba(37, 99, 235, 0.08);
 }
@@ -1114,7 +1114,7 @@ html.light .view-bar {
   background: #e2e8f0;
 }
 html.light .view-bar-fill {
-  background: linear-gradient(90deg, #2563eb, #3b82f6);
+  background: linear-gradient(90deg, #3ecf8e, #3ecf8e);
 }
 
 /* bg-grid 浅色 */
@@ -1126,7 +1126,7 @@ html.light .bg-grid {
 
 /* glitch-hover 浅色 */
 html.light .glitch-hover:hover {
-  text-shadow: 2px 0 #ef4444, -2px 0 #2563eb;
+  text-shadow: 2px 0 #ef4444, -2px 0 #3ecf8e;
 }
 
 /* vignette 浅色减淡 */
@@ -1137,12 +1137,12 @@ html.light .vignette {
 /* 浅色模式选中 */
 html.light ::selection {
   background: rgba(37, 99, 235, 0.15);
-  color: #1e40af;
+  color: #24b47e;
 }
 html.light input,
 html.light textarea,
 html.light [contenteditable] {
-  caret-color: #2563eb;
+  caret-color: #3ecf8e;
 }
 
 /* ── 以下为结构性覆盖（非 Tailwind arbitrary value，需保留） ── */
@@ -1157,7 +1157,7 @@ html.light select {
 html.light input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
 html.light textarea:focus,
 html.light select:focus {
-  border-color: #2563eb !important;
+  border-color: #3ecf8e !important;
   outline: none !important;
 }
 html.light input::placeholder,
