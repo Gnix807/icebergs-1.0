@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useRef, type ComponentType } from 'react';
-import { AWARD_TYPES, USERBOX_LIBRARY, getUserboxDef, USERBOX_BASE_SLOTS, USERBOX_MAX_SLOTS } from '../../lib/awards';
+import { AWARD_TYPES, USERBOX_LIBRARY, USERBOX_BASE_SLOTS, USERBOX_MAX_SLOTS } from '../../lib/awards';
 import { useModalAnimation } from '../../hooks/useModalAnimation';
-import { Eye, Layers, Anchor, BookOpen, Brain, Fish, Trophy } from 'lucide-react';
+import { Layers, Anchor, BookOpen, Brain, Fish, Trophy } from 'lucide-react';
 
 // 探索成就 key → Lucide 图标组件映射（DB 中的 icon 字段作为降级备用）
 const EXPLORE_ICON_MAP: Record<string, ComponentType<{ size?: number; strokeWidth?: number; color?: string }>> = {
@@ -91,6 +91,7 @@ interface Props {
   achievements?: { achievementId: string; unlockedAt: string }[];
   achievementDefs?: AchievementDef[];
   userReadCount?: number;
+  watchlistCount?: number;
   awards?: { id: string; type: string; message: string | null; createdAt: string; giver: { id: string; username: string; nickname: string | null } }[];
   userboxIds?: string[];
 }
@@ -103,6 +104,14 @@ const LEVEL_COLORS: Record<number, string> = {
   2: '#3b82f6',
   3: '#f59e0b',
   4: '#ef4444',
+};
+
+const LEVEL_LABELS: Record<number, string> = {
+  0: '访客',
+  1: '研究员',
+  2: '分析师',
+  3: '主管',
+  4: '管理员',
 };
 
 const ROLE_BADGES: Record<string, { label: string; color: string }> = {
@@ -259,20 +268,13 @@ function ScoreLogTab({ userId }: { userId: string }) {
 
 // ── 探索成就 Tab 子组件 ────────────────────────────────────────────────────
 function ExploreTab({
-  achievementDefs, achievementMap, userReadCount,
+  achievementDefs, achievementMap, userReadCount, isLight,
 }: {
   achievementDefs: AchievementDef[];
   achievementMap: Record<string, string>;
   userReadCount: number;
+  isLight: boolean;
 }) {
-  const [isLight, setIsLight] = useState(false);
-  useEffect(() => {
-    const update = () => setIsLight(document.documentElement.classList.contains('light'));
-    update();
-    const obs = new MutationObserver(update);
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => obs.disconnect();
-  }, []);
   const visible = achievementDefs.filter(d => !d.isHidden || d.key in achievementMap);
 
   if (visible.length === 0) {
@@ -454,17 +456,24 @@ const SCAN_LINES: React.CSSProperties = {
 };
 const NO_LINES: React.CSSProperties = {};
 
+function StatCard({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
+  return (
+    <div className="border border-border-subtle bg-surface-2 px-3 py-2.5 text-center">
+      <div className="text-[10px] font-mono text-text-mid mb-1 tracking-widest">{label}</div>
+      <div className="text-sm font-mono font-bold tabular-nums text-text-hi" style={valueColor ? { color: valueColor } : undefined}>{value}</div>
+    </div>
+  );
+}
+
 export function UserCenter({
   user, icebergs, isOwner, viewerRole, viewerIsFounder,
   appealEligible, promotionEligible, promotionPending,
-  rfaEligible, rfaPending, rfaActiveId,
   socialStats,
   achievements = [], achievementDefs = [], userReadCount = 0,
-  awards = [], userboxIds = [],
+  awards = [], userboxIds = [], watchlistCount = 0,
   presenceStatus = 'offline',
 }: Props) {
   const [activeTab, setActiveTab]     = useState<Tab>('icebergs');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // 通知面板
   const [showNotifPanel, setShowNotifPanel]   = useState(false);
@@ -491,8 +500,6 @@ export function UserCenter({
   const [promotionStatement, setPromotionStatement] = useState('');
   const [promotionBusy, setPromotionBusy]           = useState(false);
   const [promotionSent, setPromotionSent]           = useState(false);
-  const [activeUserboxIndex, setActiveUserboxIndex] = useState<number | null>(null);
-
   const qLevel      = getQualityLevel(user.qualityScore, user.role);
   const levelColor  = LEVEL_COLORS[qLevel.level] ?? '#6b7280';
   const displayName = user.nickname || user.username;
@@ -523,7 +530,6 @@ export function UserCenter({
   }
   // 社区成就计数：founderOnly 徽章仅在解锁时才计入（不让非站长被它撑槽位）
   const unlockedCommunityCount = COMMUNITY_BADGES.filter(b => b.id in achievementMap && (!b.founderOnly || user.isFounder)).length;
-  const unlockedExploreCount   = achievementDefs.filter(d => d.key in achievementMap).length;
 
   const tabs: { id: Tab; label: string; code: string; amber?: boolean }[] = [
     { id: 'icebergs',  label: '冰山图',   code: 'ICEBERGS'  },
@@ -682,404 +688,17 @@ export function UserCenter({
     } finally { setActionBusy(false); }
   };
 
-  // ── 侧边栏内容（桌面 + 移动端共用）────────────────────────────────
-  function renderSidebar() {
-    // ── Userbox 数据构建 ───────────────────────────────────────────
-    const roleLabels: Record<string, string> = {
-      ADMIN: '管理员', EDITOR: '编辑者', MODERATOR: '版主',
-      CONTRIBUTOR: '贡献者', USER: '注册用户',
-    };
-    const memberDays = Math.floor((Date.now() - new Date(user.createdAt).getTime()) / 86400000);
-    const memberStr  = memberDays >= 365
-      ? `${Math.floor(memberDays / 365)} 年 ${Math.floor((memberDays % 365) / 30)} 个月`
-      : `${memberDays} 天`;
-    const levelNames = ['访客', '研究员', '分析师', '督察员'];
-    const unlockedTotal = unlockedCommunityCount + unlockedExploreCount;
+  // Computed values for dashboard
+  const qualityLevel  = qLevel.level;
+  const levelLabel    = LEVEL_LABELS[qualityLevel] ?? '访客';
+  const topAchievements = achievementDefs.filter(d => d.key in achievementMap);
+  const totalUnlocked   = Object.keys(achievementMap).length;
+  const readCount       = userReadCount;
 
-    const userboxes: Array<{ leftBg: string; leftFg: string; leftText: string; name: string; text: string }> = [];
-    const CUSTOM_USERBOX_NAME: Record<string, string> = {
-      interest_history: '历史',
-      interest_science: '科学',
-      interest_culture: '文化',
-      interest_tech: '技术',
-      interest_art: '艺术',
-      interest_geo: '地缘',
-      interest_nature: '自然',
-      interest_mystery: '谜团',
-      style_creator: '创作',
-      style_researcher: '研究',
-      style_explorer: '漫游',
-      style_editor: '审阅',
-      style_voter: '投票',
-      persona_nightowl: '夜猫',
-      persona_perfectionist: '严谨',
-      persona_wikifan: '维基',
-      persona_deepdiver: '深潜',
-      persona_veteran: '元老',
-    };
-    if (user.isFounder) {
-      userboxes.push({ leftBg: '#f59e0b', leftFg: '#0a0a0a', leftText: 'ROOT', name: '站长', text: '该用户拥有平台全局访问与控制权限' });
-    }
-    userboxes.push({
-      leftBg: roleBadge.color, leftFg: '#0a0a0a',
-      leftText: roleBadge.label,
-      name: '角色',
-      text: `该用户是${roleLabels[user.role] ?? user.role}`,
-    });
-    userboxes.push({
-      leftBg: '#111827', leftFg: '#6b7280',
-      leftText: String(new Date(user.createdAt).getFullYear()),
-      name: '资历',
-      text: `注册时长 ${memberStr}`,
-    });
-    userboxes.push({
-      leftBg: `${levelColor}1a`, leftFg: levelColor,
-      leftText: String(user.qualityScore),
-      name: '质量',
-      text: `质量等级：${levelNames[qLevel.level] ?? qLevel.label}`,
-    });
-    if (user._count.icebergs > 0) {
-      userboxes.push({
-        leftBg: '#001a00', leftFg: '#00FF41',
-        leftText: String(user._count.icebergs),
-        name: '作品',
-        text: `发布了 ${user._count.icebergs} 篇冰山图`,
-      });
-    }
-    if (unlockedTotal > 0) {
-      userboxes.push({
-        leftBg: '#1a1020', leftFg: '#8b5cf6',
-        leftText: String(unlockedTotal),
-        name: '成就',
-        text: `已解锁 ${unlockedTotal} 枚成就`,
-      });
-    }
-    // 已解锁的社区成就逐一展示（founderOnly 徽章用更显眼的底色）
-    COMMUNITY_BADGES.forEach(badge => {
-      if (badge.id in achievementMap) {
-        userboxes.push({
-          leftBg: badge.founderOnly ? `${badge.color}44` : `${badge.color}22`,
-          leftFg: badge.color,
-          leftText: badge.icon,
-          name: badge.labelZh,
-          text: `${badge.labelZh} — ${badge.desc}`,
-        });
-      }
-    });
-    // 用户自选框
-    userboxIds.forEach(bid => {
-      const def = getUserboxDef(bid);
-      if (!def) return;
-      userboxes.push({
-        leftBg: def.leftBg,
-        leftFg: def.leftFg,
-        leftText: def.leftText,
-        name: CUSTOM_USERBOX_NAME[bid] ?? def.leftText,
-        text: def.text,
-      });
-    });
-
-    return (
-      <>
-        {/* Wikipedia 风用户框 */}
-        <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
-          <div className="relative">
-            <div className="px-3.5 pt-3 pb-2.5 border-b border-border-minimal">
-              <div className="text-[11px] font-mono text-text-mid tracking-[0.2em]">// USERBOX</div>
-            </div>
-            <div className="p-2.5">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {userboxes.map((box, i) => {
-                  const codeText = String(box.leftText ?? '');
-                  const codeSizeClass = codeText.length >= 5
-                    ? 'text-[11px] sm:text-[12px]'
-                    : codeText.length >= 4
-                      ? 'text-[13px]'
-                      : 'text-[14px]';
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      title={box.text}
-                      aria-label={`${box.leftText}：${box.text}`}
-                      onMouseEnter={() => setActiveUserboxIndex(i)}
-                      onFocus={() => setActiveUserboxIndex(i)}
-                      onClick={() => setActiveUserboxIndex(prev => (prev === i ? null : i))}
-                      className="group relative min-h-[4.8rem] min-w-0 border border-border-minimal transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-1 focus:ring-brand"
-                      style={{ background: box.leftBg, color: box.leftFg }}
-                    >
-                      <span className="flex h-full w-full flex-col items-center justify-center gap-1 px-1 py-1.5">
-                        <span className={`block w-full ${codeSizeClass} font-mono font-bold leading-tight text-center whitespace-nowrap tracking-normal`}>
-                          {box.leftText}
-                        </span>
-                        <span className="block w-full text-[14px] font-mono leading-tight text-center opacity-90 whitespace-nowrap tracking-tight">
-                          {box.name}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="mt-2 px-0.5 min-h-[28px]">
-                {activeUserboxIndex !== null ? (
-                  <p className="text-[11px] font-mono text-text-body leading-relaxed">
-                    {userboxes[activeUserboxIndex]?.text}
-                  </p>
-                ) : (
-                  <p className="text-[10px] font-mono text-text-mid">// 悬停或点击徽章查看说明</p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 授予勋章面板 */}
-        {awards.length > 0 && (
-          <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
-            <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
-            <div className="relative">
-              <div className="px-3.5 pt-3 pb-2.5 border-b border-border-minimal flex items-center justify-between">
-                <div className="text-[11px] font-mono text-text-mid tracking-[0.2em]">// AWARDS</div>
-                <span className="text-[11px] font-mono text-warning">{awards.length}</span>
-              </div>
-              <div className="divide-y divide-[#0d0f14]">
-                {awards.map(award => {
-                  const def = AWARD_TYPES.find(a => a.id === award.type);
-                  if (!def) return null;
-                  const giverName = award.giver.nickname || award.giver.username;
-                  return (
-                    <div key={award.id} className="flex items-stretch" style={{ minHeight: '44px' }}>
-                      <div
-                        className="w-[52px] flex items-center justify-center flex-shrink-0 text-xl"
-                        style={{ background: `${def.color}22`, color: def.color }}
-                        title={def.labelZh}
-                      >
-                        {def.icon}
-                      </div>
-                      <div className="flex-1 flex flex-col justify-center px-2.5 bg-surface-0 min-w-0 border-l border-border-minimal py-1.5">
-                        <span className="text-[11px] font-mono font-semibold leading-tight" style={{ color: def.color }}>{def.labelZh}</span>
-                        {award.message && (
-                          <span className="text-[10px] font-mono text-text-body leading-tight mt-0.5 line-clamp-2">{award.message}</span>
-                        )}
-                        <span className="text-[10px] font-mono text-text-mid leading-tight mt-0.5">
-                          by @{giverName} · {new Date(award.createdAt).toLocaleDateString('zh-CN')}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 通知入口 */}
-        {isOwner && (
-          <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
-            <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
-            <div className="relative p-3.5">
-              <div className="text-[11px] font-mono text-text-mid tracking-[0.2em] mb-3">// NOTIFICATIONS</div>
-              <button
-                onClick={() => setShowNotifPanel(true)}
-                className="flex items-center justify-between w-full text-sm font-mono text-text-body hover:text-brand transition-colors group"
-              >
-                <span className="group-hover:translate-x-0.5 transition-transform">通知中心</span>
-                <div className="flex items-center gap-2">
-                  {unreadCount > 0
-                    ? <span className="bg-[#ef4444] text-white text-[10px] font-mono px-1.5 py-0.5 min-w-[20px] text-center">{unreadCount > 99 ? '99+' : unreadCount}</span>
-                    : <span className="text-text-lo text-xs">▶</span>
-                  }
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Wikipedia 风成就徽章 — 社区贡献 */}
-        <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
-          <div className="relative">
-            <div className="flex items-center justify-between px-3.5 pt-3.5 pb-2.5 border-b border-border-minimal">
-              <div className="text-[11px] font-mono text-text-mid tracking-[0.2em]">// COMMUNITY</div>
-              <span className="text-[11px] font-mono" style={{ color: unlockedCommunityCount > 0 ? levelColor : (isLight ? '#d1d5db' : '#30363d') }}>
-                {unlockedCommunityCount}/{COMMUNITY_BADGES.length}
-              </span>
-            </div>
-
-            {/* 社区徽章 barnstar 网格 */}
-            <div className="grid grid-cols-2 gap-2 p-3">
-              {COMMUNITY_BADGES.filter(badge => !badge.founderOnly || user.isFounder).map(badge => {
-                const unlocked   = badge.id in achievementMap;
-                const unlockedAt = achievementMap[badge.id];
-                const dateStr    = unlockedAt
-                  ? new Date(unlockedAt).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', year: '2-digit' })
-                  : null;
-                return (
-                  <div
-                    key={badge.id}
-                    className="flex flex-col items-center text-center p-2 border transition-all"
-                    style={{
-                      borderColor: unlocked ? `${badge.color}${badge.founderOnly ? 'cc' : '55'}` : (isLight ? '#e2e8f0' : '#1a1f2a'),
-                      background:  unlocked ? `${badge.color}${badge.founderOnly ? '18' : '0d'}` : (isLight ? '#f8fafc' : '#050608'),
-                      opacity:     unlocked ? 1 : 0.42,
-                      boxShadow:   unlocked ? `0 0 ${badge.founderOnly ? '20px' : '12px'} ${badge.color}${badge.founderOnly ? '44' : '22'}` : 'none',
-                    }}
-                  >
-                    <div
-                      className={`text-2xl mb-1 leading-none${badge.founderOnly && unlocked ? ' animate-pulse' : ''}`}
-                      style={{ filter: unlocked ? `drop-shadow(0 0 ${badge.founderOnly ? '10px' : '6px'} ${badge.color}${badge.founderOnly ? 'bb' : '88'})` : 'none' }}
-                    >
-                      {badge.icon}
-                    </div>
-                    <div className="text-[10px] font-mono font-bold tracking-wide leading-tight" style={{ color: unlocked ? badge.color : (isLight ? '#d1d5db' : '#30363d') }}>
-                      {badge.label}
-                    </div>
-                    <div className="text-[9px] font-mono text-text-lo leading-tight mt-0.5">{badge.labelZh}</div>
-                    {unlocked && dateStr && (
-                      <div className="text-[9px] font-mono text-text-mid mt-1 leading-tight">{dateStr}</div>
-                    )}
-                    {!unlocked && (
-                      <div className="text-[9px] font-mono text-text-lo mt-1">— — —</div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* 探索成就概览 */}
-            <div className="border-t border-border-minimal px-3.5 py-2.5 flex items-center justify-between">
-              <div className="text-[10px] font-mono text-text-mid">// EXPLORE</div>
-              <span className="text-[10px] font-mono" style={{ color: unlockedExploreCount > 0 ? '#f59e0b' : (isLight ? '#d1d5db' : '#30363d') }}>
-                {unlockedExploreCount}/{achievementDefs.filter(d => !d.isHidden || d.key in achievementMap).length}
-              </span>
-            </div>
-            {/* 迷你进度条 */}
-            <div className="px-3 pb-3">
-              <div className="w-full h-1.5 bg-surface-4 border border-border-minimal overflow-hidden">
-                <div
-                  className="h-full transition-all"
-                  style={{
-                    width: achievementDefs.length > 0
-                      ? `${Math.round((unlockedExploreCount / Math.max(1, achievementDefs.filter(d => !d.isHidden || d.key in achievementMap).length)) * 100)}%`
-                      : '0%',
-                    background: 'linear-gradient(90deg, #f59e0b, #ef4444)',
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 社交数据 */}
-        {showStats && socialStats && (
-          <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
-            <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
-            <div className="relative p-3.5">
-              <div className="text-[11px] font-mono text-text-mid tracking-[0.2em] mb-3">// STATS</div>
-              <div className="space-y-2">
-                {[
-                  { label: 'VIEWS',    value: socialStats.totalViews.toLocaleString(),       color: '#06b6d4' },
-                  { label: 'VOTES',    value: `+${socialStats.totalVotes.toLocaleString()}`, color: '#22c55e' },
-                  { label: 'ICEBERGS', value: user._count.icebergs.toString(),               color: levelColor  },
-                ].map(s => (
-                  <div key={s.label} className="flex items-center justify-between">
-                    <span className="text-xs font-mono text-text-mid tracking-wider">{s.label}</span>
-                    <span className="text-sm font-mono font-bold tabular-nums" style={{ color: s.color }}>
-                      {s.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 快捷操作 */}
-        {isOwner && (
-          <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
-            <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
-            <div className="relative p-3.5">
-              <div className="text-[11px] font-mono text-text-mid tracking-[0.2em] mb-3">// QUICK ACTIONS</div>
-              <div className="space-y-2">
-                <a
-                  href="/iceberg/new"
-                  className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-border-subtle text-text-body hover:border-brand hover:text-brand transition-colors group"
-                >
-                  <span>创建冰山图</span>
-                  <span className="text-text-lo group-hover:text-brand transition-colors">+</span>
-                </a>
-                {user.role === 'USER' && promotionEligible && !promotionPending && !promotionSent && (
-                  <button
-                    onClick={() => setShowPromotion(true)}
-                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-warning/20 text-warning hover:bg-warning/10 transition-colors"
-                  >
-                    <span>申请晋升</span><span>→</span>
-                  </button>
-                )}
-                {user.role === 'USER' && (promotionPending || promotionSent) && (
-                  <div className="text-center text-xs font-mono text-warning py-2 border border-[#f59e0b20]">
-                    晋升审核中…
-                  </div>
-                )}
-                {user.role === 'CONTRIBUTOR' && rfaEligible && !rfaPending && (
-                  <a
-                    href="/rfa/apply"
-                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-[#3b82f630] text-info hover:bg-info/10 transition-colors"
-                  >
-                    <span>申请编辑资格（RfA）</span><span>→</span>
-                  </a>
-                )}
-                {user.role === 'CONTRIBUTOR' && rfaPending && rfaActiveId && (
-                  <a
-                    href={`/rfa/${rfaActiveId}`}
-                    className="flex items-center justify-between w-full px-3 py-2 text-xs font-mono border border-[#3b82f630] text-info hover:bg-info/10 transition-colors"
-                  >
-                    <span>RfA 进行中</span><span>→</span>
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Steam 风最近活动 */}
-        {(showStats || isOwner) && icebergs.length > 0 && (
-          <div className="relative border border-border-subtle bg-surface-2 overflow-hidden">
-            <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
-            <div className="relative">
-              <div className="px-3.5 pt-3.5 pb-2.5 border-b border-border-minimal">
-                <div className="text-[11px] font-mono text-text-mid tracking-[0.2em]">// RECENT ACTIVITY</div>
-              </div>
-              {icebergs.slice(0, 4).map(ic => (
-                <a
-                  key={ic.id}
-                  href={`/iceberg/${ic.slug}`}
-                  className="flex items-start gap-3 px-3.5 py-2.5 border-b border-[#0d0f14] hover:bg-surface-1 transition-colors group last:border-b-0"
-                >
-                  <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-border-minimal bg-surface-0 mt-0.5">
-                    <span className="text-text-lo text-xs group-hover:text-brand transition-colors">▼</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-mono text-text-body truncate group-hover:text-brand transition-colors leading-tight mb-1">
-                      {ic.title}
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px] font-mono text-text-mid">
-                      <span className="flex items-center gap-1"><Eye size={11} strokeWidth={1.5} /> {ic.viewCount}</span>
-                      <span>{timeAgo(ic.createdAt)}</span>
-                      {ic.status !== 'PUBLISHED' && (
-                        <span className="text-warning opacity-70">{ic.status}</span>
-                      )}
-                    </div>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
-      </>
-    );
+  function formatJoinDate(dateStr: string) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   }
 
   return (
@@ -1261,21 +880,50 @@ export function UserCenter({
         </div>
       </div>
 
-      {/* ── 两栏布局 ──────────────────────────────────────────────────────── */}
-      <div className="flex gap-6 items-start">
+      {/* Stats Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-5">
+        <StatCard label="累计阅读" value={readCount.toLocaleString()} />
+        <StatCard label="创作冰山" value={`${icebergs?.length ?? 0} 张`} />
+        <StatCard label="收藏情报" value={`${watchlistCount ?? 0} 个`} />
+        <StatCard label="质量段位" value={`${levelLabel} ${qualityLevel}`} valueColor={levelColor} />
+        <StatCard label={isOwner ? '连续登录' : '注册时间'} value={isOwner ? '0 天' : formatJoinDate(user.createdAt)} />
+      </div>
 
-        <div className="hidden md:flex flex-col gap-4 w-[280px] lg:w-[300px] flex-shrink-0">
-          {renderSidebar()}
+      {/* Achievement Strip */}
+      {topAchievements.length > 0 && (
+        <div className="flex items-center gap-3 mb-5 px-3 py-2 border border-border-subtle bg-surface-2 flex-wrap">
+          <span className="text-[10px] font-mono text-text-mid tracking-widest flex-shrink-0">✦ {isOwner ? '最近成就' : '成就展示'}</span>
+          {topAchievements.slice(0, 3).map((ach) => (
+            <span key={ach.key} className="text-xs font-mono" style={{ color: ach.color }}>
+              {ach.icon} {ach.labelZh}
+            </span>
+          ))}
+          {totalUnlocked > 3 && (
+            <span className="text-[10px] font-mono text-text-mid ml-auto">+{totalUnlocked - 3} 更多</span>
+          )}
         </div>
+      )}
+
+      {/* Actions Bar (owner only) */}
+      {isOwner && (
+        <div className="flex items-center gap-2 mb-5 flex-wrap">
+          <a href="/iceberg/new" className="px-3 py-1.5 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors">+ 创建冰山图</a>
+          <a href="/feedback" className="px-3 py-1.5 border border-border-subtle text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">! 反馈</a>
+          <a href={`/user/${user.id}?tab=settings`} className="px-3 py-1.5 border border-border-subtle text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">⚙ 设置</a>
+          {unreadCount > 0 && (
+            <a href="#" onClick={(e) => { e.preventDefault(); setShowNotifPanel(true); }} className="px-3 py-1.5 border border-border-subtle text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors ml-auto">
+              通知({unreadCount})
+            </a>
+          )}
+          {promotionEligible && (
+            <button onClick={() => setShowPromotion(true)} className="px-3 py-1.5 border border-warning/30 text-xs font-mono text-warning hover:border-warning hover:bg-warning/5 transition-colors">
+              申请晋升
+            </button>
+          )}
+        </div>
+      )}
 
         <div className="flex-1 min-w-0">
-          <button
-            onClick={() => setSidebarOpen(o => !o)}
-            className="md:hidden w-full py-2.5 mb-4 text-xs font-mono border border-border-subtle text-text-mid hover:text-text-body hover:border-border transition-colors"
-          >
-            [ 档案附录 {sidebarOpen ? '▲' : '▼'} ]
-          </button>
-          {sidebarOpen && <div className="md:hidden mb-5 flex flex-col gap-3">{renderSidebar()}</div>}
 
           {/* Tab 导航 */}
           <div className="flex border-b border-border-subtle mb-6 boot-animate" style={{ animationDelay: '60ms' }}>
@@ -1301,7 +949,7 @@ export function UserCenter({
           <div className="boot-animate" style={{ animationDelay: '100ms' }}>
             {activeTab === 'icebergs'  && <UserIcebergs icebergs={icebergs} isOwner={isOwner} />}
             {activeTab === 'watchlist' && <UserWatchlist userId={user.id} isOwner={isOwner} publiclyVisible={user.privacyShowWatchlist} />}
-            {activeTab === 'explore'   && <ExploreTab achievementDefs={achievementDefs} achievementMap={achievementMap} userReadCount={userReadCount} />}
+            {activeTab === 'explore'   && <ExploreTab achievementDefs={achievementDefs} achievementMap={achievementMap} userReadCount={userReadCount} isLight={isLight} />}
             {activeTab === 'score' && isOwner && <ScoreLogTab userId={user.id} />}
             {activeTab === 'settings' && isOwner && (
               <div className="space-y-6">
@@ -1341,7 +989,6 @@ export function UserCenter({
             {activeTab === 'admin' && isOwner && (viewerRole || viewerIsFounder) && <AdminPanel role={viewerRole ?? 'USER'} isFounder={viewerIsFounder} />}
           </div>
         </div>
-      </div>
 
       {/* ── 通知面板弹窗 ──────────────────────────────────────────────────── */}
       {notifMounted && (
@@ -1478,6 +1125,7 @@ export function UserCenter({
           isLeaving={awardLeaving}
           onClose={() => setShowAwardModal(false)}
           existingAwards={awards}
+          isLight={isLight}
         />
       )}
 
@@ -1511,28 +1159,21 @@ export function UserCenter({
 
 
 // ── 授予勋章弹窗 ──────────────────────────────────────────────────────────
-function AwardModal({ userId, isLeaving, onClose, existingAwards }: {
+function AwardModal({ userId, isLeaving, onClose, existingAwards, isLight }: {
   userId: string;
   isLeaving: boolean;
   onClose: () => void;
   existingAwards: { id: string; type: string }[];
+  isLight: boolean;
 }) {
   const [selectedType, setSelectedType] = useState('');
   const [message, setMessage]           = useState('');
   const [busy, setBusy]                 = useState(false);
   const [revokingType, setRevokingType] = useState<string | null>(null);
   const [error, setError]               = useState<string | null>(null);
-  const [isLight, setIsLight]           = useState(false);
   const [awardedByType, setAwardedByType] = useState<Record<string, string>>(
     () => Object.fromEntries(existingAwards.map((a) => [a.type, a.id])),
   );
-  useEffect(() => {
-    const update = () => setIsLight(document.documentElement.classList.contains('light'));
-    update();
-    const obs = new MutationObserver(update);
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => obs.disconnect();
-  }, []);
   const submit = async () => {
     if (!selectedType) return;
     setBusy(true); setError(null);

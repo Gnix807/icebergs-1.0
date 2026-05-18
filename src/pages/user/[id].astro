@@ -27,6 +27,7 @@ let achievementDefs: { key: string; icon: string; label: string; labelZh: string
 let userReadCount = 0;
 let awards: { id: string; type: string; message: string | null; createdAt: string; giver: { id: string; username: string; nickname: string | null } }[] = [];
 let userboxIds: string[] = [];
+let watchlistCount = 0;
 let presenceStatus: 'online' | 'active' | 'offline' = 'offline';
 let error = null;
 
@@ -147,7 +148,7 @@ try {
     }
 
     if (user) {
-      const [fetchedIcebergs, totalVotes, fetchedAchDefs, readCount, fetchedAwards, userStats] = await Promise.all([
+      const [fetchedIcebergs, totalVotes, fetchedAchDefs, readCount, fetchedAwards, userStats, wlCount] = await Promise.all([
         prisma.iceberg.findMany({
           where: isOwner
             ? { authorId: id }
@@ -179,12 +180,14 @@ try {
           where: { userId: id },
           select: { lastVisitDate: true },
         }),
+        prisma.watchlist.count({ where: { userId: id } }),
       ]);
       userIcebergs = fetchedIcebergs;
       achievementDefs = fetchedAchDefs;
       userReadCount = readCount;
       awards = fetchedAwards.map((a: any) => ({ ...a, createdAt: new Date(a.createdAt).toISOString() }));
       userboxIds = JSON.parse(user.userboxIds ?? '[]');
+      watchlistCount = wlCount;
       const totalViews = fetchedIcebergs.reduce((sum, ic) => sum + ic.viewCount, 0);
       socialStats = { totalViews, totalVotes };
       const today = new Date().toISOString().slice(0, 10);
@@ -267,6 +270,7 @@ try {
         userReadCount={userReadCount}
         awards={awards}
         userboxIds={userboxIds}
+        watchlistCount={watchlistCount}
         presenceStatus={presenceStatus}
       />
     )}
