@@ -61,8 +61,8 @@ const ITEMS_PAD = 14;
 const HEADER_H  = 44;
 const TITLE_H   = 60;
 const FOOTER_H  = 80;
-const FONT_MONO  = '13px ui-monospace,"JetBrains Mono",Consolas,monospace';
-const FONT_SMALL = '11px ui-monospace,"JetBrains Mono",Consolas,monospace';
+const FONT_MONO  = '13px ui-monospace,"IBM Plex Mono",Consolas,monospace';
+const FONT_SMALL = '11px ui-monospace,"IBM Plex Mono",Consolas,monospace';
 
 function calcItemsHeight(
   ctx: CanvasRenderingContext2D,
@@ -123,7 +123,7 @@ async function drawExport(
   let y = PAD;
 
   // 标题
-  ctx.font = `bold 17px ui-monospace,"JetBrains Mono",Consolas,monospace`;
+  ctx.font = `bold 17px ui-monospace,"IBM Plex Mono",Consolas,monospace`;
   ctx.fillStyle = T.titleText;
   ctx.textBaseline = 'middle';
   ctx.fillText(icebergTitle, PAD, y + TITLE_H / 2);
