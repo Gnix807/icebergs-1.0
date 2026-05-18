@@ -56,13 +56,13 @@ function CardSkeleton() {
   );
 }
 
-export function IcebergList() {
+export function IcebergList({ initialSort = 'newest' }: { initialSort?: string }) {
   const [icebergs, setIcebergs] = useState<IcebergListItem[]>([]);
   const [meta,     setMeta]     = useState<Meta | null>(null);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState<string | null>(null);
   const [q,        setQ]        = useState('');
-  const [sort,     setSort]     = useState<Sort>('newest');
+  const [sort,     setSort]     = useState<Sort>(initialSort as Sort);
   const [page,     setPage]     = useState(1);
   const [showNsfw, setShowNsfw] = useState(false);
   const [topic,    setTopic]    = useState<'all' | string>('all');

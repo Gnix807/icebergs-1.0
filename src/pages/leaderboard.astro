@@ -3,15 +3,23 @@ import Layout from '../layouts/Layout.astro';
 import { prisma } from '../lib/prisma';
 
 const tab = (Astro.url.searchParams.get('tab') ?? 'views') as 'views' | 'votes';
+const period = (Astro.url.searchParams.get('period') ?? 'all') as 'week' | 'month' | 'all';
 
 let ranked: any[] = [];
 let error = null;
 
 try {
+  // 时间范围筛选
+  const periodGte = period === 'week' ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                  : period === 'month' ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+                  : undefined;
+  const whereBase: any = { status: 'PUBLISHED' };
+  if (periodGte) whereBase.createdAt = { gte: periodGte };
+
   if (tab === 'votes') {
     // ── 点赞排行：先聚合净票数，再拉详情 ──────────────────────
     const publishedIds = await prisma.iceberg.findMany({
-      where: { status: 'PUBLISHED' },
+      where: whereBase,
       select: { id: true },
     }).then(r => r.map(x => x.id));
 
@@ -26,7 +34,7 @@ try {
     const topIds = voteAgg.map(v => v.icebergId);
     if (topIds.length > 0) {
       const icebergs = await prisma.iceberg.findMany({
-        where: { id: { in: topIds }, status: 'PUBLISHED' },
+        where: { id: { in: topIds }, ...whereBase },
         select: {
           id: true, slug: true, title: true, description: true,
           viewCount: true, createdAt: true,
@@ -44,7 +52,7 @@ try {
   } else {
     // ── 浏览量排行 ─────────────────────────────────────────────
     const icebergs = await prisma.iceberg.findMany({
-      where: { status: 'PUBLISHED' },
+      where: whereBase,
       orderBy: [{ viewCount: 'desc' }, { createdAt: 'desc' }],
       take: 50,
       select: {

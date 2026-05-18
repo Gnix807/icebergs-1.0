@@ -1,6 +1,8 @@
 ﻿---
 import Layout from '../../layouts/Layout.astro';
 import { IcebergList } from '../../components/iceberg/IcebergList';
+
+const sort = (Astro.url.searchParams.get('sort') ?? 'newest') as string;
 ---
 
 <Layout title="冰山广场 | 冰山图宇宙">
@@ -8,7 +10,7 @@ import { IcebergList } from '../../components/iceberg/IcebergList';
 
   <main class="bg-grid max-w-6xl mx-auto px-4 md:px-6 py-12 relative z-10">
 
-    <header class="mb-10 reveal">
+    <header class="mb-6 reveal">
       <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">[ ICEBERG SQUARE ]</div>
       <div class="flex items-end justify-between gap-4">
         <div>
@@ -19,16 +21,38 @@ import { IcebergList } from '../../components/iceberg/IcebergList';
         </div>
         <a
           href="/iceberg/new"
-          class="flex-shrink-0 px-5 py-2 bg-brand text-[#0A0A0A] font-mono font-semibold text-sm hover:bg-brand-hover transition-colors"
+          class="flex-shrink-0 px-5 py-2 bg-brand text-[#171717] font-mono font-semibold text-sm hover:bg-brand-hover transition-colors"
         >
           + 创建冰山图
         </a>
       </div>
     </header>
 
-    <!-- 列表 -->
+    {/* 排序切换 */}
+    <div class="flex gap-0 mb-6 border border-border w-fit reveal">
+      {[
+        { value: 'newest', label: '最新' },
+        { value: 'popular', label: '最热' },
+        { value: 'oldest', label: '最早' },
+      ].map(({ value, label }, i) => (
+        <a
+          href={`/iceberg/list?sort=${value}`}
+          class={`px-5 py-2 text-xs font-mono transition-colors ${
+            i > 0 ? 'border-l border-border' : ''
+          } ${
+            sort === value
+              ? 'bg-brand text-[#171717] font-bold'
+              : 'text-text-body hover:text-brand hover:bg-brand/5'
+          }`}
+        >
+          {label}
+        </a>
+      ))}
+    </div>
+
+    {/* 列表 */}
     <div class="reveal">
-      <IcebergList client:only="react" />
+      <IcebergList client:only="react" initialSort={sort} />
     </div>
   </main>
 </Layout>
