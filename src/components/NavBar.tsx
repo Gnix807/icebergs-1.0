@@ -188,10 +188,11 @@ export function NavBar() {
     };
   }, []);
 
-  // 仅登录态轮询，避免游客持续 401 噪音
+  // 仅登录态轮询，后台标签页暂停避免无谓请求
   useEffect(() => {
     if (!user) return;
     const timer = setInterval(() => {
+      if (document.visibilityState === 'hidden') return;
       fetchUser();
     }, 15000);
     return () => clearInterval(timer);
