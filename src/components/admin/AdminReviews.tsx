@@ -172,7 +172,7 @@ export function AdminReviews() {
                 <button
                   onClick={() => setOverrideModal({ id: r.id, title: r.iceberg.title })}
                   disabled={acting === r.id}
-                  className="px-3 py-1.5 text-xs font-mono bg-[#a855f7/10] border border-[#a855f7/25] text-[#a855f7] hover:bg-[#a855f7/15] transition-colors disabled:opacity-50"
+                  className="btn-purple px-3 py-1.5 text-xs font-mono transition-colors disabled:opacity-50"
                 >
                   直接发布
                 </button>
@@ -273,7 +273,7 @@ export function AdminReviews() {
               <button
                 onClick={override}
                 disabled={overrideReason.trim().length < 5 || acting === overrideModalRef.current?.id}
-                className="flex-1 py-2 bg-[#a855f7/20] border border-[#a855f7/30] text-[#a855f7] text-xs hover:bg-[#a855f7/20] transition-colors disabled:opacity-50"
+                className="btn-purple flex-1 py-2 text-xs transition-colors disabled:opacity-50"
               >
                 确认发布
               </button>

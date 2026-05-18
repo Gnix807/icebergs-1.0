@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   /* ── V1 旧令牌（保留兼容，逐步废弃） ──────────────── */
   --bg-base: #0d1117;
   --bg-elevated: #161b22;
@@ -174,12 +174,12 @@ canvas {
 /* 文本选中 */
 ::selection {
   background: rgba(0, 255, 65, 0.2);
-  color: #00FF41;
+  color: var(--color-brand);
 }
 
 /* 光标颜色 */
 input, textarea, [contenteditable] {
-  caret-color: #00FF41;
+  caret-color: var(--color-brand);
 }
 
 /* 自定义滚动条 */
@@ -193,7 +193,7 @@ input, textarea, [contenteditable] {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2A2A2A;
+  background: var(--color-border-3);
   border-radius: 0;
 }
 
@@ -204,19 +204,19 @@ input, textarea, [contenteditable] {
 /* 编辑器层级滚动条（明显可见） */
 .editor-scroll-shell {
   scrollbar-width: auto;
-  scrollbar-color: #00ff41 #0d1117;
+  scrollbar-color: var(--color-brand) var(--color-surface-1);
   scrollbar-gutter: stable;
 }
 .editor-scroll-shell::-webkit-scrollbar {
   width: 12px;
 }
 .editor-scroll-shell::-webkit-scrollbar-track {
-  background: #0d1117;
-  border-left: 1px solid #21262d;
+  background: var(--color-surface-1);
+  border-left: 1px solid var(--color-border-2);
 }
 .editor-scroll-shell::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #00ff41 0%, #00c834 100%);
-  border: 2px solid #0d1117;
+  border: 2px solid var(--color-surface-1);
   border-radius: 999px;
 }
 .editor-scroll-shell::-webkit-scrollbar-thumb:hover {
@@ -348,7 +348,7 @@ html.light .editor-scroll-quick.is-active.editor-scroll-quick-top:hover {
   background: rgba(2, 6, 12, 0.82);
 }
 .search-modal-panel {
-  background: #161b22;
+  background: var(--color-surface-2);
   border: 1px solid #30363d;
 }
 .search-modal-header {
@@ -453,7 +453,7 @@ a:focus-visible,
   transition: all 0.2s ease;
 }
 .tier-card-hover:hover {
-  background-color: #1a1a1a;
+  background-color: var(--color-border-3);
 }
 
 /* Markdown 内容样式 */
@@ -483,13 +483,13 @@ a:focus-visible,
 .markdown-content h1,
 .markdown-content h2,
 .markdown-content h3 {
-  color: #e5e7eb;
+  color: var(--color-text-hi);
   font-weight: 700;
   margin-top: 1em;
   margin-bottom: 0.5em;
 }
 .markdown-content h2 {
-  border-bottom: 1px solid #2A2A2A;
+  border-bottom: 1px solid var(--color-border-3);
   padding-bottom: 0.3em;
 }
 .markdown-content p {
@@ -497,9 +497,9 @@ a:focus-visible,
   color: var(--text-secondary);
 }
 .markdown-content a {
-  color: #00FF41;
+  color: var(--color-brand);
   text-decoration: none;
-  border-bottom: 1px solid #00FF41;
+  border-bottom: 1px solid var(--color-brand);
 }
 .markdown-content a:hover {
   background-color: rgba(0, 255, 65, 0.1);
@@ -520,21 +520,21 @@ a:focus-visible,
   margin-bottom: 0.3em;
 }
 .markdown-content blockquote {
-  border-left: 3px solid #ef4444;
+  border-left: 3px solid var(--color-danger);
   padding-left: 1em;
-  color: #ef4444;
+  color: var(--color-danger);
   font-style: italic;
   margin: 0.8em 0;
 }
 .markdown-content code {
-  background: #1a1a1a;
+  background: var(--color-border-3);
   padding: 0.2em 0.4em;
   border-radius: 3px;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.9em;
 }
 .markdown-content pre {
-  background: #1a1a1a;
+  background: var(--color-border-3);
   padding: 1em;
   border-radius: 4px;
   max-width: 100%;
@@ -560,12 +560,12 @@ a:focus-visible,
   color: var(--text-primary);
   font-weight: 600;
   padding: 0.5em 0.75em;
-  border-bottom: 2px solid #30363d;
-  background: #161b22;
+  border-bottom: 2px solid var(--color-border);
+  background: var(--color-surface-2);
 }
 .markdown-content td {
   padding: 0.45em 0.75em;
-  border-bottom: 1px solid #21262d;
+  border-bottom: 1px solid var(--color-border-2);
   color: var(--text-secondary);
 }
 .markdown-content tr:hover td {
@@ -573,7 +573,7 @@ a:focus-visible,
 }
 .markdown-content hr {
   border: none;
-  border-top: 1px solid #21262d;
+  border-top: 1px solid var(--color-border-2);
   margin: 1.5em 0;
 }
 .katex-display-block {
@@ -612,7 +612,7 @@ a:focus-visible,
 /* 浏览量进度条 */
 .view-bar {
   height: 3px;
-  background: #1f2937;
+  background: var(--color-border-2);
   overflow: hidden;
   margin-top: 6px;
 }
@@ -634,7 +634,7 @@ a:focus-visible,
 
 /* Glitch hover 文字色差 */
 .glitch-hover:hover {
-  text-shadow: 2px 0 #ef4444, -2px 0 #00FF41;
+  text-shadow: 2px 0 var(--color-danger), -2px 0 var(--color-brand);
 }
 
 /* 终端网格背景 */

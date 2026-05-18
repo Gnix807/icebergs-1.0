@@ -247,6 +247,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
       ref={setNodeRef}
       style={style}
       onDoubleClick={() => setIsEditing(true)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEditing(true); } }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
