@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useRef, type ComponentType } from 'react';
-import { AWARD_TYPES, USERBOX_LIBRARY, USERBOX_BASE_SLOTS, USERBOX_MAX_SLOTS } from '../../lib/awards';
+import { AWARD_TYPES, USERBOX_BASE_SLOTS, USERBOX_MAX_SLOTS } from '../../lib/awards';
+import { UserboxPicker } from './UserboxPicker';
 import { useModalAnimation } from '../../hooks/useModalAnimation';
 import { Layers, Anchor, BookOpen, Brain, Fish, Trophy } from 'lucide-react';
 
@@ -953,30 +954,24 @@ export function UserCenter({
             {activeTab === 'score' && isOwner && <ScoreLogTab userId={user.id} />}
             {activeTab === 'settings' && isOwner && (
               <div className="space-y-6">
-                {user.role === 'USER' && (
-                  <div className="border border-border-subtle bg-surface-2 p-5">
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <div>
-                        <span className="text-sm font-mono text-text-hi">晋升至 CONTRIBUTOR</span>
-                        <p className="text-xs font-mono text-text-mid mt-1">
-                          条件：质量分 ≥ 20 · 冰山图 ≥ 2 · 注册 ≥ 7 天 · 账户正常 · 90 天内无 WARNED_2
-                        </p>
-                      </div>
-                      {(promotionPending || promotionSent)
-                        ? <span className="flex-shrink-0 text-xs font-mono text-warning border border-warning/20 px-2.5 py-1.5">审核中</span>
-                        : promotionEligible
-                          ? <button onClick={() => setShowPromotion(true)} className="flex-shrink-0 px-4 py-2 text-sm font-mono bg-brand/10 border border-brand/25 text-brand hover:bg-brand/15 transition-colors">申请晋升</button>
-                          : <span className="flex-shrink-0 text-xs font-mono text-text-mid border border-border-subtle px-2.5 py-1.5">条件未达到</span>
-                      }
-                    </div>
-                    <div className="flex flex-wrap gap-4 text-xs font-mono">
-                      <span className={user.qualityScore >= 20 ? 'text-success' : 'text-text-mid'}>质量分 {user.qualityScore}/20</span>
-                      <span className={user._count.icebergs >= 2 ? 'text-success' : 'text-text-mid'}>冰山图 {user._count.icebergs}/2</span>
-                      <span className={user.status === 'ACTIVE' ? 'text-success' : 'text-danger'}>账户 {user.status}</span>
-                    </div>
+                {/* 账号设置 */}
+                <div className="border border-border-subtle bg-surface-2">
+                  <div className="px-5 py-3 border-b border-border-subtle bg-surface-1 flex items-center gap-2">
+                    <span className="text-brand font-mono text-xs">⚙</span>
+                    <span className="font-mono text-xs text-text-hi tracking-widest">账号设置</span>
                   </div>
-                )}
-                <UserSettings userId={user.id} initial={{ nickname: user.nickname, bio: user.bio, avatar: user.avatar, privacyShowStats: user.privacyShowStats, privacyShowWatchlist: user.privacyShowWatchlist }} />
+                  <div className="p-5">
+                    <UserSettings userId={user.id} initial={{ nickname: user.nickname, bio: user.bio, avatar: user.avatar, privacyShowStats: user.privacyShowStats, privacyShowWatchlist: user.privacyShowWatchlist }} />
+                  </div>
+                </div>
+
+                {/* 用户框定制 */}
+                <div className="border border-border-subtle bg-surface-2">
+                  <div className="px-5 py-3 border-b border-border-subtle bg-surface-1 flex items-center gap-2">
+                    <span className="text-warning font-mono text-xs">🎨</span>
+                    <span className="font-mono text-xs text-text-hi tracking-widest">用户框定制</span>
+                  </div>
+                  <div className="p-5">
                 <UserboxPicker
                   userId={user.id}
                   currentIds={userboxIds}
@@ -985,12 +980,12 @@ export function UserCenter({
                   isFounder={user.isFounder}
                 />
               </div>
-            )}
-            {activeTab === 'admin' && isOwner && (viewerRole || viewerIsFounder) && <AdminPanel role={viewerRole ?? 'USER'} isFounder={viewerIsFounder} />}
+            </div>
           </div>
-        </div>
-
-      {/* ── 通知面板弹窗 ──────────────────────────────────────────────────── */}
+        )}
+        {activeTab === 'admin' && isOwner && (viewerRole || viewerIsFounder) && <AdminPanel role={viewerRole ?? 'USER'} isFounder={viewerIsFounder} />}
+      </div>
+    </div>
       {notifMounted && (
         <div className={`${notifLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/60 flex items-start justify-center z-50 pt-16 px-4`}>
           <div ref={notifPanelRef} className={`${notifLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-md font-mono max-h-[75vh] flex flex-col`}>
@@ -1301,145 +1296,4 @@ function AwardModal({ userId, isLeaving, onClose, existingAwards, isLight }: {
   );
 }
 
-// ── 用户框选择器（Settings Tab 内）──────────────────────────────────────
-function UserboxPicker({
-  userId,
-  currentIds,
-  unlockedAchievementIds,
-  maxSlots,
-  isFounder = false,
-}: {
-  userId: string;
-  currentIds: string[];
-  unlockedAchievementIds: string[];
-  maxSlots: number;
-  isFounder?: boolean;
-}) {
-  const unlockedSet = new Set(unlockedAchievementIds);
-  // 过滤掉已保存但当前已无资格持有的条目（站长跳过）
-  const validCurrent = currentIds.filter(id => {
-    const def = USERBOX_LIBRARY.flatMap(c => c.boxes).find(b => b.id === id);
-    return def && (isFounder || !def.requires || unlockedSet.has(def.requires));
-  });
 
-  const [selected, setSelected] = useState<Set<string>>(new Set(validCurrent));
-  const [saving, setSaving]     = useState(false);
-  const [saved, setSaved]       = useState(false);
-
-  const toggle = (id: string, locked: boolean) => {
-    if (locked) return;
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else if (isFounder || next.size < maxSlots) {
-        next.add(id);
-      }
-      return next;
-    });
-    setSaved(false);
-  };
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      const res  = await fetch(`/api/users/${userId}/userboxes`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: [...selected] }),
-      });
-      const data = await res.json();
-      if (data.success) setSaved(true);
-    } finally { setSaving(false); }
-  };
-
-  const atLimit = !isFounder && selected.size >= maxSlots;
-
-  return (
-    <div className="border border-border-subtle bg-surface-2 p-5">
-      <div className="flex items-center justify-between mb-1">
-        <div>
-          <div className="text-sm font-mono text-text-hi">用户框定制</div>
-        </div>
-        <button
-          onClick={save} disabled={saving}
-          className={`flex-shrink-0 px-4 py-2 text-xs font-mono border transition-colors disabled:opacity-50 ${saved ? 'border-success/25 text-success' : 'border-brand/25 text-brand hover:bg-brand/10'}`}
-        >
-          {saving ? '保存中...' : saved ? '✓ 已保存' : '保存'}
-        </button>
-      </div>
-      {/* 槽位说明 */}
-      <div className="flex items-center gap-2 mb-4">
-        {isFounder ? (
-          <span className="text-[10px] font-mono" style={{ color: '#f59e0b' }}>◆ FOUNDER — 无限制</span>
-        ) : (
-          <>
-            <div className="flex gap-1">
-              {Array.from({ length: maxSlots }).map((_, i) => (
-                <div
-                  key={i}
-                  className="w-4 h-1.5 transition-colors"
-                  style={{ background: i < selected.size ? '#00FF41' : '#21262d' }}
-                />
-              ))}
-            </div>
-            <span className="text-[10px] font-mono text-text-mid">
-              {selected.size}/{maxSlots} 槽位
-              {maxSlots < USERBOX_MAX_SLOTS && <span className="ml-1 text-text-lo">— 解锁更多社区成就可扩展至 {USERBOX_MAX_SLOTS} 个</span>}
-            </span>
-          </>
-        )}
-      </div>
-
-      <div className="space-y-4">
-        {USERBOX_LIBRARY.map(cat => (
-          <div key={cat.category}>
-            <div className="text-[10px] font-mono text-text-mid tracking-widest mb-2">// {cat.category}</div>
-            <div className="space-y-1">
-              {cat.boxes.map(box => {
-                const on     = selected.has(box.id);
-                const locked = !isFounder && !!(box.requires && !unlockedSet.has(box.requires));
-                const full   = !on && atLimit && !locked;
-                return (
-                  <button
-                    key={box.id}
-                    onClick={() => toggle(box.id, locked)}
-                    disabled={locked || full}
-                    title={locked ? `需要：${box.requiresLabel}` : full ? '已达槽位上限' : undefined}
-                    className={`w-full flex items-stretch border transition-all ${
-                      locked                           ? 'border-border-subtle opacity-30 cursor-not-allowed' :
-                      on                               ? 'border-brand/25' :
-                      full                             ? 'border-border-subtle opacity-30 cursor-not-allowed' :
-                                                         'border-border-subtle opacity-60 hover:opacity-90'
-                    }`}
-                    style={{ minHeight: '32px' }}
-                  >
-                    <div
-                      className="w-12 flex items-center justify-center flex-shrink-0 text-[11px] font-mono font-bold"
-                      style={{ background: locked ? '#111518' : box.leftBg, color: locked ? '#30363d' : box.leftFg }}
-                    >
-                      {locked ? '🔒' : box.leftText}
-                    </div>
-                    <div className="flex-1 flex items-center px-2.5 bg-surface-0 min-w-0 border-l border-border-minimal">
-                      <span className="text-[11px] font-mono text-text-body truncate">{box.text}</span>
-                      {locked && (
-                        <span className="ml-auto flex-shrink-0 text-[9px] font-mono text-text-lo pl-2 truncate">
-                          需要 {box.requiresLabel}
-                        </span>
-                      )}
-                    </div>
-                    <div className="w-8 flex items-center justify-center flex-shrink-0 bg-surface-0">
-                      <span className="text-[10px] font-mono" style={{ color: on ? '#00FF41' : '#30363d' }}>
-                        {on ? '✓' : locked ? '' : '+'}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
