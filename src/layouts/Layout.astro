@@ -151,7 +151,7 @@ const bannerAnn = await prisma.announcement.findFirst({
     <div id="crt-scanlines" class="crt-scanlines pointer-events-none fixed inset-0 z-[9999]"></div>
 
     <!-- CRT 开关（仅桌面端） -->
-    <button id="crt-toggle" class="hidden md:flex fixed bottom-4 left-4 z-decorator items-center gap-1.5 px-2 py-1 text-[10px] font-display text-text-lo border border-border-subtle bg-surface-2/90 hover:border-brand hover:text-brand transition-colors" title="切换 CRT 扫描线效果" aria-label="切换 CRT 扫描线效果">
+      <button id="crt-toggle" class="hidden md:flex fixed bottom-4 left-4 z-decorator items-center gap-1.5 px-2 py-1 text-[10px] font-display text-text-lo border border-border-subtle hover:border-brand hover:text-brand transition-colors" style="background: rgba(36, 36, 36, 0.9)" title="切换 CRT 扫描线效果" aria-label="切换 CRT 扫描线效果">
       <span id="crt-toggle-icon">⊟</span> CRT
     </button>
 
@@ -280,7 +280,7 @@ const bannerAnn = await prisma.announcement.findFirst({
       initCursor();
 
       // ── CRT 扫描线开关 ──────────────────────────────────
-      (function initCrtToggle() {
+      function initCrtToggle() {
         const scanlines = document.getElementById('crt-scanlines');
         const toggleBtn = document.getElementById('crt-toggle');
         const icon = document.getElementById('crt-toggle-icon');
@@ -297,7 +297,11 @@ const bannerAnn = await prisma.announcement.findFirst({
           if (icon) icon.textContent = isOff ? '⊟' : '⊡';
           localStorage.setItem('crt-scanlines', isOff ? 'on' : 'off');
         });
-      })();
+      }
+      initCrtToggle();
+      document.addEventListener('astro:page-load', initCrtToggle);
+      // ViewTransitions 导航后重新初始化
+      document.addEventListener('astro:page-load', initCrtToggle);
 
       // ── ViewTransitions 页面导航进度条 ───────────────────
       (function initProgress() {
