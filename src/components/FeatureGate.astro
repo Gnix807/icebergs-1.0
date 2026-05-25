@@ -1,0 +1,23 @@
+---
+import { getFeatureFlags, isEnabled } from '../lib/features';
+
+interface Props {
+  feature: string;
+  name: string;
+}
+
+const { feature, name } = Astro.props;
+const flags = await getFeatureFlags();
+const enabled = isEnabled(flags, feature);
+---
+
+{enabled ? (
+  <slot />
+) : (
+  <div class="py-20 text-center border border-dashed border-border-subtle bg-surface-2/30">
+    <div class="text-5xl mb-4 opacity-20">⚙</div>
+    <p class="text-sm font-mono text-text-body mb-2">{name}功能暂未开放</p>
+    <p class="text-xs font-mono text-text-mid">项目处于起步阶段，该功能将在后续版本中逐步开放。</p>
+    <a href="/" class="inline-block mt-4 text-xs font-mono text-brand hover:underline">← 返回首页</a>
+  </div>
+)}

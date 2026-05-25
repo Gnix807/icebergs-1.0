@@ -7,6 +7,7 @@ import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
 import { getSessionById } from '../../lib/auth';
 import { getRfaSettings } from '../../lib/rfa';
+import FeatureGate from '../../components/FeatureGate.astro';
 
 const sessionId = Astro.cookies.get('session')?.value;
 const session   = await getSessionById(sessionId);
@@ -52,6 +53,7 @@ const eligible = reasons.length === 0;
 ---
 
 <Layout title="申请编辑资格（RfA）— 冰山图宇宙">
+  <FeatureGate feature="feature_rfa" name="RfA 编辑选举">
   <main class="max-w-xl mx-auto px-4 py-8 reveal">
 
     <div class="text-[10px] font-mono text-text-lo mb-6">
@@ -126,6 +128,7 @@ const eligible = reasons.length === 0;
     </div>
 
   </main>
+  </FeatureGate>
 </Layout>
 
 <script>

@@ -4,6 +4,7 @@ import { prisma } from '../../lib/prisma';
 import { getSessionById } from '../../lib/auth';
 import { RfaVotePanel } from '../../components/rfa/RfaVotePanel';
 import { getRfaSettings, evaluateRfa } from '../../lib/rfa';
+import FeatureGate from '../../components/FeatureGate.astro';
 
 const { id } = Astro.params;
 const sessionId = Astro.cookies.get('session')?.value;
@@ -106,6 +107,7 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
 ---
 
 <Layout title={`@${applicantDisplay} 的编辑资格申请 — RfA`}>
+  <FeatureGate feature="feature_rfa" name="RfA 编辑选举">
   <main class="max-w-2xl mx-auto px-4 py-8 reveal">
 
     <!-- 面包屑 -->
@@ -205,6 +207,7 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
     />
 
   </main>
+  </FeatureGate>
 </Layout>
 
 <script>

@@ -70,7 +70,8 @@ const dropdownMenus = [
 // 移动端菜单仍然展示全部链接
 const allLinks = [...navLinks, ...dropdownMenus.flatMap(m => m.links)];
 
-export function NavBar() {
+export function NavBar({ features: featuresRaw }: { features?: string }) {
+  const features = JSON.parse(featuresRaw || '{}') as Record<string, boolean>;
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLogin, setShowLogin] = useState(false);

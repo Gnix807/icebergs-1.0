@@ -5,6 +5,7 @@ import { Toast } from '../components/ui/Toast';
 import { AchievementToast } from '../components/ui/AchievementToast';
 import { ViewTransitions } from 'astro:transitions';
 import { prisma } from '../lib/prisma';
+import { getFeatureFlags } from '../lib/features';
 import '../styles/global.css';
 
 interface Props {
@@ -21,6 +22,9 @@ const bannerAnn = await prisma.announcement.findFirst({
   select: { id: true, title: true, type: true, createdAt: true },
 }).then((a: any) => a ? { ...a, createdAt: a.createdAt.toISOString() } : null)
   .catch(() => null);
+
+// 功能开关（带缓存，60 秒刷新一次）
+const features = await getFeatureFlags();
 ---
 
 <!doctype html>
@@ -41,7 +45,7 @@ const bannerAnn = await prisma.announcement.findFirst({
     <div id="page-progress" class="page-progress-bar"></div>
 
     <!-- 导航栏 -->
-    <NavBar client:load />
+    <NavBar client:load features={JSON.stringify(features)} />
 
     <!-- 主内容区域（pt-14 抵消固定导航栏高度） -->
     <div class="pt-14 pb-16 lg:pb-0">

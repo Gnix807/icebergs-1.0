@@ -10,6 +10,7 @@ interface Props {
     privacyShowStats: boolean;
     privacyShowWatchlist: boolean;
   };
+  features?: Record<string, boolean>;
 }
 
 interface AuthSession {
@@ -19,7 +20,7 @@ interface AuthSession {
   isCurrent: boolean;
 }
 
-export function UserSettings({ userId, initial }: Props) {
+export function UserSettings({ userId, initial, features = {} }: Props) {
   const [nickname, setNickname] = useState(initial.nickname ?? '');
   const [bio, setBio] = useState(initial.bio ?? '');
   const [avatar, setAvatar] = useState(initial.avatar ?? '');
@@ -446,6 +447,7 @@ export function UserSettings({ userId, initial }: Props) {
             </button>
           </div>
 
+          {features.feature_session_mgmt !== false && (
           <div className="p-4 border border-border-subtle bg-surface-2">
             <div className="flex items-center justify-between gap-3 mb-3">
               <div>
@@ -505,10 +507,12 @@ export function UserSettings({ userId, initial }: Props) {
               </div>
             )}
           </div>
+          )}
         </div>
       </section>
 
       {/* 隐私设置 */}
+      {features.feature_privacy !== false && (
       <section>
         <div className="text-xs font-mono text-text-mid mb-4 tracking-widest uppercase">
           // 隐私设置
@@ -552,6 +556,7 @@ export function UserSettings({ userId, initial }: Props) {
           ))}
         </div>
       </section>
+      )}
 
       {/* 保存按钮 */}
       <button

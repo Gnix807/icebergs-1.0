@@ -475,6 +475,7 @@ export function UserCenter({
   presenceStatus = 'offline',
 }: Props) {
   const [activeTab, setActiveTab]     = useState<Tab>('icebergs');
+  const [features, setFeatures]       = useState<Record<string, boolean>>({});
 
   // 通知面板
   const [showNotifPanel, setShowNotifPanel]   = useState(false);
@@ -615,6 +616,17 @@ export function UserCenter({
           setUnreadCount(d.data.unreadCount);
           setNotifLoaded(true);
         }
+      })
+      .catch(() => {});
+  }, [isOwner]);
+
+  // 加载功能开关
+  useEffect(() => {
+    if (!isOwner) return;
+    fetch('/api/features')
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) setFeatures(d.data);
       })
       .catch(() => {});
   }, [isOwner]);
@@ -916,7 +928,7 @@ export function UserCenter({
               通知({unreadCount})
             </a>
           )}
-          {promotionEligible && (
+          {promotionEligible && features.feature_promotion !== false && (
             <button onClick={() => setShowPromotion(true)} className="px-3 py-1.5 border border-warning/30 text-xs font-mono text-warning hover:border-warning hover:bg-warning/5 transition-colors">
               申请晋升
             </button>
@@ -961,11 +973,12 @@ export function UserCenter({
                     <span className="font-mono text-xs text-text-hi tracking-widest">账号设置</span>
                   </div>
                   <div className="p-5">
-                    <UserSettings userId={user.id} initial={{ nickname: user.nickname, bio: user.bio, avatar: user.avatar, privacyShowStats: user.privacyShowStats, privacyShowWatchlist: user.privacyShowWatchlist }} />
+                    <UserSettings userId={user.id} initial={{ nickname: user.nickname, bio: user.bio, avatar: user.avatar, privacyShowStats: user.privacyShowStats, privacyShowWatchlist: user.privacyShowWatchlist }} features={features} />
                   </div>
                 </div>
 
                 {/* 用户框定制 */}
+                {features.feature_userboxes !== false && (
                 <div className="border border-border-subtle bg-surface-2">
                   <div className="px-5 py-3 border-b border-border-subtle bg-surface-1 flex items-center gap-2">
                     <span className="text-warning font-mono text-xs">🎨</span>
@@ -981,6 +994,7 @@ export function UserCenter({
                 />
               </div>
             </div>
+                )}
           </div>
         )}
         {activeTab === 'admin' && isOwner && (viewerRole || viewerIsFounder) && <AdminPanel role={viewerRole ?? 'USER'} isFounder={viewerIsFounder} />}

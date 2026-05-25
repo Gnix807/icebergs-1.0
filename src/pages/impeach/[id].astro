@@ -4,6 +4,7 @@ import { prisma } from '../../lib/prisma';
 import { getSessionById } from '../../lib/auth';
 import { ImpeachVotePanel } from '../../components/impeach/ImpeachVotePanel';
 import { getImpeachSettings, evaluateImpeach, demotedRole } from '../../lib/impeach';
+import FeatureGate from '../../components/FeatureGate.astro';
 
 const { id } = Astro.params;
 const sessionId = Astro.cookies.get('session')?.value;
@@ -100,6 +101,7 @@ const canCancel = session && status === 'OPEN' &&
 ---
 
 <Layout title={`弹劾 @${targetDisplay} — 冰山图宇宙`}>
+  <FeatureGate feature="feature_impeach" name="弹劾流程">
   <main class="max-w-2xl mx-auto px-4 py-8 reveal">
 
     <div class="text-[10px] font-mono text-text-lo mb-6">
@@ -207,6 +209,7 @@ const canCancel = session && status === 'OPEN' &&
     />
 
   </main>
+  </FeatureGate>
 </Layout>
 
 <script>
