@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
+    "predev": "node -e \"try { require('fs').rmSync('node_modules/.vite',{recursive:true,force:true}) } catch(e) {}\"",
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check"
