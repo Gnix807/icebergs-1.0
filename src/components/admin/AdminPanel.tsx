@@ -9,8 +9,9 @@ import { AdminFeedback } from './AdminFeedback';
 import { AdminAchievements } from './AdminAchievements';
 import { AdminElections } from './AdminElections';
 import { AdminAnnouncements } from './AdminAnnouncements';
+import { AdminFeatureFlags } from './AdminFeatureFlags';
 
-type AdminTab = 'reviews' | 'users' | 'settings' | 'appeals' | 'promotions' | 'reports' | 'feedback' | 'achievements' | 'elections' | 'announcements';
+type AdminTab = 'reviews' | 'users' | 'settings' | 'appeals' | 'promotions' | 'reports' | 'feedback' | 'achievements' | 'elections' | 'announcements' | 'features';
 
 interface Props {
   role: string;
@@ -28,6 +29,7 @@ const TABS: { id: AdminTab; label: string; code: string; minRole: string }[] = [
   { id: 'announcements', label: '公告发布', code: 'ANNOUNCE', minRole: 'ADMIN' },
   { id: 'achievements', label: '成就配置', code: 'ACHIEVEMENTS', minRole: 'ADMIN' },
   { id: 'settings',     label: '系统配置', code: 'SETTINGS',     minRole: 'ADMIN' },
+  { id: 'features',     label: '功能开关', code: 'FEATURES',     minRole: 'ADMIN' },
 ];
 
 export function AdminPanel({ role, isFounder }: Props) {
@@ -127,6 +129,7 @@ export function AdminPanel({ role, isFounder }: Props) {
       {activeTab === 'announcements' && <AdminAnnouncements />}
       {activeTab === 'achievements' && <AdminAchievements />}
       {activeTab === 'settings'     && <AdminSettings />}
+      {activeTab === 'features'     && <AdminFeatureFlags />}
     </div>
   );
 }

@@ -28,13 +28,26 @@ export async function PUT(event: APIContext) {
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
     if (!can(session, 'user:ban')) return json(error(ErrorCodes.FORBIDDEN, '需要管理员权限'), 403);
 
-    const body = await event.request.json() as Record<string, string>;
+    const body = await event.request.json() as Record<string, any>;
     if (!body || typeof body !== 'object') {
       return json(error(ErrorCodes.BAD_REQUEST, '请求体格式错误'), 400);
     }
 
+    // 功能开关批量更新：{ features: { key: boolean, ... } }
+    const updates: Record<string, string> = {};
+    if (body.features && typeof body.features === 'object') {
+      Object.entries(body.features).forEach(([k, v]) => {
+        updates[k] = String(v);
+      });
+    } else {
+      // 通用 key-value 更新
+      Object.entries(body).forEach(([k, v]) => {
+        if (k !== 'features') updates[k] = String(v);
+      });
+    }
+
     await Promise.all(
-      Object.entries(body).map(([key, value]) =>
+      Object.entries(updates).map(([key, value]) =>
         prisma.systemSettings.upsert({
           where: { key },
           update: { value: String(value), updatedBy: session.userId },
@@ -43,7 +56,7 @@ export async function PUT(event: APIContext) {
       ),
     );
 
-    return json(success({ updated: Object.keys(body).length }), 200);
+    return json(success({ updated: Object.keys(updates).length }), 200);
   } catch (err) {
     console.error('更新配置失败:', err);
     return json(error(ErrorCodes.INTERNAL_ERROR, '更新失败'), 500);
