@@ -28,7 +28,6 @@ const MAX_SEND_PER_IP_DAY = Math.max(1, Number(process.env.EMAIL_MAX_SEND_PER_IP
 const MAX_VERIFY_ATTEMPTS = Math.max(1, Number(process.env.EMAIL_CODE_MAX_ATTEMPTS || 5));
 const DEV_SECRET_FALLBACK = 'dev-email-secret-change-me';
 
-let ensurePromise: Promise<void> | null = null;
 let cachedSecret: string | null = null;
 
 function getSecret(): string {
@@ -51,39 +50,6 @@ function hashCode(email: string, purpose: EmailVerificationPurpose, code: string
   return createHash('sha256')
     .update(`${email}|${purpose}|${code}|${getSecret()}`)
     .digest('hex');
-}
-
-async function ensureEmailVerificationTable(): Promise<void> {
-  if (!ensurePromise) {
-    ensurePromise = (async () => {
-      await prisma.$executeRawUnsafe(`
-        CREATE TABLE IF NOT EXISTS email_verification_codes (
-          id TEXT PRIMARY KEY,
-          email TEXT NOT NULL,
-          purpose TEXT NOT NULL,
-          code_hash TEXT NOT NULL,
-          expires_at TEXT NOT NULL,
-          attempts INTEGER NOT NULL DEFAULT 0,
-          consumed_at TEXT,
-          send_ip TEXT,
-          created_at TEXT NOT NULL
-        )
-      `);
-      await prisma.$executeRawUnsafe(`
-        CREATE INDEX IF NOT EXISTS idx_email_verify_email_purpose_created
-        ON email_verification_codes(email, purpose, created_at)
-      `);
-      await prisma.$executeRawUnsafe(`
-        CREATE INDEX IF NOT EXISTS idx_email_verify_ip_created
-        ON email_verification_codes(send_ip, created_at)
-      `);
-    })().catch((err) => {
-      ensurePromise = null;
-      throw err;
-    });
-  }
-
-  await ensurePromise;
 }
 
 function nowIso(): string {
@@ -111,7 +77,6 @@ export async function canSendEmailCode(
   purpose: EmailVerificationPurpose,
   sendIp: string | null
 ): Promise<{ ok: true } | { ok: false; message: string; retryAfterSec?: number }> {
-  await ensureEmailVerificationTable();
   const email = normalizeEmail(emailRaw);
   const now = Date.now();
   const since24hIso = new Date(now - 24 * 60 * 60 * 1000).toISOString();
@@ -166,7 +131,6 @@ export async function saveEmailCode(
   code: string,
   sendIp: string | null
 ): Promise<void> {
-  await ensureEmailVerificationTable();
   const email = normalizeEmail(emailRaw);
   const createdAt = nowIso();
   const expiresAt = new Date(Date.now() + CODE_TTL_MINUTES * 60 * 1000).toISOString();
@@ -191,7 +155,6 @@ export async function verifyAndConsumeEmailCode(
   purpose: EmailVerificationPurpose,
   codeRaw: string
 ): Promise<VerifyEmailCodeResult> {
-  await ensureEmailVerificationTable();
   const email = normalizeEmail(emailRaw);
   const code = codeRaw.trim();
   if (!code) return 'invalid';

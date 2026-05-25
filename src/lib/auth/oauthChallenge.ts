@@ -23,42 +23,8 @@ interface OAuthChallengeRow {
   created_at: string;
 }
 
-let ensurePromise: Promise<void> | null = null;
-
 function hashState(state: string): string {
   return createHash('sha256').update(state).digest('hex');
-}
-
-async function ensureChallengeTable(): Promise<void> {
-  if (!ensurePromise) {
-    ensurePromise = (async () => {
-      await prisma.$executeRawUnsafe(`
-        CREATE TABLE IF NOT EXISTS oauth_challenges (
-          id TEXT PRIMARY KEY,
-          state_hash TEXT NOT NULL UNIQUE,
-          provider TEXT NOT NULL,
-          intent TEXT NOT NULL,
-          code_verifier TEXT,
-          link_user_id TEXT,
-          expires_at TEXT NOT NULL,
-          consumed_at TEXT,
-          created_at TEXT NOT NULL
-        )
-      `);
-      await prisma.$executeRawUnsafe(`
-        CREATE INDEX IF NOT EXISTS idx_oauth_challenges_expires
-        ON oauth_challenges(expires_at)
-      `);
-      await prisma.$executeRawUnsafe(`
-        CREATE INDEX IF NOT EXISTS idx_oauth_challenges_consumed
-        ON oauth_challenges(consumed_at)
-      `);
-    })().catch((err) => {
-      ensurePromise = null;
-      throw err;
-    });
-  }
-  await ensurePromise;
 }
 
 async function cleanupExpired(nowIso: string): Promise<void> {
@@ -86,7 +52,6 @@ export async function saveOAuthChallengeWithIntent(
     linkUserId?: string | null;
   }
 ): Promise<void> {
-  await ensureChallengeTable();
 
   const now = new Date();
   const nowIso = now.toISOString();
@@ -116,7 +81,6 @@ export async function saveOAuthChallengeWithIntent(
 }
 
 export async function consumeOAuthChallenge(state: string): Promise<OAuthChallenge | null> {
-  await ensureChallengeTable();
 
   const nowIso = new Date().toISOString();
   const stateHash = hashState(state);

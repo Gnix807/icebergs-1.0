@@ -18,8 +18,6 @@ interface AuthRateLimitRow {
   oldest: string | null;
 }
 
-let ensurePromise: Promise<void> | null = null;
-
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -33,37 +31,7 @@ function normalizeKey(raw: string): string {
   return value || 'unknown';
 }
 
-async function ensureRateLimitTable(): Promise<void> {
-  if (!ensurePromise) {
-    ensurePromise = (async () => {
-      await prisma.$executeRawUnsafe(`
-        CREATE TABLE IF NOT EXISTS auth_rate_limit_events (
-          id TEXT PRIMARY KEY,
-          action TEXT NOT NULL,
-          rate_key TEXT NOT NULL,
-          created_at TEXT NOT NULL
-        )
-      `);
-      await prisma.$executeRawUnsafe(`
-        CREATE INDEX IF NOT EXISTS idx_auth_rate_limit_action_key_created
-        ON auth_rate_limit_events(action, rate_key, created_at)
-      `);
-      await prisma.$executeRawUnsafe(`
-        CREATE INDEX IF NOT EXISTS idx_auth_rate_limit_created
-        ON auth_rate_limit_events(created_at)
-      `);
-    })().catch((err) => {
-      ensurePromise = null;
-      throw err;
-    });
-  }
-
-  await ensurePromise;
-}
-
 async function consumeRule(rule: AuthRateLimitRule): Promise<AuthRateLimitResult> {
-  await ensureRateLimitTable();
-
   const now = Date.now();
   const currentIso = nowIso();
   const key = normalizeKey(rule.key);

@@ -16,45 +16,7 @@ export class OAuthIdentityError extends Error {
   }
 }
 
-let ensurePromise: Promise<void> | null = null;
-
-async function ensureOAuthIdentityTable(): Promise<void> {
-  if (!ensurePromise) {
-    ensurePromise = (async () => {
-      await prisma.$executeRawUnsafe(`
-        CREATE TABLE IF NOT EXISTS oauth_identities (
-          id TEXT PRIMARY KEY,
-          user_id TEXT NOT NULL,
-          provider TEXT NOT NULL,
-          provider_user_id TEXT NOT NULL,
-          email TEXT,
-          created_at TEXT NOT NULL,
-          FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-      `);
-      await prisma.$executeRawUnsafe(`
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_oauth_identity_unique
-        ON oauth_identities(provider, provider_user_id)
-      `);
-      await prisma.$executeRawUnsafe(`
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_oauth_identity_user_provider
-        ON oauth_identities(user_id, provider)
-      `);
-      await prisma.$executeRawUnsafe(`
-        CREATE INDEX IF NOT EXISTS idx_oauth_identity_user
-        ON oauth_identities(user_id)
-      `);
-    })().catch((err) => {
-      ensurePromise = null;
-      throw err;
-    });
-  }
-
-  await ensurePromise;
-}
-
 export async function findOAuthIdentityUserId(provider: OAuthProvider, providerUserId: string): Promise<string | null> {
-  await ensureOAuthIdentityTable();
   const rows = await prisma.$queryRaw<OAuthIdentityRow[]>`
     SELECT user_id, provider, provider_user_id
     FROM oauth_identities
@@ -65,7 +27,6 @@ export async function findOAuthIdentityUserId(provider: OAuthProvider, providerU
 }
 
 export async function getLinkedOAuthProviders(userId: string): Promise<Record<OAuthProvider, boolean>> {
-  await ensureOAuthIdentityTable();
   const rows = await prisma.$queryRaw<OAuthIdentityRow[]>`
     SELECT user_id, provider, provider_user_id
     FROM oauth_identities
@@ -86,7 +47,6 @@ export async function linkOAuthIdentity(
   providerUserId: string,
   email: string | null
 ): Promise<'linked' | 'already_linked'> {
-  await ensureOAuthIdentityTable();
 
   const byIdentity = await prisma.$queryRaw<OAuthIdentityRow[]>`
     SELECT user_id, provider, provider_user_id
@@ -123,7 +83,6 @@ export async function linkOAuthIdentity(
 }
 
 export async function unlinkOAuthIdentity(userId: string, provider: OAuthProvider): Promise<number> {
-  await ensureOAuthIdentityTable();
   const affected = await prisma.$executeRaw`
     DELETE FROM oauth_identities
     WHERE user_id = ${userId} AND provider = ${provider}

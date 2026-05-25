@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -126,6 +126,23 @@ model OAuthChallenge {
   @@index([expiresAt], map: "idx_oauth_challenges_expires")
   @@index([consumedAt], map: "idx_oauth_challenges_consumed")
   @@map("oauth_challenges")
+}
+
+// ── 邮箱验证码 ────────────────────────────────────────────
+model EmailVerificationCode {
+  id         String    @id @default(cuid())
+  email      String
+  purpose    String
+  codeHash   String    @map("code_hash")
+  expiresAt  DateTime  @map("expires_at")
+  attempts   Int       @default(0)
+  consumedAt DateTime? @map("consumed_at")
+  sendIp     String?   @map("send_ip")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([email, purpose, createdAt], map: "idx_email_verify_email_purpose_created")
+  @@index([sendIp, createdAt], map: "idx_email_verify_ip_created")
+  @@map("email_verification_codes")
 }
 
 // ── 管理员/站长授予勋章 ────────────────────────────────────────
