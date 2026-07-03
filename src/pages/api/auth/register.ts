@@ -2,7 +2,6 @@ import type { APIContext } from 'astro';
 import { prisma } from '../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { createSession } from '../../../lib/auth';
-import { verifyAndConsumeEmailCode } from '../../../lib/auth/emailVerification';
 import { enforceAuthRateLimit, getClientIp } from '../../../lib/auth/rateLimit';
 import { pbkdf2, randomBytes } from 'crypto';
 import { promisify } from 'util';
@@ -33,7 +32,6 @@ export async function POST(event: APIContext) {
     const password = typeof body.password === 'string' ? body.password : '';
     const username = normalizeUsername(body.username);
     const nickname = typeof body.nickname === 'string' ? body.nickname.trim() : '';
-    const verificationCode = typeof body.verificationCode === 'string' ? body.verificationCode.trim() : '';
 
     if (!email || !password || !username) {
       return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '邮箱、密码、用户名不能为空')), {
@@ -66,19 +64,6 @@ export async function POST(event: APIContext) {
           'Content-Type': 'application/json',
           'Retry-After': String(authRate.retryAfterSec),
         },
-      });
-    }
-
-    if (!verificationCode) {
-      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '请先填写邮箱验证码')), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    if (!/^\d{6}$/.test(verificationCode)) {
-      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '验证码应为6位数字')), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
       });
     }
 
@@ -136,23 +121,6 @@ export async function POST(event: APIContext) {
     }
     if (existingUsername) {
       return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '用户名已被占用')), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const verifyResult = await verifyAndConsumeEmailCode(email, 'register', verificationCode);
-    if (verifyResult !== 'valid') {
-      const messageMap: Record<string, string> = {
-        missing: '请先发送邮箱验证码',
-        expired: '验证码已过期，请重新发送',
-        invalid: '验证码错误',
-        too_many_attempts: '验证码错误次数过多，请重新发送',
-      };
-      return new Response(JSON.stringify(error(
-        ErrorCodes.VALIDATION_ERROR,
-        messageMap[verifyResult] || '验证码校验失败'
-      )), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });

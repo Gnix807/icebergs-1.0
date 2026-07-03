@@ -100,11 +100,20 @@ export interface UnlockedAchievement {
   color: string;
 }
 
+// ── 防抖：同一用户 2 秒内只跑一次检查 ─────────────────────
+const lastCheck = new Map<string, number>();
+const CHECK_COOLDOWN = 2000;
+
 export async function checkAchievements(
   userId: string,
   trigger: TriggerParams,
   opts: { skipPending?: boolean } = {},
 ): Promise<UnlockedAchievement[]> {
+  const now = Date.now();
+  const last = lastCheck.get(userId);
+  if (last && now - last < CHECK_COOLDOWN) return [];
+  lastCheck.set(userId, now);
+
   try {
     const [ctx, allAchievements, existingRaw] = await Promise.all([
       buildContext(userId, trigger),

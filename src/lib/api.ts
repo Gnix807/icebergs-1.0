@@ -33,4 +33,5 @@ export const ErrorCodes = {
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   BAD_REQUEST: 'BAD_REQUEST',
   CONFLICT: 'CONFLICT',
+  RATE_LIMITED: 'RATE_LIMITED',
 } as const;

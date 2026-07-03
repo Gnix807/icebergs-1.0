@@ -41,6 +41,13 @@ export async function createSession(userId: string, event: APIContext): Promise<
     data: { id: sessionId, userId, expiresAt },
   });
 
+  // 顺便清理过期 Session（最多 100 条，异步不阻塞）
+  prisma.session.deleteMany({
+    where: { expiresAt: { lt: new Date() } },
+  }).then((r) => {
+    if (r.count > 50) console.log(`[auth] 清理了 ${r.count} 个过期 session`);
+  }).catch(() => {});
+
   event.cookies.set('session', sessionId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

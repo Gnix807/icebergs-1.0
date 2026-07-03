@@ -30,7 +30,7 @@ function hashState(state: string): string {
 async function cleanupExpired(nowIso: string): Promise<void> {
   await prisma.$executeRaw`
     DELETE FROM oauth_challenges
-    WHERE expires_at <= ${nowIso}
+    WHERE expires_at <= ${nowIso}::TIMESTAMPTZ
   `;
 }
 
@@ -73,9 +73,9 @@ export async function saveOAuthChallengeWithIntent(
       ${payload.intent},
       ${payload.codeVerifier ?? null},
       ${payload.linkUserId ?? null},
-      ${expiresIso},
+      ${expiresIso}::TIMESTAMPTZ,
       ${null},
-      ${nowIso}
+      ${nowIso}::TIMESTAMPTZ
     )
   `;
 }
@@ -91,7 +91,7 @@ export async function consumeOAuthChallenge(state: string): Promise<OAuthChallen
     FROM oauth_challenges
     WHERE state_hash = ${stateHash}
       AND consumed_at IS NULL
-      AND expires_at > ${nowIso}
+      AND expires_at > ${nowIso}::TIMESTAMPTZ
     ORDER BY created_at DESC
     LIMIT 1
   `;
@@ -101,7 +101,7 @@ export async function consumeOAuthChallenge(state: string): Promise<OAuthChallen
   const consumedIso = new Date().toISOString();
   const affected = await prisma.$executeRaw`
     UPDATE oauth_challenges
-    SET consumed_at = ${consumedIso}
+    SET consumed_at = ${consumedIso}::TIMESTAMPTZ
     WHERE id = ${row.id} AND consumed_at IS NULL
   `;
   if (Number(affected) < 1) {

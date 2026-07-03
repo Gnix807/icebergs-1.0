@@ -100,7 +100,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
       return mode === 'login' ? '登录失败，请稍后重试' : mode === 'register' ? '注册失败，请稍后重试' : '重置密码失败，请稍后重试';
     }
     if (mode === 'login' && msg.includes('邮箱或密码错误')) return '邮箱或密码错误，请检查后重试';
-    if (mode === 'login' && msg.includes('第三方登录')) return '该邮箱仅支持第三方登录，请改用 GitHub / Google';
+     if (mode === 'login' && msg.includes('第三方登录')) return '该邮箱仅支持第三方登录，请改用 GitHub 登录';
     if (mode === 'register' && msg.includes('验证码')) return msg;
     return msg;
   };
@@ -171,8 +171,8 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
       const body = mode === 'login'
         ? { email: normalizedEmail, password }
         : mode === 'register'
-          ? { email: normalizedEmail, password, username: username.trim(), nickname, verificationCode }
-          : { email: normalizedEmail, verificationCode, newPassword: password };
+          ? { email: normalizedEmail, password, username: username.trim(), nickname }
+          : { email: normalizedEmail, newPassword: password };
 
       const res = await fetch(endpoint, {
         method: 'POST',
@@ -289,18 +289,6 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                 </svg>
                 使用 GitHub 登录/注册
               </a>
-              <a
-                href="/api/auth/login?provider=google"
-                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-surface-4 border border-border hover:border-brand hover:bg-surface-3 transition-all text-sm font-mono"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M21.8 12.23c0-.76-.07-1.49-.2-2.2H12v4.16h5.49a4.7 4.7 0 0 1-2.04 3.08v2.56h3.31c1.94-1.78 3.04-4.4 3.04-7.6Z" fill="#4285F4"/>
-                  <path d="M12 22c2.75 0 5.06-.91 6.75-2.17l-3.31-2.56c-.91.61-2.08.97-3.44.97-2.65 0-4.9-1.79-5.7-4.19H2.9v2.63A10 10 0 0 0 12 22Z" fill="#34A853"/>
-                  <path d="M6.3 14.05A6 6 0 0 1 6 12c0-.71.12-1.4.3-2.05V7.32H2.9A10 10 0 0 0 2 12c0 1.6.38 3.1.9 4.68l3.4-2.63Z" fill="#FBBC05"/>
-                  <path d="M12 5.76c1.5 0 2.85.52 3.92 1.54l2.94-2.94A9.8 9.8 0 0 0 12 2 10 10 0 0 0 2.9 7.32l3.4 2.63C7.1 7.55 9.35 5.76 12 5.76Z" fill="#EA4335"/>
-                </svg>
-                使用 Google 登录/注册
-              </a>
 
               <div className="flex items-center gap-2 my-3">
                 <div className="flex-1 h-px bg-[#2A2A2A]"></div>
@@ -325,31 +313,6 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                 aria-label="邮箱地址"
               />
             </div>
-
-            {(mode === 'register' || mode === 'reset') && (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value.replace(/[^\d]/g, '').slice(0, 6))}
-                  className="flex-1 px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder:text-text-lo transition-colors"
-                  placeholder="邮箱验证码（6位）"
-                  required
-                  inputMode="numeric"
-                  pattern="^\d{6}$"
-                  maxLength={6}
-                  aria-label="邮箱验证码"
-                />
-                <button
-                  type="button"
-                  onClick={handleSendCode}
-                  disabled={sendingCode || cooldown > 0}
-                  className="px-3 py-2.5 min-w-[118px] text-xs font-mono border border-border text-text-hi hover:border-brand hover:text-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {sendingCode ? '发送中...' : cooldown > 0 ? `${cooldown}s 后重发` : '发送验证码'}
-                </button>
-              </div>
-            )}
 
             <div>
               <div className="relative">

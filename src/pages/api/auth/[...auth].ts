@@ -262,7 +262,9 @@ async function handleCallback(event: APIContext) {
         avatar: typeof githubUser.avatar_url === 'string' ? githubUser.avatar_url : null,
       };
     } else {
+      console.log('[OAuth] Google callback - exchanging code');
       const tokens = await google.validateAuthorizationCode(code, finalCodeVerifier!);
+      console.log('[OAuth] Google tokens received');
       const accessToken = tokens.accessToken();
       const response = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
         headers: {
@@ -355,7 +357,8 @@ async function handleCallback(event: APIContext) {
       headers: { Location: '/' },
     });
   } catch (err) {
-    console.error('OAuth callback error:', err instanceof Error ? err.message : String(err));
+    console.error('[OAuth callback] error:', err instanceof Error ? err.message : String(err));
+    console.error('[OAuth callback] stack:', err instanceof Error ? err.stack?.split('\n').slice(0,3).join(' | ') : '');
     return new Response(null, {
       status: 302,
       headers: { Location: '/?error=oauth_failed' },
@@ -459,6 +462,7 @@ export async function GET(event: APIContext) {
         username: true,
         nickname: true,
         email: true,
+        avatar: true,
         passwordHash: true,
         role: true,
         isFounder: true,

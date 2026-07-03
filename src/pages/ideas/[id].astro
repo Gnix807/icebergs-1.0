@@ -1,0 +1,188 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+import { getSessionById } from '../../lib/auth/index';
+import { getIcebergTopicLabel } from '../../lib/icebergTopic';
+
+const { id } = Astro.params;
+let idea: any = null;
+let error = null;
+
+const sessionId = Astro.cookies.get('session')?.value;
+const session = await getSessionById(sessionId);
+
+try {
+  idea = await prisma.idea.findUnique({
+    where: { id },
+    select: {
+      id: true, title: true, description: true, topic: true,
+      status: true, claimedBy: true, icebergId: true, createdAt: true,
+      _count: { select: { votes: true } },
+      creator: { select: { id: true, username: true, nickname: true, avatar: true } },
+    },
+  });
+  if (!idea) error = '创意不存在';
+} catch (err) {
+  console.error('加载创意失败:', err);
+  error = '加载失败';
+}
+
+const statusLabel: Record<string, string> = {
+  OPEN: '待认领',
+  CLAIMED: '已认领',
+  COMPLETED: '已完成',
+};
+const isOwner = session && idea && idea.creator.id === session.userId;
+const isClaimant = session && idea && idea.claimedBy === session.userId;
+const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
+---
+
+<Layout title={`${idea?.title || '创意详情'} | 冰山图宇宙`}>
+  <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
+  <main class="bg-grid max-w-3xl mx-auto px-4 py-12 relative z-10">
+
+    {error ? (
+      <div class="p-8 border border-border text-center reveal">
+        <p class="text-red-500 font-mono">{error}</p>
+        <a href="/ideas" class="text-brand hover:underline mt-4 inline-block font-mono text-sm">← 返回创意板</a>
+      </div>
+    ) : (
+      <>
+        <header class="mb-8 reveal">
+          <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">
+            <a href="/ideas" class="hover:text-brand transition-colors">← 创意板</a>
+          </div>
+          <div class="flex items-center gap-2 mb-3 flex-wrap">
+            <span class={`text-[10px] font-mono px-2 py-0.5 border ${idea.status === 'OPEN' ? 'text-warning border-warning/30 bg-warning/5' : idea.status === 'CLAIMED' ? 'text-info border-info/30 bg-info/5' : 'text-success border-success/30 bg-success/5'}`}>
+              {statusLabel[idea.status]}
+            </span>
+            <span class="text-[10px] font-mono text-text-lo">{getIcebergTopicLabel(idea.topic)}</span>
+          </div>
+          <h1 class="text-2xl font-mono font-semibold">{idea.title}</h1>
+
+          <div class="flex items-center gap-3 mt-4 text-[10px] font-mono text-text-lo">
+            <span>由 <a href={`/user/${idea.creator.id}`} class="text-text-body hover:text-brand transition-colors">{idea.creator.nickname || idea.creator.username}</a> 提交</span>
+            <span>·</span>
+            <span>{new Date(idea.createdAt).toLocaleDateString('zh-CN')}</span>
+          </div>
+        </header>
+
+        {idea.description && (
+          <section class="mb-8 reveal" style="animation-delay:60ms">
+            <div class="text-xs text-text-body leading-relaxed border-l-2 border-border pl-4 py-1">{idea.description}</div>
+          </section>
+        )}
+
+        <div class="flex flex-wrap items-center gap-4 mb-10 reveal" style="animation-delay:100ms">
+          <!-- 投票 -->
+          <button id="vote-btn" class={`flex items-center gap-1.5 px-3 py-1.5 border text-xs font-mono transition-colors ${session ? 'hover:border-brand cursor-pointer' : 'cursor-not-allowed opacity-50'} border-border text-text-body`} disabled={!session}>
+            <span id="vote-icon">▲</span>
+            <span id="vote-count">{idea._count.votes}</span> 票
+          </button>
+
+          <!-- 认领 -->
+          {idea.status === 'OPEN' && session && !isOwner && (
+            <button id="claim-btn" class="px-3 py-1.5 border border-brand text-brand text-xs font-mono hover:bg-brand hover:text-[#171717] transition-colors">
+              认领这个创意
+            </button>
+          )}
+          {idea.status === 'CLAIMED' && (isOwner || isClaimant) && (
+            <button id="complete-btn" class="px-3 py-1.5 border border-success text-success text-xs font-mono hover:bg-success hover:text-[#171717] transition-colors">
+              标记为已完成
+            </button>
+          )}
+          {idea.status === 'OPEN' && isOwner && (
+            <select id="status-select" class="px-2 py-1.5 border border-border text-xs font-mono bg-surface-2 text-text-body">
+              <option value="OPEN" selected={idea.status === 'OPEN'}>待认领</option>
+              <option value="COMPLETED">已通过其他方式完成</option>
+            </select>
+          )}
+
+          <!-- iceberg link -->
+          {idea.icebergId && (
+            <a href={`/iceberg/${idea.icebergId}`} class="px-3 py-1.5 border border-border text-xs font-mono text-text-body hover:border-brand transition-colors">
+              查看完成的冰山图 →
+            </a>
+          )}
+        </div>
+
+        {idea.status === 'COMPLETED' && !idea.icebergId && (isOwner || isClaimant) && (
+          <div class="mb-8 p-4 border border-dashed border-border reveal" style="animation-delay:120ms">
+            <p class="text-xs font-mono text-text-mid mb-2">输入完成的冰山图 ID 或 slug：</p>
+            <div class="flex gap-2">
+              <input id="iceberg-link-input" type="text" placeholder="iceberg slug…"
+                class="flex-1 px-2.5 py-1.5 text-xs font-mono border border-border bg-surface-2 text-text-hi focus:border-brand focus:outline-none" />
+              <button id="link-btn" class="px-3 py-1.5 border border-brand text-brand text-xs font-mono hover:bg-brand hover:text-[#171717] transition-colors">
+                关联
+              </button>
+            </div>
+            <span id="link-msg" class="text-[10px] font-mono text-danger mt-1 hidden"></span>
+          </div>
+        )}
+      </>
+    )}
+  </main>
+</Layout>
+
+<script define:vars={{ ideaId: id, ownerFlag: isOwner }}>
+  // 投票
+  const voteBtn = document.getElementById('vote-btn');
+  if (voteBtn) {
+    voteBtn.addEventListener('click', async () => {
+      const res = await fetch(`/api/ideas/${ideaId}/vote`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('vote-count').textContent = String(data.data.voteCount);
+        document.getElementById('vote-icon').textContent = data.data.voted ? '▲' : '△';
+        voteBtn.style.borderColor = data.data.voted ? 'var(--color-brand)' : '';
+      }
+    });
+  }
+
+  // 认领
+  const claimBtn = document.getElementById('claim-btn');
+  if (claimBtn) {
+    claimBtn.addEventListener('click', async () => {
+      const res = await fetch(`/api/ideas/${ideaId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CLAIMED' }),
+      });
+      if (res.ok) window.location.reload();
+    });
+  }
+
+  // 标记完成
+  const completeBtn = document.getElementById('complete-btn');
+  if (completeBtn) {
+    completeBtn.addEventListener('click', async () => {
+      const res = await fetch(`/api/ideas/${ideaId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'COMPLETED' }),
+      });
+      if (res.ok) window.location.reload();
+    });
+  }
+
+  // 关联冰山图
+  const linkBtn = document.getElementById('link-btn');
+  const linkInput = document.getElementById('iceberg-link-input');
+  if (linkBtn && linkInput) {
+    linkBtn.addEventListener('click', async () => {
+      const slug = linkInput.value.trim();
+      if (!slug) return;
+      const res = await fetch(`/api/ideas/${ideaId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ icebergId: slug }),
+      });
+      if (res.ok) window.location.reload();
+      else {
+        const msg = document.getElementById('link-msg')!;
+        msg.textContent = '关联失败，请检查 ID 是否正确';
+        msg.classList.remove('hidden');
+      }
+    });
+  }
+</script>

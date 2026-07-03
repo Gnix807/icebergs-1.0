@@ -2,12 +2,19 @@ import type { APIContext } from 'astro';
 import { getSession } from '../../../lib/auth/index';
 import { prisma } from '../../../lib/prisma';
 import { checkAchievements, updateDailyStreak } from '../../../lib/achievementService';
+import { isRateLimited } from '../../../lib/rateLimit';
 
 export async function POST(event: APIContext) {
   const session = await getSession(event);
   if (!session) {
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (await isRateLimited('item_read', session.userId, 120)) {
+    return new Response(JSON.stringify({ success: false, error: { message: '操作太频繁' } }), {
+      status: 429, headers: { 'Content-Type': 'application/json' },
     });
   }
 

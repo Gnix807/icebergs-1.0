@@ -267,7 +267,7 @@ function ConditionBuilder({ conditions, onChange }: { conditions: Condition[]; o
 const EMPTY_FORM = {
   key: '', icon: '', label: '', labelZh: '', desc: '',
   color: '#6b7280', triggerType: 'manual', triggerTarget: 0,
-  sortOrder: 0, isHidden: false, conditions: '[]',
+  sortOrder: 0, isHidden: false, conditions: '[]', category: '阅读',
 };
 
 function InlineForm({ editId, initialForm, initialConditions, onSave, onCancel }: {
@@ -331,6 +331,15 @@ function InlineForm({ editId, initialForm, initialConditions, onSave, onCancel }
           <input type="number" value={form.sortOrder} onChange={e => setForm(f => ({ ...f, sortOrder: Number(e.target.value) }))}
             className="w-full bg-surface-2 border border-border text-text-hi text-xs px-2 py-1.5 font-mono" />
         </div>
+        <div className="flex-1">
+          <div className="text-[10px] font-mono text-text-body mb-1">分类</div>
+          <select value={(form as any).category || '阅读'} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+            className="w-full bg-surface-2 border border-border text-text-hi text-xs px-2 py-1.5 font-mono">
+            {['阅读','创作','投票','收藏','质量','坚持','搜索','随机','深夜','时刻','标签','词条','隐藏','其他'].map(c =>
+              <option key={c} value={c}>{c}</option>
+            )}
+          </select>
+        </div>
         <div className="flex items-end pb-1.5">
           <label className="flex items-center gap-1 text-xs font-mono text-text-body cursor-pointer">
             <input type="checkbox" checked={form.isHidden} onChange={e => setForm(f => ({ ...f, isHidden: e.target.checked }))} />
@@ -363,15 +372,16 @@ function InlineForm({ editId, initialForm, initialConditions, onSave, onCancel }
 interface AchievementDef {
   id: string; key: string; icon: string; label: string; labelZh: string;
   desc: string; color: string; triggerType: string; triggerTarget: number;
-  sortOrder: number; isHidden: boolean; conditions: string; createdAt: string;
+  sortOrder: number; isHidden: boolean; conditions: string; category?: string | null;
+  createdAt: string;
 }
 
 export function AdminAchievements() {
   const [achievements, setAchievements] = useState<AchievementDef[]>([]);
   const [loading, setLoading]           = useState(true);
-  /** 当前展开的条目：'new' = 新建表单，ach.id = 编辑该条目 */
   const [expandedId, setExpandedId]     = useState<string | null>(null);
   const [deleting, setDeleting]         = useState<string | null>(null);
+  const [filterCategory, setFilterCategory] = useState('全部');
 
   const load = async () => {
     setLoading(true);
@@ -408,7 +418,7 @@ export function AdminAchievements() {
         key: ach.key, icon: ach.icon, label: ach.label, labelZh: ach.labelZh,
         desc: ach.desc, color: ach.color, triggerType: ach.triggerType,
         triggerTarget: ach.triggerTarget, sortOrder: ach.sortOrder,
-        isHidden: ach.isHidden, conditions: ach.conditions,
+        isHidden: ach.isHidden, conditions: ach.conditions, category: ach.category,
       },
       conditions,
     };
@@ -416,7 +426,7 @@ export function AdminAchievements() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-3">
         <div className="text-sm font-mono text-text-body">
           探索成就定义 — <span className="text-brand">{achievements.length}</span> 条
         </div>
@@ -430,6 +440,21 @@ export function AdminAchievements() {
         >
           {expandedId === 'new' ? '▲ 收起' : '+ 新建成就'}
         </button>
+      </div>
+
+      {/* 分类筛选 */}
+      <div className="flex flex-wrap gap-1 mb-3">
+        {(() => {
+          const cats = ['全部', ...new Set(achievements.map(a => a.category).filter(Boolean) as string[])].sort();
+          return cats.map(cat => (
+            <button key={cat} onClick={() => setFilterCategory(cat)}
+              className={`text-[10px] font-mono px-2 py-1 border transition-colors ${
+                filterCategory === cat ? 'border-brand text-brand bg-brand/10' : 'border-border-subtle text-text-mid hover:border-brand'
+              }`}>
+              {cat}{cat !== '全部' && <span className="ml-0.5 opacity-40">{achievements.filter(a => a.category === cat).length}</span>}
+            </button>
+          ));
+        })()}
       </div>
 
       {/* 新建表单（行内展开，在列表上方） */}
@@ -455,7 +480,7 @@ export function AdminAchievements() {
         <div className="text-xs text-text-lo font-mono">加载中...</div>
       ) : (
         <div className="space-y-1">
-          {achievements.map(ach => {
+          {achievements.filter(a => filterCategory === '全部' || a.category === filterCategory).map(ach => {
             const isOpen = expandedId === ach.id;
             let preview: string[] = [];
             try {
@@ -474,7 +499,8 @@ export function AdminAchievements() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono text-text-hi">{ach.labelZh}</span>
-                      {ach.isHidden && <span className="text-[10px] text-text-body border border-border px-1">隐藏</span>}
+                      {ach.isHidden && <span className="text-[9px] text-text-body border border-border px-1">隐藏</span>}
+                      {ach.category && <span className="text-[9px] text-text-lo border border-border-subtle px-1">{ach.category}</span>}
                     </div>
                     <div className="text-[10px] text-text-lo font-mono mt-0.5">
                       {preview.length > 0 ? preview.join(' + ') : ach.triggerType}

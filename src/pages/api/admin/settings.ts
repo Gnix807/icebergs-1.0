@@ -7,6 +7,7 @@ import { success, error, ErrorCodes } from '../../../lib/api';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 import { can } from '../../../lib/permissions';
+import { clearFeatureCache } from '../../../lib/features';
 
 export async function GET(event: APIContext) {
   try {
@@ -55,6 +56,8 @@ export async function PUT(event: APIContext) {
         }),
       ),
     );
+
+    if (body.features) clearFeatureCache();
 
     return json(success({ updated: Object.keys(updates).length }), 200);
   } catch (err) {

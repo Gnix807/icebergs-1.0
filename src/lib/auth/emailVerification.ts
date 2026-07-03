@@ -103,7 +103,7 @@ export async function canSendEmailCode(
   const emailCountRows = await prisma.$queryRaw<Array<{ count: number | bigint }>>`
     SELECT COUNT(1) AS count
     FROM email_verification_codes
-    WHERE email = ${email} AND purpose = ${purpose} AND created_at >= ${since24hIso}
+    WHERE email = ${email} AND purpose = ${purpose} AND created_at >= ${since24hIso}::TIMESTAMPTZ
   `;
   const emailCount = Number(emailCountRows[0]?.count ?? 0);
   if (emailCount >= MAX_SEND_PER_EMAIL_DAY) {
@@ -114,7 +114,7 @@ export async function canSendEmailCode(
     const ipCountRows = await prisma.$queryRaw<Array<{ count: number | bigint }>>`
       SELECT COUNT(1) AS count
       FROM email_verification_codes
-      WHERE send_ip = ${sendIp} AND created_at >= ${since24hIso}
+      WHERE send_ip = ${sendIp} AND created_at >= ${since24hIso}::TIMESTAMPTZ
     `;
     const ipCount = Number(ipCountRows[0]?.count ?? 0);
     if (ipCount >= MAX_SEND_PER_IP_DAY) {
@@ -138,7 +138,7 @@ export async function saveEmailCode(
 
   await prisma.$executeRaw`
     UPDATE email_verification_codes
-    SET consumed_at = ${createdAt}
+    SET consumed_at = ${createdAt}::TIMESTAMPTZ
     WHERE email = ${email} AND purpose = ${purpose} AND consumed_at IS NULL
   `;
 
@@ -146,7 +146,7 @@ export async function saveEmailCode(
     INSERT INTO email_verification_codes
       (id, email, purpose, code_hash, expires_at, attempts, consumed_at, send_ip, created_at)
     VALUES
-      (${crypto.randomUUID()}, ${email}, ${purpose}, ${codeHash}, ${expiresAt}, 0, ${null}, ${sendIp}, ${createdAt})
+      (${crypto.randomUUID()}, ${email}, ${purpose}, ${codeHash}, ${expiresAt}::TIMESTAMPTZ, 0, ${null}, ${sendIp}, ${createdAt}::TIMESTAMPTZ)
   `;
 }
 
@@ -173,7 +173,7 @@ export async function verifyAndConsumeEmailCode(
   if (toMs(row.expires_at) < Date.now()) {
     await prisma.$executeRaw`
       UPDATE email_verification_codes
-      SET consumed_at = ${now}
+      SET consumed_at = ${now}::TIMESTAMPTZ
       WHERE id = ${row.id}
     `;
     return 'expired';

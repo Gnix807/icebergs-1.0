@@ -36,7 +36,8 @@ const features = await getFeatureFlags();
     <title>{title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Serif:wght@500;600;700&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=PingFang+SC:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/misans@4.0.0/lib/Normal/MiSans-Normal.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" />
     <ViewTransitions />
   </head>
@@ -63,7 +64,7 @@ const features = await getFeatureFlags();
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 pb-8">
-          <!-- 品牌 -->
+          {/* 品牌 */}
           <div>
             <div class="flex items-center gap-1 mb-3">
               <span class="text-brand font-bold text-sm">Iceberg</span>
@@ -78,7 +79,7 @@ const features = await getFeatureFlags();
             </div>
           </div>
 
-          <!-- 探索 -->
+          {/* 探索 */}
           <div>
             <div class="text-[10px] text-text-mid tracking-widest mb-3">// 探索</div>
             <nav class="space-y-1.5">
@@ -86,32 +87,40 @@ const features = await getFeatureFlags();
               <a href="/iceberg/random" class="block text-xs text-text-body hover:text-brand transition-colors">随机漫游</a>
               <a href="/leaderboard" class="block text-xs text-text-body hover:text-brand transition-colors">排行榜</a>
               <a href="/iceberg/new" class="block text-xs text-text-body hover:text-brand transition-colors">创建冰山图</a>
+              <a href="/ideas" class="block text-xs text-text-body hover:text-brand transition-colors">创意板</a>
             </nav>
           </div>
 
-          <!-- 社区 -->
+          {/* 社区 */}
           <div>
-            <div class="text-[10px] text-text-mid tracking-widest mb-3">// 社区</div>
+            <div class="text-[10px] text-text-mid tracking-widest mb-3">// 社区/帮助</div>
             <nav class="space-y-1.5">
               <a href="/announcements" class="block text-xs text-text-body hover:text-brand transition-colors">公告</a>
               <a href="/org" class="block text-xs text-text-body hover:text-brand transition-colors">机构</a>
               <a href="/rules" class="block text-xs text-text-body hover:text-brand transition-colors">规则</a>
               <a href="/feedback" class="block text-xs text-text-body hover:text-brand transition-colors">反馈建议</a>
-              <a href="/feedback/progress" class="block text-xs text-text-body hover:text-brand transition-colors">反馈进展</a>
+              <a href="/guide" class="block text-xs text-text-body hover:text-brand transition-colors">使用指南</a>
             </nav>
           </div>
 
-          <!-- 帮助 -->
+          {/* 支持 */}
           <div>
-            <div class="text-[10px] text-text-mid tracking-widest mb-3">// 帮助</div>
+            <div class="text-[10px] text-text-mid tracking-widest mb-3">// 关于</div>
             <nav class="space-y-1.5">
-              <a href="/guide" class="block text-xs text-text-body hover:text-brand transition-colors">使用指南</a>
-              <a href="/about" class="block text-xs text-text-body hover:text-brand transition-colors">关于本站</a>
               <a href="/changelog" class="block text-xs text-text-body hover:text-brand transition-colors">更新日志</a>
+              <a href="/about" class="block text-xs text-text-body hover:text-brand transition-colors">关于本站</a>
               <a href="/terms" class="block text-xs text-text-body hover:text-brand transition-colors">服务条款</a>
               <a href="/privacy" class="block text-xs text-text-body hover:text-brand transition-colors">隐私政策</a>
             </nav>
           </div>
+        </div>
+
+        <!-- 支持本站 -->
+        <div class="border-t border-border-subtle py-3 flex flex-wrap items-center justify-center gap-4 text-[10px] font-mono">
+          <span class="text-text-lo">支持本项目</span>
+          <a href="https://www.patreon.com/" target="_blank" rel="noopener" class="text-text-mid hover:text-brand transition-colors">Patreon</a>
+          <a href="https://ko-fi.com/" target="_blank" rel="noopener" class="text-text-mid hover:text-brand transition-colors">Ko-fi</a>
+          <a href="https://afdian.com/" target="_blank" rel="noopener" class="text-text-mid hover:text-brand transition-colors">爱发电</a>
         </div>
 
         <!-- 底部版权行 -->

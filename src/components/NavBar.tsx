@@ -9,6 +9,7 @@ interface User {
   id: string;
   username: string;
   nickname: string;
+  avatar?: string | null;
   isFounder?: boolean;
 }
 
@@ -33,42 +34,22 @@ interface SearchResult {
 const navLinks = [
   { href: '/', label: '首页' },
   { href: '/iceberg/list', label: '冰山广场' },
+  { href: '/ideas', label: '创意板' },
   { href: '/leaderboard', label: '排行榜' },
   { href: '/iceberg/new', label: '创建' },
 ];
 
-// 分类下拉菜单
-const dropdownMenus = [
-  {
-    label: '探索',
-    links: [
-      { href: '/iceberg/random', label: '随机漫游' },
-      { href: '/announcements', label: '公告' },
-      { href: '/changelog', label: '更新日志' },
-    ],
-  },
-  {
-    label: '帮助',
-    links: [
-      { href: '/guide', label: '使用指南' },
-      { href: '/feedback', label: '反馈建议' },
-      { href: '/feedback/progress', label: '反馈进展' },
-    ],
-  },
-  {
-    label: '关于',
-    links: [
-      { href: '/org', label: '机构' },
-      { href: '/rules', label: '平台规则' },
-      { href: '/terms', label: '服务条款' },
-      { href: '/privacy', label: '隐私政策' },
-      { href: '/about', label: '关于本站' },
-    ],
-  },
+const moreLinks = [
+  { href: '/sitemap', label: '功能大厅' },
+  { href: '/iceberg/random', label: '随机漫游' },
+  { href: '/guide', label: '使用指南' },
+  { href: '/announcements', label: '公告' },
+  { href: '/changelog', label: '更新日志' },
+  { href: '/feedback', label: '反馈建议' },
+  { href: '/about', label: '关于本站' },
 ];
 
-// 移动端菜单仍然展示全部链接
-const allLinks = [...navLinks, ...dropdownMenus.flatMap(m => m.links)];
+const allLinks = [...navLinks, ...moreLinks];
 
 export function NavBar({ features: featuresRaw }: { features?: string }) {
   const features = JSON.parse(featuresRaw || '{}') as Record<string, boolean>;
@@ -99,6 +80,25 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
   const [currentPath, setCurrentPath] = useState('');
   const [hasNewAnnouncement, setHasNewAnnouncement] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const { mounted: moreMounted, isLeaving: moreLeaving } = useModalAnimation(openDropdown === 'more');
+  const moreRef = useRef<HTMLDivElement>(null);
+  const moreTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const userTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openMore = () => {
+    if (moreTimer.current) clearTimeout(moreTimer.current);
+    setOpenDropdown('more');
+  };
+  const closeMore = () => {
+    moreTimer.current = setTimeout(() => setOpenDropdown(null), 150);
+  };
+  const openUser = () => {
+    if (userTimer.current) clearTimeout(userTimer.current);
+    setShowDropdown(true);
+  };
+  const closeUser = () => {
+    userTimer.current = setTimeout(() => setShowDropdown(false), 150);
+  };
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -350,49 +350,39 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                   );
                 })}
 
-                {/* 分类下拉菜单 */}
-                {dropdownMenus.map(menu => {
-                  const isOpen = openDropdown === menu.label;
-                  const hasActive = menu.links.some(l => isActive(l.href));
-                  return (
-                    <div className="relative" key={menu.label}>
-                      <button
-                        onClick={() => setOpenDropdown(isOpen ? null : menu.label)}
-                        className={`relative px-2.5 xl:px-3 py-2 text-[15px] transition-all font-mono border-b-2 ${
-                          hasActive
-                            ? 'text-brand border-brand'
-                            : 'text-text-hi hover:text-brand border-transparent hover:border-brand/25'
-                        }`}
-                      >
-                        {menu.label}
-                        <span className="ml-0.5 text-[10px]">{isOpen ? '▲' : '▼'}</span>
-                      </button>
-                      {isOpen && (
-                        <div className="absolute top-full left-0 mt-1 w-36 bg-surface-2 border border-border shadow-xl z-50 nav-dropdown-in"
-                          onMouseLeave={() => setOpenDropdown(null)}>
-                          {menu.links.map(({ href, label }) => {
-                            const active = isActive(href);
-                            const isAnn = href === '/announcements';
-                            return (
-                              <a key={href} href={href}
-                                onClick={() => setOpenDropdown(null)}
-                                className={`flex items-center justify-between px-4 py-2.5 text-xs font-mono transition-colors border-b border-border-subtle last:border-0 ${
-                                  active
-                                    ? 'text-brand bg-brand/5'
-                                    : 'text-text-body hover:text-brand hover:bg-surface-1'
-                                }`}>
-                                {label}
-                                {isAnn && hasNewAnnouncement && (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-brand" />
-                                )}
-                              </a>
-                            );
-                          })}
-                        </div>
-                      )}
+                {/* 更多 */}
+                <div className="relative" ref={moreRef}
+                  onMouseEnter={openMore} onMouseLeave={closeMore}>
+                  <button
+                    onClick={() => setOpenDropdown(openDropdown === 'more' ? null : 'more')}
+                    className={`relative px-2.5 xl:px-3 py-2 text-[15px] transition-all font-mono border-b-2 ${
+                      openDropdown === 'more'
+                        ? 'text-brand border-brand'
+                        : 'text-text-hi hover:text-brand border-transparent hover:border-brand/25'
+                    }`}
+                  >
+                    功能
+                    <span className="ml-0.5 text-[10px]">{openDropdown === 'more' ? '▲' : '▼'}</span>
+                  </button>
+                  {moreMounted && (
+                    <div className={`absolute top-full right-0 mt-1.5 w-44 bg-surface-2 border border-border rounded-lg shadow-2xl z-50 overflow-hidden ${moreLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
+                      {moreLinks.map(({ href, label }) => {
+                        const active = isActive(href);
+                        return (
+                          <a key={href} href={href}
+                            onClick={() => setOpenDropdown(null)}
+                            className={`flex items-center gap-2.5 px-4 py-2.5 text-xs font-mono transition-colors ${
+                              active
+                                ? 'text-brand bg-brand/5 border-l-2 border-brand'
+                                : 'text-text-body hover:text-brand hover:bg-surface-3'
+                            }`}>
+                            {label}
+                          </a>
+                        );
+                      })}
                     </div>
-                  );
-                })}
+                  )}
+                </div>
               </div>
             </div>
 
@@ -522,10 +512,15 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
               {!loading && (
                 <>
                   {user ? (
-                    <div className="relative" ref={dropdownRef}>
+                    <div className="relative" ref={dropdownRef}
+                      onMouseEnter={openUser} onMouseLeave={closeUser}>
                       <button onClick={() => setShowDropdown(!showDropdown)}
                         className="flex items-center gap-2 px-3 py-1.5 text-[15px] text-text-hi hover:text-brand border border-border hover:border-brand transition-all font-mono">
-                        <User size={14} strokeWidth={1.5} className="text-brand" />
+                        {user.avatar ? (
+                          <img src={user.avatar} alt="" className="h-5 w-5 rounded-full object-cover" />
+                        ) : (
+                          <User size={14} strokeWidth={1.5} className="text-brand" />
+                        )}
                         <span className="hidden sm:inline max-w-20 truncate">{user.nickname || user.username}</span>
                         <span
                           className="text-xs transition-transform duration-200"
@@ -536,16 +531,25 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                       {dropdownMounted && (
                         <div className={`absolute right-0 top-full mt-2 w-52 bg-surface-2 border border-border shadow-xl overflow-hidden z-50 ${dropdownLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
                           <div className="px-4 py-3 border-b border-border">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-mono text-text-hi">{user.nickname || user.username}</p>
-                              {user.isFounder && (
-                                <span className="text-[10px] font-mono px-1 py-0.5 border"
-                                  style={{ color: '#f59e0b', borderColor: '#f59e0b50', background: '#f59e0b10' }}>
-                                  ◆ FOUNDER
-                                </span>
+                            <div className="flex items-center gap-2.5">
+                              {user.avatar ? (
+                                <img src={user.avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
+                              ) : (
+                                <div className="h-8 w-8 rounded-full bg-surface-3 border border-border flex items-center justify-center">
+                                  <User size={14} strokeWidth={1.5} className="text-text-mid" />
+                                </div>
                               )}
+                              <div className="min-w-0">
+                                <p className="text-sm font-mono text-text-hi truncate">{user.nickname || user.username}</p>
+                                {user.isFounder && (
+                                  <span className="text-[10px] font-mono px-1 py-0.5 border"
+                                    style={{ color: '#f59e0b', borderColor: '#f59e0b50', background: '#f59e0b10' }}>
+                                    ◆ FOUNDER
+                                  </span>
+                                )}
+                                <p className="text-xs text-text-body truncate">@{user.username}</p>
+                              </div>
                             </div>
-                            <p className="text-xs text-text-body truncate">@{user.username}</p>
                           </div>
                           <div className="py-1">
                             <a href={`/user/${user.id}`}

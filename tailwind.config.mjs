@@ -5,20 +5,15 @@ export default {
     extend: {
       // ── 字体家族 ──────────────────────────────────────────
       fontFamily: {
-        // 显示字：导航、标题、标签、代码
-        display: ['IBM Plex Mono', 'JetBrains Mono', 'monospace'],
-        // 正文字：冰山图正文、Markdown、段落
-        body: ['Noto Serif SC', 'Noto Serif', 'serif'],
-        // UI 字：表单、提示、辅助文本
-        ui: ['IBM Plex Sans', 'system-ui', 'sans-serif'],
-        // 向后兼容别名（逐步迁移期间保持可用）
-        mono: ['IBM Plex Mono', 'JetBrains Mono', 'monospace'],
-        sans: ['IBM Plex Sans', 'Noto Serif SC', 'system-ui', 'sans-serif'],
+        display: ['Space Grotesk', 'MiSans Normal', 'PingFang SC', 'Microsoft YaHei', 'system-ui', 'sans-serif'],
+        body:    ['MiSans Normal', 'PingFang SC', 'Microsoft YaHei', 'Space Grotesk', 'system-ui', 'sans-serif'],
+        ui:      ['Space Grotesk', 'MiSans Normal', 'PingFang SC', 'Microsoft YaHei', 'system-ui', 'sans-serif'],
+        mono:    ['Space Mono', 'MiSans Normal', 'system-ui', 'PingFang SC', 'Microsoft YaHei', 'monospace'],
+        sans:    ['Space Grotesk', 'MiSans Normal', 'PingFang SC', 'Microsoft YaHei', 'system-ui', 'sans-serif'],
       },
 
       // ── 颜色令牌（通过 CSS 变量实现暗/亮切换）────────────
       colors: {
-        // 表面层级
         surface: {
           0: 'var(--color-surface-0)',
           1: 'var(--color-surface-1)',
@@ -26,21 +21,17 @@ export default {
           3: 'var(--color-surface-3)',
           4: 'var(--color-surface-4)',
         },
-        // 文字层级
         'text-hi':   'var(--color-text-hi)',
         'text-body': 'var(--color-text-body)',
         'text-mid':  'var(--color-text-mid)',
         'text-lo':   'var(--color-text-lo)',
-        // 边框层级
         border:       'var(--color-border)',
         'border-subtle':  'var(--color-border-2)',
         'border-minimal': 'var(--color-border-3)',
-        // 品牌色
         brand: {
           DEFAULT: 'var(--color-brand)',
           hover:   'var(--color-brand-2)',
         },
-        // 语义色
         danger:  { DEFAULT: 'var(--color-danger)' },
         warning: { DEFAULT: 'var(--color-warning)' },
         success: { DEFAULT: 'var(--color-success)' },
@@ -49,15 +40,13 @@ export default {
         gold:    { DEFAULT: 'var(--color-gold)' },
         silver:  { DEFAULT: 'var(--color-silver)' },
         bronze:  { DEFAULT: 'var(--color-bronze)' },
-        // 向后兼容（逐步迁移）
-        'bg-base':      '#1c1c1c',
-        'bg-elevated':  '#242424',
-        'bg-surface':   '#2e2e2e',
+        'bg-base':      'var(--bg-base)',
+        'bg-elevated':  'var(--bg-elevated)',
+        'bg-surface':   'var(--bg-surface)',
         'terminal-green':     '#3ecf8e',
         'terminal-green-dim': '#24b47e',
       },
 
-      // ── 圆角层级 (Supabase-inspired — 克制微圆角) ──────
       borderRadius: {
         'token':      '0',
         'token-sm':   '4px',
@@ -66,14 +55,12 @@ export default {
         'token-full': '9999px',
       },
 
-      // ── 阴影层级 (Supabase elevation system) ──────────────
       boxShadow: {
         'surface': '0 1px 3px rgba(0,0,0,0.06)',
         'overlay': '0 8px 24px rgba(0,0,0,0.08)',
         'modal':   '0 16px 48px rgba(0,0,0,0.12)',
       },
 
-      // ── Z-Index 尺度 ──────────────────────────────────────
       zIndex: {
         'content':   '10',
         'sticky':    '30',
@@ -83,7 +70,6 @@ export default {
         'decorator': '90',
       },
 
-      // ── 缓动函数 ──────────────────────────────────────────
       transitionTimingFunction: {
         'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
         'card':     'cubic-bezier(0.25, 0.46, 0.45, 0.94)',

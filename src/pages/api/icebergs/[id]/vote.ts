@@ -6,6 +6,7 @@ import { checkAchievements, updateDailyStreak } from '../../../../lib/achievemen
 import { awardNewVoteScore } from '../../../../lib/activityScore';
 import { logScore } from '../../../../lib/scoreLog';
 import { notifyAggregated } from '../../../../lib/notify';
+import { isRateLimited } from '../../../../lib/rateLimit';
 
 // POST /api/icebergs/:id/vote  body: { value: 1 | -1 }
 // Toggle: if same value exists → delete (un-vote); else upsert
@@ -15,6 +16,13 @@ export async function POST(event: APIContext) {
     if (!session) {
       return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
         status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (await isRateLimited('vote', session.userId, 30)) {
+      return new Response(JSON.stringify(error(ErrorCodes.RATE_LIMITED, '操作太频繁，请稍后再试')), {
+        status: 429,
         headers: { 'Content-Type': 'application/json' },
       });
     }

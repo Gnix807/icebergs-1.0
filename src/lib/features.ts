@@ -2,7 +2,12 @@ import { prisma } from './prisma';
 
 let cache: Record<string, boolean> | null = null;
 let cacheTime = 0;
-const TTL = 60_000; // 1 minute
+const TTL = 30_000; // 30 seconds
+
+export function clearFeatureCache() {
+  cache = null;
+  cacheTime = 0;
+}
 
 export async function getFeatureFlags(): Promise<Record<string, boolean>> {
   const now = Date.now();

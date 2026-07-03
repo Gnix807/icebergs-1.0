@@ -9,45 +9,45 @@ interface Setting {
 
 const SETTING_META: Record<string, { label: string; hint: string }> = {
   // 管理员席位 & 选举
-  admin_max:                    { label: '管理员席位上限',                  hint: '超过此数无法通过选举或任命新管理员（默认 3）' },
-  election_apply_days:          { label: '选举申请期（天）',                hint: '创建选举时的候选人申请期默认值' },
-  election_vote_days:           { label: '选举投票期（天）',                hint: '投票窗口默认时长' },
-  election_candidate_min_days:  { label: '候选人最低注册天数',              hint: 'EDITOR/MODERATOR 候选资格最低账龄' },
-  election_vote_min_days:       { label: '投票者最低注册天数',              hint: '低于此账龄的用户无投票资格' },
+  admin_max:                    { label: '管理员席位上限',                  hint: '超过此数无法通过选举或任命新管理员，默认 3。设满后需要有人卸任才能增补。' },
+  election_apply_days:          { label: '选举申请期（天）',                hint: '创建选举时，候选人提交申请的窗口期天数。' },
+  election_candidate_min_days:  { label: '候选人最低注册天数',              hint: 'EDITOR/MODERATOR 候选资格：注册天数必须≥此值才能参选。' },
+  election_vote_days:           { label: '选举投票期（天）',                hint: '申请截止后开放投票的天数。' },
+  election_vote_min_days:       { label: '投票者最低注册天数',              hint: '低于此账龄的用户无权投票，防止小号刷票。' },
   // 版主人数上限
-  moderator_max:           { label: '版主人数上限',                 hint: '超过此数无法任命新版主，调整后立即生效' },
+  moderator_max:           { label: '版主人数上限',                 hint: '超过此数无法任命新版主。已有版主达标则后续申请自动拒。' },
   // 晋升门槛 — CONTRIBUTOR
-  contributor_min_score:   { label: 'CONTRIBUTOR 最低质量分',       hint: '低于此分不可申请贡献者' },
-  contributor_min_icebergs:{ label: 'CONTRIBUTOR 最低冰山图数',     hint: '至少发布此数量的冰山图' },
-  contributor_min_days:    { label: 'CONTRIBUTOR 最低注册天数',     hint: '注册时间不足则无法申请' },
+  contributor_min_score:   { label: 'CONTRIBUTOR 最低质量分',       hint: '低于此分无法提交晋升申请。默认 20。' },
+  contributor_min_icebergs:{ label: 'CONTRIBUTOR 最低冰山图数',     hint: '至少发布并审核通过此数量的冰山图。默认 2。' },
+  contributor_min_days:    { label: 'CONTRIBUTOR 最低注册天数',     hint: '注册不足此天数无法申请晋升。默认 7。' },
   // 晋升门槛 — EDITOR
-  editor_min_score:        { label: 'EDITOR 最低质量分',            hint: '申请编辑所需的最低分' },
-  editor_min_days:         { label: 'EDITOR 最低注册天数',          hint: '注册时间不足则无法申请' },
+  editor_min_score:        { label: 'EDITOR 最低质量分',            hint: '申请编辑权限所需的最低质量分。默认 100。' },
+  editor_min_days:         { label: 'EDITOR 最低注册天数',          hint: '注册不足此天数无法申请 EDITOR。默认 30。' },
   // 晋升门槛 — MODERATOR
-  moderator_min_score:     { label: 'MODERATOR 最低质量分',         hint: '申请版主所需的最低分' },
-  moderator_min_days:      { label: 'MODERATOR 最低注册天数',       hint: '注册时间不足则无法申请' },
-  // RfA（编辑资格申请）
-  rfa_min_votes:           { label: 'EDITOR RfA 最低赞成票数',      hint: '原始票数（不加权），低于此数直接拒绝' },
-  rfa_admin_min_votes:     { label: 'ADMIN RfA 最低有效票数',       hint: '高于 EDITOR 门槛' },
-  rfa_pass_ratio:          { label: 'RfA 通过比例',                 hint: '加权票比例门槛，0.67 ≈ 2/3，范围 0~1' },
-  rfa_vote_days:           { label: 'RfA 投票期（天）',             hint: '申请提交后开放投票的天数' },
-  rfa_cooldown_days:       { label: 'RfA 失败冷却期（天）',         hint: '未通过后须等待此天数才能再次申请' },
-  // 持续活跃质量分
-  activity_comment_score:     { label: '发评论得分',                hint: '每发一条评论获得的质量分（受每日上限约束）' },
-  activity_comment_daily_cap: { label: '评论每日计分上限（条）',    hint: '超过此数的评论当日不再得分' },
-  activity_vote_score:        { label: '首次投票得分',              hint: '首次给某篇图投赞/踩获得的质量分（改票/撤票不计）' },
-  activity_vote_daily_cap:    { label: '投票每日计分上限（次）',    hint: '超过此数的首次投票当日不再得分' },
-  activity_like_score:        { label: '评论被点赞得分',            hint: '评论被他人点赞时给作者的得分，无每日上限' },
-  activity_weekly_threshold:  { label: '周活跃奖励触发行为数',      hint: '本周（评论+首次投票）≥ 此数时发放周奖励' },
-  activity_weekly_bonus:      { label: '周活跃奖励分值',            hint: '达到周活跃门槛后一次性发放的质量分' },
+  moderator_min_score:     { label: 'MODERATOR 最低质量分',         hint: '申请版主所需的最低质量分。默认 300。' },
+  moderator_min_days:      { label: 'MODERATOR 最低注册天数',       hint: '注册不足此天数无法申请 MODERATOR。默认 60。' },
+  // RfA（编辑/管理员资格申请）
+  rfa_min_votes:           { label: 'EDITOR RfA 最低有效票数',      hint: '原始票数（不加权），低于此数申请自动拒。默认 5。' },
+  rfa_admin_min_votes:     { label: 'ADMIN RfA 最低有效票数',       hint: '比 EDITOR 门槛更高。加权投票防止小号刷票。默认 10。' },
+  rfa_pass_ratio:          { label: 'RfA 通过比例',                 hint: '加权赞成票 /（赞成+反对）≥ 此值方可通过。0.67 即三分之二多数。' },
+  rfa_vote_days:           { label: 'RfA 投票期（天）',             hint: '申请提交后公开投票的天数。后续无新票则可提前关闭。' },
+  rfa_cooldown_days:       { label: 'RfA 失败冷却期（天）',         hint: 'RfA 被拒后需等待此天数才能再次申请。防止反复刷。' },
   // 弹劾流程
-  impeach_vote_days:  { label: '弹劾投票期（天）',   hint: '弹劾发起后开放投票的天数' },
-  impeach_pass_ratio: { label: '弹劾通过比例',       hint: '加权支持票占比门槛，0.67 ≈ 2/3，范围 0~1' },
-  impeach_min_votes:  { label: '弹劾最低支持票数',   hint: '原始票数（不加权），低于此数直接拒绝' },
+  impeach_vote_days:  { label: '弹劾投票期（天）',   hint: '弹劾发起后开放投票的天数。' },
+  impeach_pass_ratio: { label: '弹劾通过比例',       hint: '加权支持票占比≥此值即通过。0.67 即三分之二多数。默认与 RfA 一致。' },
+  impeach_min_votes:  { label: '弹劾最低有效票数',   hint: '原始票数（不加权），低于此数弹劾自动失败。' },
   // 账号管理
-  warned1_auto_clear:      { label: 'WARNED_1 自动清除天数',        hint: '从违规日起计算' },
-  warned2_appeal_days:     { label: 'WARNED_2 申诉冷却天数',        hint: '满该天数才可发起申诉' },
-  promotion_expire:        { label: '晋升申请过期天数',              hint: '超期后申请自动关闭' },
+  warned1_auto_clear:      { label: 'WARNED_1 自动清除天数',        hint: '被警告后（级别1），间隔此天数且无新违规，警告自动清除。默认 90。' },
+  warned2_appeal_days:     { label: 'WARNED_2 申诉冷却天数',        hint: '严重警告后需等待此天数方可提交申诉。' },
+  promotion_expire:        { label: '晋升申请过期天数',              hint: 'CONTRIBUTOR 晋升申请超此天数未处理则自动关闭。' },
+  // 持续活跃质量分
+  activity_comment_score:     { label: '发评论得分',                hint: '每发一条评论获得的质量分。受下方每日上限约束。默认 1。' },
+  activity_comment_daily_cap: { label: '评论每日计分上限（条）',    hint: '超过此评论数的当日不再得分。默认 5。' },
+  activity_vote_score:        { label: '首次投票得分',              hint: '首次给某篇冰山投赞/踩获得的质量分。改票/撤票不重复计。默认 1。' },
+  activity_vote_daily_cap:    { label: '投票每日计分上限（次）',    hint: '超过本次数的当日投票不再得分。默认 3。' },
+  activity_like_score:        { label: '评论被点赞得分',            hint: '他人给你的评论点赞时，你获得的质量分。无每日上限。默认 1。' },
+  activity_weekly_threshold:  { label: '周活跃奖励触发行为数',      hint: '本周（评论+投票）≥此数时，发放下方周奖励。默认 10。' },
+  activity_weekly_bonus:      { label: '周活跃奖励分值',            hint: '达到阈值后一次性发放的质量分。默认 5。' },
 };
 
 export function AdminSettings() {
@@ -100,7 +100,7 @@ export function AdminSettings() {
         // 治理参数配置 · 修改后立即生效（懒加载计算）
       </div>
 
-      {settings.map(s => {
+      {settings.filter(s => !s.key.startsWith('feature_')).map(s => {
         const meta = SETTING_META[s.key];
         return (
           <div key={s.key} className="border border-border-subtle bg-surface-2 p-4">

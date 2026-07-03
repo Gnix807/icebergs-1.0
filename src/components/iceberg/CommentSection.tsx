@@ -169,8 +169,9 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
       });
       const data = await res.json();
       if (data.success) {
+        const newComment = data.data.comment;
         setDraft('');
-        await load(sort);
+        setComments(prev => [newComment, ...prev]);
         textareaRef.current?.focus();
       } else {
         toast(data.error?.message ?? '发布失败', 'error');
@@ -193,9 +194,14 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
       });
       const data = await res.json();
       if (data.success) {
+        const newReply = data.data.comment;
         setReplyDraft('');
         setReplyingTo(null);
-        await load(sort);
+        setComments(prev => prev.map(c =>
+          c.id === parentId
+            ? { ...c, replies: [...c.replies, { ...newReply }] }
+            : c
+        ));
       } else {
         toast(data.error?.message ?? '回复失败', 'error');
       }

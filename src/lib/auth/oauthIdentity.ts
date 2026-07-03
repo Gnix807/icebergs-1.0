@@ -77,7 +77,7 @@ export async function linkOAuthIdentity(
   const now = new Date().toISOString();
   await prisma.$executeRaw`
     INSERT INTO oauth_identities (id, user_id, provider, provider_user_id, email, created_at)
-    VALUES (${crypto.randomUUID()}, ${userId}, ${provider}, ${providerUserId}, ${email}, ${now})
+    VALUES (${crypto.randomUUID()}, ${userId}, ${provider}, ${providerUserId}, ${email}, ${now}::TIMESTAMPTZ)
   `;
   return 'linked';
 }

@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
 import { renderMarkdownWithMath } from '../../lib/markdown';
+import { getCachedMarkdown } from '../../lib/markdownCache';
 import { SocialBar } from '../../components/iceberg/SocialBar';
 import { ExportButton } from '../../components/iceberg/ExportButton';
 import { CommentSection } from '../../components/iceberg/CommentSection';
@@ -49,14 +50,14 @@ try {
 
     if (iceberg) {
       if (iceberg.status === 'PUBLISHED') {
-        // 更新浏览计数 + 写入浏览日志（并发，不阻塞渲染）
-        await Promise.all([
+        // 更新浏览计数 + 写入浏览日志（同一事务，确保一致性）
+        await prisma.$transaction([
           prisma.iceberg.update({
             where: { id: iceberg.id },
             data: { viewCount: { increment: 1 } },
           }),
-          prisma.viewLog.create({ data: { icebergId: iceberg.id } }).catch(() => {}),
-        ]);
+          prisma.viewLog.create({ data: { icebergId: iceberg.id } }),
+        ]).catch(() => {});
 
         // 追踪首次访问该冰山图（visitedIcebergCount）
         if (session) {
@@ -90,7 +91,7 @@ try {
       for (const tier of iceberg.tiers) {
         for (const item of tier.items) {
           if (item.desc) {
-            (item as any)._descHtml = renderMarkdownWithMath(item.desc);
+            (item as any)._descHtml = getCachedMarkdown(item.id, item.desc, item.updatedAt);
           }
           // Parse labels JSON array
           try {
@@ -112,14 +113,40 @@ try {
 }
 
 const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
-const tierBg     = ['#052e16', '#172554', '#451a03', '#450a0a', '#4a044e', '#2e1065'];
+
+// 深度色带：不循环，每层颜色独一无二，从浅到深连续渐变
+function depthColor(index: number, total: number): string {
+  if (total <= 1) return '#3b82f6';
+  const t = index / Math.max(total - 1, 1);
+  const stops = [
+    { pos: 0.00, r: 0x22, g: 0xc5, b: 0x5e },  // green
+    { pos: 0.20, r: 0x34, g: 0xd3, b: 0x99 },  // teal
+    { pos: 0.40, r: 0x3b, g: 0x82, b: 0xf6 },  // blue
+    { pos: 0.60, r: 0xf5, g: 0x9e, b: 0x0b },  // amber
+    { pos: 0.80, r: 0xef, g: 0x44, b: 0x44 },  // red
+    { pos: 1.00, r: 0x8b, g: 0x5c, b: 0xf6 },  // purple
+  ];
+  // 插值
+  let lo = stops[0], hi = stops[stops.length - 1];
+  for (let i = 0; i < stops.length - 1; i++) {
+    if (t >= stops[i].pos && t <= stops[i + 1].pos) {
+      lo = stops[i]; hi = stops[i + 1]; break;
+    }
+  }
+  const localT = (t - lo.pos) / (hi.pos - lo.pos);
+  const r = Math.round(lo.r + (hi.r - lo.r) * localT);
+  const g = Math.round(lo.g + (hi.g - lo.g) * localT);
+  const b = Math.round(lo.b + (hi.b - lo.b) * localT);
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
 const statusLabelMap: Record<string, string> = {
-  DRAFT: 'DRAFT',
-  PENDING_REVIEW: 'PENDING_REVIEW',
-  PUBLISHED: 'PUBLISHED',
-  REJECTED: 'REJECTED',
-  ARCHIVED: 'ARCHIVED',
+  DRAFT: '草稿',
+  PENDING_REVIEW: '待审核',
+  PUBLISHED: '已发布',
+  REJECTED: '已退回',
+  ARCHIVED: '已归档',
 };
+
 
 // 展平所有词条，用于抽屉导航
 interface FlatItem {
@@ -148,6 +175,9 @@ const allItemsFlat: FlatItem[] = (iceberg?.tiers ?? []).flatMap((tier: any, ti: 
   }))
 );
 
+// 阅读时间预估（按平均每分钟 12 个词条）
+const estimatedMinutes = allItemsFlat.length > 0 ? Math.max(1, Math.ceil(allItemsFlat.length / 12)) : 0;
+
 // 每层词条的全局起始 index（用于按钮的 data-index）
 let globalIdx = 0;
 
@@ -171,11 +201,48 @@ const PREDEFINED_LABEL_COLORS: Record<string, string> = {
   '猜测':   '#6b7280',
   '未证实': '#3b82f6',
 };
+
+// 标签 emoji 图标映射
+const LABEL_EMOJI: Record<string, string> = {
+  'NSFW': '🔞', '争议': '⚠️', '猜测': '💭', '未证实': '❓',
+  '游戏': '🎮', '历史': '📜', '科学': '🧪', '都市传说': '🌃',
+  '阴谋论': '🕵️', '网络文化': '💻', '动漫': '🍧', '动物': '🐾',
+  '犯罪': '🚨', '超自然': '👻', 'UFO': '🛸', '宗教': '✝️',
+  '民俗': '🏮', '军事': '🪖', '失踪': '🫥', '船舶': '🚢',
+  '特殊地点': '📍', '诡异': '😱', '灵异': '🔮', '志怪': '👹',
+  '自然': '🌿', '建筑': '🏢', '交通': '🛣️', '艺术': '🎨',
+  '心理': '🧠', '校园': '🏫', '医学': '🏥', '考古': '🏺',
+  '技术': '⚙️', '媒体': '📺', '广播': '📢', '文学': '📕',
+  '灾难': '💥', '学术': '📚', '音乐': '🎵',
+};
+function labelEmoji(lbl: string): string { return LABEL_EMOJI[lbl] || ''; }
 const CUSTOM_PALETTE = ['#a78bfa', '#34d399', '#fb923c', '#f472b6', '#38bdf8', '#a3e635'];
 const labelColorMap: Record<string, string> = {};
 let _ci = 0;
 for (const lbl of allLabels) {
   labelColorMap[lbl] = PREDEFINED_LABEL_COLORS[lbl] ?? CUSTOM_PALETTE[_ci++ % CUSTOM_PALETTE.length];
+}
+
+// ── 相关冰山图 ──────────────────────────────────────────
+let relatedIcebergs: any[] = [];
+if (iceberg?.status === 'PUBLISHED') {
+  try {
+    // 同主题
+    const sameTopic = await prisma.iceberg.findMany({
+      where: { status: 'PUBLISHED', topic: iceberg.topic, id: { not: iceberg.id } },
+      select: { id: true, slug: true, title: true, viewCount: true },
+      orderBy: { viewCount: 'desc' },
+      take: 3,
+    });
+    // 随机
+    const ids = sameTopic.map(i => i.id).concat(iceberg.id);
+    const random = await prisma.iceberg.findMany({
+      where: { status: 'PUBLISHED', id: { notIn: ids } },
+      select: { id: true, slug: true, title: true, viewCount: true },
+      take: 3,
+    });
+    relatedIcebergs = [...sameTopic, ...random];
+  } catch {}
 }
 ---
 
@@ -221,6 +288,7 @@ for (const lbl of allLabels) {
               <span class="text-text-mid">
                 <span class="text-text-body">{iceberg.tiers.length}</span> 层 ·
                 <span class="text-text-body ml-1">{allItemsFlat.length}</span> 词条
+                <span class="ml-1 text-text-lo">(~{estimatedMinutes} 分钟)</span>
               </span>
               <span class="text-text-mid">
                 <span class="text-text-body">{iceberg.viewCount}</span> 次探索
@@ -247,34 +315,6 @@ for (const lbl of allLabels) {
             )}
           </div>
         </header>
-
-        {/* ── 阅读工具：目录 / 进度 / 续读 ───────────────────── */}
-        {iceberg.tiers.length > 0 && (
-          <section id="reading-tools" class="mb-6 border border-border-subtle bg-surface-1 p-4 space-y-3">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-              <div class="min-w-0">
-                <div class="text-[10px] font-mono text-text-mid tracking-widest mb-1">目录</div>
-                <div class="flex flex-wrap gap-1.5">
-                  {iceberg.tiers.map((tier: any, ti: number) => (
-                    <a
-                      href={`#tier-${ti}`}
-                      data-tier-jump={String(ti)}
-                      class="toc-link text-[10px] font-mono px-2 py-1 border border-border text-text-body hover:border-brand hover:text-brand transition-colors"
-                    >
-                      {tier.name}
-                    </a>
-                  ))}
-                </div>
-              </div>
-              <button
-                id="resume-reading-btn"
-                class="hidden text-[10px] font-mono px-2 py-1 border border-border text-text-body hover:border-brand hover:text-brand transition-colors"
-              >
-                回到上次阅读位置
-              </button>
-            </div>
-          </section>
-        )}
 
         {/* ── Filter Bar ──────────────────────────────────── */}
         {(iceberg.tiers.length > 1 || allLabels.length > 0) && (
@@ -307,9 +347,24 @@ for (const lbl of allLabels) {
                     class="label-filter-btn text-[10px] font-mono px-2 py-1 border transition-all"
                     style={`--lc: ${labelColorMap[label]}`}
                   >
-                    {label}
+                    {labelEmoji(label) && <span class="mr-0.5">{labelEmoji(label)}</span>}{label}
                   </button>
                 ))}
+              </div>
+            )}
+            {/* Search within iceberg */}
+            {allItemsFlat.length > 5 && (
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-mono text-text-mid tracking-widest w-8 shrink-0">搜索</span>
+                <input
+                  id="item-search-input"
+                  type="text"
+                  placeholder="搜索词条标题或描述…"
+                  class="text-[10px] font-mono px-2.5 py-1.5 border border-border bg-surface-2 text-text-body
+                         placeholder:text-text-lo focus:border-brand focus:outline-none flex-1 max-w-xs
+                         transition-colors"
+                />
+                <span id="search-count" class="text-[10px] font-mono text-text-mid hidden"></span>
               </div>
             )}
             <div class="flex items-center justify-between min-h-[1rem]">
@@ -322,40 +377,31 @@ for (const lbl of allLabels) {
         )}
 
         {/* ── Tier Sections ──────────────────────────────── */}
-        <div id="iceberg-export-content" class="space-y-4">
+        <div id="iceberg-export-content" class="space-y-3">
           {iceberg.tiers.map((tier: any, ti: number) => {
             const startIdx = globalIdx;
             globalIdx += tier.items.length;
-            const color = tierColors[ti % 6];
-            const bg = tierBg[ti % 6];
+            const color = depthColor(ti, iceberg.tiers.length);
+
             return (
-              <div id={`tier-${ti}`} class="reveal tier-section" data-tier-idx={String(ti)}>
-                {/* Tier header */}
-                <div
-                  class="tier-header border-l-4 px-4 py-2.5"
-                  style={`border-color: ${color}; background-color: ${bg}22`}
-                >
+              <div
+                id={`tier-${ti}`}
+                class="reveal tier-section"
+                data-tier-idx={String(ti)}
+                style={{ borderLeft: `3px solid ${color}`, background: `${color}0d` }}
+              >
+                <div class="px-4 py-2.5">
                   <div class="flex items-center gap-3">
-                    <h3 class="font-mono text-sm font-semibold" style={`color: ${color}`}>
-                      {tier.name}
-                    </h3>
-                    <span class="tier-count font-mono text-[10px] text-text-mid border border-border px-1.5 py-0.5">
-                      {tier.items.length} 词条
-                    </span>
+                    <h3 class="font-mono text-sm font-semibold" style={{ color }}>{tier.name}</h3>
+                    <span class="text-[10px] font-mono text-text-lo">{tier.items.length}</span>
                   </div>
                   {tier.desc && (
-                    <p class="mt-0.5 font-mono text-[11px] text-text-body">{tier.desc}</p>
+                    <p class="mt-0.5 font-mono text-[11px] text-text-body max-w-2xl">{tier.desc}</p>
                   )}
                 </div>
 
-                {/* Items as chips */}
-                <div
-                  class="tier-body border-l-4 border-b border-r border-border-subtle p-4"
-                  style={`border-left-color: ${color}44`}
-                >
-                  {tier.items.length === 0 ? (
-                    <p class="text-xs text-text-mid font-mono">暂无词条</p>
-                  ) : (
+                <div class="px-4 pb-3">
+                  {tier.items.length > 0 && (
                     <div class="flex flex-wrap gap-2">
                       {tier.items.map((item: any, ii: number) => {
                         const idx = startIdx + ii;
@@ -374,8 +420,7 @@ for (const lbl of allLabels) {
                             {(item as any)._labels?.length > 0 && (
                               <span class="flex items-center gap-0.5 shrink-0 ml-0.5">
                                 {(item as any)._labels.map((lbl: string) => (
-                                  <span
-                                    data-label={lbl}
+                                  <span data-label={lbl}
                                     class="chip-label block w-1.5 h-1.5 rounded-full transition-all"
                                     style={`--lc: ${labelColorMap[lbl] ?? color}; background-color: ${labelColorMap[lbl] ?? color}`}
                                     title={lbl}
@@ -394,8 +439,30 @@ for (const lbl of allLabels) {
           })}
         </div>
 
-        {/* ── Footer Actions ─────────────────────────────── */}
-        <div class="mt-10 flex flex-wrap justify-between items-center gap-4 border-t border-border-subtle pt-6">
+        {/* ── 相关推荐 + 页脚操作 ─────────────────────────── */}
+        {relatedIcebergs.length > 0 && (
+          <section class="mt-10 border-t border-border-subtle pt-6">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xs font-mono text-text-mid tracking-widest">相关冰山图</h3>
+              <a href="/iceberg/list" class="text-[10px] font-mono text-text-lo hover:text-brand transition-colors">
+                浏览全部 →
+              </a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {relatedIcebergs.map((r: any) => (
+                <a
+                  href={`/iceberg/${r.slug}`}
+                  class="block p-3 border border-border hover:border-brand bg-surface-2 transition-all hover:-translate-y-0.5"
+                >
+                  <div class="font-mono text-xs text-text-body truncate">{r.title}</div>
+                  <div class="font-mono text-[10px] text-text-lo mt-1">{r.viewCount} 次探索</div>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <div class="mt-8 flex flex-wrap justify-between items-center gap-4 border-t border-border-subtle pt-6">
           <a
             href={`/feedback?id=${iceberg.id}&title=${encodeURIComponent(iceberg.title)}`}
             class="px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-danger hover:text-danger transition-colors"
@@ -407,6 +474,12 @@ for (const lbl of allLabels) {
             class="px-5 py-2 border border-border font-mono text-sm text-text-body hover:border-brand hover:text-brand transition-colors"
           >
             ← 返回列表
+          </a>
+          <a
+            href="/iceberg/random"
+            class="px-5 py-2 border border-border font-mono text-sm text-text-body hover:border-brand hover:text-brand transition-colors"
+          >
+            随机下一篇
           </a>
         </div>
 
@@ -424,98 +497,71 @@ for (const lbl of allLabels) {
     )}
   </main>
 
-  {/* ── Drawer Overlay ────────────────────────────────────── */}
+  {/* ── Modal Overlay ─────────────────────────────────────── */}
   <div
-    id="drawer-overlay"
-    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 opacity-0 pointer-events-none transition-opacity duration-300"
-    onclick="closeDrawer()"
+    id="modal-overlay"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 opacity-0 pointer-events-none transition-opacity duration-200"
+    onclick="closeModal()"
   ></div>
 
-  {/* ── Drawer Panel ──────────────────────────────────────── */}
+  {/* ── Modal Popup ────────────────────────────────────────── */}
   <div
-    id="drawer"
-    class="fixed top-0 right-0 h-full w-full md:w-[640px] bg-surface-1 border-l border-border-subtle
-           shadow-[-20px_0_60px_rgba(0,0,0,0.7)] z-50
-           transform translate-x-full transition-transform duration-300 flex flex-col"
+    id="modal-popup"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-200"
   >
-    {/* Drawer Header — sticky */}
-    <div class="sticky top-0 z-10 flex items-start justify-between px-6 py-4 border-b border-border-subtle bg-surface-1 shrink-0">
-      <div class="flex-1 min-w-0 mr-4">
-        <div id="drawer-tier" class="text-[10px] font-mono mb-1.5 tracking-widest"></div>
-        <h2 id="drawer-title" class="text-lg font-mono text-text-hi leading-snug"></h2>
+    <div id="modal-card" class="relative w-full max-w-lg max-h-[80vh] bg-surface-1 border border-border shadow-2xl flex flex-col scale-95 transition-transform duration-200">
+      {/* Header */}
+      <div class="flex items-start justify-between px-5 py-3.5 border-b border-border-subtle shrink-0">
+        <div class="flex-1 min-w-0 mr-3">
+          <div id="modal-tier" class="text-[10px] font-mono mb-1 tracking-widest"></div>
+          <h2 id="modal-title" class="text-base font-mono text-text-hi leading-snug"></h2>
+        </div>
+        <button onclick="closeModal()"
+          class="shrink-0 text-text-body hover:text-text-hi border border-border-subtle hover:border-border px-2 py-1 text-xs font-mono transition-all">
+          ✕
+        </button>
       </div>
-      <button
-        onclick="closeDrawer()"
-        class="shrink-0 mt-0.5 text-text-body hover:text-text-hi border border-border-subtle hover:border-border
-               px-2.5 py-1.5 text-xs font-mono transition-all"
-      >
-        ✕
-      </button>
-    </div>
 
-    {/* Navigation bar */}
-    <div id="drawer-nav" class="flex items-center justify-between px-6 py-2.5 border-b border-border-subtle bg-surface-1 shrink-0">
-      <button
-        id="drawer-prev"
-        onclick="navigateDrawer(-1)"
-        class="font-mono text-xs text-text-body hover:text-brand disabled:opacity-30 disabled:cursor-not-allowed
-               border border-border-subtle hover:border-brand px-2.5 py-1 transition-all"
-      >
-        ← 上一个
-      </button>
-      <span id="drawer-count" class="font-mono text-[10px] text-text-mid tracking-widest"></span>
-      <button
-        id="drawer-next"
-        onclick="navigateDrawer(1)"
-        class="font-mono text-xs text-text-body hover:text-brand disabled:opacity-30 disabled:cursor-not-allowed
-               border border-border-subtle hover:border-brand px-2.5 py-1 transition-all"
-      >
-        下一个 →
-      </button>
-    </div>
+      {/* Navigation — 仅底栏，顶栏用标题+计数 */}
+      <div class="flex items-center justify-between px-5 py-2 border-b border-border-subtle shrink-0">
+        <span id="modal-count" class="font-mono text-[10px] text-text-mid tracking-widest"></span>
+        <span class="font-mono text-[9px] text-text-lo">← → 切换 · Esc 关闭</span>
+      </div>
 
-    {/* Labels */}
-    <div id="drawer-labels-row" class="px-6 py-2.5 border-b border-border-subtle shrink-0 hidden">
-      <div id="drawer-labels" class="flex flex-wrap gap-1.5"></div>
-    </div>
+      {/* Labels */}
+      <div id="modal-labels-row" class="px-5 py-2 border-b border-border-subtle shrink-0 hidden">
+        <div id="modal-labels" class="flex flex-wrap gap-1.5"></div>
+      </div>
 
-    {/* Content — crossfade on item switch */}
-    <div id="drawer-body" class="flex-1 overflow-y-auto p-6">
-      <div id="drawer-content" class="markdown-content text-sm text-text-body leading-relaxed transition-opacity duration-150"></div>
-    </div>
+      {/* Body */}
+      <div id="modal-body" class="flex-1 overflow-y-auto p-5">
+        <div id="modal-content" class="markdown-content text-sm text-text-body leading-relaxed"></div>
+      </div>
 
-    {/* Bottom sticky nav bar */}
-    <div class="sticky bottom-0 z-10 px-6 py-2.5 border-t border-border-subtle bg-surface-1 shrink-0 flex items-center justify-between">
-      <button
-        id="drawer-bottom-prev"
-        onclick="navigateDrawer(-1)"
-        class="font-mono text-xs text-text-body hover:text-brand disabled:opacity-30 disabled:cursor-not-allowed
-               border border-border-subtle hover:border-brand px-2.5 py-1 transition-all"
-      >
-        ← 上一个
-      </button>
-      <span id="drawer-bottom-count" class="font-mono text-[10px] text-text-mid tracking-widest tabular-nums"></span>
-      <button
-        id="drawer-bottom-next"
-        onclick="navigateDrawer(1)"
-        class="font-mono text-xs text-text-body hover:text-brand disabled:opacity-30 disabled:cursor-not-allowed
-               border border-border-subtle hover:border-brand px-2.5 py-1 transition-all"
-      >
-        下一个 →
-      </button>
-      <span class="font-mono text-[9px] text-text-lo ml-2 hidden md:inline">←→ 切换 · Esc 关闭</span>
-    </div>
-
-    {/* Footer */}
-    <div class="px-6 py-3 border-t border-border-subtle shrink-0 bg-surface-1 flex items-center justify-between">
-      <span class="text-[10px] font-mono text-text-lo truncate">{iceberg?.title}</span>
-      <a
-        id="drawer-feedback-link"
-        href="#"
-        class="text-[10px] font-mono text-text-mid hover:text-danger transition-colors whitespace-nowrap ml-4"
-      >
-        ! 反馈
-      </a>
+      {/* Bottom bar — 切换+功能 */}
+      <div class="px-5 py-2.5 border-t border-border-subtle shrink-0 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <button id="modal-bottom-prev" onclick="navigateModal(-1)"
+            class="font-mono text-xs text-text-body hover:text-brand disabled:opacity-30 disabled:cursor-not-allowed border border-border-subtle hover:border-brand px-2 py-0.5 transition-all">
+            ←
+          </button>
+          <span id="modal-bottom-count" class="font-mono text-[10px] text-text-mid tabular-nums"></span>
+          <button id="modal-bottom-next" onclick="navigateModal(1)"
+            class="font-mono text-xs text-text-body hover:text-brand disabled:opacity-30 disabled:cursor-not-allowed border border-border-subtle hover:border-brand px-2 py-0.5 transition-all">
+            →
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="modal-copy-link" title="复制本词条链接"
+            class="text-[10px] font-mono text-text-mid hover:text-brand border border-border-subtle px-2 py-0.5 hover:border-brand transition-all">
+            📋 复制链接
+          </button>
+          <a id="modal-feedback-link" href="#"
+            class="text-[10px] font-mono text-text-mid hover:text-danger transition-colors whitespace-nowrap">
+            ! 反馈
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </Layout>
@@ -547,20 +593,87 @@ for (const lbl of allLabels) {
       .catch(function () {});
   }
 
-  const overlay      = document.getElementById('drawer-overlay');
-  const drawer       = document.getElementById('drawer');
-  const drawerTitle  = document.getElementById('drawer-title');
-  const drawerTier   = document.getElementById('drawer-tier');
-  const drawerCount  = document.getElementById('drawer-count');
-  const drawerPrev   = document.getElementById('drawer-prev');
-  const drawerNext   = document.getElementById('drawer-next');
-  const drawerContent    = document.getElementById('drawer-content');
-  const drawerLabelsRow  = document.getElementById('drawer-labels-row');
-  const drawerLabels     = document.getElementById('drawer-labels');
-  const drawerFeedback   = document.getElementById('drawer-feedback-link');
+  const overlay      = document.getElementById('modal-overlay');
+  const popup        = document.getElementById('modal-popup');
+  const modalCard    = document.getElementById('modal-card');
+  const modalTitle   = document.getElementById('modal-title');
+  const modalTier    = document.getElementById('modal-tier');
+  const modalCount   = document.getElementById('modal-count');
+  const modalContent = document.getElementById('modal-content');
+  const modalLabelsRow = document.getElementById('modal-labels-row');
+  const modalLabels  = document.getElementById('modal-labels');
+  const modalFeedback = document.getElementById('modal-feedback-link');
+  const modalBody    = document.getElementById('modal-body');
   const progressText = document.getElementById('read-progress-text');
   const progressFill = document.getElementById('read-progress-fill');
-  const resumeBtn = document.getElementById('resume-reading-btn');
+  const searchInput = document.getElementById('item-search-input');
+  const searchCount = document.getElementById('search-count');
+
+  // ── URL helpers ──────────────────────────────────────────
+  function updateURL(params) {
+    var url = new URL(window.location.href);
+    if (params.item) url.searchParams.set('item', params.item);
+    else url.searchParams.delete('item');
+    if (params.tier !== undefined) url.searchParams.set('tier', params.tier);
+    else url.searchParams.delete('tier');
+    if (params.labels) url.searchParams.set('label', params.labels);
+    else url.searchParams.delete('label');
+    if (url.href !== window.location.href) {
+      history.replaceState(null, '', url);
+    }
+  }
+
+  function getURLParams() {
+    var p = new URLSearchParams(window.location.search);
+    return {
+      item: p.get('item'),
+      tier: p.get('tier'),
+      labels: p.get('label') ? p.get('label').split(',') : [],
+    };
+  }
+
+  // ── Search within iceberg ────────────────────────────────
+  var searchTerm = '';
+  function applySearch() {
+    var term = (searchInput ? searchInput.value.toLowerCase().trim() : '') || '';
+    searchTerm = term;
+    var anyMatch = false;
+    document.querySelectorAll('.item-chip').forEach(function (chip) {
+      if (!term) {
+        // 清除搜索过滤 (但仍受 tier/label 过滤控制，由 applyFilters 管理)
+        chip.dataset.searchMatch = '1';
+        anyMatch = true;
+        return;
+      }
+      var title = (chip.querySelector('.chip-title')?.textContent || '').toLowerCase();
+      var itemId = chip.dataset.id;
+      var item = ITEMS.find(function (it) { return it.id === itemId; });
+      var desc = item ? (item.title + ' ' + (item.descHtml || '')).toLowerCase() : title;
+      var match = title.includes(term) || desc.includes(term);
+      chip.dataset.searchMatch = match ? '1' : '0';
+      if (match) anyMatch = true;
+    });
+
+    if (searchCount) {
+      if (term) {
+        var count = document.querySelectorAll('.item-chip[data-search-match="1"]').length;
+        searchCount.textContent = count + ' 条匹配';
+        searchCount.classList.remove('hidden');
+        if (!anyMatch && term.length > 0) searchCount.textContent = '无结果';
+      } else {
+        searchCount.classList.add('hidden');
+      }
+    }
+    applyFilters();
+  }
+
+  if (searchInput) {
+    var searchTimer = null;
+    searchInput.addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(applySearch, 200);
+    });
+  }
 
   function saveReaderState() {
     try {
@@ -584,19 +697,6 @@ for (const lbl of allLabels) {
     var progress = Math.max(0, Math.min(100, Math.round((passed / sections.length) * 100)));
     if (progressText) progressText.textContent = progress + '%';
     if (progressFill) progressFill.style.width = progress + '%';
-
-    var activeTierIndex = -1;
-    for (var i = 0; i < sections.length; i++) {
-      var rect = sections[i].getBoundingClientRect();
-      if (rect.top <= 120 && rect.bottom > 140) {
-        activeTierIndex = i;
-        break;
-      }
-    }
-    document.querySelectorAll('[data-tier-jump]').forEach(function (el) {
-      var isActive = parseInt(el.getAttribute('data-tier-jump') || '-1', 10) === activeTierIndex;
-      el.classList.toggle('toc-link-active', isActive);
-    });
   }
 
   function restoreReaderState() {
@@ -614,98 +714,100 @@ for (const lbl of allLabels) {
     resumeBtn.addEventListener('click', function () {
       window.scrollTo({ top: saved.scrollY, behavior: 'smooth' });
       if (typeof saved.currentIndex === 'number' && saved.currentIndex >= 0 && saved.currentIndex < ITEMS.length) {
-        openDrawer(saved.currentIndex);
+        openModal(saved.currentIndex);
         highlightChip(saved.currentIndex);
       }
     });
   }
 
-  function renderDrawer(idx) {
+  function renderModal(idx) {
     const item = ITEMS[idx];
     if (!item) return;
 
-    // 保存当前词的滚动位置
+    // 保存当前滚动位置
     if (currentIndex >= 0 && currentIndex < ITEMS.length) {
-      var bodyEl = document.getElementById('drawer-body');
-      if (bodyEl) scrollPositions[ITEMS[currentIndex].id] = bodyEl.scrollTop;
+      if (modalBody) scrollPositions[ITEMS[currentIndex].id] = modalBody.scrollTop;
     }
 
     currentIndex = idx;
 
     // Header
-    drawerTier.textContent  = item.tierName;
-    drawerTier.style.color  = item.tierColor;
-    drawerTitle.textContent = item.title;
-    drawerTitle.style.color = item.tierColor;
+    modalTier.textContent  = item.tierName;
+    modalTier.style.color  = item.tierColor;
+    modalTitle.textContent = item.title;
+    modalTitle.style.color = item.tierColor;
 
-    // Navigation (top + bottom)
-    var countText = (idx + 1) + ' / ' + ITEMS.length;
-    drawerCount.textContent = countText;
-    drawerPrev.disabled = idx === 0;
-    drawerNext.disabled = idx === ITEMS.length - 1;
-    var bottomCount = document.getElementById('drawer-bottom-count');
-    if (bottomCount) bottomCount.textContent = countText;
-    var bottomPrev = document.getElementById('drawer-bottom-prev');
-    var bottomNext = document.getElementById('drawer-bottom-next');
-    if (bottomPrev) { bottomPrev.disabled = idx === 0; bottomPrev.style.display = ''; }
-    if (bottomNext) { bottomNext.disabled = idx === ITEMS.length - 1; bottomNext.style.display = ''; }
+    // Navigation (top counter + bottom counter)
+    var cnt = (idx + 1) + ' / ' + ITEMS.length;
+    modalCount.textContent = cnt;
+    var el = document.getElementById('modal-bottom-count');
+    if (el) el.textContent = cnt;
+    el = document.getElementById('modal-bottom-prev');
+    if (el) el.disabled = idx === 0;
+    el = document.getElementById('modal-bottom-next');
+    if (el) el.disabled = idx === ITEMS.length - 1;
 
     // Labels
     if (item.labels && item.labels.length > 0) {
-      drawerLabels.textContent = '';
+      modalLabels.textContent = '';
       item.labels.forEach(function (label) {
         var tag = document.createElement('span');
         tag.className = 'text-[10px] font-mono px-2 py-0.5 border';
         tag.style.color = item.tierColor;
         tag.style.borderColor = item.tierColor + '44';
         tag.textContent = label;
-        drawerLabels.appendChild(tag);
+        modalLabels.appendChild(tag);
       });
-      drawerLabelsRow.classList.remove('hidden');
+      modalLabelsRow.classList.remove('hidden');
     } else {
-      drawerLabelsRow.classList.add('hidden');
+      modalLabelsRow.classList.add('hidden');
     }
 
-    // Content — crossfade
-    var bodyEl = document.getElementById('drawer-body');
-    drawerContent.style.opacity = '0';
+    // Content — 先显示加载动画，再渲染实际内容
+    var loader = '<div class="modal-loader"><div class="modal-spinner"></div><p class="modal-loader-text">加载中...</p></div>';
+    modalContent.innerHTML = loader;
+    modalContent.style.opacity = '1';
     setTimeout(function () {
-      drawerContent.innerHTML = item.descHtml || '<p class="text-text-lo">暂无描述</p>';
-      drawerContent.style.opacity = '1';
-      // 恢复滚动位置
-      if (bodyEl) bodyEl.scrollTop = scrollPositions[item.id] || 0;
-    }, 80);
+      modalContent.innerHTML = item.descHtml || '<p class="text-text-lo">暂无描述</p>';
+      if (modalBody) modalBody.scrollTop = scrollPositions[item.id] || 0;
+    }, 250);
 
     // Feedback link
-    if (drawerFeedback) {
-      drawerFeedback.href = `/feedback?id=${icebergId}&item=${encodeURIComponent(item.title)}`;
+    if (modalFeedback) {
+      modalFeedback.href = `/feedback?id=${icebergId}&item=${encodeURIComponent(item.title)}`;
     }
   }
 
-  function openDrawer(idx) {
-    renderDrawer(idx);
+  function openModal(idx) {
+    renderModal(idx);
     overlay.classList.remove('opacity-0', 'pointer-events-none');
     overlay.classList.add('opacity-100');
-    drawer.classList.remove('translate-x-full');
+    popup.classList.remove('opacity-0', 'pointer-events-none');
+    popup.classList.add('opacity-100');
+    modalCard.classList.remove('scale-95');
+    modalCard.classList.add('scale-100');
     document.body.style.overflow = 'hidden';
     saveReaderState();
+    updateURL({ item: ITEMS[idx].id });
   }
 
-  window.closeDrawer = function () {
-    // 保存当前滚动位置
+  window.closeModal = function () {
     if (currentIndex >= 0 && currentIndex < ITEMS.length) {
-      var bodyEl = document.getElementById('drawer-body');
-      if (bodyEl) scrollPositions[ITEMS[currentIndex].id] = bodyEl.scrollTop;
+      if (modalBody) scrollPositions[ITEMS[currentIndex].id] = modalBody.scrollTop;
     }
     saveReaderState();
     overlay.classList.add('opacity-0', 'pointer-events-none');
     overlay.classList.remove('opacity-100');
-    drawer.classList.add('translate-x-full');
+    popup.classList.add('opacity-0', 'pointer-events-none');
+    popup.classList.remove('opacity-100');
+    modalCard.classList.add('scale-95');
+    modalCard.classList.remove('scale-100');
     document.body.style.overflow = '';
     currentIndex = -1;
+    updateURL({ item: null });
   };
 
-  window.navigateDrawer = function (dir) {
+  window.navigateModal = function (dir) {
     let next = currentIndex + dir;
     while (next >= 0 && next < ITEMS.length) {
       const chip = document.querySelector(`.item-chip[data-index="${next}"]`);
@@ -716,10 +818,11 @@ for (const lbl of allLabels) {
       next += dir;
     }
     if (next < 0 || next >= ITEMS.length) return;
-    renderDrawer(next);
+    renderModal(next);
     highlightChip(next);
     reportRead(ITEMS[next]);
     saveReaderState();
+    updateURL({ item: ITEMS[next].id });
   };
 
   function highlightChip(idx) {
@@ -737,7 +840,7 @@ for (const lbl of allLabels) {
   document.querySelectorAll('.item-chip').forEach((btn) => {
     btn.addEventListener('click', () => {
       const idx = parseInt(btn.dataset.index, 10);
-      openDrawer(idx);
+      openModal(idx);
       highlightChip(idx);
       reportRead(ITEMS[idx]);
       saveReaderState();
@@ -746,15 +849,15 @@ for (const lbl of allLabels) {
 
   // Keyboard navigation
   document.addEventListener('keydown', (e) => {
-    if (drawer.classList.contains('translate-x-full')) return;
-    if (e.key === 'Escape') { window.closeDrawer(); return; }
+    if (popup.classList.contains('opacity-0')) return;
+    if (e.key === 'Escape') { window.closeModal(); return; }
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       e.preventDefault();
-      window.navigateDrawer(1);
+      window.navigateModal(1);
     }
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       e.preventDefault();
-      window.navigateDrawer(-1);
+      window.navigateModal(-1);
     }
   });
 
@@ -778,8 +881,10 @@ for (const lbl of allLabels) {
         try { labels = JSON.parse(chip.dataset.labels || '[]'); } catch (_) {}
         var labelMatch = activeLabels.size === 0 ||
           Array.from(activeLabels).some(function (l) { return labels.indexOf(l) !== -1; });
-        chip.style.display = labelMatch ? '' : 'none';
-        if (labelMatch) { visibleCount++; tierVisible++; }
+        var searchMatch = chip.dataset.searchMatch !== '0';
+        var visible = labelMatch && searchMatch;
+        chip.style.display = visible ? '' : 'none';
+        if (visible) { visibleCount++; tierVisible++; }
       });
 
       var countEl = section.querySelector('.tier-count');
@@ -836,10 +941,15 @@ for (const lbl of allLabels) {
       if (activeChip) {
         var sec = activeChip.closest('.tier-section');
         if (activeChip.style.display === 'none' || (sec && sec.style.display === 'none')) {
-          window.closeDrawer();
+          window.closeModal();
         }
       }
     }
+
+    // Sync URL
+    var urlTier = activeTier !== null ? String(activeTier) : null;
+    var urlLabels = activeLabels.size > 0 ? Array.from(activeLabels).sort().join(',') : null;
+    updateURL({ tier: urlTier, labels: urlLabels });
   }
 
   // Bind tier filter buttons
@@ -879,9 +989,38 @@ for (const lbl of allLabels) {
     });
   }
 
+  // ── URL state initialization ───────────────────────────
+  var initParams = getURLParams();
+  if (initParams.tier !== null && initParams.tier !== 'null') {
+    activeTier = parseInt(initParams.tier, 10);
+    if (isNaN(activeTier)) activeTier = null;
+  }
+  if (initParams.labels && initParams.labels.length > 0) {
+    initParams.labels.forEach(function (l) { activeLabels.add(l); });
+  }
+
   // Initialise — sets "全部" as active
   applyFilters();
-  restoreReaderState();
+  setTimeout(function () {
+    // 如果 URL 中有 item 参数，自动打开对应词条
+    if (initParams.item) {
+      var idx = -1;
+      for (var i = 0; i < ITEMS.length; i++) {
+        if (ITEMS[i].id === initParams.item) { idx = i; break; }
+      }
+      if (idx >= 0) {
+        // 确保该词条可见（清除会隐藏它的过滤条件）
+        var chip = document.querySelector('.item-chip[data-index="' + idx + '"]');
+        if (chip && chip.style.display === 'none') {
+          activeTier = null;
+          activeLabels.clear();
+          applyFilters();
+        }
+        openModal(idx);
+        highlightChip(idx);
+      }
+    }
+  }, 150);
   updateReadingProgress();
   window.addEventListener('scroll', function () {
     updateReadingProgress();
@@ -889,24 +1028,21 @@ for (const lbl of allLabels) {
     scrollSaveTimer = window.setTimeout(saveReaderState, 220);
   }, { passive: true });
   window.addEventListener('beforeunload', saveReaderState);
+
+  // 复制链接
+  var copyBtn = document.getElementById('modal-copy-link');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function() {
+      var url = new URL(window.location.href);
+      url.searchParams.set('item', ITEMS[currentIndex]?.id || '');
+      navigator.clipboard.writeText(url.href).catch(function(){});
+      copyBtn.textContent = '✓ 已复制';
+      setTimeout(function() { copyBtn.textContent = '📋 复制链接'; }, 1500);
+    });
+  }
 </script>
 
 <style>
-  /* ── 阅读工具 ── */
-  .toc-link {
-    border-color: #30363d;
-    color: #8b949e;
-  }
-  .toc-link-active {
-    border-color: var(--color-brand) !important;
-    color: var(--color-brand) !important;
-    background: rgba(0, 255, 65, 0.08);
-  }
-  html.light .toc-link-active {
-    border-color: var(--color-brand) !important;
-    color: var(--color-brand) !important;
-    background: rgba(37, 99, 235, 0.08);
-  }
   #read-progress-track {
     box-shadow: inset 0 -1px 0 rgba(33, 38, 45, 0.9);
   }
@@ -942,6 +1078,16 @@ for (const lbl of allLabels) {
   html.light .filter-btn:hover {
     border-color: #cbd5e1;
     color: #64748b;
+  }
+  #item-search-input:focus {
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.08);
+  }
+  html.light #item-search-input {
+    background-color: #f1f5f9;
+    border-color: #e2e8f0;
+  }
+  html.light #item-search-input:focus {
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.08);
   }
 
   /* ── Label filter buttons (per-label color via --lc var) ── */
@@ -1001,50 +1147,50 @@ for (const lbl of allLabels) {
     background-color: color-mix(in srgb, var(--chip-color) 10%, #0d1117);
     box-shadow: 0 0 12px color-mix(in srgb, var(--chip-color) 25%, transparent);
   }
-  #drawer-content :global(h1),
-  #drawer-content :global(h2),
-  #drawer-content :global(h3) {
+  #modal-content :global(h1),
+  #modal-content :global(h2),
+  #modal-content :global(h3) {
     color: var(--color-text-hi);
-    font-family: 'IBM Plex Mono', monospace;
+    font-family: 'Space Mono', monospace;
     margin: 1.25rem 0 0.5rem;
   }
-  #drawer-content :global(p) {
+  #modal-content :global(p) {
     margin: 0.75rem 0;
     line-height: 1.75;
   }
-  #drawer-content :global(a) {
+  #modal-content :global(a) {
     color: var(--color-brand);
     text-decoration: underline;
   }
-  #drawer-content :global(blockquote) {
+  #modal-content :global(blockquote) {
     border-left: 3px solid var(--color-border);
     padding-left: 1rem;
     color: var(--color-text-body);
     margin: 1rem 0;
   }
-  #drawer-content :global(code) {
+  #modal-content :global(code) {
     background: var(--color-surface-3);
     padding: 0.1em 0.3em;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 0.85em;
   }
-  #drawer-content :global(hr) {
+  #modal-content :global(hr) {
     border-color: var(--color-border-2);
     margin: 1.5rem 0;
   }
-  #drawer-content :global(ul) {
+  #modal-content :global(ul) {
     list-style-type: disc;
     padding-left: 1.5em;
     margin: 0.75rem 0;
     color: var(--color-text-body);
   }
-  #drawer-content :global(ol) {
+  #modal-content :global(ol) {
     list-style-type: decimal;
     padding-left: 1.5em;
     margin: 0.75rem 0;
     color: var(--color-text-body);
   }
-  #drawer-content :global(li) {
+  #modal-content :global(li) {
     margin-bottom: 0.25rem;
     line-height: 1.75;
   }
@@ -1055,12 +1201,42 @@ for (const lbl of allLabels) {
     overflow-x: auto;
   }
   /* Scrollbar */
-  #drawer-body {
+  #modal-body {
     scrollbar-width: thin;
     scrollbar-color: #30363d #0d1117;
   }
-  #drawer-body::-webkit-scrollbar { width: 5px; }
-  #drawer-body::-webkit-scrollbar-track { background: #0d1117; }
-  #drawer-body::-webkit-scrollbar-thumb { background: #30363d; }
-  #drawer-body::-webkit-scrollbar-thumb:hover { background: #484f58; }
+  #modal-body::-webkit-scrollbar { width: 5px; }
+  #modal-body::-webkit-scrollbar-track { background: #0d1117; }
+  #modal-body::-webkit-scrollbar-thumb { background: #30363d; }
+  #modal-body::-webkit-scrollbar-thumb:hover { background: #484f58; }
+  /* 浅色模式淡化层背景 */
+  html.light .tier-section {
+    background: transparent !important;
+    border-left-width: 3px !important;
+  }
+  /* ── 弹窗加载动画 ── */
+  .modal-loader {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 2rem 0; gap: 1rem;
+  }
+  .modal-spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-brand);
+    border-radius: 50%;
+    animation: modal-spin 0.6s linear infinite;
+  }
+  @keyframes modal-spin { to { transform: rotate(360deg); } }
+  .modal-loader-text {
+    font-size: 11px; font-family: monospace; color: var(--color-text-lo);
+    animation: sk-shimmer 1.2s ease-in-out infinite;
+  }
+  @keyframes sk-shimmer {
+    0%, 100% { opacity: 0.4; }
+    50%      { opacity: 1; }
+  }
+  html.light .modal-spinner {
+    border-color: #e2e8f0;
+    border-top-color: var(--color-brand);
+  }
 </style>

@@ -41,12 +41,12 @@ async function consumeRule(rule: AuthRateLimitRule): Promise<AuthRateLimitResult
   await prisma.$executeRaw`
     DELETE FROM auth_rate_limit_events
     WHERE action = ${rule.action}
-      AND created_at < ${sinceIso}
+      AND created_at < ${sinceIso}::TIMESTAMPTZ
   `;
 
   await prisma.$executeRaw`
     INSERT INTO auth_rate_limit_events (id, action, rate_key, created_at)
-    VALUES (${crypto.randomUUID()}, ${rule.action}, ${key}, ${currentIso})
+    VALUES (${crypto.randomUUID()}, ${rule.action}, ${key}, ${currentIso}::TIMESTAMPTZ)
   `;
 
   const rows = await prisma.$queryRaw<AuthRateLimitRow[]>`
@@ -54,7 +54,7 @@ async function consumeRule(rule: AuthRateLimitRule): Promise<AuthRateLimitResult
     FROM auth_rate_limit_events
     WHERE action = ${rule.action}
       AND rate_key = ${key}
-      AND created_at >= ${sinceIso}
+      AND created_at >= ${sinceIso}::TIMESTAMPTZ
   `;
 
   const count = Number(rows[0]?.count ?? 0);

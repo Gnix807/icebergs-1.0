@@ -1,22 +1,10 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { IcebergEditor } from '../../components/iceberg/IcebergEditor';
-import { getSessionById } from '../../lib/auth/index';
-import { can } from '../../lib/permissions';
-
-const sessionId = Astro.cookies.get('session')?.value;
-const session = await getSessionById(sessionId);
-
-if (!session) {
-  return Astro.redirect('/login');
-}
-if (!can(session, 'content:create')) {
-  return Astro.redirect('/?error=account_restricted');
-}
 ---
 
 <Layout title="创建冰山图 | 冰山图宇宙">
   <main class="min-h-screen py-8">
-    <IcebergEditor client:only="react" />
+    <IcebergEditor client:visible />
   </main>
 </Layout>

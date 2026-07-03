@@ -1,8 +1,5 @@
 import { prisma } from './prisma';
 
-/**
- * 创建一条站内通知（fire-and-forget，失败时静默记录错误）
- */
 export async function notify(
   userId: string,
   type: string,
@@ -20,11 +17,7 @@ export async function notify(
 }
 
 /**
- * 聚合通知：同一 userId + type + aggregateKey 的未读通知合并为一条，
- * 递增 count 并更新 title。适用于点赞、回复等高频场景。
- *
- * titleFn(count) 根据最新计数返回标题文本，例如：
- *   (n) => n === 1 ? '有人点赞了你的评论' : `${n} 人点赞了你的评论`
+ * 聚合通知：原子 INSERT ... ON CONFLICT DO UPDATE，消除竞态条件。
  */
 export async function notifyAggregated(
   userId: string,
@@ -34,35 +27,26 @@ export async function notifyAggregated(
   link?: string,
 ): Promise<void> {
   try {
-    // 查找同类型、同目标、未读的已有通知
-    const existing = await prisma.notification.findFirst({
-      where: { userId, type, aggregateKey, read: false },
-      select: { id: true, count: true },
-    });
-
-    if (existing) {
-      const newCount = existing.count + 1;
-      await prisma.notification.update({
-        where: { id: existing.id },
-        data: {
-          count: newCount,
-          title: titleFn(newCount),
-          // updatedAt 由 @updatedAt 自动维护
-        },
-      });
-    } else {
-      await prisma.notification.create({
-        data: {
-          userId,
-          type,
-          aggregateKey,
-          title: titleFn(1),
-          link: link ?? null,
-          count: 1,
-        },
-      });
-    }
+    const id = generateId();
+    // PostgreSQL atomic upsert: 如果同 userId+type+aggregateKey+read=false 已存在，则 count+1
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO notifications ("id", "userId", "type", "title", "link", "aggregateKey", "count", "read", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, $6, 1, false, NOW(), NOW())
+       ON CONFLICT ("userId", "type", "aggregateKey", "read")
+       WHERE "read" = false
+       DO UPDATE SET "count" = notifications."count" + 1,
+                     "title" = CASE
+                       WHEN notifications."count" = $7 THEN $4
+                       ELSE $4
+                     END,
+                     "updatedAt" = NOW()`,
+      id, userId, type, titleFn(1), link ?? null, aggregateKey, 1,
+    );
   } catch (err) {
     console.error('[notifyAggregated] 通知失败:', err);
   }
+}
+
+function generateId(): string {
+  return `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }

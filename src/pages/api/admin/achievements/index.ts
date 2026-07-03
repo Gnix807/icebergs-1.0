@@ -62,6 +62,7 @@ export async function POST(event: APIContext) {
         sortOrder:     body.sortOrder ?? 0,
         isHidden:      body.isHidden ?? false,
         conditions:    body.conditions ?? '[]',
+        category:      body.category || null,
       },
     } as any);
 

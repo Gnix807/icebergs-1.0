@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useRef, type ComponentType } from 'react';
-import { AWARD_TYPES, USERBOX_BASE_SLOTS, USERBOX_MAX_SLOTS } from '../../lib/awards';
+import { AWARD_TYPES, USERBOX_BASE_SLOTS, USERBOX_MAX_SLOTS, USERBOX_LIBRARY } from '../../lib/awards';
 import { UserboxPicker } from './UserboxPicker';
 import { useModalAnimation } from '../../hooks/useModalAnimation';
 import { Layers, Anchor, BookOpen, Brain, Fish, Trophy } from 'lucide-react';
@@ -268,6 +268,26 @@ function ScoreLogTab({ userId }: { userId: string }) {
 }
 
 // ── 探索成就 Tab 子组件 ────────────────────────────────────────────────────
+
+function achCategory(key: string): string {
+  if (/^(explore_first|explore_10|explore_50|explore_depth|explore_all_clear|pioneer|curious|tracker|overload|abyss|hazard|omniscient|meme|read_|num_|devil|brain_jar|allclear|deepdive|speedrun|epic|firstclear|shallow|squid|404)/.test(key)) return '阅读';
+  if (/^create_/.test(key)) return '创作';
+  if (/^vote_/.test(key)) return '投票';
+  if (/^watch_/.test(key)) return '收藏';
+  if (/^quality_/.test(key)) return '质量';
+  if (/^search/.test(key) || /^(monk|blind|chaos_order)/.test(key)) return '搜索';
+  if (/^random|^lucky/.test(key)) return '随机';
+  if (/^nightowl|^3am/.test(key)) return '深夜';
+  if (/^streak_|^globe_/.test(key)) return '坚持';
+  if (/^time_|^day_/.test(key)) return '时刻';
+  if (/^label_/.test(key)) return '标签';
+  if (/^item_|^minimal|^redacted/.test(key)) return '词条';
+  if (/^o5|^immune|^meta_|^444/.test(key)) return '隐藏';
+  return '其他';
+}
+
+const ACH_CATEGORIES = ['全部','阅读','创作','投票','收藏','质量','坚持','搜索','随机','深夜','时刻','标签','词条','隐藏','其他'];
+
 function ExploreTab({
   achievementDefs, achievementMap, userReadCount, isLight,
 }: {
@@ -276,7 +296,11 @@ function ExploreTab({
   userReadCount: number;
   isLight: boolean;
 }) {
-  const visible = achievementDefs.filter(d => !d.isHidden || d.key in achievementMap);
+  const [achFilter, setAchFilter] = useState('全部');
+  const getCat = (d: AchievementDef) => (d as any).category || achCategory(d.key);
+  const allDefs = achievementDefs.filter(d => !d.isHidden || d.key in achievementMap);
+  const categories = ['全部', ...new Set(allDefs.map(d => getCat(d)))];
+  const visible = allDefs.filter(d => achFilter === '全部' || getCat(d) === achFilter);
 
   if (visible.length === 0) {
     return (
@@ -293,10 +317,26 @@ function ExploreTab({
 
   return (
     <div>
+      {/* 分类筛选 */}
+      <div className="flex flex-wrap gap-1 mb-3">
+        {categories.map(cat => {
+          const count = allDefs.filter(d => getCat(d) === cat).length;
+          if (cat !== '全部' && count === 0) return null;
+          return (
+            <button key={cat} onClick={() => setAchFilter(cat)}
+              className={`text-[10px] font-mono px-2 py-1 border transition-colors ${
+                achFilter === cat ? 'border-brand text-brand bg-brand/10' : 'border-border-subtle text-text-mid hover:border-brand'
+              }`}>
+              {cat}{cat !== '全部' && <span className="ml-0.5 opacity-40">{count}</span>}
+            </button>
+          );
+        })}
+      </div>
+
       {/* 顶部进度栏 */}
       <div className="border border-border-subtle bg-surface-2 px-5 py-4 mb-5">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-mono text-text-mid tracking-widest">探索进度</span>
+          <span className="text-xs font-mono text-text-mid tracking-widest">{achFilter === '全部' ? '探索进度' : achFilter + '进度'}</span>
           <span className="text-xs font-mono text-warning tabular-nums">{unlocked} / {visible.length}</span>
         </div>
         <div className="w-full h-2 bg-surface-4 border border-border-minimal overflow-hidden">
@@ -502,6 +542,7 @@ export function UserCenter({
   const [promotionStatement, setPromotionStatement] = useState('');
   const [promotionBusy, setPromotionBusy]           = useState(false);
   const [promotionSent, setPromotionSent]           = useState(false);
+  const [showAllAchievements, setShowAllAch]        = useState(false);
   const qLevel      = getQualityLevel(user.qualityScore, user.role);
   const levelColor  = LEVEL_COLORS[qLevel.level] ?? '#6b7280';
   const displayName = user.nickname || user.username;
@@ -532,6 +573,11 @@ export function UserCenter({
   }
   // 社区成就计数：founderOnly 徽章仅在解锁时才计入（不让非站长被它撑槽位）
   const unlockedCommunityCount = COMMUNITY_BADGES.filter(b => b.id in achievementMap && (!b.founderOnly || user.isFounder)).length;
+
+  // 用户框展示数据 — 从 USERBOX_LIBRARY 映射
+  const allBoxDefs: Record<string, { id: string; text: string; leftText: string; leftBg: string; leftFg: string; requires?: string }> = {};
+  USERBOX_LIBRARY.forEach(cat => cat.boxes.forEach(box => { allBoxDefs[box.id] = box as any; }));
+  const userboxDefs = (userboxIds || []).map(id => allBoxDefs[id]).filter(Boolean);
 
   const tabs: { id: Tab; label: string; code: string; amber?: boolean }[] = [
     { id: 'icebergs',  label: '冰山图',   code: 'ICEBERGS'  },
@@ -781,141 +827,131 @@ export function UserCenter({
         </div>
       )}
 
-      {/* ── HUD 档案头部 ──────────────────────────────────────────────────── */}
-      <div className="relative border border-border-subtle bg-surface-2 mb-6 overflow-hidden boot-animate" style={{ animationDelay: '20ms' }}>
-        <div className="absolute inset-0 pointer-events-none" style={isLight ? NO_LINES : SCAN_LINES} />
+      {/* ── 档案头部 ──────────────────────────────────── */}
+      <div className="border border-border bg-surface-2 mb-6 overflow-hidden boot-animate" style={{ animationDelay: '20ms' }}>
 
-        <div className="relative flex items-center justify-between px-5 py-2 border-b border-border-subtle bg-surface-0">
-          <span className="text-[11px] font-mono text-text-mid tracking-[0.18em]">
-            PERSONNEL FILE — SUBJECT #{user.username.toUpperCase()}
-          </span>
-          <div className="flex items-center gap-2" title={presence.hint}>
-            <span
-              className={`inline-block w-2 h-2 rounded-full ${presence.pulse ? 'animate-pulse' : ''}`}
-              style={{ backgroundColor: presence.dot }}
-            />
-            <span className="text-[11px] font-mono tracking-wider" style={{ color: presence.text }}>{presence.label}</span>
-          </div>
-        </div>
-
-        <div className="relative p-5 md:p-7">
-          <div className="flex items-start gap-5 md:gap-6">
-
-            {/* 头像 + HUD 角码 + 角色徽章 */}
-            <div className="flex-shrink-0 flex flex-col items-center gap-2.5">
-              <div className="relative p-1.5">
-                <span className="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2" style={{ borderColor: levelColor }} />
-                <span className="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2" style={{ borderColor: levelColor }} />
-                <span className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2" style={{ borderColor: levelColor }} />
-                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2" style={{ borderColor: levelColor }} />
-                {user.avatar ? (
-                  <img src={user.avatar} alt={displayName} className="w-16 h-16 md:w-20 md:h-20 object-cover block"
-                    onError={e => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex'; }} />
-                ) : null}
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-surface-1 items-center justify-center" style={{ display: user.avatar ? 'none' : 'flex' }}>
-                  <span className="font-mono text-3xl" style={{ color: `${levelColor}60` }}>{displayName.charAt(0).toUpperCase()}</span>
+        <div className="p-5 md:p-6">
+          <div className="flex items-start gap-5">
+            {/* 头像 — 质量分色环 */}
+            <div className="flex-shrink-0">
+              <div className="relative p-1 rounded-full" style={{ background: `conic-gradient(${levelColor} 0deg, ${levelColor} ${Math.round(qLevel.progress * 360)}deg, transparent ${Math.round(qLevel.progress * 360)}deg)` }}>
+                <div className="p-0.5 rounded-full bg-surface-2">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={displayName} className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover block"
+                      onError={e => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex'; }} />
+                  ) : null}
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-surface-3 items-center justify-center" style={{ display: user.avatar ? 'none' : 'flex' }}>
+                    <span className="font-mono text-3xl font-bold" style={{ color: levelColor }}>{displayName.charAt(0).toUpperCase()}</span>
+                  </div>
                 </div>
               </div>
-              <div className="text-[11px] font-mono border px-2.5 py-1 tracking-widest" style={{ color: roleBadge.color, borderColor: `${roleBadge.color}50`, background: `${roleBadge.color}12` }}>
+              <div className="text-[10px] font-mono border px-2 py-0.5 mt-2 text-center inline-block w-full" style={{ color: roleBadge.color, borderColor: `${roleBadge.color}50`, background: `${roleBadge.color}10` }}>
                 {roleBadge.label}
               </div>
             </div>
 
-            {/* 名称 + bio + meta */}
+            {/* 信息 */}
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2.5 mb-2">
-                <h1 className="text-xl md:text-2xl font-mono font-bold">
-                  <span style={{ color: levelColor }}>@</span>
-                  <span className="glitch-hover cursor-default text-text-hi">{displayName}</span>
-                </h1>
-                {user.nickname && <span className="text-xs font-mono text-text-mid">({user.username})</span>}
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h1 className="text-xl font-mono font-bold text-text-hi">{displayName}</h1>
+                {user.nickname && <span className="text-xs font-mono text-text-mid">@{user.username}</span>}
                 {user.isFounder && (
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 border"
-                    style={{ color: '#f59e0b', borderColor: '#f59e0b50', background: '#f59e0b0d' }}>
-                    ◆ FOUNDER
-                  </span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 border" style={{ color: '#f59e0b', borderColor: '#f59e0b50', background: '#f59e0b10' }}>✦ FOUNDER</span>
                 )}
-                {isOwner && <span className="text-xs font-mono border border-border text-text-mid px-2 py-0.5">YOU</span>}
+                {isOwner && <span className="text-[10px] font-mono border border-border-subtle text-text-mid px-1.5 py-0.5 bg-surface-3">YOU</span>}
               </div>
 
               {user.bio
-                ? <p className="text-sm font-mono text-text-body leading-relaxed mb-3">{user.bio}</p>
+                ? <p className="text-xs text-text-body leading-relaxed mb-3 border-l-2 border-border pl-3">{user.bio}</p>
                 : isOwner
-                  ? <p className="text-xs font-mono text-text-lo mb-3 italic">// 点击「设置」添加个人简介</p>
+                  ? <p className="text-[10px] font-mono text-text-lo mb-3 italic">点击「设置」添加简介</p>
                   : <div className="mb-3" />
               }
 
-              <div className="flex flex-wrap gap-x-5 gap-y-1.5">
-                {[
-                  { label: 'joined',   value: new Date(user.createdAt).toLocaleDateString('zh-CN') },
-                  ...(showStats ? [{ label: 'icebergs', value: String(user._count.icebergs) }] : []),
-                  ...(showStats && socialStats ? [
-                    { label: 'views', value: socialStats.totalViews.toLocaleString() },
-                    { label: 'votes', value: `+${socialStats.totalVotes.toLocaleString()}` },
-                  ] : []),
-                ].map(m => (
-                  <span key={m.label} className="flex items-center gap-1.5 text-xs font-mono">
-                    <span style={{ color: `${levelColor}70` }}>◆</span>
-                    <span className="text-text-mid">{m.label}</span>
-                    <span className="text-text-body">{m.value}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Steam 风等级 rank 卡 */}
-            <div
-              className="flex-shrink-0 hidden sm:flex flex-col items-center border p-4 min-w-[110px] text-center"
-              style={{ borderColor: `${levelColor}50`, background: `${levelColor}08` }}
-            >
-              <div className="text-[10px] font-mono tracking-[0.2em] mb-1" style={{ color: `${levelColor}60` }}>CLEARANCE</div>
-              <div className="text-5xl font-mono font-black tabular-nums leading-none mb-1.5" style={{ color: levelColor, textShadow: `0 0 24px ${levelColor}55` }}>
-                {qLevel.level}
-              </div>
-              <div className="text-xs font-mono tracking-widest mb-3" style={{ color: `${levelColor}90` }}>
-                {qLevel.label}
-              </div>
-              {showStats && (
-                <>
-                  <div className="flex gap-px w-full mb-1.5">
-                    {Array.from({ length: 10 }).map((_, i) => (
-                      <div key={i} className="flex-1 h-2 transition-all" style={{ backgroundColor: i < Math.round(qLevel.progress * 10) ? levelColor : (isLight ? '#e2e8f0' : '#1a1f2a') }} />
-                    ))}
-                  </div>
-                  <div className="text-[10px] font-mono tabular-nums" style={{ color: `${levelColor}55` }}>
-                    {qLevel.nextScore ? `${user.qualityScore} / ${qLevel.nextScore}` : `${user.qualityScore} · MAX`}
-                  </div>
-                </>
+              {/* 用户框 */}
+              {userboxDefs.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {userboxDefs.map(box => (
+                    <span key={box.id} className="inline-flex items-center text-[10px] font-mono border rounded overflow-hidden"
+                      title={box.text}>
+                      <span className="px-1.5 py-0.5 font-bold" style={{ background: box.leftBg, color: box.leftFg }}>{box.leftText}</span>
+                      <span className="px-1.5 py-0.5 text-text-body border-l border-border-subtle bg-surface-3">{box.text}</span>
+                    </span>
+                  ))}
+                </div>
               )}
+              {isOwner && userboxDefs.length === 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 border rounded text-text-lo border-border-subtle">
+                    📌 在「设置」→「用户框」中选择展示的成就
+                  </span>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-text-lo bg-surface-3 border border-border-subtle px-2 py-0.5 rounded">
+                  加入 {new Date(user.createdAt).toLocaleDateString('zh-CN')}
+                </span>
+                {showStats && (
+                  <>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-mono text-text-hi bg-surface-3 border border-border-subtle px-2 py-0.5 rounded">
+                      {user._count.icebergs} 冰山图
+                    </span>
+                    {socialStats && (
+                      <>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-mono text-text-hi bg-surface-3 border border-border-subtle px-2 py-0.5 rounded">
+                          {socialStats.totalViews.toLocaleString()} 阅读
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-mono text-text-hi bg-surface-3 border border-border-subtle px-2 py-0.5 rounded">
+                          +{socialStats.totalVotes} 票
+                        </span>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
 
+            {/* 等级 — 环形进度 */}
+            {showStats && (
+              <div className="flex-shrink-0 hidden sm:flex flex-col items-center gap-1.5">
+                <div className="relative w-20 h-20">
+                  <svg className="w-20 h-20 -rotate-90" viewBox="0 0 72 72">
+                    <circle cx="36" cy="36" r="30" fill="none" stroke="var(--color-border)" strokeWidth="4" />
+                    <circle cx="36" cy="36" r="30" fill="none" stroke={levelColor} strokeWidth="4"
+                      strokeDasharray={`${qLevel.progress * 188.5} 188.5`} strokeLinecap="round" />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-xl font-mono font-bold tabular-nums leading-none" style={{ color: levelColor }}>{qLevel.level}</span>
+                    <span className="text-[8px] font-mono text-text-lo">{qLevel.label}</span>
+                  </div>
+                </div>
+                {qLevel.nextScore && (
+                  <div className="text-[9px] font-mono text-text-lo">{user.qualityScore}/{qLevel.nextScore}</div>
+                )}
+              </div>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Stats Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-5">
-        <StatCard label="累计阅读" value={readCount.toLocaleString()} />
-        <StatCard label="创作冰山" value={`${icebergs?.length ?? 0} 张`} />
-        <StatCard label="收藏情报" value={`${watchlistCount ?? 0} 个`} />
-        <StatCard label="质量段位" value={`${levelLabel} ${qualityLevel}`} valueColor={levelColor} />
-        <StatCard label={isOwner ? '连续登录' : '注册时间'} value={isOwner ? '0 天' : formatJoinDate(user.createdAt)} />
+        {/* 成就条 */}
+        {topAchievements.length > 0 && (
+          <div className="border-t border-border-subtle px-5 py-2 flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-mono text-text-mid tracking-widest">成就</span>
+            {(showAllAchievements ? topAchievements : topAchievements.slice(0, 4)).map(ach => (
+              <span key={ach.key} className="text-[10px] font-mono px-1.5 py-0.5 border rounded"
+                style={{ color: ach.color, borderColor: `${ach.color}40`, background: `${ach.color}10` }}>
+                {ach.icon} {ach.labelZh}
+              </span>
+            ))}
+            {totalUnlocked > 4 && (
+              <button onClick={() => setShowAllAch(!showAllAchievements)} className="text-[10px] font-mono text-text-mid ml-auto hover:text-brand transition-colors">
+                {showAllAchievements ? '收起' : `+${totalUnlocked - 4} 更多`}
+              </button>
+            )}
+          </div>
+        )}
       </div>
-
-      {/* Achievement Strip */}
-      {topAchievements.length > 0 && (
-        <div className="flex items-center gap-3 mb-5 px-3 py-2 border border-border-subtle bg-surface-2 flex-wrap">
-          <span className="text-[10px] font-mono text-text-mid tracking-widest flex-shrink-0">✦ {isOwner ? '最近成就' : '成就展示'}</span>
-          {topAchievements.slice(0, 3).map((ach) => (
-            <span key={ach.key} className="text-xs font-mono" style={{ color: ach.color }}>
-              {ach.icon} {ach.labelZh}
-            </span>
-          ))}
-          {totalUnlocked > 3 && (
-            <span className="text-[10px] font-mono text-text-mid ml-auto">+{totalUnlocked - 3} 更多</span>
-          )}
-        </div>
-      )}
 
       {/* Actions Bar (owner only) */}
       {isOwner && (

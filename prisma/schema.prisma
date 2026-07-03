@@ -5,15 +5,16 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 // ============================================
 // V2: RBAC Phase 1
-// NOTE: SQLite does not support Prisma enums.
+// NOTE: Enums are stored as plain strings in DB.
 //       Type-safety is enforced via TypeScript
-//       union types in src/lib/types.ts instead.
+//       union types in src/lib/types.ts.
+//       (Kept as strings for simple DB portability)
 // ============================================
 
 model User {
@@ -78,18 +79,26 @@ model User {
   receivedAwards       UserAward[]      @relation("AwardReceiver")
   givenAwards          UserAward[]      @relation("AwardGiver")
   announcements        Announcement[]
+  ideas                Idea[]
+  ideaVotes            IdeaVote[]
+  collections          Collection[]
+  followers            Follow[]         @relation("FollowFollowing")
+  following            Follow[]         @relation("FollowFollower")
+  drafts               Draft[]
 
+  @@index([qualityScore])
+  @@index([createdAt])
   @@map("users")
 }
 
 // ── OAuth 账号绑定（运行时兼容表）─────────────────────────────
 model OAuthIdentity {
-  id             String  @id
-  userId         String  @map("user_id")
+  id             String   @id
+  userId         String   @map("user_id")
   provider       String
-  providerUserId String  @map("provider_user_id")
+  providerUserId String   @map("provider_user_id")
   email          String?
-  createdAt      String  @map("created_at")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -101,10 +110,10 @@ model OAuthIdentity {
 
 // ── 登录/注册限流事件（运行时兼容表）──────────────────────────
 model AuthRateLimitEvent {
-  id        String @id
+  id        String   @id
   action    String
-  rateKey   String @map("rate_key")
-  createdAt String @map("created_at")
+  rateKey   String   @map("rate_key")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([action, rateKey, createdAt], map: "idx_auth_rate_limit_action_key_created")
   @@index([createdAt], map: "idx_auth_rate_limit_created")
@@ -196,9 +205,11 @@ model Iceberg {
   review      IcebergReview?
   viewLogs    ViewLog[]
   comments    Comment[]
+  collectionItems CollectionItem[]
 
   @@index([authorId])
   @@index([status, topic, createdAt])
+  @@index([viewCount])
   @@map("icebergs")
 }
 
@@ -242,6 +253,8 @@ model Vote {
   iceberg Iceberg @relation(fields: [icebergId], references: [id], onDelete: Cascade)
 
   @@unique([userId, icebergId])
+  @@index([userId, createdAt])
+  @@index([icebergId])
   @@map("votes")
 }
 
@@ -278,7 +291,7 @@ model Notification {
 
   @@index([userId, read])
   @@index([userId, createdAt])
-  @@index([userId, type, aggregateKey, read])
+  @@unique([userId, type, aggregateKey, read])
   @@map("notifications")
 }
 
@@ -312,7 +325,7 @@ model PromotionRequest {
   user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([status])
+  @@index([status, expiresAt])
   @@map("promotion_requests")
 }
 
@@ -471,6 +484,7 @@ model Achievement {
   sortOrder    Int      @default(0)
   isHidden     Boolean  @default(false) // true = 未解锁时不展示
   conditions   String   @default("[]") // JSON Condition[] 可视化积木
+  category     String?  // 分类：创作/阅读/投票/收藏/质量/搜索/随机/深夜/时刻/标签/词条/坚持/隐藏/其他
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -587,6 +601,7 @@ model Comment {
 
   @@index([icebergId, createdAt])
   @@index([parentId])
+  @@index([userId, createdAt])
   @@map("comments")
 }
 
@@ -695,6 +710,7 @@ model ScoreLog {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  @@index([userId, reason, createdAt])
   @@map("score_logs")
 }
 
@@ -716,4 +732,96 @@ model Announcement {
 
   @@index([createdAt])
   @@map("announcements")
+}
+
+// ── 创意板 ──────────────────────────────────────────────────
+model Idea {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  topic       String   @default("general")
+  creatorId   String
+  status      String   @default("OPEN")  // OPEN | CLAIMED | COMPLETED
+  claimedBy   String?
+  icebergId   String?  // 完成后关联的冰山图
+
+  createdAt   DateTime @default(now())
+
+  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  votes       IdeaVote[]
+
+  @@index([status, createdAt])
+  @@index([creatorId])
+  @@map("ideas")
+}
+
+model IdeaVote {
+  id        String   @id @default(cuid())
+  ideaId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([ideaId, userId])
+  @@map("idea_votes")
+}
+
+// ── 收藏集 ──────────────────────────────────────────────────
+model Collection {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  isPublic    Boolean          @default(false)
+  userId      String
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       CollectionItem[]
+  @@index([userId])
+  @@map("collections")
+}
+
+model CollectionItem {
+  id           String     @id @default(cuid())
+  collectionId String
+  icebergId    String
+  sortOrder    Int        @default(0)
+  note         String?
+
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  iceberg      Iceberg    @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+  @@unique([collectionId, icebergId])
+  @@map("collection_items")
+}
+
+// ── 关注系统 ──────────────────────────────────────────────────
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("FollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("FollowFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+  @@unique([followerId, followingId])
+  @@index([followingId])
+  @@map("follows")
+}
+
+// ── 编辑器草稿 ──────────────────────────────────────────────────
+model Draft {
+  id        String   @id @default(cuid())
+  userId    String
+  icebergId String?
+  data      String   // JSON blob：完整 Iceberg（含 tiers/items）
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, icebergId])
+  @@index([userId])
+  @@map("drafts")
 }

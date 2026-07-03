@@ -28,7 +28,7 @@ export async function PUT(event: APIContext) {
     const body = await event.request.json() as {
       icon?: string; label?: string; labelZh?: string; desc?: string;
       color?: string; triggerType?: string; triggerTarget?: number;
-      sortOrder?: number; isHidden?: boolean; conditions?: string;
+      sortOrder?: number; isHidden?: boolean; conditions?: string; category?: string | null;
     };
 
     const updated = await prisma.achievement.update({
@@ -44,6 +44,7 @@ export async function PUT(event: APIContext) {
         ...(body.sortOrder     != null && { sortOrder:     body.sortOrder            }),
         ...(body.isHidden      != null && { isHidden:      body.isHidden             }),
         ...(body.conditions    != null && { conditions:    body.conditions           }),
+        ...(body.category     !== undefined && { category:  body.category || null     }),
       },
     } as any);
 

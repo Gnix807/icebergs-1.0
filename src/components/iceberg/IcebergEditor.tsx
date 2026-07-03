@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState, useCallback, useRef } from 'react';
+import { loadDraft, saveDraft, clearDraft } from '../../lib/editorDraft';
 import type { ChecklistItem } from '../../lib/types';
 import { useModalAnimation } from '../../hooks/useModalAnimation';
 import * as dndCore from '@dnd-kit/core';
@@ -313,31 +314,16 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     setCustomTopicInput(iceberg.topic);
   }, [iceberg?.topic, iceberg?.id]);
 
-  // 检查 localStorage 是否有未完成的草稿
+  // 检查服务端草稿（fallback localStorage）
   useEffect(() => {
     if (!icebergId || icebergId !== 'new') return;
-
-    const draftKey = getDraftStorageKey(null);
-    const savedDraft = localStorage.getItem(draftKey) ?? localStorage.getItem(LEGACY_DRAFT_KEY);
-    if (savedDraft) {
-      try {
-        const draft = JSON.parse(savedDraft) as IcebergDraft;
-        if (draft.title && draft.title !== '未命名冰山图') {
-          setDraftToRecover({
-            ...draft,
-            topic: normalizeIcebergTopic(draft.topic),
-          });
-          setShowRecovery(true);
-          if (!localStorage.getItem(draftKey)) {
-            localStorage.setItem(draftKey, savedDraft);
-          }
-          localStorage.removeItem(LEGACY_DRAFT_KEY);
-        }
-      } catch {
-        // ignore parse errors
+    loadDraft(null).then((draft) => {
+      if (draft?.title && draft.title !== '未命名冰山图') {
+        setDraftToRecover({ ...draft, topic: normalizeIcebergTopic(draft.topic) });
+        setShowRecovery(true);
       }
-    }
-  }, [icebergId, getDraftStorageKey]);
+    });
+  }, [icebergId]);
 
   // 恢复草稿
   const handleRecoverDraft = () => {
@@ -350,22 +336,21 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
   // 丢弃草稿
   const handleDiscardDraft = () => {
-    localStorage.removeItem(getDraftStorageKey(iceberg));
-    localStorage.removeItem(LEGACY_DRAFT_KEY);
+    clearDraft(iceberg && !iceberg.id.startsWith('temp_') ? iceberg.id : null);
     setShowRecovery(false);
     setDraftToRecover(null);
   };
 
-  // 保存到 localStorage
+  // 保存到服务端草稿 + localStorage 备份（1.5s 防抖）
+  const draftSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!iceberg || !isDirty) return;
-
-    const savedDraft = {
-      ...iceberg,
-      savedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(getDraftStorageKey(iceberg), JSON.stringify(savedDraft));
-  }, [iceberg, isDirty, getDraftStorageKey]);
+    if (draftSaveTimer.current) clearTimeout(draftSaveTimer.current);
+    draftSaveTimer.current = setTimeout(() => {
+      const dk = iceberg.id.startsWith('temp_') ? null : iceberg.id;
+      saveDraft(dk, iceberg);
+    }, 1500);
+  }, [iceberg, isDirty]);
 
   // 切换编辑目标时读取版本历史
   useEffect(() => {
@@ -420,7 +405,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
             setDirty(false);
             setLastSaved(new Date());
             pushVersionSnapshot(created, 'auto');
-            localStorage.removeItem(getDraftStorageKey(iceberg));
+            clearDraft(iceberg.id);
           }
         } else {
           const payload = {
@@ -439,7 +424,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
             setDirty(false);
             setLastSaved(new Date());
             pushVersionSnapshot(iceberg, 'auto');
-            localStorage.removeItem(getDraftStorageKey(iceberg));
+            clearDraft(iceberg.id);
             clearSyncFailure(`iceberg:update:${iceberg.id}`);
           } else {
             queueSyncFailure({
@@ -1079,7 +1064,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           setDirty(false);
           setLastSaved(new Date());
           pushVersionSnapshot(created, 'manual');
-          localStorage.removeItem(getDraftStorageKey(iceberg));
+          clearDraft(iceberg.id);
           toast('草稿已保存');
         }
       } else {
@@ -1096,7 +1081,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
         });
         const data = await res.json().catch(() => null);
         if (res.ok && data?.success) {
-          localStorage.removeItem(getDraftStorageKey(iceberg));
+          clearDraft(iceberg.id);
           setDirty(false);
           setLastSaved(new Date());
           pushVersionSnapshot(iceberg, 'manual');
@@ -1164,7 +1149,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
         }
         const persisted = withTopic(data.data);
         setIceberg(persisted);
-        localStorage.removeItem(getDraftStorageKey(iceberg));
+        clearDraft(iceberg.id);
         icebergId = data.data.id;
         redirectKey = data.data.slug || data.data.id;
         submitSnapshot = persisted;
@@ -1199,6 +1184,21 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     }
   };
 
+  // 键盘快捷键 Ctrl+S 保存 / Ctrl+Enter 提交
+  const saveRef = useRef(handleSave);
+  const submitRef = useRef(handleSubmit);
+  saveRef.current = handleSave;
+  submitRef.current = handleSubmit;
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveRef.current(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); submitRef.current(); }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
   const handleDelete = async () => {
     if (!iceberg || iceberg.id.startsWith('temp_')) return;
     setIsDeleting(true);
@@ -1206,7 +1206,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       const res = await fetch(`/api/icebergs/${iceberg.id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
-        localStorage.removeItem(getDraftStorageKey(iceberg));
+        clearDraft(iceberg.id);
         localStorage.removeItem(getHistoryKey(iceberg));
         window.location.href = '/iceberg/list';
       } else {
@@ -1327,10 +1327,12 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                 <span className="text-info">[ ● 保存中... ]</span>
               ) : isDirty ? (
                 <span className="text-warning">[ ● 未保存 ]</span>
-              ) : (
+              ) : lastSaved ? (
                 <span className="text-success">
-                  [ ● 已保存{lastSaved ? ` ${lastSaved.toLocaleTimeString()}` : ''} ]
+                  [ ● 已保存 {(() => { const s = Math.round((Date.now() - lastSaved.getTime()) / 1000); return s < 60 ? `${s}秒前` : s < 3600 ? `${Math.round(s/60)}分钟前` : lastSaved.toLocaleTimeString(); })()} ]
                 </span>
+              ) : (
+                <span className="text-success">[ ● 已保存 ]</span>
               )}
             </div>
           </div>
