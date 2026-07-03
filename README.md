@@ -1,109 +1,140 @@
-# 冰山图宇宙
+# 冰山图宇宙 (Iceberg Universe)
 
-一个 SCP Foundation 风格的知识内容分享平台。用户可以创建和浏览"冰山图"——一种分层展示内容的可视化形式，表层为广为人知的事实，越往深处越冷僻小众。
+> 一个以「冰山图」为核心的知识整理与分享社区。把你知道的一切，按深度分层。
 
 ## 技术栈
 
-- **框架**：[Astro 5](https://astro.build/) + React 19（Islands 模式）
-- **数据库**：Prisma 5 + SQLite
-- **认证**：GitHub OAuth + Google OAuth + 邮箱/密码 + 邮箱验证码防刷
-- **样式**：Tailwind CSS 3.4
-- **拖拽**：@dnd-kit
-- **状态**：Zustand 5（编辑器）
-
-## 功能
-
-- 冰山图创建与编辑（拖拽分层、自动保存）
-- 内容审核队列（EDITOR 审核，ADMIN Override）
-- RBAC 权限系统（USER / CONTRIBUTOR / EDITOR / MODERATOR / ADMIN）
-- 成就系统（数据库配置型，无需改代码即可增删成就）
-- RfA 晋升申请 + 弹劾系统 + 站长民主选举
-- 评论、投票、收藏、站内通知、积分历史
-- 管理后台（审核 / 晋升 / 举报 / 反馈 / 用户 / 申诉 / 选举 / 成就 / 系统配置）
+| 层 | 技术 |
+|---|---|
+| 框架 | Astro 5 SSR + React 19 Islands |
+| 样式 | Tailwind 3.4 + 自定义 CSS 变量 |
+| 数据库 | PostgreSQL 18 + Prisma 5 |
+| 状态管理 | Zustand 5 |
+| 拖拽 | @dnd-kit |
+| 认证 | Arctic (GitHub OAuth) + 邮箱密码 (pbkdf2) |
+| 搜索 | PostgreSQL tsvector + GIN 索引 |
+| 字体 | Space Grotesk + Space Mono + MiSans |
 
 ## 快速开始
 
+### 环境要求
+
+- Node.js 22+
+- PostgreSQL 18
+- Git
+
+### 安装与启动
+
 ```bash
-# 安装依赖
+cd frontend
+cp .env.example .env      # 编辑 .env 填入 OAuth 密钥
 npm install
+npx prisma db push        # 初始化数据库表结构
+npx prisma generate       # 生成 Prisma Client
 
-# 初始化数据库
-npx prisma db push
-node prisma/seed.mjs
+# 初始化全文搜索索引
+psql -U icebergs -d icebergs -f prisma/migrations/001_fulltext_search.sql
 
-# 启动开发服务器（端口 4321）
-npm run dev
+# 可选：导入旧 SQLite 数据
+# node prisma/migrate-to-pg.mjs
+
+npm run dev               # 启动开发服务器，默认 http://localhost:4321
 ```
 
-### 环境变量
+### 环境变量 (`.env`)
 
-复制 `.env.example` 为 `.env` 并填写：
-
-```
-DATABASE_URL="file:./dev.db"
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
+```env
+DATABASE_URL="postgresql://icebergs:icebergs_dev@127.0.0.1:5433/icebergs"
+GITHUB_CLIENT_ID=           # GitHub OAuth App Client ID
+GITHUB_CLIENT_SECRET=       # GitHub OAuth App Client Secret
 REDIRECT_URI=http://localhost:4321/api/auth/callback
-
-# 邮箱验证码发送：console(默认) / resend / webhook
-EMAIL_PROVIDER=console
-EMAIL_FROM=
-RESEND_API_KEY=
-EMAIL_WEBHOOK_URL=
-EMAIL_WEBHOOK_SECRET=
-EMAIL_VERIFICATION_SECRET=change-me
-EMAIL_CODE_TTL_MINUTES=10
-EMAIL_SEND_COOLDOWN_SECONDS=60
-EMAIL_MAX_SEND_PER_EMAIL_DAY=20
-EMAIL_MAX_SEND_PER_IP_DAY=60
-EMAIL_CODE_MAX_ATTEMPTS=5
-
-NODE_ENV=development
+CRON_SECRET=                # Cron 端点鉴权密钥
 ```
 
-说明：
-- `EMAIL_PROVIDER=console` 时不会真正发信，验证码会打印在服务端日志中，便于本地联调。
-- 生产环境建议配置 `resend` 或 `webhook`，并替换 `EMAIL_VERIFICATION_SECRET`。
+### 常用命令
 
-## 开发命令
+| 命令 | 说明 |
+|------|------|
+| `npm run dev` | 启动开发服务器 |
+| `npm run build` | 生产构建 |
+| `npm run check` | TypeScript 类型检查 |
+| `npx prisma studio` | 数据库可视化管理 |
+| `npx prisma db push` | 同步 Schema 到数据库 |
 
-```bash
-npm run dev      # 开发服务器
-npm run build    # 生产构建
-npm run check    # TypeScript 类型检查
+## 架构
 
-npx prisma studio       # 可视化数据库
-npx prisma db push      # 应用 schema 变更（可在 dev server 运行时执行）
-npx prisma generate     # 重新生成 client（需先停止 dev server）
+### SSR 模式
+
+`.astro` 页面通过 Prisma 直接在服务端获取数据，React 组件仅在有交互需求的场景下以 Islands (`client:load` / `client:visible`) 方式加载。
+
+### 认证与会话
+
+- **会话持久化** — 数据库存储，无 JWT，无内存状态
+- **OAuth** — Arctic 库实现 GitHub 登录，支持 PKCE
+- **邮箱登录** — pbkdf2 密码哈希，无需邮箱验证码
+- **权限控制** — 统一 `can(session, action)` 函数，角色层级：USER → CONTRIBUTOR → EDITOR → MODERATOR → ADMIN → FOUNDER
+
+### 数据模型
+
+核心模型：`Iceberg` → `Tier` → `Item`（三层嵌套）。每个词条支持 Markdown 描述、标签分类、KaTeX 数学公式。
+
+### 全文搜索
+
+PostgreSQL `tsvector` + GIN 索引，支持中英文混合搜索。中文自动按字拆分，英文按词拆分。
+
+## 功能
+
+| 功能 | 路由 |
+|------|------|
+| 首页 | `/` |
+| 冰山广场 | `/iceberg/list` |
+| 冰山详情 | `/iceberg/[slug]` |
+| 创建/编辑冰山图 | `/iceberg/new` `/iceberg/edit/[id]` |
+| 排行榜 | `/leaderboard` |
+| 创意板 | `/ideas` |
+| 功能大厅 | `/sitemap` |
+| 个人主页 | `/user/[id]` |
+| 机构 | `/org` |
+| RfA 选举 | `/rfa` `/elections` `/impeach` |
+| 使用指南 | `/guide` |
+| 平台规则 | `/rules` |
+| 反馈 | `/feedback` |
+
+## 目录结构
+
+```
+frontend/src/
+├── components/
+│   ├── admin/          # 管理面板（审核/用户/设置…）
+│   ├── iceberg/        # 冰山编辑器、列表、弹窗、评论…
+│   ├── ui/             # Toast、骨架屏、成就弹窗
+│   ├── user/           # 用户中心、设置、成就展示
+│   ├── LoginForm.tsx
+│   └── NavBar.tsx
+├── hooks/              # useModalAnimation
+├── layouts/
+│   └── Layout.astro    # 全局布局 + 设计系统
+├── lib/
+│   ├── auth/           # 认证、限流、OAuth 挑战…
+│   ├── achievementService.ts / achievementEngine.ts
+│   ├── permissions.ts  # RBAC 权限控制
+│   ├── icebergTopic.ts # 主题分类
+│   ├── features.ts     # 功能开关
+│   └── api.ts          # 统一 API 响应格式
+├── pages/
+│   ├── api/            # REST API 端点
+│   ├── iceberg/        # 冰山图页面
+│   ├── user/           # 用户页面
+│   └── ...             # 其他页面
+├── stores/
+│   └── icebergStore.ts # Zustand 编辑器状态
+└── styles/
+    └── global.css      # 全局样式 + CSS 变量
 ```
 
-> **Windows 注意**：`prisma generate` 在 dev server 运行时会报 EPERM（DLL 占用），需先停服务再执行。
+## 设计系统
 
-## 项目结构
+暗色主题，品牌色 `#00FF41`（终端绿）。CSS 变量定义在 `:root`，浅色模式通过 `html.light` 覆盖。
 
-```
-src/
-├── components/       # React 组件（Islands）
-│   ├── admin/        # 管理后台
-│   ├── iceberg/      # 冰山图相关
-│   ├── ui/           # 通用 UI（Toast、Skeleton 等）
-│   └── user/         # 用户中心
-├── layouts/          # 全局布局 + 设计系统
-├── lib/              # 工具库（auth、permissions、prisma 等）
-├── pages/            # 页面 + API 路由
-│   └── api/          # REST 端点
-└── stores/           # Zustand store
-prisma/
-├── schema.prisma     # 数据库 schema
-└── seed.mjs          # 初始数据
-```
-
-## 生产部署
-
-部署时请在环境变量中配置 OAuth 回调地址（生产环境必填）：
-
-```
-REDIRECT_URI=https://yourdomain.com/api/auth/callback
-```
+- 背景层级：`#0d1117` → `#161b22` → `#1c2128` → `#21262d`
+- 字体：Space Grotesk（UI） + Space Mono（代码） + MiSans Normal（中文）
