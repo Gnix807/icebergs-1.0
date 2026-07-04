@@ -10,51 +10,37 @@
    - 密码：设置一个强密码
 4. 记录连接信息，之后要填入 `.env`
 
-## 2. 上传项目
+## 首次部署
 
-1. 1Panel → **文件** → 进入 `/opt/`，创建目录 `icebergs`
-2. 上传代码（二选一）：
-   - **ZIP 上传**：本地打包 `frontend/` 目录，在文件管理里上传解压
-   - **Git 克隆**：在 1Panel 终端执行：
-     ```bash
-     git clone https://github.com/Gnix807/icebergs-1.0.git /opt/icebergs
-     ```
+### 1. 创建 PostgreSQL 数据库
 
-> 项目代码在 `/opt/icebergs/frontend/` 目录下，后续所有路径以此为准。
+1. 1Panel → **数据库** → **PostgreSQL** → **创建数据库**
+2. 填写数据库名 `icebergs`，用户名 `icebergs`，设置密码。
 
-## 3. 安装依赖 + 构建
+### 2. 上传项目
 
-在 1Panel 终端执行：
+1Panel → **文件** → 进入 `/opt/` → 创建目录 `icebergs`。
+
+上传代码（二选一）：
+- ZIP 上传后解压
+- 终端执行 `git clone https://github.com/Gnix807/icebergs-1.0.git /opt/icebergs`
+
+### 3. 首次安装
+
+打开 1Panel 终端，执行：
 
 ```bash
 cd /opt/icebergs/frontend
-
-# 配置环境变量
-cp .env.example .env
-# 用 1Panel 文件编辑器修改 .env（内容见下一步）
-
-# 安装依赖
+cp .env.example .env      # 编辑 .env（见下方说明）
 npm install
-
-# 初始化数据库
 npx prisma generate
 npx prisma db push
-
-# 构建
 npm run build
 ```
 
-### 初始化全文搜索索引
+### 4. 配置 .env
 
-在 1Panel 数据库 UI 中找到 `icebergs` 库 → 点击 **SQL 窗口** → 将以下文件内容粘贴执行：
-
-```
-prisma/migrations/001_fulltext_search.sql
-```
-
-## 4. 配置环境变量（`.env`）
-
-用 1Panel 文件编辑器打开 `/opt/icebergs/frontend/.env`：
+用 1Panel 文件编辑器编辑 `.env`：
 
 ```env
 DATABASE_URL="postgresql://icebergs:你的密码@localhost:5432/icebergs"
@@ -65,63 +51,34 @@ NODE_ENV=production
 CRON_SECRET=随机字符串
 ```
 
-## 5. 创建网站 + 反向代理
+### 5. 初始化全文搜索
+
+1Panel → 数据库 → icebergs → SQL 窗口 → 粘贴 `prisma/migrations/001_fulltext_search.sql` 内容并执行。
+
+### 6. 创建反向代理
 
 1. 1Panel → **网站** → **创建网站** → **反向代理**
-2. 填写：
-   - 域名：`你的域名.com`
-   - 代理地址：`http://127.0.0.1:4321`
-3. 创建后在 **网站设置** → **SSL** 中一键申请 Let's Encrypt 证书
-4. 在 **配置文件** 中追加静态资源缓存：
+2. 域名填你的域名，代理地址 `http://127.0.0.1:4321`
+3. 创建后在 **SSL** 页一键申请证书
 
-```nginx
-location /uploads/ {
-    alias /opt/icebergs/frontend/public/uploads/;
-    expires 30d;
-}
-location /_astro/ {
-    alias /opt/icebergs/frontend/dist/client/_astro/;
-    expires 1y;
-}
-```
-
-## 6. 启动并守护进程
-
-选择以下两种方式之一：
-
-### 方式 A：进程守护（推荐）
+### 7. 启动进程守护
 
 1. 1Panel → **进程守护** → **新建**
-2. 填写：
-   - 名称：`icebergs`
-   - 启动命令：`/usr/bin/node /opt/icebergs/frontend/dist/server/entry.mjs`
-   - 工作目录：`/opt/icebergs/frontend`
-   - 进程数：`1`
-3. 点击确定，自动启动并守护
+2. 名称：`icebergs`
+3. 启动命令：`/usr/bin/node /opt/icebergs/frontend/dist/server/entry.mjs`
+4. 工作目录：`/opt/icebergs/frontend`
+5. 进程数：`1`
 
-### 方式 B：PM2
+### 8. 更新 GitHub OAuth 回调
 
-```bash
-cd /opt/icebergs/frontend
-npm install -g pm2
-pm2 start dist/server/entry.mjs --name icebergs
-pm2 save
-pm2 startup
-```
-
-## 7. 更新 GitHub OAuth 回调地址
-
-GitHub → Settings → Developer Settings → OAuth Apps → 你的 App，将回调地址更新为：
-
+GitHub → Settings → Developer Settings → OAuth Apps，将回调地址改为：
 ```
 https://你的域名/api/auth/callback
 ```
 
-> 如果不更新，GitHub 登录回调会失败。
+### 9. 可选：Cron 定时任务
 
-## 8. Cron 定时任务（可选）
-
-如启用了选举/RfA/弹劾功能，在 1Panel → **计划任务** 中添加：
+1Panel → **计划任务**，添加：
 
 | 脚本名 | 周期 | 命令 |
 |--------|------|------|
@@ -131,30 +88,25 @@ https://你的域名/api/auth/callback
 
 ---
 
-## 9. 日常维护
+## 后续更新
+
+以后每次更新代码只需要：
 
 ```bash
-# 更新代码
-cd /opt/icebergs/frontend
-git pull
-npm install
-npx prisma db push
-npm run build
-# 然后在 1Panel 进程守护中重启 icebergs
-
-# 或者在 PM2 中
-pm2 restart icebergs
+cd /opt/icebergs/frontend && bash deploy.sh
 ```
 
-## 10. 部署检查清单
+或在 1Panel 计划任务中设置定时执行 `bash /opt/icebergs/frontend/deploy.sh`。
 
-- [ ] `.env` 已配置生产环境变量
-- [ ] `NODE_ENV=production`
-- [ ] `REDIRECT_URI` 已更新为生产域名
-- [ ] GitHub OAuth App 回调地址已更新
-- [ ] 数据库已创建，`prisma db push` 已执行
+唯一需要手动改的永远是 `.env`，其他全部自动。
+
+## 部署检查清单
+
+- [ ] PostgreSQL 数据库已创建
+- [ ] `.env` 已配置（唯一需要手动编辑的文件）
+- [ ] `npm run build` 无报错
 - [ ] 全文搜索 SQL 已执行
-- [ ] 网站反向代理已创建
-- [ ] SSL 证书已申请
-- [ ] 进程守护/PM2 已配置
+- [ ] 反向代理 + SSL 已配置
+- [ ] 进程守护已启动
+- [ ] GitHub OAuth 回调地址已更新
 - [ ] 浏览器打开 `https://你的域名` 确认可访问
