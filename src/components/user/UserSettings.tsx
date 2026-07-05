@@ -249,141 +249,90 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
   };
 
   return (
-    <div className="space-y-8 max-w-2xl">
-      {/* 基本资料 */}
-      <section>
-        <div className="text-xs font-mono text-text-mid mb-4 tracking-widest uppercase">
-          // 基本资料
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-mono text-text-body mb-1.5">
-              昵称 <span className="text-text-mid">NICKNAME</span>
-            </label>
-            <input
-              type="text"
-              value={nickname}
-              onChange={e => setNickname(e.target.value)}
-              maxLength={50}
-              placeholder="留空则使用用户名"
-              className="w-full bg-surface-2 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none transition-colors placeholder:text-text-mid"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-mono text-text-body mb-1.5">
-              个人简介 <span className="text-text-mid">BIO</span>
-            </label>
-            <textarea
-              value={bio}
-              onChange={e => setBio(e.target.value)}
-              maxLength={200}
-              rows={3}
-              placeholder="一句话介绍自己（200字以内）"
-              className="w-full bg-surface-2 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none transition-colors resize-none placeholder:text-text-mid"
-            />
-            <div className="text-right text-[10px] font-mono text-text-mid mt-1">
-              {bio.length} / 200
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-mono text-text-body mb-1.5">
-              头像 <span className="text-text-mid">AVATAR</span>
-            </label>
-            {/* 隐藏的文件输入 */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              className="hidden"
-              onChange={handleFileUpload}
-            />
-            <div className="flex gap-2 items-center">
-              {/* 预览 */}
-              {avatar ? (
-                <img
-                  src={avatar}
-                  alt="preview"
-                  className="w-10 h-10 object-cover border border-border-subtle flex-shrink-0"
-                  onError={e => (e.currentTarget.style.display = 'none')}
-                />
-              ) : (
-                <div className="w-10 h-10 border border-border-subtle flex-shrink-0 flex items-center justify-center bg-surface-1">
-                  <span className="text-text-lo font-mono text-xs">?</span>
-                </div>
-              )}
-              <div className="flex-1 flex flex-col gap-1.5">
-                {/* URL 输入 */}
-                <input
-                  type="url"
-                  value={avatar}
-                  onChange={e => setAvatar(e.target.value)}
-                  placeholder="https://... 或点击右侧上传本地图片"
-                  className="w-full bg-surface-2 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none transition-colors placeholder:text-text-mid"
-                />
-                {/* 上传按钮 */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="self-start px-3 py-1 text-xs font-mono border border-border text-text-body hover:border-brand hover:text-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {uploading ? '上传中...' : '↑ 上传本地图片'}
-                </button>
-                <div className="text-[10px] font-mono text-text-lo">支持 JPG / PNG / GIF / WebP，最大 2 MB</div>
+    <div className="space-y-6 max-w-2xl">
+      {/* ── 个人资料卡 ── */}
+      <section className="border border-border-subtle bg-surface-2">
+        <div className="px-5 py-3 border-b border-border-subtle flex items-center gap-3">
+          {/* 头像区域 */}
+          <div className="relative flex-shrink-0">
+            {avatar ? (
+              <img src={avatar} alt="avatar" className="w-16 h-16 object-cover border-2 border-border"
+                onError={e => (e.currentTarget.style.display = 'none')} />
+            ) : (
+              <div className="w-16 h-16 border-2 border-border flex items-center justify-center bg-surface-1">
+                <span className="text-text-lo font-mono text-lg">?</span>
               </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-mono text-text-hi">{nickname || '未设置昵称'}</div>
+            <div className="text-[10px] font-mono text-text-mid mt-0.5 line-clamp-2">{bio || '未填写简介'}</div>
+          </div>
+          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
+            className="px-3 py-1.5 text-xs font-mono border border-border text-text-body hover:border-brand hover:text-brand transition-colors flex-shrink-0">
+            {uploading ? '...' : '上传头像'}
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp"
+            className="hidden" onChange={handleFileUpload} />
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-mono text-text-mid mb-1.5 tracking-widest">昵称</label>
+              <input type="text" value={nickname} onChange={e => setNickname(e.target.value)} maxLength={50}
+                placeholder="给自己起个名字"
+                className="w-full bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
             </div>
+            <div>
+              <label className="block text-[10px] font-mono text-text-mid mb-1.5 tracking-widest">头像链接</label>
+              <input type="url" value={avatar} onChange={e => setAvatar(e.target.value)}
+                placeholder="或直接粘贴图片URL"
+                className="w-full bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] font-mono text-text-mid mb-1.5 tracking-widest">简介</label>
+            <textarea value={bio} onChange={e => setBio(e.target.value)} maxLength={200} rows={2}
+              placeholder="一句话介绍自己"
+              className="w-full bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none resize-none placeholder:text-text-mid" />
+            <div className="text-right text-[10px] font-mono text-text-mid">{bio.length}/200</div>
           </div>
         </div>
       </section>
 
-      {/* 账号绑定 */}
-      <section>
-        <div className="text-xs font-mono text-text-mid mb-4 tracking-widest uppercase">
-          // 账号绑定
+      {/* ── 账号绑定 ── */}
+      <section className="border border-border-subtle bg-surface-2">
+        <div className="px-5 py-3 border-b border-border-subtle">
+          <span className="text-[10px] font-mono text-text-mid tracking-widest">账号绑定</span>
         </div>
-        <div className="space-y-3">
+        <div className="p-5 space-y-2">
           {[
-            { key: 'github', label: 'GitHub', href: '/api/auth/login?provider=github&intent=link' },
-            { key: 'google', label: 'Google', href: '/api/auth/login?provider=google&intent=link' },
-          ].map((provider) => {
-            const linked = linkedProviders[provider.key as 'github' | 'google'];
+            { key: 'github', label: 'GitHub', icon: '🐙', href: '/api/auth/login?provider=github&intent=link' },
+          ].map(provider => {
+            const linked = linkedProviders[provider.key as 'github'];
             return (
-              <div
-                key={provider.key}
-                className="p-3 border border-border-subtle bg-surface-2 flex items-center justify-between gap-3"
-              >
-                <div>
-                  <div className="text-sm font-mono text-text-hi">{provider.label}</div>
-                  <div className="text-xs font-mono text-text-mid mt-1">
-                    {linked ? '已绑定，可直接第三方登录' : '未绑定'}
+              <div key={provider.key} className="flex items-center justify-between gap-3 py-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">{provider.icon}</span>
+                  <div>
+                    <div className="text-sm font-mono text-text-hi">{provider.label}</div>
+                    <div className="text-[10px] font-mono text-text-mid">
+                      {linked ? '已绑定，可用第三方直接登录' : '未绑定'}
+                    </div>
                   </div>
                 </div>
-                {securityLoading ? (
-                  <span className="text-xs font-mono text-text-mid">加载中...</span>
-                ) : linked ? (
+                {linked ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono px-2.5 py-1 border border-brand/25 text-brand bg-brand/10">
-                      已绑定
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleUnlinkProvider(provider.key as 'github' | 'google')}
+                    <span className="text-[10px] font-mono text-brand">✓ 已绑定</span>
+                    <button type="button" onClick={() => handleUnlinkProvider(provider.key as 'github')}
                       disabled={unlinkingProvider === provider.key}
-                      className="px-3 py-1.5 text-xs font-mono border border-danger/25 text-danger hover:bg-danger/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {unlinkingProvider === provider.key ? '解绑中...' : '解绑'}
+                      className="text-[10px] font-mono text-text-mid hover:text-danger transition-colors disabled:opacity-50">
+                      {unlinkingProvider === provider.key ? '...' : '解绑'}
                     </button>
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      window.location.assign(provider.href);
-                    }}
-                    className="px-3 py-1.5 text-xs font-mono border border-border text-text-body hover:border-brand hover:text-brand transition-colors"
-                  >
+                  <button type="button" onClick={() => window.location.assign(provider.href)}
+                    className="px-3 py-1 text-xs font-mono border border-border text-text-body hover:border-brand hover:text-brand transition-colors">
                     绑定
                   </button>
                 )}
@@ -391,180 +340,111 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
             );
           })}
         </div>
-        <div className="text-[10px] font-mono text-text-lo mt-2">
-          绑定后不会影响原有邮箱密码登录方式。
-        </div>
-        {!hasPassword && linkedCount <= 1 && (
-          <div className="text-[10px] font-mono text-danger mt-2">
-            当前只剩一种登录方式，无法解绑最后一个第三方账号。建议先设置邮箱密码。
-          </div>
-        )}
       </section>
 
-      {/* 账号安全 */}
-      <section>
-        <div className="text-xs font-mono text-text-mid mb-4 tracking-widest uppercase">
-          // 账号安全
+      {/* ── 账号安全 ── */}
+      <section className="border border-border-subtle bg-surface-2">
+        <div className="px-5 py-3 border-b border-border-subtle">
+          <span className="text-[10px] font-mono text-text-mid tracking-widest">账号安全</span>
         </div>
-        <div className="space-y-4">
-          <div className="p-4 border border-border-subtle bg-surface-2 space-y-3">
-            <div className="text-sm font-mono text-text-hi">登录密码</div>
-            {!hasPassword && (
-              <div className="text-[11px] font-mono text-text-mid">
-                当前账号仅支持第三方登录。设置密码后可直接邮箱登录。
+        <div className="p-5 space-y-4">
+          <div>
+            <div className="text-sm font-mono text-text-hi mb-3">登录密码</div>
+            <div className="space-y-2">
+              {!hasPassword && (
+                <div className="text-[11px] font-mono text-text-mid mb-2">当前仅支持第三方登录，设置密码后可直接邮箱登录。</div>
+              )}
+              {hasPassword && (
+                <input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)}
+                  placeholder="当前密码"
+                  className="w-full bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
+              )}
+              <div className="flex gap-2">
+                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                  placeholder={hasPassword ? '新密码（至少6位）' : '设置密码（至少6位）'}
+                  className="flex-1 bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
+                <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="确认密码"
+                  className="flex-1 bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
               </div>
-            )}
-            {hasPassword && (
-              <input
-                type="password"
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                placeholder="当前密码"
-                className="w-full bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none transition-colors placeholder:text-text-mid"
-              />
-            )}
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder={hasPassword ? '新密码（至少 6 位）' : '设置登录密码（至少 6 位）'}
-              className="w-full bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none transition-colors placeholder:text-text-mid"
-            />
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="确认新密码"
-              className="w-full bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none transition-colors placeholder:text-text-mid"
-            />
-            <button
-              type="button"
-              onClick={handleChangePassword}
-              disabled={changingPassword}
-              className="px-4 py-2 text-xs font-mono border border-brand/25 text-brand hover:bg-brand/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {changingPassword ? '提交中...' : hasPassword ? '修改密码' : '设置密码'}
-            </button>
+              <button type="button" onClick={handleChangePassword} disabled={changingPassword}
+                className={`px-4 py-2 text-xs font-mono border transition-colors disabled:opacity-50 ${hasPassword ? 'border-brand/25 text-brand hover:bg-brand/10' : 'border-border text-text-body hover:border-brand'}`}>
+                {changingPassword ? '提交中...' : hasPassword ? '修改密码' : '设置密码'}
+              </button>
+            </div>
           </div>
 
           {features.feature_session_mgmt !== false && (
-          <div className="p-4 border border-border-subtle bg-surface-2">
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <div>
-                <div className="text-sm font-mono text-text-hi">登录会话</div>
-                <div className="text-[11px] font-mono text-text-mid mt-1">
-                  可以下线其他设备，保护账号安全。
+            <div className="pt-4 border-t border-border-subtle">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="text-sm font-mono text-text-hi">登录会话</div>
+                  <div className="text-[11px] font-mono text-text-mid mt-0.5">管理所有已登录设备</div>
                 </div>
+                <button type="button" onClick={handleLogoutOthers} disabled={sessionBusy || securityLoading}
+                  className="px-3 py-1.5 text-xs font-mono border border-danger/25 text-danger hover:bg-danger/10 transition-colors disabled:opacity-50">
+                  下线其他设备
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleLogoutOthers}
-                disabled={sessionBusy || securityLoading}
-                className="px-3 py-1.5 text-xs font-mono border border-danger/25 text-danger hover:bg-danger/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                下线其他设备
-              </button>
-            </div>
-
-            {securityLoading ? (
-              <div className="text-xs font-mono text-text-mid">会话加载中...</div>
-            ) : sessions.length === 0 ? (
-              <div className="text-xs font-mono text-text-mid">暂无会话记录</div>
-            ) : (
-              <div className="space-y-2">
-                {sessions.map((s) => (
-                  <div
-                    key={s.id}
-                    className="p-3 border border-border-subtle bg-surface-1 flex items-center justify-between gap-3"
-                  >
-                    <div className="min-w-0">
-                      <div className="text-xs font-mono text-text-hi">
-                        {s.isCurrent ? '当前设备' : `会话 ${s.id.slice(0, 8)}`}
+              {securityLoading ? (
+                <div className="text-xs font-mono text-text-mid py-4 text-center">加载中...</div>
+              ) : sessions.length === 0 ? (
+                <div className="text-xs font-mono text-text-mid py-4 text-center">暂无会话</div>
+              ) : (
+                <div className="space-y-1">
+                  {sessions.map(s => (
+                    <div key={s.id} className="flex items-center justify-between py-2 px-3 bg-surface-1 border border-border-subtle">
+                      <div className="min-w-0">
+                        <span className="text-xs font-mono text-text-hi">{s.isCurrent ? '当前设备' : `设备 ${s.id.slice(0,8)}`}</span>
+                        <span className="text-[10px] font-mono text-text-mid ml-3">{formatTime(s.createdAt)}</span>
                       </div>
-                      <div className="text-[10px] font-mono text-text-mid mt-1">
-                        登录于 {formatTime(s.createdAt)}
-                      </div>
-                      <div className="text-[10px] font-mono text-text-mid">
-                        过期于 {formatTime(s.expiresAt)}
-                      </div>
+                      {s.isCurrent ? (
+                        <span className="text-[10px] font-mono text-brand flex-shrink-0">当前</span>
+                      ) : (
+                        <button type="button" onClick={() => handleLogoutSession(s.id)} disabled={sessionBusy}
+                          className="text-[10px] font-mono text-text-mid hover:text-danger transition-colors flex-shrink-0">
+                          下线
+                        </button>
+                      )}
                     </div>
-                    {s.isCurrent ? (
-                      <span className="text-[10px] font-mono px-2 py-1 border border-brand/25 text-brand bg-brand/10">
-                        当前
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleLogoutSession(s.id)}
-                        disabled={sessionBusy}
-                        className="px-3 py-1.5 text-xs font-mono border border-border text-text-body hover:border-danger hover:text-danger transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        下线
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </section>
 
-      {/* 隐私设置 */}
+      {/* ── 隐私设置 ── */}
       {features.feature_privacy !== false && (
-      <section>
-        <div className="text-xs font-mono text-text-mid mb-4 tracking-widest uppercase">
-          // 隐私设置
-        </div>
-        <div className="space-y-3">
-          {[
-            {
-              key: 'stats',
-              label: '公开统计数据',
-              sub: '创建数量、质量分对外可见',
-              value: showStats,
-              onChange: setShowStats,
-            },
-            {
-              key: 'watchlist',
-              label: '公开收藏夹',
-              sub: '其他用户可查看你收藏的冰山图',
-              value: showWatchlist,
-              onChange: setShowWatchlist,
-            },
-          ].map(item => (
-            <label
-              key={item.key}
-              className="flex items-center justify-between p-3 border border-border-subtle hover:border-border cursor-pointer group"
-            >
-              <div>
-                <div className="text-sm font-mono text-text-body group-hover:text-text-hi transition-colors">
-                  {item.label}
+        <section className="border border-border-subtle bg-surface-2">
+          <div className="px-5 py-3 border-b border-border-subtle">
+            <span className="text-[10px] font-mono text-text-mid tracking-widest">隐私设置</span>
+          </div>
+          <div className="p-5 space-y-1">
+            {[
+              { key: 'stats', label: '公开统计数据', sub: '创建数量、质量分对外可见', value: showStats, onChange: setShowStats },
+              { key: 'watchlist', label: '公开收藏夹', sub: '其他用户可查看你收藏的冰山图', value: showWatchlist, onChange: setShowWatchlist },
+            ].map(item => (
+              <div key={item.key} className="flex items-center justify-between py-2.5 cursor-pointer"
+                onClick={() => item.onChange(!item.value)}>
+                <div>
+                  <div className="text-sm font-mono text-text-body">{item.label}</div>
+                  <div className="text-[10px] font-mono text-text-mid">{item.sub}</div>
                 </div>
-                <div className="text-xs font-mono text-text-mid mt-0.5">{item.sub}</div>
+                <div className={`w-9 h-5 rounded-full transition-colors flex-shrink-0 relative ${item.value ? 'bg-brand/30' : 'bg-surface-1 border border-border'}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 rounded-full transition-all ${item.value ? 'left-4 bg-brand' : 'left-0.5 bg-text-mid'}`} />
+                </div>
               </div>
-              <div
-                onClick={() => item.onChange(!item.value)}
-                className={`relative w-10 h-5 transition-colors flex-shrink-0 ${item.value ? 'bg-brand/20 border-brand' : 'bg-[#111] border-border'} border`}
-              >
-                <div
-                  className={`absolute top-0.5 w-3.5 h-3.5 transition-all ${item.value ? 'left-[calc(100%-18px)] bg-brand' : 'left-0.5 bg-[#374151]'}`}
-                />
-              </div>
-            </label>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
       )}
 
-      {/* 保存按钮 */}
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="px-6 py-2 bg-brand text-[#0A0A0A] font-mono font-semibold text-sm hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {saving ? 'SAVING...' : '保存设置'}
+      {/* ── 保存 ── */}
+      <button onClick={handleSave} disabled={saving}
+        className="w-full py-2.5 bg-brand text-[#0A0A0A] font-mono font-semibold text-sm hover:bg-brand-hover transition-colors disabled:opacity-50">
+        {saving ? '保存中...' : '保存设置'}
       </button>
     </div>
   );
