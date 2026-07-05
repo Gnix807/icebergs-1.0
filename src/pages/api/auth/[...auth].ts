@@ -466,6 +466,7 @@ export async function GET(event: APIContext) {
         passwordHash: true,
         role: true,
         isFounder: true,
+        qualityScore: true,
         createdAt: true,
         stats: { select: { pendingAchievements: true } },
       },

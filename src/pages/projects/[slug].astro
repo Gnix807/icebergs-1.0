@@ -1,0 +1,209 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+import { getSessionById } from '../../lib/auth/index';
+import { getIcebergTopicLabel } from '../../lib/icebergTopic';
+
+const { slug } = Astro.params;
+const tab = Astro.url.searchParams.get('tab') || 'overview';
+let project: any = null; let error = null;
+let relatedIcebergs: any[] = []; let openIdeas: any[] = []; let tasks: any[] = [];
+
+const sessionId = Astro.cookies.get('session')?.value;
+const session = await getSessionById(sessionId);
+const isLoggedIn = !!session;
+
+try { project = await prisma.project.findUnique({ where: { slug }, select: {
+  id: true, name: true, slug: true, description: true, topic: true, status: true, createdAt: true, creatorId: true,
+  creator: { select: { id: true, nickname: true, username: true, avatar: true } },
+  members: { select: { role: true, user: { select: { id: true, nickname: true, username: true, avatar: true } } }, orderBy: { joinedAt: 'asc' } },
+  _count: { select: { members: true, tasks: true, discussions: true } },
+} });
+if (!project) { error = '专题不存在'; } else {
+  [relatedIcebergs, openIdeas, tasks] = await Promise.all([
+    prisma.iceberg.findMany({ where: { projectId: project.id, status: 'PUBLISHED' }, orderBy: { updatedAt: 'desc' }, take: 20, select: { id: true, slug: true, title: true, viewCount: true, _count: { select: { tiers: true } } } }),
+    prisma.idea.findMany({ where: { projectId: project.id, status: { not: 'COMPLETED' } }, orderBy: { createdAt: 'desc' }, take: 20, select: { id: true, title: true, status: true, _count: { select: { votes: true } } } }),
+    prisma.projectTask.findMany({ where: { projectId: project.id }, orderBy: [{ priority: 'asc' }, { createdAt: 'desc' }], select: { id: true, title: true, description: true, status: true, priority: true, dueDate: true, createdAt: true, assignee: { select: { id: true, nickname: true, username: true, avatar: true } }, creator: { select: { id: true, nickname: true, username: true } } } }),
+  ]);
+  const wantJoin = Astro.url.searchParams.get('join');
+  if (wantJoin === '1' && session && !project.members.some((m: any) => m.user.id === session.userId)) {
+    await prisma.projectMember.create({ data: { projectId: project.id, userId: session.userId } }).catch(() => {});
+  }
+}} catch (err) { error = '加载失败'; }
+
+const isMember = session && project?.members.some((m: any) => m.user.id === session.userId);
+const isModerator = session && project?.members.some((m: any) => m.user.id === session.userId && m.role === 'MODERATOR');
+const isCreator = session?.userId === project?.creatorId;
+const isAdmin = session?.isFounder || session?.role === 'ADMIN';
+
+// Pre-compute JSON for modal
+const tasksJson = JSON.stringify(tasks.map((t: any) => ({ id: t.id, title: t.title, description: t.description, status: t.status, priority: t.priority, dueDate: t.dueDate, createdAt: t.createdAt, creator: t.creator, assignee: t.assignee })));
+const membersArr = project?.members?.map((m: any) => ({ id: m.user.id, name: m.user.nickname || m.user.username })) || [];
+const membersJson = JSON.stringify(membersArr);
+
+const taskColumns = { OPEN: tasks.filter(t => t.status === 'OPEN'), IN_PROGRESS: tasks.filter(t => t.status === 'IN_PROGRESS'), COMPLETED: tasks.filter(t => t.status === 'COMPLETED') };
+const statusLabel = { OPEN: '待处理', IN_PROGRESS: '进行中', COMPLETED: '已完成' };
+const statusColor = { OPEN: '#f59e0b', IN_PROGRESS: '#3b82f6', COMPLETED: '#22c55e' };
+const priorityLabel = { P0: '🔴 紧急', P1: '🟠 高', P2: '⚪ 中', P3: '⚫ 低' };
+const priorityColor = { P0: '#ef4444', P1: '#f59e0b', P2: '#6b7280', P3: '#94a3b8' };
+const tabs = [{ key: 'overview', label: '概览' }, { key: 'tasks', label: '任务' }, { key: 'members', label: '成员' }];
+---
+
+<Layout title={`${project?.name || '专题'} | 冰山图宇宙`}>
+  <main class="bg-grid px-4 md:px-6 py-12 relative z-10" data-project-slug={project?.slug || ''}>
+    {error ? (<div class="p-8 border border-border text-center"><p class="text-red-500 font-mono">{error}</p><a href="/projects" class="text-brand hover:underline mt-4 inline-block">← 返回列表</a></div>) : (<div class="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-8"><div class="min-w-0">
+      <header class="mb-6"><div class="text-xs font-mono text-text-mid mb-2"><a href="/projects" class="hover:text-brand">← 专题协作</a></div>
+        <div class="flex items-center gap-2 mb-2 flex-wrap"><span class="text-[10px] font-mono px-2 py-0.5 border border-border text-text-mid">{getIcebergTopicLabel(project.topic)}</span><span class="text-[10px] font-mono text-text-lo">{project._count.members} 成员 · {project._count.tasks} 任务</span></div>
+        <div class="flex items-center justify-between"><h1 class="text-2xl font-mono font-semibold"><span class="text-brand">#</span> {project.name}</h1>
+          <div class="flex gap-2">
+            <button id="join-btn" class="px-4 py-1.5 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:opacity-90" style={isLoggedIn && !isMember ? '' : 'display:none'}>加入</button>
+            <button id="leave-btn" class="px-4 py-1.5 border border-border text-xs font-mono text-text-body hover:border-danger hover:text-danger" style={isLoggedIn && isMember ? '' : 'display:none'}>退出</button>
+            {isModerator && <button id="invite-btn" class="px-4 py-1.5 border border-info/30 text-info text-xs font-mono hover:bg-info/10">📋 邀请</button>}
+            {isModerator && <button id="edit-project-btn" class="px-4 py-1.5 border border-border text-xs font-mono text-text-body hover:border-brand">编辑</button>}
+            {(isCreator || isAdmin) && <button id="delete-btn" class="px-4 py-1.5 border border-danger/30 text-danger text-xs font-mono hover:bg-danger hover:text-white">删除</button>}
+          </div></div><span id="invite-link" class="hidden text-[10px] font-mono text-text-body px-2 py-1.5 border border-border bg-surface-2 block mt-2 truncate"></span>
+      </header>
+      <div class="flex gap-0 mb-6 border border-border w-fit">{tabs.map(t => (<a href={`/projects/${project.slug}?tab=${t.key}`} class={`px-4 py-1.5 text-[10px] font-mono border-r border-border last:border-r-0 ${tab===t.key?'bg-brand text-[#0A0A0A] font-bold':'text-text-body hover:bg-surface-2'}`}>{t.label}</a>))}</div>
+      {isModerator && (<div id="project-edit-form" class="border border-border bg-surface-1 p-4 mb-6 space-y-3 hidden">
+        <div class="text-[10px] font-mono text-text-mid">编辑专题</div>
+        <input id="pe-name" type="text" value={project.name} class="w-full px-3 py-2 text-sm font-mono border border-border bg-surface-2 text-text-hi focus:border-brand focus:outline-none"/>
+        <textarea id="pe-desc" rows="3" class="w-full px-3 py-2 text-xs font-mono border border-border bg-surface-2 text-text-hi focus:border-brand focus:outline-none resize-none">{project.description || ''}</textarea>
+        <div class="flex gap-2"><button id="pe-save" class="px-4 py-1.5 bg-brand text-[#0A0A0A] text-xs font-mono font-bold">保存</button><button id="pe-cancel" class="px-4 py-1.5 border border-border text-xs font-mono text-text-body">取消</button></div>
+      </div>)}
+      {tab === 'overview' && (<div class="space-y-6">
+        {project.description && <div class="p-4 border border-border bg-surface-2 text-xs text-text-body whitespace-pre-wrap">{project.description}</div>}
+        {['iceberg','idea'].map(type => (<section><div class="flex items-center justify-between mb-2"><span class="text-[10px] font-mono text-text-mid tracking-widest">{type==='iceberg'?'📊 冰山图':'💡 创意'}</span>{isMember && <button id={`link-${type}-btn`} class="text-[10px] font-mono px-2 py-0.5 border border-border text-text-body hover:border-brand">+ 关联</button>}</div>
+          <div id={`link-${type}-form`} class="hidden flex gap-2 mb-2"><input id={`link-${type}-input`} type="text" placeholder="slug 或 ID" class="flex-1 px-2.5 py-1 text-[10px] font-mono border border-border bg-surface-2 text-text-hi focus:border-brand focus:outline-none"/><button id={`link-${type}-submit`} class="px-3 py-1 text-[10px] font-mono bg-brand text-[#0A0A0A]">确认</button></div>
+          {(type==='iceberg'?relatedIcebergs:openIdeas).length===0?<p class="text-[10px] font-mono text-text-lo py-3">点击上方关联</p>:<div class={type==='iceberg'?'grid grid-cols-1 sm:grid-cols-2 gap-2':'space-y-1'}>{(type==='iceberg'?relatedIcebergs:openIdeas).map((r:any)=>(type==='iceberg'?<div class="relative group p-3 border border-border bg-surface-2"><button class="absolute top-2 right-2 text-text-lo hover:text-danger text-xs hidden group-hover:block" onclick={`unlink('iceberg','${r.id}')`}>✕</button><a href={`/iceberg/${r.slug||r.id}`} class="text-xs font-mono text-text-hi truncate block pr-6">{r.title}</a><div class="text-[9px] font-mono text-text-lo mt-1">{r._count.tiers} 层 · {r.viewCount} 浏览</div></div>:<div class="flex items-center justify-between p-2.5 border border-border bg-surface-2 group"><a href={`/ideas/${r.id}`} class="text-xs font-mono text-text-body truncate flex-1">{r.title}</a><button class="text-text-lo hover:text-danger text-xs ml-2 hidden group-hover:block" onclick={`unlink('idea','${r.id}')`}>✕</button></div>))}</div>}</section>))}
+      </div>)}
+      {tab === 'tasks' && (<div>
+        {isMember && <div>
+          <button id="task-form-toggle" type="button" class="w-full flex items-center justify-between px-3 py-2 border border-border bg-surface-1 text-xs font-mono text-text-mid hover:text-brand transition-colors mb-3"><span>➕ 新建任务</span><span id="task-form-arrow" class="text-[9px]">▸</span></button>
+          <div id="task-form-body" style="display:none" class="border border-border bg-surface-1 p-4 mb-4 space-y-3">
+            <div class="flex gap-2"><input id="task-input" type="text" placeholder="任务标题…" maxlength="200" class="flex-1 px-3 py-2 text-sm font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none"/>
+              <select id="task-assignee" class="px-2.5 py-2 text-xs font-mono border border-border bg-surface-2 text-text-hi"><option value="">指派给…</option>{project.members.map((m:any) => (<option value={m.user.id}>{m.user.nickname||m.user.username}</option>))}</select>
+              <select id="task-priority" class="px-2.5 py-2 text-xs font-mono border border-border bg-surface-2 text-text-hi"><option value="">优先级</option>{Object.entries(priorityLabel).map(([k,v]) => (<option value={k}>{v}</option>))}</select>
+              <button id="task-submit" class="px-5 py-2 bg-brand text-[#0A0A0A] text-sm font-mono font-bold hover:opacity-90">创建</button></div>
+            <textarea id="task-desc" rows="3" maxlength="2000" placeholder="描述（支持 Markdown）…" class="w-full px-3 py-2 text-xs font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none resize-none"></textarea>
+            <div><div class="text-[9px] font-mono text-text-mid mb-1.5">快速模板</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {[{ key:'write', label:'📝 撰写', title:'撰写「[主题]」冰山图', priority:'P1', desc:'从零创建冰山图，含至少3层结构和词条描述' },{ key:'review', label:'👀 审核', title:'审核「[标题]」的内容', priority:'P1', desc:'检查层级结构和词条质量' },{ key:'expand', label:'📈 补充', title:'为「[冰山图]」补充词条', priority:'P2', desc:'添加新词条或完善描述' },{ key:'research', label:'🔍 研究', title:'收集「[主题]」参考资料', priority:'P2', desc:'查找整理书籍、论文等来源' },{ key:'fix', label:'🔧 修复', title:'修复「[冰山图]」的错误', priority:'P1', desc:'修正事实错误或过时信息' },{ key:'promote', label:'📣 推广', title:'推广「[冰山图]」', priority:'P3', desc:'在社区分享吸引更多人' }].map(tpl => (<button type="button" class="task-tpl text-left p-2.5 border border-border bg-surface-2 hover:border-brand group" data-title={tpl.title} data-priority={tpl.priority} data-desc={tpl.desc}><div class="text-[10px] font-mono font-bold text-text-hi">{tpl.label}</div><div class="text-[9px] font-mono text-text-lo mt-1 line-clamp-2">{tpl.desc}</div></button>))}</div></div></div></div>}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">{Object.entries(taskColumns).map(([st, col]: [string, any[]]) => (<div class="border border-border-minimal bg-surface-1 p-3">
+          <div class="flex items-center justify-between mb-3 pb-2 border-b border-border-minimal"><span class="text-xs font-mono font-bold" style={`color:${statusColor[st]}`}>{statusLabel[st]}</span><span class="text-[10px] font-mono text-text-lo">{col.length}</span></div>
+          <div class="space-y-2 min-h-[100px] max-h-[250px] overflow-y-auto">{col.length===0 ? <p class="text-[10px] font-mono text-text-lo text-center py-6">—</p> : col.map((t:any) => (<div class="block p-3 border border-border hover:border-brand bg-surface-2 cursor-pointer transition-colors task-card" data-id={t.id} onclick={`openTaskModal('${t.id}')`}>
+            <div class="flex items-center gap-1.5 mb-1 flex-wrap">{t.priority && <span class="text-[8px] font-mono px-1 py-0.5 border rounded" style={`color:${priorityColor[t.priority]};border-color:${priorityColor[t.priority]}40`}>{priorityLabel[t.priority]}</span>}<span class="text-[8px] font-mono px-1 py-0.5 border rounded" style={`color:${statusColor[t.status]};border-color:${statusColor[t.status]}40`}>{statusLabel[t.status]}</span></div>
+            <div class="text-xs font-mono text-text-hi truncate">{t.title}</div><div class="flex items-center justify-between mt-2 text-[9px] font-mono text-text-lo">{t.assignee ? <span>@{t.assignee.nickname||t.assignee.username}</span> : <span>未指派</span>}{t.dueDate && <span>{new Date(t.dueDate).toLocaleDateString('zh-CN')}</span>}</div>
+            {isMember && (<div class="flex gap-1 mt-2">{st !== 'OPEN' && <button class="text-[8px] font-mono px-1.5 py-0.5 border border-border hover:border-brand text-text-mid task-move" data-to="OPEN">← 待处理</button>}{st !== 'IN_PROGRESS' && <button class="text-[8px] font-mono px-1.5 py-0.5 border border-border hover:border-info text-text-mid task-move" data-to="IN_PROGRESS">→ 进行中</button>}{st !== 'COMPLETED' && <button class="text-[8px] font-mono px-1.5 py-0.5 border border-border hover:border-success text-text-mid task-move" data-to="COMPLETED">✓ 完成</button>}</div>)}
+          </div>))}</div></div>))}</div>
+      </div>)}
+      {tab === 'members' && (<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">{project.members.map((m:any)=>(<div class="border border-border bg-surface-2 p-3">
+        <a href={`/user/${m.user.id}`} class="flex items-center gap-3 mb-2 hover:opacity-80">{m.user.avatar?<img src={m.user.avatar} class="w-8 h-8 rounded-full border border-border object-cover" alt=""/>:<div class="w-8 h-8 rounded-full border border-border bg-surface-3 flex items-center justify-center text-[10px] font-mono text-text-mid">{(m.user.nickname||m.user.username).charAt(0)}</div>}<div class="flex-1 min-w-0"><div class="text-xs font-mono text-text-hi truncate">{m.user.nickname||m.user.username}</div><div class="text-[9px] font-mono text-text-lo">@{m.user.username}</div></div>{m.role==='MODERATOR'&&<span class="text-[8px] font-mono px-1.5 py-0.5 border border-warning/30 text-warning flex-shrink-0">管理</span>}{project.creatorId===m.user.id&&<span class="text-[8px] font-mono px-1.5 py-0.5 border border-brand/30 text-brand flex-shrink-0">创建者</span>}</a>
+        {isModerator && m.user.id !== session?.userId && (<div class="flex gap-1"><button class="member-action text-[10px] font-mono px-2 py-1 border border-border hover:border-danger hover:text-danger transition-colors" data-uid={m.user.id} data-action="kick">踢出</button>{m.role!=='MODERATOR' && <button class="member-action text-[10px] font-mono px-2 py-1 border border-border hover:border-warning hover:text-warning transition-colors" data-uid={m.user.id} data-action="promote">提拔</button>}{m.role==='MODERATOR' && <button class="member-action text-[10px] font-mono px-2 py-1 border border-border hover:border-info hover:text-info transition-colors" data-uid={m.user.id} data-action="demote">降级</button>}{isCreator && <button class="member-action text-[10px] font-mono px-2 py-1 border border-border hover:border-brand hover:text-brand transition-colors" data-uid={m.user.id} data-action="transfer">转移</button>}</div>)}
+      </div>))}</div>)}
+    </div>
+    <aside class="space-y-4 hidden lg:block sticky top-24 self-start">
+      <div class="border border-border-subtle bg-surface-1 p-3"><div class="text-[10px] font-mono text-text-mid tracking-widest mb-2">统计</div><div class="space-y-1 text-[10px] font-mono"><div class="flex justify-between"><span class="text-text-mid">冰山图</span><span class="text-text-body">{relatedIcebergs.length}</span></div><div class="flex justify-between"><span class="text-text-mid">创意</span><span class="text-text-body">{openIdeas.length}</span></div><div class="flex justify-between"><span class="text-text-mid">任务</span><span class="text-text-body">{project._count.tasks}</span></div><div class="flex justify-between"><span class="text-text-mid">讨论</span><span class="text-text-body">{project._count.discussions}</span></div></div></div>
+      <div class="border border-border-subtle bg-surface-1"><button id="disc-toggle" class="w-full px-3 py-2 border-b border-border-subtle flex items-center justify-between hover:bg-surface-2"><span class="text-[10px] font-mono text-text-mid tracking-widest">💬 讨论</span><span class="flex items-center gap-2"><span class="text-[9px] font-mono text-text-lo">{project._count.discussions}</span><span id="disc-arrow" class="text-[9px] text-text-mid">▾</span></span></button><div id="disc-body"><div class="p-2"><input id="disc-input-sidebar" type="text" maxlength="500" placeholder="说点什么… Enter 发送" class="w-full px-2.5 py-1.5 text-[10px] font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none"/></div><div id="disc-list-sidebar" class="px-2 pb-2 space-y-2 max-h-36 overflow-y-auto text-[10px] leading-relaxed" style="scrollbar-width:thin"></div></div></div>
+    </aside></div>)}
+  </main>
+</Layout>
+
+<!-- Task Modal -->
+<div id="task-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,0.6)">
+  <div class="bg-surface-1 border border-border w-full max-w-xl max-h-[85vh] overflow-y-auto p-6 shadow-2xl space-y-4">
+    <div class="flex items-center justify-between mb-4"><span class="text-[10px] font-mono text-text-mid">任务详情</span><button id="task-modal-close" class="text-text-lo hover:text-text-body text-lg leading-none">✕</button></div>
+    <div id="task-modal-content" class="text-xs font-mono"></div>
+  </div>
+</div>
+
+<script is:inline></script>
+<script define:vars={{ tasksData: tasks, membersData: membersArr }}>
+window.__tasks = tasksData;
+window.__tasks = tasksData;
+window.__members = membersData;
+</script>
+<script is:inline>
+var sl={OPEN:'待处理',IN_PROGRESS:'进行中',COMPLETED:'已完成'},sc={OPEN:'#f59e0b',IN_PROGRESS:'#3b82f6',COMPLETED:'#22c55e'};
+var pl={P0:'🔴 紧急',P1:'🟠 高',P2:'⚪ 中',P3:'⚫ 低'},pc={P0:'#ef4444',P1:'#f59e0b',P2:'#6b7280',P3:'#94a3b8'};
+
+window.openTaskModal=function(tid){
+  var m=document.getElementById('task-modal'),c=document.getElementById('task-modal-content'),slug=document.querySelector('main[data-project-slug]')?.dataset?.projectSlug;
+  if(!m||!c||!slug)return;m.classList.remove('hidden');
+  var task=null;for(var i=0;i<window.__tasks.length;i++){if(window.__tasks[i].id===tid){task=window.__tasks[i];break}}
+  if(!task){c.innerHTML='<p class="text-xs font-mono text-danger">任务不存在</p>';return}
+  var isMem=!!document.getElementById('leave-btn');
+  var cr=(task.creator&&task.creator.nickname)||(task.creator&&task.creator.username)||'?',as=(task.assignee&&task.assignee.nickname)||(task.assignee&&task.assignee.username)||'未指派',due=task.dueDate?new Date(task.dueDate).toLocaleDateString('zh-CN'):'';
+  var h='<div class="space-y-3"><div class="text-sm font-mono font-bold text-text-hi">'+task.title+'</div>';
+  h+='<div class="flex flex-wrap gap-2 mb-3"><span class="text-[10px] font-mono px-2 py-0.5 border rounded" style="color:'+sc[task.status]+';border-color:'+sc[task.status]+'40">'+sl[task.status]+'</span>';
+  if(task.priority)h+='<span class="text-[10px] font-mono px-2 py-0.5 border rounded" style="color:'+pc[task.priority]+';border-color:'+pc[task.priority]+'40">'+pl[task.priority]+'</span>';
+  if(due)h+='<span class="text-[10px] font-mono text-text-lo">📅 '+due+'</span>';h+='</div>';
+  h+='<div class="text-[10px] font-mono text-text-lo mb-3">'+cr+' · 指派: '+as+'</div>';
+  if(task.description)h+='<div class="text-xs text-text-body whitespace-pre-wrap border-l-2 border-border pl-3 mb-3">'+task.description+'</div>';
+  if(!task.assignee||!task.assignee.id)h+='<button id="tm-claim" class="px-4 py-1.5 border border-success text-success text-xs font-mono hover:bg-success hover:text-[#0A0A0A]">🙋 认领</button> ';
+  if(isMem){h+='<button id="tm-edit" class="px-4 py-1.5 border border-border text-xs font-mono text-text-body hover:border-brand">编辑</button>';if(task.assignee&&task.assignee.id)h+=' <button id="tm-unassign" class="px-4 py-1.5 border border-orange-400/30 text-orange-400 text-xs font-mono hover:bg-orange-400/10">取消指派</button>';h+=' <button id="tm-delete" class="px-4 py-1.5 border border-danger/30 text-danger text-xs font-mono hover:bg-danger hover:text-white">删除</button>';}
+  h+='<div class="border-t border-border-subtle pt-3 mt-3"><div class="text-[10px] font-mono text-text-mid mb-2">评论</div><div id="tm-comments" class="space-y-1 max-h-32 overflow-y-auto text-[10px]">加载中…</div>';
+  if(isMem)h+='<div class="flex gap-2 mt-2"><input id="tm-ci" type="text" maxlength="500" placeholder="添加评论…" class="flex-1 px-2 py-1 text-[10px] font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none"/><button id="tm-cs" class="px-3 py-1 text-[10px] font-mono bg-brand text-[#0A0A0A]">发送</button></div>';
+  h+='</div></div>';c.innerHTML=h;
+  function lc(){var cl=document.getElementById('tm-comments');if(!cl)return;fetch('/api/projects/'+slug+'/task-comments?taskId='+tid).then(function(r){return r.json()}).then(function(d){if(d.success){cl.innerHTML=d.data.comments.length===0?'<p class="text-text-lo text-center py-2">暂无评论</p>':d.data.comments.map(function(cm){var u=cm.user||{},n=u.nickname||u.username||'?';return'<div><span class="font-bold text-text-hi">'+n+'</span> <span class="text-text-body">'+cm.content+'</span> <span class="text-text-lo ml-1">'+new Date(cm.createdAt).toLocaleDateString('zh-CN')+'</span></div>'}).join('')}}).catch(function(){})}
+  lc();
+  setTimeout(function(){
+    var cs=document.getElementById('tm-cs'),ci=document.getElementById('tm-ci');
+    if(cs&&ci)cs.onclick=async function(){var v=ci.value.trim();if(!v)return;cs.disabled=true;await fetch('/api/projects/'+slug+'/task-comments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:tid,content:v})});ci.value='';cs.disabled=false;lc()};
+    var clb=document.getElementById('tm-claim');if(clb)clb.onclick=function(){fetch('/api/projects/'+slug+'/tasks',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:tid,assigneeId:'__self__'})}).then(function(){location.reload()})};
+    var uab=document.getElementById('tm-unassign');if(uab)uab.onclick=function(){fetch('/api/projects/'+slug+'/tasks',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:tid,assigneeId:null})}).then(function(){location.reload()})};
+    var db3=document.getElementById('tm-delete');if(db3)db3.onclick=function(){if(confirm('确定删除此任务？')){fetch('/api/projects/'+slug+'/tasks',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:tid})}).then(function(){location.reload()})}};
+    var eb=document.getElementById('tm-edit');if(eb)eb.onclick=function(){editTaskModal(tid,task,slug,isMem)};
+  },200);
+  document.getElementById('task-modal-close').onclick=function(){m.classList.add('hidden')};
+  m.onclick=function(e){if(e.target===m)m.classList.add('hidden')};
+};
+
+window.editTaskModal=function(tid,task,slug,isMem){
+  var c=document.getElementById('task-modal-content'),members=window.__members||[];
+  var eh='';eh+='<input id="em-title" type="text" value="'+task.title+'" class="w-full px-3 py-2 text-sm font-mono border border-border bg-surface-2 text-text-hi focus:border-brand focus:outline-none mb-2"/>';
+  eh+='<div class="flex flex-wrap gap-2 mb-2"><select id="em-status" class="px-2 py-1.5 text-[10px] font-mono border border-border bg-surface-2 text-text-hi">';
+  Object.entries(sl).forEach(function(e){eh+='<option value="'+e[0]+'"'+(task.status===e[0]?' selected':'')+'>'+e[1]+'</option>'});
+  eh+='</select><select id="em-priority" class="px-2 py-1.5 text-[10px] font-mono border border-border bg-surface-2 text-text-hi"><option value=""'+(task.priority?'':' selected')+'>无优先级</option>';
+  Object.entries(pl).forEach(function(e){eh+='<option value="'+e[0]+'"'+(task.priority===e[0]?' selected':'')+'>'+e[1]+'</option>'});
+  eh+='</select><select id="em-assignee" class="px-2 py-1.5 text-[10px] font-mono border border-border bg-surface-2 text-text-hi"><option value="">无指派</option>';
+  var curAid=task.assignee?task.assignee.id:'';
+  for(var i=0;i<members.length;i++){eh+='<option value="'+members[i].id+'"'+(members[i].id===curAid?' selected':'')+'>'+members[i].name+'</option>'}
+  eh+='</select><input id="em-due" type="date" value="'+(task.dueDate?new Date(task.dueDate).toISOString().slice(0,10):'')+'" class="px-2 py-1.5 text-[10px] font-mono border border-border bg-surface-2 text-text-hi"/></div>';
+  eh+='<textarea id="em-desc" rows="4" class="w-full px-3 py-2 text-xs font-mono border border-border bg-surface-2 text-text-hi focus:border-brand focus:outline-none resize-none mb-2">'+(task.description||'')+'</textarea>';
+  eh+='<div class="flex gap-2"><button id="em-save" class="px-4 py-1.5 bg-brand text-[#0A0A0A] text-xs font-mono font-bold">保存</button><button id="em-cancel" class="px-4 py-1.5 border border-border text-xs font-mono text-text-body">取消</button></div>';
+  c.innerHTML=eh;
+  document.getElementById('em-cancel').onclick=function(){openTaskModal(tid)};
+  document.getElementById('em-save').onclick=async function(){
+    var t2=document.getElementById('em-title').value.trim(),s2=document.getElementById('em-status').value,p2=document.getElementById('em-priority').value||null;
+    var a2=document.getElementById('em-assignee').value||null,d2=document.getElementById('em-due').value||null,desc2=document.getElementById('em-desc').value.trim()||null;
+    if(!t2)return;document.getElementById('em-save').disabled=true;
+    await fetch('/api/projects/'+slug+'/tasks',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:tid,title:t2,status:s2,priority:p2,assigneeId:a2,dueDate:d2,description:desc2})});
+    location.reload();
+  };
+};
+</script>
+
+{project && <script is:inline>
+function loadDiscussions(){var dl=document.getElementById('disc-list-sidebar'),di=document.getElementById('disc-input-sidebar');if(!dl)return;var slug=document.querySelector('main[data-project-slug]')?.dataset?.projectSlug;if(!slug)return;var da='/api/projects/'+slug+'/discussions',lastCount=-1;async function ld(){try{var r=await fetch(da),d=await r.json();if(d.success){var ct=d.data.discussions.length;if(ct!==lastCount||lastCount===-1){lastCount=ct;dl.innerHTML=ct?d.data.discussions.slice(0,15).map(function(m){var u=m.user||{},n=u.nickname||u.username||'?';return'<div class="text-[10px] leading-relaxed"><span class="text-text-hi font-bold">'+n+'</span> <span class="text-text-body">'+m.content+'</span></div>'}).join(''):'<p class="text-[10px] font-mono text-text-lo text-center py-4">暂无消息</p>'}}}catch(e){}}
+  if(di&&!di._bound){di._bound=true;di.onkeydown=async function(e){if(e.key!=='Enter')return;var v=di.value.trim();if(!v)return;di.disabled=true;await fetch(da,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:v})});di.value='';di.disabled=false;ld()}}ld();window._discInterval&&clearInterval(window._discInterval);window._discInterval=setInterval(ld,30000)}
+loadDiscussions();document.addEventListener('astro:after-swap',function(){setTimeout(loadDiscussions,100)});
+</script>}
+
+<script is:inline>
+function initAll(){
+  var main=document.querySelector('main[data-project-slug]');if(!main)return;var slug=main.dataset.projectSlug;
+  var tft=document.getElementById('task-form-toggle'),tfb=document.getElementById('task-form-body'),tfa=document.getElementById('task-form-arrow');if(tft&&tfb)tft.onclick=function(){if(tfb.style.display==='none'){tfb.style.display='';tfa.textContent='▾'}else{tfb.style.display='none';tfa.textContent='▸'}};
+  var dt=document.getElementById('disc-toggle'),db2=document.getElementById('disc-body'),da2=document.getElementById('disc-arrow');if(dt&&db2)dt.onclick=function(){if(db2.style.display==='none'){db2.style.display='';da2.textContent='▾'}else{db2.style.display='none';da2.textContent='▸'}};
+  var jb=document.getElementById('join-btn'),lb=document.getElementById('leave-btn');async function tog(){var r=await fetch('/api/projects/'+slug+'/members',{method:'POST'});var d=await r.json();if(d.success){if(d.data.joined){jb.style.display='none';lb.style.display=''}else{jb.style.display='';lb.style.display='none'}}}if(jb)jb.onclick=tog;if(lb)lb.onclick=tog;
+  var db=document.getElementById('delete-btn');if(db)db.onclick=async function(){if(!confirm('确定删除？'))return;var r=await fetch('/api/projects',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:slug})});if(r.ok)location.href='/projects'};
+  window.unlink=async function(type,id){var r=await fetch('/api/projects/'+slug+'/link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:type,id:id})});if(r.ok)location.reload()};
+  function setupLinker(b,f,i,s,t){var btn=document.getElementById(b),fm=document.getElementById(f),inp=document.getElementById(i),sub=document.getElementById(s);if(!btn||!fm)return;btn.onclick=function(){fm.classList.toggle('hidden')};if(sub)sub.onclick=async function(){var v=inp.value.trim();if(!v)return;sub.disabled=true;var r=await fetch('/api/projects/'+slug+'/link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:t,id:v})});if(r.ok)location.reload();else sub.disabled=false}}setupLinker('link-iceberg-btn','link-iceberg-form','link-iceberg-input','link-iceberg-submit','iceberg');setupLinker('link-idea-btn','link-idea-form','link-idea-input','link-idea-submit','idea');
+  var peb=document.getElementById('edit-project-btn'),pef=document.getElementById('project-edit-form');if(peb&&pef)peb.onclick=function(){pef.classList.toggle('hidden')};var pec=document.getElementById('pe-cancel');if(pec)pec.onclick=function(){pef.classList.add('hidden')};var pes=document.getElementById('pe-save');if(pes)pes.onclick=async function(){var nm=document.getElementById('pe-name').value.trim(),desc=document.getElementById('pe-desc').value.trim()||null;if(!nm)return;pes.disabled=true;await fetch('/api/projects',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:slug,name:nm,description:desc})});location.reload()};
+  document.querySelectorAll('.member-action').forEach(function(btn){btn.onclick=async function(e){e.preventDefault();var uid=btn.dataset.uid,act=btn.dataset.action;btn.disabled=true;await fetch('/api/projects/'+slug+'/members',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:uid,action:act})});location.reload()}});
+  var ib=document.getElementById('invite-btn'),il=document.getElementById('invite-link');if(ib&&il)ib.onclick=function(){var link=location.origin+'/projects/'+slug+'?join=1';il.textContent=link;il.classList.remove('hidden');navigator.clipboard.writeText(link).catch(function(){})};
+  var ti=document.getElementById('task-input'),tp=document.getElementById('task-priority'),ta=document.getElementById('task-assignee'),tb=document.getElementById('task-submit'),td=document.getElementById('task-desc');document.querySelectorAll('.task-tpl').forEach(function(btn){btn.onclick=function(){ti.value=btn.dataset.title;if(btn.dataset.priority)tp.value=btn.dataset.priority;if(btn.dataset.desc)td.value=btn.dataset.desc}});if(tb)tb.onclick=async function(){var v=ti.value.trim();if(!v)return;var p=tp.value||undefined,a=ta.value||undefined,desc=td?td.value.trim()||undefined:undefined;tb.disabled=true;await fetch('/api/projects/'+slug+'/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:v,priority:p,assigneeId:a,description:desc})});ti.value='';tb.disabled=false;location.reload()};
+  initProjectPage();
+}
+function initProjectPage(){var main=document.querySelector('main[data-project-slug]');if(!main)return;var slug=main.dataset.projectSlug;document.querySelectorAll('.task-move').forEach(function(btn){btn.onclick=function(e){e.stopPropagation();e.preventDefault();var id=btn.closest('.task-card').dataset.id,to=btn.dataset.to;fetch('/api/projects/'+slug+'/tasks',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({taskId:id,status:to})}).then(function(r){return r.json()}).then(function(){location.reload()})}})}
+initAll();
+document.addEventListener('astro:after-swap',function(){setTimeout(function(){initAll();loadDiscussions()},100)});
+</script>

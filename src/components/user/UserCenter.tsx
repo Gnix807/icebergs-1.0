@@ -97,7 +97,7 @@ interface Props {
   userboxIds?: string[];
 }
 
-type Tab = 'icebergs' | 'watchlist' | 'explore' | 'score' | 'settings' | 'admin';
+type Tab = 'icebergs' | 'drafts' | 'watchlist' | 'explore' | 'score' | 'settings' | 'admin';
 
 const LEVEL_COLORS: Record<number, string> = {
   0: '#6b7280',
@@ -542,6 +542,9 @@ export function UserCenter({
   const [promotionStatement, setPromotionStatement] = useState('');
   const [promotionBusy, setPromotionBusy]           = useState(false);
   const [promotionSent, setPromotionSent]           = useState(false);
+  const [following, setFollowing]                   = useState(false);
+  const [followerCount, setFollowerCount]           = useState(0);
+  const [followBusy, setFollowBusy]                 = useState(false);
   const [showAllAchievements, setShowAllAch]        = useState(false);
   const qLevel      = getQualityLevel(user.qualityScore, user.role);
   const levelColor  = LEVEL_COLORS[qLevel.level] ?? '#6b7280';
@@ -563,6 +566,23 @@ export function UserCenter({
     return () => obs.disconnect();
   }, []);
 
+  // 关注状态
+  useEffect(() => {
+    if (isOwner) return;
+    fetch(`/api/users/${user.id}/follow`, { method: 'POST' }).then(r => r.json()).then(d => {
+      if (d.success) { setFollowing(d.data.following); setFollowerCount(d.data.followerCount); }
+    }).catch(() => {});
+  }, [user.id, isOwner]);
+
+  const toggleFollow = async () => {
+    setFollowBusy(true);
+    try {
+      const res = await fetch(`/api/users/${user.id}/follow`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) { setFollowing(data.data.following); setFollowerCount(data.data.followerCount); }
+    } finally { setFollowBusy(false); }
+  };
+
   // 从 DB 数据构建成就映射（unlockedAt 用于 tooltip）
   const achievementMap: Record<string, string> = Object.fromEntries(
     achievements.map(a => [a.achievementId, a.unlockedAt])
@@ -581,6 +601,7 @@ export function UserCenter({
 
   const tabs: { id: Tab; label: string; code: string; amber?: boolean }[] = [
     { id: 'icebergs',  label: '冰山图',   code: 'ICEBERGS'  },
+    { id: 'drafts',    label: '草稿',     code: 'DRAFTS'    },
     { id: 'watchlist', label: '收藏',     code: 'WATCHLIST' },
     { id: 'explore',   label: '探索成就', code: 'EXPLORE'   },
     ...(isOwner ? [{ id: 'score' as Tab, label: '积分', code: 'SCORE' }] : []),
@@ -868,6 +889,21 @@ export function UserCenter({
                   : <div className="mb-3" />
               }
 
+              {/* 关注按钮 */}
+              {!isOwner && (
+                <div className="flex items-center gap-2 mb-2">
+                  <button onClick={toggleFollow} disabled={followBusy}
+                    className={`text-[10px] font-mono border px-2.5 py-0.5 transition-colors ${
+                      following ? 'border-success/30 text-success bg-success/5 hover:border-danger hover:text-danger' : 'border-brand/30 text-brand hover:bg-brand/10'
+                    }`}>
+                    {following ? '已关注' : '+ 关注'}
+                  </button>
+                  {followerCount > 0 && (
+                    <span className="text-[10px] font-mono text-text-lo">{followerCount} 粉丝</span>
+                  )}
+                </div>
+              )}
+
               {/* 用户框 */}
               {userboxDefs.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
@@ -996,7 +1032,8 @@ export function UserCenter({
           </div>
 
           <div className="boot-animate" style={{ animationDelay: '100ms' }}>
-            {activeTab === 'icebergs'  && <UserIcebergs icebergs={icebergs} isOwner={isOwner} />}
+            {activeTab === 'icebergs'  && <UserIcebergs icebergs={icebergs.filter((i: any) => i.status === 'PUBLISHED')} isOwner={isOwner} />}
+            {activeTab === 'drafts' && isOwner && <UserIcebergs icebergs={icebergs.filter((i: any) => i.status === 'DRAFT')} isOwner={isOwner} />}
             {activeTab === 'watchlist' && <UserWatchlist userId={user.id} isOwner={isOwner} publiclyVisible={user.privacyShowWatchlist} />}
             {activeTab === 'explore'   && <ExploreTab achievementDefs={achievementDefs} achievementMap={achievementMap} userReadCount={userReadCount} isLight={isLight} />}
             {activeTab === 'score' && isOwner && <ScoreLogTab userId={user.id} />}

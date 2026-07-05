@@ -1,0 +1,59 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { prisma } from '../lib/prisma';
+import { getSessionById } from '../lib/auth/index';
+import { getIcebergTopicLabel } from '../lib/icebergTopic';
+
+const sessionId = Astro.cookies.get('session')?.value;
+const session = await getSessionById(sessionId);
+const isAdmin = session?.isFounder || session?.role === 'ADMIN';
+
+const featured = await prisma.iceberg.findMany({
+  where: { featured: true, status: 'PUBLISHED' },
+  orderBy: { updatedAt: 'desc' },
+  select: {
+    id: true, slug: true, title: true, description: true,
+    viewCount: true, createdAt: true,
+    author: { select: { id: true, nickname: true, username: true, avatar: true } },
+    _count: { select: { tiers: true } },
+  },
+});
+---
+
+<Layout title="精选内容 | 冰山图宇宙">
+  <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
+  <main class="max-w-6xl mx-auto bg-grid px-4 md:px-6 py-12 relative z-10">
+
+    <header class="mb-8 reveal">
+      <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">[ FEATURED ]</div>
+      <h1 class="text-3xl font-mono font-semibold">
+        <span class="text-brand">#</span> 精选内容
+      </h1>
+      <p class="mt-2 text-sm text-text-body font-mono">管理员精选的优质冰山图，值得一读</p>
+    </header>
+
+    {featured.length === 0 ? (
+      <div class="p-8 border border-dashed border-border text-center">
+        <p class="text-sm text-text-mid font-mono">暂无精选内容</p>
+      </div>
+    ) : (
+      <div class="space-y-3">
+        {featured.map(f => (
+          <a href={`/iceberg/${f.slug || f.id}`} class="block p-5 border border-warning/20 bg-warning/5 hover:border-warning/40 transition-colors reveal">
+            <div class="flex items-start gap-2 mb-2">
+              <span class="text-warning text-sm">⭐</span>
+              <h2 class="text-lg font-mono font-bold text-text-hi">{f.title}</h2>
+            </div>
+            {f.description && <p class="text-xs text-text-body line-clamp-2 mb-3 ml-6">{f.description}</p>}
+            <div class="flex items-center gap-4 ml-6 text-[10px] font-mono text-text-mid">
+              <span>{f._count.tiers} 层</span>
+              <span>{f.viewCount.toLocaleString()} 浏览</span>
+              <span>{f.author?.nickname || f.author?.username}</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    )}
+
+  </main>
+</Layout>

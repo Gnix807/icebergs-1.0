@@ -11,6 +11,8 @@ interface User {
   nickname: string;
   avatar?: string | null;
   isFounder?: boolean;
+  role?: string;
+  qualityScore?: number;
 }
 
 interface Notification {
@@ -36,6 +38,7 @@ const navLinks = [
   { href: '/iceberg/list', label: '冰山广场' },
   { href: '/ideas', label: '创意板' },
   { href: '/leaderboard', label: '排行榜' },
+  { href: '/featured', label: '精选' },
   { href: '/iceberg/new', label: '创建' },
 ];
 
@@ -62,6 +65,10 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
   const { mounted: dropdownMounted, isLeaving: dropdownLeaving } = useModalAnimation(showDropdown);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [crtOn, setCrtOn] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('crt-scanlines') === 'on';
+    return false;
+  });
   const [showNotif, setShowNotif] = useState(false);
   const { mounted: notifMounted, isLeaving: notifLeaving } = useModalAnimation(showNotif);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -248,6 +255,13 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
     localStorage.setItem('theme', next);
     document.documentElement.classList.toggle('light', next === 'light');
   };
+  const toggleCrt = () => {
+    const next = !crtOn;
+    setCrtOn(next);
+    localStorage.setItem('crt-scanlines', next ? 'on' : 'off');
+    const el = document.getElementById('crt-scanlines');
+    if (el) el.style.display = next ? '' : 'none';
+  };
 
   // ── 搜索 ──────────────────────────────────────
   // Ctrl+K / Esc 快捷键
@@ -287,7 +301,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
         if (data.success) setSearchResults(data.data.items);
       } catch {}
       setSearchLoading(false);
-    }, 300);
+    }, 150);
   };
 
   const handleSearchKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -444,12 +458,18 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                   {notifMounted && (
                     <div className={`absolute right-0 top-full mt-2 w-80 bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden ${notifLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
                       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle bg-surface-1">
-                        <span className="text-xs font-mono text-text-hi">通知</span>
-                        {unreadCount > 0 && (
-                          <button onClick={markAllRead} className="text-[10px] font-mono text-text-lo hover:text-brand transition-colors">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-mono text-text-hi">通知</span>
+                          <button
+                            onClick={unreadCount > 0 ? markAllRead : undefined}
+                            className={`text-[10px] font-mono transition-colors ${unreadCount > 0 ? 'text-text-mid hover:text-brand cursor-pointer' : 'text-text-lo cursor-default'}`}
+                          >
                             全部已读
                           </button>
-                        )}
+                        </div>
+                        <a href="/notifications" onClick={() => setShowNotif(false)} className="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
+                          查看全部通知 →
+                        </a>
                       </div>
 
                       <div className="max-h-[400px] overflow-y-auto">
@@ -529,44 +549,75 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                       </button>
 
                       {dropdownMounted && (
-                        <div className={`absolute right-0 top-full mt-2 w-52 bg-surface-2 border border-border shadow-xl overflow-hidden z-50 ${dropdownLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
-                          <div className="px-4 py-3 border-b border-border">
-                            <div className="flex items-center gap-2.5">
+                        <div className={`absolute right-0 top-full mt-2 w-64 bg-surface-2 border border-border shadow-xl overflow-hidden z-50 ${dropdownLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
+                          <div className="px-4 py-3.5 border-b border-border">
+                            <div className="flex items-center gap-3">
                               {user.avatar ? (
-                                <img src={user.avatar} alt="" className="h-8 w-8 rounded-full object-cover" />
+                                <img src={user.avatar} alt="" className="h-10 w-10 rounded-full object-cover ring-1 ring-border" />
                               ) : (
-                                <div className="h-8 w-8 rounded-full bg-surface-3 border border-border flex items-center justify-center">
-                                  <User size={14} strokeWidth={1.5} className="text-text-mid" />
+                                <div className="h-10 w-10 rounded-full bg-surface-3 border border-border flex items-center justify-center">
+                                  <User size={18} strokeWidth={1.5} className="text-text-mid" />
                                 </div>
                               )}
-                              <div className="min-w-0">
-                                <p className="text-sm font-mono text-text-hi truncate">{user.nickname || user.username}</p>
-                                {user.isFounder && (
-                                  <span className="text-[10px] font-mono px-1 py-0.5 border"
-                                    style={{ color: '#f59e0b', borderColor: '#f59e0b50', background: '#f59e0b10' }}>
-                                    ◆ FOUNDER
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-mono text-text-hi truncate">{user.nickname || user.username}</p>
+                                  {user.isFounder && (
+                                    <span className="text-[9px] font-mono px-1.5 py-0.5 border flex-shrink-0"
+                                      style={{ color: '#f59e0b', borderColor: '#f59e0b50', background: '#f59e0b10' }}>
+                                      FOUNDER
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[11px] text-text-mid truncate">@{user.username}</p>
+                                {user.role && user.role !== 'USER' && (
+                                  <span className={`text-[9px] font-mono px-1.5 py-0.5 mt-1 inline-block ${user.role === 'ADMIN' ? 'text-[#ef4444] border-[#ef4444]/30 bg-[#ef4444]/5' : user.role === 'EDITOR' ? 'text-[#22c55e] border-[#22c55e]/30 bg-[#22c55e]/5' : user.role === 'MODERATOR' ? 'text-[#3b82f6] border-[#3b82f6]/30 bg-[#3b82f6]/5' : 'text-[#8b5cf6] border-[#8b5cf6]/30 bg-[#8b5cf6]/5'}`}
+                                    style={{ border: '1px solid' }}
+                                  >
+                                    {user.role}
                                   </span>
                                 )}
-                                <p className="text-xs text-text-body truncate">@{user.username}</p>
                               </div>
                             </div>
+                            {(typeof user.qualityScore !== 'undefined') && (
+                              <div className="flex items-center justify-between mt-2.5 pt-2.5 border-t border-border-subtle">
+                                <span className="text-[10px] font-mono text-text-mid">质量分</span>
+                                <span className="text-[11px] font-mono font-bold text-brand">{user.qualityScore}</span>
+                              </div>
+                            )}
                           </div>
                           <div className="py-1">
                             <a href={`/user/${user.id}`}
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
+                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
                               onClick={() => setShowDropdown(false)}>
-                              <LayoutDashboard size={14} strokeWidth={1.5} /> 我的主页
+                              <LayoutDashboard size={15} strokeWidth={1.5} /> 我的主页
                             </a>
-                            <a href={`/user/${user.id}?tab=settings`}
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
+                            <a href="/iceberg/new"
+                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
                               onClick={() => setShowDropdown(false)}>
-                              <Settings size={14} strokeWidth={1.5} /> 账号设置
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                              创建冰山图
+                            </a>
+                            <a href={`/user/${user.id}?tab=watchlist`}
+                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
+                              onClick={() => setShowDropdown(false)}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                              收藏
                             </a>
                           </div>
                           <div className="border-t border-border py-1">
+                            <a href={`/user/${user.id}?tab=settings`}
+                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
+                              onClick={() => setShowDropdown(false)}>
+                              <Settings size={15} strokeWidth={1.5} /> 账号设置
+                            </a>
+                            <button onClick={(e) => { e.preventDefault(); toggleCrt(); }}
+                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono text-left">
+                              <span className="w-[15px] text-center text-[13px]">{crtOn ? '⊟' : '⊡'}</span> CRT 扫描线 <span className="ml-auto text-[10px] text-text-lo">{crtOn ? 'ON' : 'OFF'}</span>
+                            </button>
                             <a href="/api/auth/logout"
-                              className="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:bg-surface-3 transition-colors font-mono">
-                              <LogOut size={14} strokeWidth={1.5} /> 退出登录
+                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-danger hover:bg-surface-3 transition-colors font-mono">
+                              <LogOut size={15} strokeWidth={1.5} /> 退出登录
                             </a>
                           </div>
                         </div>

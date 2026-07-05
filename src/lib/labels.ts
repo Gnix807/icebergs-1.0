@@ -1,0 +1,113 @@
+export interface LabelDef {
+  key: string;
+  emoji: string;
+  category: '标记' | '内容' | '来源';
+}
+
+export const LABEL_DEFS: LabelDef[] = [
+  // ── 标记类（状态/性质） ──
+  { key: 'NSFW',    emoji: '🔞', category: '标记' },
+  { key: '争议',    emoji: '⚠️', category: '标记' },
+  { key: '猜测',    emoji: '💭', category: '标记' },
+  { key: '未证实',  emoji: '❓', category: '标记' },
+  { key: '冷门',    emoji: '🥶', category: '标记' },
+  { key: '小众',    emoji: '🔍', category: '标记' },
+  { key: '已辟谣',  emoji: '🚫', category: '标记' },
+  { key: '机密',    emoji: '🔐', category: '标记' },
+  { key: '禁区',    emoji: '☣️', category: '标记' },
+  { key: '入门',    emoji: '🌱', category: '标记' },
+  { key: '进阶',    emoji: '📈', category: '标记' },
+  { key: '待完善',  emoji: '🔧', category: '标记' },
+
+  // ── 内容类（主题/领域） ──
+  { key: '游戏',    emoji: '🎮', category: '内容' },
+  { key: '历史',    emoji: '📜', category: '内容' },
+  { key: '科学',    emoji: '🧪', category: '内容' },
+  { key: '都市传说', emoji: '🌃', category: '内容' },
+  { key: '阴谋论',  emoji: '🕵️', category: '内容' },
+  { key: '网络文化', emoji: '💻', category: '内容' },
+  { key: '动漫',    emoji: '🍧', category: '内容' },
+  { key: '动物',    emoji: '🐾', category: '内容' },
+  { key: '犯罪',    emoji: '🚨', category: '内容' },
+  { key: '超自然',  emoji: '👻', category: '内容' },
+  { key: 'UFO',     emoji: '🛸', category: '内容' },
+  { key: '宗教',    emoji: '✝️', category: '内容' },
+  { key: '民俗',    emoji: '🏮', category: '内容' },
+  { key: '军事',    emoji: '🪖', category: '内容' },
+  { key: '失踪',    emoji: '🫥', category: '内容' },
+  { key: '船舶',    emoji: '🚢', category: '内容' },
+  { key: '特殊地点', emoji: '📍', category: '内容' },
+  { key: '诡异',    emoji: '😱', category: '内容' },
+  { key: '灵异',    emoji: '🔮', category: '内容' },
+  { key: '志怪',    emoji: '👹', category: '内容' },
+  { key: '自然',    emoji: '🌿', category: '内容' },
+  { key: '建筑',    emoji: '🏢', category: '内容' },
+  { key: '交通',    emoji: '🛣️', category: '内容' },
+  { key: '艺术',    emoji: '🎨', category: '内容' },
+  { key: '心理',    emoji: '🧠', category: '内容' },
+  { key: '校园',    emoji: '🏫', category: '内容' },
+  { key: '医学',    emoji: '🏥', category: '内容' },
+  { key: '考古',    emoji: '🏺', category: '内容' },
+  { key: '技术',    emoji: '⚙️', category: '内容' },
+  { key: '媒体',    emoji: '📺', category: '内容' },
+  { key: '灾难',    emoji: '💥', category: '内容' },
+  { key: '学术',    emoji: '📚', category: '内容' },
+  { key: '音乐',    emoji: '🎵', category: '内容' },
+  { key: '体育',    emoji: '⚽', category: '内容' },
+  { key: '美食',    emoji: '🍜', category: '内容' },
+  { key: '政治',    emoji: '🏛️', category: '内容' },
+  { key: '经济',    emoji: '💰', category: '内容' },
+  { key: '哲学',    emoji: '🤔', category: '内容' },
+  { key: '语言',    emoji: '🗣️', category: '内容' },
+  { key: '天文',    emoji: '🌌', category: '内容' },
+  { key: '神话',    emoji: '⚡', category: '内容' },
+  { key: '人物',    emoji: '👤', category: '内容' },
+  { key: '摄影',    emoji: '📷', category: '内容' },
+  { key: '时尚',    emoji: '👗', category: '内容' },
+  { key: '设计',    emoji: '✏️', category: '内容' },
+  { key: '法律',    emoji: '⚖️', category: '内容' },
+  { key: '农业',    emoji: '🌾', category: '内容' },
+  { key: '海洋',    emoji: '🌊', category: '内容' },
+  { key: '气象',    emoji: '🌪️', category: '内容' },
+  { key: '能源',    emoji: '⚡', category: '内容' },
+  { key: 'AI',      emoji: '🤖', category: '内容' },
+  { key: '密码学',  emoji: '🔑', category: '内容' },
+  { key: '宇宙',    emoji: '🚀', category: '内容' },
+  { key: '地理',    emoji: '🗺️', category: '内容' },
+  { key: '生物',    emoji: '🧬', category: '内容' },
+  { key: '化学',    emoji: '⚗️', category: '内容' },
+  { key: '数学',    emoji: '📐', category: '内容' },
+  { key: '物理',    emoji: '🔭', category: '内容' },
+  { key: '电影',    emoji: '🎬', category: '内容' },
+  { key: '电视剧',  emoji: '📺', category: '内容' },
+  { key: '综艺',    emoji: '🎤', category: '内容' },
+  { key: '互联网',  emoji: '🌐', category: '内容' },
+  { key: '软件',    emoji: '💿', category: '内容' },
+
+  // ── 来源类 ──
+  { key: '广播',    emoji: '📢', category: '来源' },
+  { key: '文学',    emoji: '📕', category: '来源' },
+  { key: '纪录片',  emoji: '🎬', category: '来源' },
+  { key: '论文',    emoji: '📑', category: '来源' },
+  { key: '访谈',    emoji: '🎙️', category: '来源' },
+  { key: '新闻',    emoji: '📰', category: '来源' },
+  { key: '官方档案', emoji: '🏛️', category: '来源' },
+  { key: '口述',    emoji: '🗣️', category: '来源' },
+  { key: '影视',    emoji: '🎥', category: '来源' },
+  { key: '网络',    emoji: '🌐', category: '来源' },
+  { key: '百科',    emoji: '📖', category: '来源' },
+  { key: '博客',    emoji: '✍️', category: '来源' },
+  { key: '论坛',    emoji: '💬', category: '来源' },
+  { key: '数据库',  emoji: '🗄️', category: '来源' },
+  { key: '实地考察', emoji: '🥾', category: '来源' },
+  { key: '实验',    emoji: '🧫', category: '来源' },
+  { key: '一手资料', emoji: '📝', category: '来源' },
+];
+
+export const LABEL_EMOJI_MAP: Record<string, string> = Object.fromEntries(
+  LABEL_DEFS.map(d => [d.key, d.emoji])
+);
+
+export function labelEmoji(key: string): string {
+  return LABEL_EMOJI_MAP[key] || '';
+}

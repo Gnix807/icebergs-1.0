@@ -1,4 +1,4 @@
-﻿---
+---
 import Layout from '../layouts/Layout.astro';
 import { prisma } from '../lib/prisma';
 
@@ -28,7 +28,7 @@ const maxCount = topTags[0]?.[1] ?? 1;
 ---
 
 <Layout title="关于 — 冰山图宇宙">
-  <main class="max-w-3xl mx-auto px-4 py-8 reveal">
+  <main class="max-w-4xl mx-auto px-4 py-8 reveal">
 
     <!-- 标题 -->
     <div class="mb-10">
@@ -119,20 +119,22 @@ const maxCount = topTags[0]?.[1] ?? 1;
             <span class="text-[10px] font-mono text-text-mid">· 注册后自动获得</span>
           </div>
           <ul class="text-[11px] font-mono text-text-body space-y-1">
-            <li class="before:content-['·'] before:text-text-lo before:mr-2">点赞/踩冰山图、收藏、回复评论</li>
-            <li class="before:content-['·'] before:text-text-lo before:mr-2">提交审核的新冰山图可获得质量分（当前 +5，每日最多 2 次）</li>
-            <li class="before:content-['·'] before:text-text-lo before:mr-2">积累质量分，申请晋升为 CONTRIBUTOR</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">创建、编辑自己的冰山图并提交审核</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">点赞/踩冰山图、收藏、回复评论、关注他人</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">提交审核的新冰山图可获得质量分（+5，每日最多 2 次）</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">质量分 ≥ 20、冰山图 ≥ 2 篇、注册 ≥ 7 天后可申请晋升 CONTRIBUTOR</li>
           </ul>
         </div>
 
         <div class="border border-border-subtle bg-surface-2 p-4">
           <div class="flex items-center gap-2 mb-2">
             <span class="font-mono text-xs text-success">CONTRIBUTOR</span>
-            <span class="text-[10px] font-mono text-text-mid">· 满足门槛后申请晋升</span>
+            <span class="text-[10px] font-mono text-text-mid">· 满足门槛后自动晋升</span>
           </div>
           <ul class="text-[11px] font-mono text-text-body space-y-1">
-            <li class="before:content-['·'] before:text-text-lo before:mr-2">创建并发布自己的冰山图</li>
-            <li class="before:content-['·'] before:text-text-lo before:mr-2">参与编辑资格（RfA）投票</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">发布冰山图无需审核，直接上线</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">参与 RfA（编辑申请）投票，决定 EDITOR 晋升</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">可申请晋升 EDITOR 参与社区治理</li>
           </ul>
         </div>
 
@@ -251,7 +253,7 @@ const maxCount = topTags[0]?.[1] ?? 1;
       <div class="border border-border-subtle bg-surface-2 p-4 font-mono text-[11px] text-text-body">
         <div class="flex flex-wrap gap-x-6 gap-y-1.5">
           <span><span class="text-text-mid">前端框架</span> · Astro + React</span>
-          <span><span class="text-text-mid">数据存储</span> · SQLite</span>
+          <span><span class="text-text-mid">数据存储</span> · PostgreSQL</span>
           <span><span class="text-text-mid">登录方式</span> · 邮箱 / GitHub / Google</span>
           <span><span class="text-text-mid">开源协议</span> · MIT</span>
         </div>

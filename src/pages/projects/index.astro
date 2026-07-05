@@ -1,0 +1,67 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+import { getSessionById } from '../../lib/auth/index';
+import { getIcebergTopicLabel } from '../../lib/icebergTopic';
+
+const sessionId = Astro.cookies.get('session')?.value;
+const session = await getSessionById(sessionId);
+const isLoggedIn = !!session;
+
+const projects = await prisma.project.findMany({
+  where: { status: 'ACTIVE' },
+  orderBy: { updatedAt: 'desc' },
+  take: 30,
+  select: {
+    id: true, slug: true, name: true, description: true, topic: true,
+    createdAt: true,
+    creator: { select: { id: true, nickname: true, username: true } },
+    _count: { select: { members: true } },
+  },
+});
+---
+
+<Layout title="专题协作 | 冰山图宇宙">
+  <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
+  <main class="max-w-6xl mx-auto bg-grid px-4 md:px-6 py-12 relative z-10">
+
+    <header class="mb-8 reveal">
+      <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">[ PROJECTS ]</div>
+      <div class="flex items-end justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-mono font-semibold"><span class="text-brand">#</span> 专题协作</h1>
+          <p class="mt-2 text-sm text-text-body font-mono">围绕特定话题的长期协作工作组</p>
+        </div>
+        {isLoggedIn && (
+          <a href="/projects/new" class="px-5 py-2 bg-brand text-[#171717] font-mono font-semibold text-sm hover:opacity-90 transition-opacity">+ 创建专题</a>
+        )}
+      </div>
+    </header>
+
+    {projects.length === 0 ? (
+      <div class="p-8 border border-dashed border-border text-center">
+        <p class="text-sm text-text-mid font-mono">暂无活跃专题</p>
+        {isLoggedIn && <p class="text-xs text-text-lo font-mono mt-1">创建第一个专题，开始协作吧</p>}
+      </div>
+    ) : (
+      <div class="space-y-3">
+        {projects.map(p => (
+          <a href={`/projects/${p.slug}`} class="block p-4 border border-border hover:border-brand bg-surface-2 transition-colors reveal">
+            <div class="flex items-start justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-[10px] font-mono px-1.5 py-0.5 border border-border text-text-mid">{getIcebergTopicLabel(p.topic)}</span>
+                  <span class="text-[10px] font-mono text-text-lo">{p._count.members} 成员</span>
+                </div>
+                <h3 class="text-sm font-mono text-text-hi">{p.name}</h3>
+                {p.description && <p class="text-xs text-text-body mt-1 line-clamp-2">{p.description}</p>}
+              </div>
+              <div class="text-[10px] font-mono text-text-lo flex-shrink-0 ml-3">@{p.creator.nickname || p.creator.username}</div>
+            </div>
+          </a>
+        ))}
+      </div>
+    )}
+
+  </main>
+</Layout>

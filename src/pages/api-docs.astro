@@ -1,0 +1,116 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const sections = [
+  {
+    title: '冰山图',
+    items: [
+      { method: 'GET', path: '/api/icebergs', desc: '冰山图列表（支持 ?q=&status=&topic=&cursor=&limit=）' },
+      { method: 'POST', path: '/api/icebergs', desc: '创建冰山图（需登录）' },
+      { method: 'GET', path: '/api/icebergs/:id', desc: '冰山图详情' },
+      { method: 'PUT', path: '/api/icebergs/:id', desc: '更新冰山图（需登录，仅作者）' },
+      { method: 'DELETE', path: '/api/icebergs/:id', desc: '删除冰山图（需登录，仅作者/管理员）' },
+      { method: 'POST', path: '/api/icebergs/:id/submit', desc: '提交审核' },
+    ],
+  },
+  {
+    title: '层级与词条',
+    items: [
+      { method: 'GET', path: '/api/icebergs/:id/tiers', desc: '层级列表' },
+      { method: 'POST', path: '/api/icebergs/:id/tiers', desc: '创建层级' },
+      { method: 'PUT', path: '/api/tiers/:id', desc: '更新层级' },
+      { method: 'DELETE', path: '/api/tiers/:id', desc: '删除层级' },
+      { method: 'GET', path: '/api/tiers/:id/items', desc: '词条列表' },
+      { method: 'POST', path: '/api/tiers/:id/items', desc: '创建词条' },
+      { method: 'PUT', path: '/api/items/:id', desc: '更新词条' },
+      { method: 'DELETE', path: '/api/items/:id', desc: '删除词条' },
+    ],
+  },
+  {
+    title: '交互',
+    items: [
+      { method: 'POST', path: '/api/icebergs/:id/vote', desc: '投票（body: { value: 1|-1 }）' },
+      { method: 'GET', path: '/api/icebergs/:id/comments', desc: '评论列表（?sort=time|hot）' },
+      { method: 'POST', path: '/api/icebergs/:id/comments', desc: '发表评论' },
+      { method: 'POST', path: '/api/comments/:id/like', desc: '点赞评论' },
+      { method: 'POST', path: '/api/items/read', desc: '标记词条已读（body: { itemId, icebergId }）' },
+    ],
+  },
+  {
+    title: '用户',
+    items: [
+      { method: 'GET', path: '/api/auth/me', desc: '当前用户信息' },
+      { method: 'POST', path: '/api/auth/register', desc: '邮箱注册' },
+      { method: 'POST', path: '/api/auth/login', desc: '邮箱登录' },
+      { method: 'GET', path: '/api/auth/login?provider=github', desc: 'GitHub OAuth 登录' },
+      { method: 'GET', path: '/api/auth/logout', desc: '登出' },
+      { method: 'GET', path: '/api/users/:id', desc: '用户资料' },
+    ],
+  },
+  {
+    title: '搜索与发现',
+    items: [
+      { method: 'GET', path: '/api/search?q=', desc: '全文搜索（冰山图+用户，?cursor= 分页）' },
+      { method: 'GET', path: '/api/features', desc: '功能开关列表' },
+      { method: 'GET', path: '/api/announcements', desc: '公告列表' },
+    ],
+  },
+  {
+    title: '创意板',
+    items: [
+      { method: 'GET', path: '/api/ideas', desc: '创意列表（?status=&topic=&cursor=）' },
+      { method: 'POST', path: '/api/ideas', desc: '提交创意' },
+      { method: 'PUT', path: '/api/ideas/:id', desc: '更新/认领创意' },
+      { method: 'POST', path: '/api/ideas/:id/vote', desc: '创意投票' },
+    ],
+  },
+  {
+    title: '收藏集',
+    items: [
+      { method: 'GET', path: '/api/collections', desc: '用户收藏集列表' },
+      { method: 'POST', path: '/api/collections', desc: '创建收藏集' },
+      { method: 'POST', path: '/api/collections/:id/items', desc: '添加冰山图到收藏集' },
+    ],
+  },
+  {
+    title: '通知',
+    items: [
+      { method: 'GET', path: '/api/notifications', desc: '通知列表' },
+      { method: 'PUT', path: '/api/notifications/:id', desc: '标记已读' },
+      { method: 'PUT', path: '/api/notifications/read-all', desc: '全部已读' },
+    ],
+  },
+  {
+    title: '关注与社交',
+    items: [
+      { method: 'POST', path: '/api/users/:id/follow', desc: '关注/取关用户（toggle）' },
+      { method: 'GET', path: '/api/feed', desc: '关注流（关注用户的最近动态）' },
+      { method: 'POST', path: '/api/reports', desc: '举报（type: iceberg|comment, targetId, reason）' },
+      { method: 'POST', path: '/api/upload', desc: '图片上传（multipart, JPG/PNG/GIF/WebP ≤ 2MB）' },
+    ],
+  },
+];
+---
+
+<Layout title="API 文档 | 冰山图宇宙">
+  <main class="max-w-4xl mx-auto px-4 md:px-6 py-12">
+    <header class="mb-10">
+      <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">[ API DOCS ]</div>
+      <h1 class="text-3xl font-mono font-semibold"><span class="text-brand">#</span> API 文档</h1>
+      <p class="mt-2 text-sm text-text-body font-mono">所有公开 API 端点。响应格式均为 success / data / error。</p>
+    </header>
+
+    <div class="space-y-8">
+      {sections.map(s => (<section>
+          <div class="text-[10px] font-mono text-brand tracking-widest mb-3">{s.title}</div>
+          <div class="space-y-1">
+            {s.items.map(item => (<div class="flex items-start gap-3 p-3 border border-border-subtle bg-surface-2">
+                <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 border rounded text-warning border-warning/30 min-w-[3.25rem] text-center flex-shrink-0">{item.method}</span>
+                <code class="text-xs font-mono text-text-hi break-all min-w-0">{item.path}</code>
+                <span class="text-[10px] font-mono text-text-mid text-right flex-shrink-0 ml-auto max-w-56">{item.desc}</span>
+              </div>))}
+          </div>
+        </section>))}
+    </div>
+  </main>
+</Layout>

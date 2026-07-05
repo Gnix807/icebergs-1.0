@@ -14,6 +14,23 @@ interface ExportButtonProps {
 
 type Theme = 'light' | 'dark';
 
+
+function sanitizeFilename(title: string): string {
+  return title
+    .replace(/[<>:"/\\|?*]/g, '')   // 移除 Windows 非法字符
+    .replace(/\s+/g, '_')            // 空格转下划线
+    .replace(/[^\w\u4e00-\u9fff-]/g, '') // 保留中英文、数字、下划线、连字符
+    .slice(0, 50)                    // 限制长度
+    .replace(/^[-_]+|[-_]+$/g, '')   // 去掉首尾的连字符/下划线
+    || 'iceberg';                    // 空则回退
+}
+
+function formatTimestamp(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+}
+
 const THEMES = {
   light: {
     bg:           '#ffffff',
@@ -48,19 +65,24 @@ const THEMES = {
 } as const;
 
 // 常量（逻辑像素）
-const W         = 900;
-const SCALE     = 2;          // 高分辨率 2×
-const PAD       = 36;
-const CONTENT_W = W - PAD * 2;
-const CHIP_H    = 28;
-const CHIP_PX   = 12;
-const CHIP_GAP  = 8;
-const ROW_GAP   = 8;
-const TIER_GAP  = 12;
-const ITEMS_PAD = 14;
-const HEADER_H  = 44;
-const TITLE_H   = 60;
-const FOOTER_H  = 80;
+const W          = 900;
+const SCALE      = 2;          // 高分辨率 2×
+const PAD        = 36;
+const CONTENT_W  = W - PAD * 2;
+const CHIP_H     = 28;
+const CHIP_PX    = 12;
+const CHIP_GAP   = 8;
+const ROW_GAP    = 8;
+const TIER_GAP   = 12;
+const ITEMS_PAD  = 14;
+const HEADER_H   = 44;
+const TITLE_H    = 74;         // 标题 + 副标题元数据行
+const FOOTER_H   = 80;
+const BAR_W      = 8;          // 层级左侧色条宽度
+const BAR_GAP    = 14;         // 色条右侧到文字间距
+const BORDER_W   = 2;          // 外边框宽度
+const BRAND      = '#00FF41';  // 品牌色（暗色背景），浅色导出时用深色变体
+const BRAND_LIGHT = '#16a34a';
 const FONT_MONO  = '13px ui-monospace,"IBM Plex Mono",Consolas,monospace';
 const FONT_SMALL = '11px ui-monospace,"IBM Plex Mono",Consolas,monospace';
 
@@ -71,7 +93,7 @@ function calcItemsHeight(
   if (items.length === 0) return { rows: [], height: ITEMS_PAD * 2 + 16 };
 
   ctx.font = FONT_SMALL;
-  const maxW = CONTENT_W - 4 - ITEMS_PAD * 2;
+  const maxW = CONTENT_W - BAR_W - ITEMS_PAD * 2;
   const rows: { title: string; x: number }[][] = [];
   let row: { title: string; x: number }[] = [];
   let x = 0;
@@ -97,6 +119,14 @@ async function drawExport(
   theme: Theme,
 ): Promise<string> {
   const T = THEMES[theme];
+  const brandColor = theme === 'dark' ? BRAND : BRAND_LIGHT;
+  const totalItems = tiers.reduce((s, t) => s + t.items.length, 0);
+  const totalTiers = tiers.length;
+  const metaText = `${totalTiers} 层 · ${totalItems} 词条`;
+
+  // Extract hostname + path for footer URL
+  let shortUrl: string;
+  try { const u = new URL(icebergUrl); shortUrl = u.host + u.pathname; } catch { shortUrl = icebergUrl; }
 
   // 第一遍：测量高度
   const measure = document.createElement('canvas').getContext('2d')!;
@@ -114,7 +144,7 @@ async function drawExport(
   canvas.width  = W * SCALE;
   canvas.height = totalH * SCALE;
   const ctx = canvas.getContext('2d')!;
-  ctx.scale(SCALE, SCALE);   // 以下所有坐标都是逻辑像素
+  ctx.scale(SCALE, SCALE);
 
   // 背景
   ctx.fillStyle = T.bg;
@@ -122,11 +152,22 @@ async function drawExport(
 
   let y = PAD;
 
-  // 标题
+  // 标题区
+  // 主标题：# icebergTitle
   ctx.font = `bold 17px ui-monospace,"IBM Plex Mono",Consolas,monospace`;
-  ctx.fillStyle = T.titleText;
   ctx.textBaseline = 'middle';
-  ctx.fillText(icebergTitle, PAD, y + TITLE_H / 2);
+  const hashW = ctx.measureText('# ').width;
+  ctx.fillStyle = brandColor;
+  ctx.fillText('#', PAD, y + 22);
+  ctx.fillStyle = T.titleText;
+  ctx.fillText(' ' + icebergTitle, PAD + hashW, y + 22);
+
+  // 副标题：元数据
+  ctx.font = FONT_SMALL;
+  ctx.fillStyle = T.watermark;
+  ctx.fillText(metaText, PAD, y + 46);
+
+  // 分隔线
   ctx.strokeStyle = T.separator;
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -144,20 +185,20 @@ async function drawExport(
     ctx.fillStyle = T.tierHeaderBg(color);
     ctx.fillRect(PAD, y, CONTENT_W, HEADER_H);
     ctx.fillStyle = color;
-    ctx.fillRect(PAD, y, 4, HEADER_H);
+    ctx.fillRect(PAD, y, BAR_W, HEADER_H);
 
     // 层名
     ctx.font = `bold ${FONT_MONO}`;
     ctx.fillStyle = color;
     ctx.textBaseline = 'middle';
-    ctx.fillText(name, PAD + 4 + 14, y + HEADER_H / 2);
+    ctx.fillText(name, PAD + BAR_W + BAR_GAP, y + HEADER_H / 2);
 
     // 词条数 badge
     const nameW = ctx.measureText(name).width;
     ctx.font = FONT_SMALL;
     const countText = `${items.length} 词条`;
     const countW = ctx.measureText(countText).width;
-    const bx = PAD + 4 + 14 + nameW + 10;
+    const bx = PAD + BAR_W + BAR_GAP + nameW + 10;
     const bh = 18;
     const by = y + (HEADER_H - bh) / 2;
     ctx.strokeStyle = T.badgeBorder;
@@ -173,7 +214,7 @@ async function drawExport(
     ctx.fillStyle = T.itemsBg;
     ctx.fillRect(PAD, y, CONTENT_W, itemsH);
     ctx.fillStyle = color + '55';
-    ctx.fillRect(PAD, y, 4, itemsH);
+    ctx.fillRect(PAD, y, BAR_W, itemsH);
     ctx.strokeStyle = T.itemsBorder;
     ctx.lineWidth = 1;
     ctx.strokeRect(PAD + 0.5, y + 0.5, CONTENT_W - 1, itemsH - 1);
@@ -182,9 +223,9 @@ async function drawExport(
       ctx.font = FONT_SMALL;
       ctx.fillStyle = T.emptyText;
       ctx.textBaseline = 'middle';
-      ctx.fillText('暂无词条', PAD + 4 + ITEMS_PAD, y + itemsH / 2);
+      ctx.fillText('暂无词条', PAD + BAR_W + ITEMS_PAD, y + itemsH / 2);
     } else {
-      const ox = PAD + 4 + ITEMS_PAD;
+      const ox = PAD + BAR_W + ITEMS_PAD;
       const oy = y + ITEMS_PAD;
       ctx.font = FONT_SMALL;
       for (let ri = 0; ri < rows.length; ri++) {
@@ -228,13 +269,19 @@ async function drawExport(
   ctx.lineTo(W - PAD, y + 16);
   ctx.stroke();
 
-  ctx.font = '12px ui-monospace,Consolas,monospace';
+  ctx.font = FONT_SMALL;
   ctx.fillStyle = T.watermark;
   ctx.textBaseline = 'middle';
-  ctx.fillText('冰山图宇宙 · iceberg.chat', PAD, y + 48);
+  ctx.fillText('冰山图宇宙 · iceberg.chat', PAD, y + 36);
+  ctx.fillText(shortUrl, PAD, y + 54);
 
   const QR = 52;
   ctx.drawImage(qrImg, W - PAD - QR, y + 14, QR, QR);
+
+  // 外边框
+  ctx.strokeStyle = T.separator;
+  ctx.lineWidth = BORDER_W;
+  ctx.strokeRect(BORDER_W / 2, BORDER_W / 2, W - BORDER_W, totalH - BORDER_W);
 
   return canvas.toDataURL('image/png');
 }
@@ -248,7 +295,7 @@ export function ExportButton({ icebergTitle, tiers, icebergUrl }: ExportButtonPr
     try {
       const dataUrl = await drawExport(icebergTitle, tiers, icebergUrl, theme);
       const link = document.createElement('a');
-      link.download = `冰山图-${Date.now()}.png`;
+      link.download = `${sanitizeFilename(icebergTitle)}_${formatTimestamp()}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {

@@ -1,4 +1,4 @@
-﻿---
+---
 /**
  * /guide — 平台使用指南与冰山图撰写细则
  */
@@ -12,7 +12,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
 ---
 
 <Layout title="使用指南 — 冰山图宇宙">
-  <main class="max-w-3xl mx-auto px-4 py-8 reveal">
+  <main class="max-w-4xl mx-auto px-4 py-8 reveal">
 
     <!-- 标题 -->
     <div class="mb-10">
@@ -96,7 +96,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           ['注册 / 登录', '点击右上角"登录"，使用 GitHub 账号或邮箱注册。新账号默认为 USER 角色。', '#30363d'],
           ['浏览内容', '前往冰山广场（/iceberg/list）探索公开内容，点击卡片进入详情页，可展开各层词条并查看描述。', '#30363d'],
           ['投票与评论', '登录后可对冰山图投赞 / 踩，可在词条详情中发表评论并对评论点赞。这些互动都会为你积累质量分。', '#30363d'],
-          ['创建你的第一张冰山图', '点击右上角用户菜单中的"创建冰山图"，进入编辑器。填写标题、描述、层级与词条后，通过提交前检查单即可提交审核。', '#00FF41'],
+          ['创建你的第一张冰山图', '点击导航栏上的「创建」按钮进入编辑器。填写标题、描述、层级与词条后，通过提交前检查单即可提交审核。也可点击个人主页的「+ 创建冰山图」按钮。', '#00FF41'],
           ['成为 CONTRIBUTOR', '累积足够的质量分与冰山图数量后，可申请晋升 CONTRIBUTOR。CONTRIBUTOR 可发布冰山图并参与 RfA 投票。', '#30363d'],
         ].map(([title, desc, color], i) => (
           <div class="border border-border-minimal bg-surface-2 p-4 flex gap-4">
@@ -125,7 +125,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           <div class="space-y-3 text-[11px] font-mono">
             <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">标题</span>
-              <span class="text-text-body">冰山图的主题名称。至少 <strong class="text-text-hi">5 个字</strong>，简洁说明主题即可，例如"日本历史""深海生物""量子力学"。</span>
+              <span class="text-text-body">冰山图的主题名称。至少 <strong class="text-text-hi">5 个字</strong>，简洁说明主题即可，例如"日本近代史""深海生物演化""量子力学入门"。</span>
             </div>
             <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">摘要</span>
@@ -298,21 +298,21 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
             <div class="flex items-center gap-2">
               <div class="w-32 text-right text-[10px]">顶层（第 1–2 层）</div>
               <div class="flex-1 bg-surface-0 h-2 relative overflow-hidden">
-                <div class="absolute inset-y-0 left-0 bg-brand/40" style="width:70%"></div>
+                <div class="absolute inset-y-0 left-0" style="width:70%;background:var(--color-brand);opacity:0.4"></div>
               </div>
               <span class="text-text-body w-32">词条多，内容浅</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="w-32 text-right text-[10px]">中层（第 3–5 层）</div>
               <div class="flex-1 bg-surface-0 h-2 relative overflow-hidden">
-                <div class="absolute inset-y-0 left-0 bg-[#22c55e]/40" style="width:45%"></div>
+                <div class="absolute inset-y-0 left-0" style="width:45%;background:#22c55e;opacity:0.4"></div>
               </div>
               <span class="text-text-body w-32">适量词条，需描述</span>
             </div>
             <div class="flex items-center gap-2">
               <div class="w-32 text-right text-[10px]">底层（第 6 层+）</div>
               <div class="flex-1 bg-surface-0 h-2 relative overflow-hidden">
-                <div class="absolute inset-y-0 left-0 bg-[#8b5cf6]/40" style="width:20%"></div>
+                <div class="absolute inset-y-0 left-0" style="width:20%;background:#8b5cf6;opacity:0.4"></div>
               </div>
               <span class="text-text-body w-32">词条少但质量高</span>
             </div>
@@ -544,6 +544,11 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
             desc: '查看个人发布的冰山图、收藏、评论、质量分积分记录、成就等。点击他人头像/用户名也可访问其主页。',
           },
           {
+            icon: '▣', label: '用户框',
+            link: null, linkLabel: null,
+            desc: '个人主页展示的装饰性标签。在「设置 → 用户框定制」中选择，从 3 类 18 个预设框中挑选，默认最多 3 个。解锁更多社区成就可扩展至 6 个。部分框需特定成就（如探路者、分析师）才能选用。',
+          },
+          {
             icon: '!', label: '举报',
             link: null, linkLabel: null,
             desc: '在冰山图或评论处点击举报按钮，填写原因提交。由 MODERATOR+ 处理。',
@@ -561,7 +566,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           {
             icon: '?', label: '创意板',
             link: '/ideas', linkLabel: '/ideas',
-            desc: '有想做但没时间做的冰山图？提交创意让社区帮你实现。也可认领别人的创意并完成后关联作品。',
+            desc: '提交冰山图创意，供社区认领并实现。支持 Markdown 描述、28 种分类标签、看板视图、多人协作认领、评论区讨论、#id 引用语法及三种提交模板（创意/反馈/建议）。',
           },
           {
             icon: '□', label: '词条搜索与弹窗',
@@ -572,6 +577,41 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
             icon: '+', label: '功能大厅',
             link: '/sitemap', linkLabel: '/sitemap',
             desc: '统一的功能入口页，列出所有可用页面。从 NavBar「功能」下拉或 Footer 链接进入。',
+          },
+          {
+            icon: '◉', label: '通知中心',
+            link: '/notifications', linkLabel: '/notifications',
+            desc: '登录后 NabvBar 铃铛图标显示未读数量。点开可预览最近通知，支持标记已读及一键全部已读。',
+          },
+          {
+            icon: '☰', label: '草稿',
+            link: null, linkLabel: null,
+            desc: '新建冰山图时退出编辑器会自动保存草稿。草稿仅自己可见，可在个人主页「草稿」Tab 中继续编辑或删除。',
+          },
+          {
+            icon: '♡', label: '关注',
+            link: null, linkLabel: null,
+            desc: '在他人主页点击「+ 关注」即可关注作者。关注后首页显示其更新动态，/api/feed 可获取关注流。',
+          },
+          {
+            icon: '▸', label: '阅读进度',
+            link: null, linkLabel: null,
+            desc: '登录后浏览冰山图词条时，页面顶部显示阅读进度条。已读词条数在元数据区展示，下次打开时恢复阅读位置。',
+          },
+          {
+            icon: '↓', label: '导出为图片',
+            link: null, linkLabel: null,
+            desc: '在任意已发布冰山图详情页点击「导出为图片」，可生成带二维码和平台水印的 PNG 信息图，支持浅色/深色主题切换。',
+          },
+          {
+            icon: '⎇', label: '编辑器快捷键',
+            link: null, linkLabel: null,
+            desc: '冰山图编辑器中按下 Ctrl+N 可快速在当前最后一层新增词条，Ctrl+Shift+N 新增层级，大幅提升编辑效率。',
+          },
+          {
+            icon: '{}', label: 'API 文档',
+            link: '/api-docs', linkLabel: '/api-docs',
+            desc: '面向开发者的公开 API 参考文档，列出冰山图、评论、搜索、收藏等所有公开接口签名。',
           },
         ].map(({ icon, label, link, linkLabel, desc }) => (
           <div class="border border-border-minimal bg-surface-2 px-4 py-3 flex gap-3 items-start">

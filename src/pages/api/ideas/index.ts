@@ -2,6 +2,7 @@ import type { APIContext } from 'astro';
 import { prisma } from '../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { getSession } from '../../../lib/auth/index';
+import { ideaId } from '../../../lib/shortId';
 
 export async function GET(event: APIContext) {
   const status = event.url.searchParams.get('status') || 'OPEN';
@@ -72,6 +73,7 @@ export async function POST(event: APIContext) {
   try {
     const idea = await prisma.idea.create({
       data: {
+        id: ideaId(),
         title,
         description: (body.description || '').trim() || null,
         topic: body.topic || 'general',

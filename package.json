@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "predev": "node -e \"try { require('fs').rmSync('node_modules/.vite',{recursive:true,force:true}) } catch(e) {}\"",
+    "dev:clean": "node -e \"try { require('fs').rmSync('node_modules/.vite',{recursive:true,force:true});require('fs').rmSync('.vite',{recursive:true,force:true}) } catch(e) {}\" && astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check"

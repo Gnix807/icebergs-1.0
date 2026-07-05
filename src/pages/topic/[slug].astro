@@ -1,0 +1,146 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+import { getIcebergTopicLabel } from '../../lib/icebergTopic';
+import { ICEBERG_TOPICS } from '../../lib/icebergTopic';
+
+const { slug } = Astro.params;
+
+const topicDef = ICEBERG_TOPICS.find(t => t.value === slug);
+if (!topicDef) return Astro.redirect('/ideas');
+
+const [featured, newest, popular, openIdeas, topAuthors] = await Promise.all([
+  prisma.iceberg.findFirst({
+    where: { topic: slug, status: 'PUBLISHED', featured: true },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, slug: true, title: true, viewCount: true, _count: { select: { tiers: true } } },
+  }),
+  prisma.iceberg.findMany({
+    where: { topic: slug, status: 'PUBLISHED' },
+    orderBy: { createdAt: 'desc' }, take: 6,
+    select: { id: true, slug: true, title: true, viewCount: true, _count: { select: { tiers: true } } },
+  }),
+  prisma.iceberg.findMany({
+    where: { topic: slug, status: 'PUBLISHED' },
+    orderBy: { viewCount: 'desc' }, take: 3,
+    select: { id: true, slug: true, title: true, viewCount: true, _count: { select: { tiers: true } } },
+  }),
+  prisma.idea.findMany({
+    where: { topic: slug, status: 'OPEN' },
+    orderBy: { createdAt: 'desc' }, take: 5,
+    select: { id: true, title: true, _count: { select: { votes: true } } },
+  }),
+  prisma.iceberg.groupBy({
+    by: ['authorId'],
+    where: { topic: slug, status: 'PUBLISHED' },
+    _count: { id: true },
+    orderBy: { _count: { id: 'desc' } },
+    take: 5,
+  }).then(async rows => {
+    const ids = rows.map(r => r.authorId);
+    const users = await prisma.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, username: true, nickname: true, avatar: true },
+    });
+    const counts = Object.fromEntries(rows.map(r => [r.authorId, r._count.id]));
+    return users.map(u => ({ ...u, count: counts[u.id] ?? 0 })).sort((a, b) => b.count - a.count);
+  }),
+]);
+
+const totalIcebergs = newest.length; // approximation
+---
+
+<Layout title={`${topicDef.label} · 主题门户 | 冰山图宇宙`}>
+  <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
+  <main class="bg-grid max-w-6xl mx-auto px-4 md:px-6 py-12 relative z-10">
+
+    <header class="mb-8 reveal">
+      <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">
+        <a href="/ideas" class="hover:text-brand transition-colors">← 创意板</a>
+        <span class="text-text-lo mx-1">/</span>
+        <span>主题门户</span>
+      </div>
+      <h1 class="text-3xl font-mono font-semibold">
+        <span class="text-brand">#</span> {topicDef.label} · 主题门户
+      </h1>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 space-y-6">
+
+        {featured && (
+          <section class="reveal">
+            <div class="text-[10px] font-mono text-warning tracking-widest mb-2">📌 精选</div>
+            <a href={`/iceberg/${featured.slug || featured.id}`} class="block p-4 border border-warning/30 bg-warning/5 hover:border-warning transition-colors">
+              <h3 class="text-sm font-mono font-bold text-text-hi">{featured.title}</h3>
+              <div class="flex items-center gap-3 mt-2 text-[10px] font-mono text-text-mid">
+                <span>{featured._count.tiers} 层</span>
+                <span>{featured.viewCount.toLocaleString()} 浏览</span>
+              </div>
+            </a>
+          </section>
+        )}
+
+        <section class="reveal" style="animation-delay:60ms">
+          <div class="text-[10px] font-mono text-text-mid tracking-widest mb-2">🆕 最新</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {newest.map(r => (
+              <a href={`/iceberg/${r.slug || r.id}`} class="block p-3 border border-border hover:border-brand bg-surface-2 transition-colors">
+                <h4 class="text-xs font-mono text-text-hi truncate">{r.title}</h4>
+                <span class="text-[9px] font-mono text-text-lo">{r._count.tiers} 层 · {r.viewCount} 浏览</span>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        {openIdeas.length > 0 && (
+          <section class="reveal" style="animation-delay:80ms">
+            <div class="text-[10px] font-mono text-warning tracking-widest mb-2">💡 待认领创意</div>
+            <div class="space-y-1">
+              {openIdeas.map(i => (
+                <a href={`/ideas/${i.id}`} class="block p-2.5 border border-border hover:border-brand bg-surface-2 transition-colors flex items-center justify-between">
+                  <span class="text-xs font-mono text-text-body truncate">{i.title}</span>
+                  <span class="text-[9px] font-mono text-text-lo ml-2 flex-shrink-0">{i._count.votes} 票</span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+
+      <div class="space-y-6">
+        <section class="reveal" style="animation-delay:100ms">
+          <div class="text-[10px] font-mono text-text-mid tracking-widest mb-2">🔥 热门</div>
+          <div class="space-y-2">
+            {popular.map((r, i) => (
+              <a href={`/iceberg/${r.slug || r.id}`} class="flex items-start gap-2">
+                <span class="text-xs font-mono font-bold w-5 text-right flex-shrink-0" style={`color:${i === 0 ? '#f59e0b' : i === 1 ? '#9ca3af' : '#cd7f32'}`}>#{i + 1}</span>
+                <span class="text-xs font-mono text-text-body truncate">{r.title}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        {topAuthors.length > 0 && (
+          <section class="reveal" style="animation-delay:120ms">
+            <div class="text-[10px] font-mono text-text-mid tracking-widest mb-2">👥 活跃贡献者</div>
+            <div class="space-y-2">
+              {topAuthors.map(u => (
+                <a href={`/user/${u.id}`} class="flex items-center gap-2">
+                  {u.avatar ? <img src={u.avatar} class="w-5 h-5 rounded-full border border-border object-cover" alt="" /> : <div class="w-5 h-5 rounded-full border border-border bg-surface-2 flex items-center justify-center text-[8px] font-mono text-text-mid">{(u.nickname || u.username).charAt(0)}</div>}
+                  <span class="text-xs font-mono text-text-body truncate">{u.nickname || u.username}</span>
+                  <span class="text-[9px] font-mono text-text-lo ml-auto">{u.count} 篇</span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <div class="border border-border-minimal bg-surface-1 p-3 text-center reveal">
+          <div class="text-lg font-mono font-bold text-brand">{totalIcebergs}</div>
+          <div class="text-[10px] font-mono text-text-mid">冰山图</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>

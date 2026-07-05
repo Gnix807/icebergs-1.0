@@ -13,7 +13,7 @@ if (!session) {
 
 <Layout title="提交创意 | 冰山图宇宙">
   <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
-  <main class="bg-grid max-w-2xl mx-auto px-4 py-12 relative z-10">
+  <main class="max-w-4xl mx-auto bg-grid px-4 py-12 relative z-10">
     <header class="mb-8 reveal">
       <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">
         <a href="/ideas" class="hover:text-brand transition-colors">← 创意板</a>
@@ -23,62 +23,153 @@ if (!session) {
       <h1 class="text-2xl font-mono font-semibold">
         <span class="text-brand">#</span> 提交新创意
       </h1>
-      <p class="mt-2 text-sm text-text-body font-mono">描述你希望看到的冰山图主题，等待社区成员认领并实现</p>
+      <p class="mt-2 text-sm text-text-body font-mono">描述你希望创建的冰山图主题，社区成员会来认领并实现</p>
     </header>
 
-    <form id="idea-form" class="space-y-5 reveal" style="animation-delay:60ms">
-      <div>
-        <label class="block text-[10px] font-mono text-text-mid tracking-widest mb-1.5">标题 <span class="text-danger">*</span></label>
-        <input id="idea-title" type="text" required minlength="5" maxlength="200"
-          placeholder="例如：中国互联网黑话冰山图"
-          class="w-full px-3 py-2 text-sm font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none transition-colors" />
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- 左侧：表单 -->
+      <div class="lg:col-span-2 space-y-6">
+
+        <!-- 模板 -->
+        <div class="reveal" style="animation-delay:40ms">
+          <div class="text-[10px] font-mono text-text-mid tracking-widest mb-2">快速模板</div>
+          <div class="flex flex-wrap gap-2">
+            {[
+              { key: 'iceberg', label: '📊 冰山图创意', title: '', desc: '## 层级建议\n1. **表层** — 大众熟知的知识\n2. **中层** — 需要一定背景\n3. **深层** — 冷门/专业领域\n\n## 参考资料\n- \n- ', topic: 'general', hasTopic: true },
+              { key: 'bug', label: '🐛 问题反馈', title: '[Bug] ', desc: '## 复现步骤\n1. \n2. \n\n## 期望行为\n\n## 实际行为\n\n## 环境\n- 浏览器：\n- 设备：', topic: 'internet', hasTopic: false },
+              { key: 'feature', label: '💡 功能建议', title: '[建议] ', desc: '## 功能描述\n\n## 使用场景\n\n## 期望效果\n\n## 优先级\n- [ ] P0 紧急\n- [ ] P1 重要\n- [ ] P2 一般', topic: 'general', hasTopic: false },
+            ].map(tpl => (
+              <button type="button" data-template={tpl.key}
+                data-title={tpl.title} data-desc={tpl.desc} data-topic={tpl.topic}
+                data-has-topic={String(tpl.hasTopic)}
+                class="text-[10px] font-mono px-2.5 py-1 border border-border text-text-body hover:border-brand hover:text-brand transition-colors">
+                {tpl.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <form id="idea-form" class="space-y-5 reveal" style="animation-delay:60ms">
+          <div>
+            <label class="block text-[10px] font-mono text-text-mid tracking-widest mb-1.5">标题 <span class="text-danger">*</span></label>
+            <input id="idea-title" type="text" required minlength="5" maxlength="200"
+              placeholder="例：中国互联网黑话冰山图 / 世界未解之谜图谱"
+              class="w-full px-3 py-2 text-sm font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none transition-colors" />
+          </div>
+
+          <div id="topic-field">
+            <label class="block text-[10px] font-mono text-text-mid tracking-widest mb-1.5">分类</label>
+            <select id="idea-topic" class="w-full px-3 py-2 text-sm font-mono border border-border bg-surface-2 text-text-hi focus:border-brand focus:outline-none transition-colors">
+              {ICEBERG_TOPICS.map(t => (
+                <option value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-mono text-text-mid tracking-widest mb-1.5">
+              描述 <span class="text-text-lo font-normal">（支持 Markdown）</span>
+            </label>
+            <textarea id="idea-desc" rows="8" maxlength="2000"
+              placeholder="建议写清楚：想做什么主题、大概分几层、每层什么方向、参考哪些资料……&#10;&#10;支持 Markdown 格式：**粗体** *斜体* - 列表等"
+              class="w-full px-3 py-2 text-sm font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none transition-colors resize-none"></textarea>
+            <div class="text-[10px] font-mono text-text-lo mt-1 text-right"><span id="desc-count">0</span>/2000</div>
+          </div>
+
+          <div class="flex items-center gap-3 pt-2">
+            <button type="submit" id="submit-btn"
+              class="px-6 py-2 bg-brand text-[#171717] font-mono font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50">
+              提交
+            </button>
+            <a href="/ideas" class="px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand transition-colors">
+              取消
+            </a>
+            <span id="submit-msg" class="text-[10px] font-mono text-danger hidden"></span>
+          </div>
+        </form>
       </div>
 
-      <div>
-        <label class="block text-[10px] font-mono text-text-mid tracking-widest mb-1.5">分类</label>
-        <select id="idea-topic" class="w-full px-3 py-2 text-sm font-mono border border-border bg-surface-2 text-text-hi focus:border-brand focus:outline-none transition-colors">
-          {ICEBERG_TOPICS.map(t => (
-            <option value={t.value}>{t.label}</option>
-          ))}
-        </select>
-      </div>
+      <!-- 右侧：编写指南 -->
+      <div class="hidden lg:block reveal" style="animation-delay:80ms">
+        <div class="sticky top-20 space-y-4">
+          <div class="border border-border-minimal bg-surface-1 p-4">
+            <div class="text-[10px] font-mono text-brand tracking-widest mb-3">编写指南</div>
+            <ul class="space-y-2 text-[11px] font-mono text-text-body leading-relaxed">
+              <li class="flex gap-2">
+                <span class="text-brand flex-shrink-0">1.</span>
+                <span><strong class="text-text-hi">标题简洁</strong>：5 字以上，一眼看懂是什么主题</span>
+              </li>
+              <li class="flex gap-2">
+                <span class="text-brand flex-shrink-0">2.</span>
+                <span><strong class="text-text-hi">选对分类</strong>：方便感兴趣的人筛选发现</span>
+              </li>
+              <li class="flex gap-2">
+                <span class="text-brand flex-shrink-0">3.</span>
+                <span><strong class="text-text-hi">层级分明</strong>：建议 3-5 层，越深越冷门</span>
+              </li>
+              <li class="flex gap-2">
+                <span class="text-brand flex-shrink-0">4.</span>
+                <span><strong class="text-text-hi">附上参考</strong>：书籍、网址、纪录片等，方便认领者查阅</span>
+              </li>
+              <li class="flex gap-2">
+                <span class="text-brand flex-shrink-0">5.</span>
+                <span><strong class="text-text-hi">Markdown 排版</strong>：用 **粗体**、- 列表让描述更清晰</span>
+              </li>
+            </ul>
+          </div>
 
-      <div>
-        <label class="block text-[10px] font-mono text-text-mid tracking-widest mb-1.5">补充说明</label>
-        <textarea id="idea-desc" rows="4" maxlength={500}
-          placeholder="进一步描述你的想法，比如：可以包含哪些层级、参考哪些资料来源等…"
-          class="w-full px-3 py-2 text-sm font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none transition-colors resize-none"></textarea>
-        <div class="text-[10px] font-mono text-text-lo mt-1 text-right"><span id="desc-count">0</span>/500</div>
+          <div class="border border-border-minimal bg-surface-1 p-4">
+            <div class="text-[10px] font-mono text-text-mid tracking-widest mb-3">流程说明</div>
+            <div class="space-y-2 text-[10px] font-mono text-text-lo">
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 border border-warning/30 bg-warning/5 flex items-center justify-center text-[8px] text-warning">1</span>
+                <span>提交创意 → 状态为<strong class="text-warning">待认领</strong></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 border border-info/30 bg-info/5 flex items-center justify-center text-[8px] text-info">2</span>
+                <span>有人认领 → 状态变为<strong class="text-info">进行中</strong></span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 border border-success/30 bg-success/5 flex items-center justify-center text-[8px] text-success">3</span>
+                <span>冰山图完成 → 关联后标记<strong class="text-success">已完成</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-
-      <div class="flex items-center gap-3 pt-2">
-        <button type="submit" id="submit-btn"
-          class="px-6 py-2 bg-brand text-[#171717] font-mono font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50">
-          提交
-        </button>
-        <a href="/ideas" class="px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand transition-colors">
-          取消
-        </a>
-        <span id="submit-msg" class="text-[10px] font-mono text-danger hidden"></span>
-      </div>
-    </form>
+    </div>
   </main>
 </Layout>
 
 <script>
-  const form = document.getElementById('idea-form')!;
-  const titleEl = document.getElementById('idea-title') as HTMLInputElement;
-  const topicEl = document.getElementById('idea-topic') as HTMLSelectElement;
-  const descEl = document.getElementById('idea-desc') as HTMLTextAreaElement;
-  const msgEl = document.getElementById('submit-msg')!;
-  const countEl = document.getElementById('desc-count')!;
-  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const form = document.getElementById('idea-form');
+  const titleEl = document.getElementById('idea-title');
+  const topicEl = document.getElementById('idea-topic');
+  const descEl = document.getElementById('idea-desc');
+  const msgEl = document.getElementById('submit-msg');
+  const countEl = document.getElementById('desc-count');
+  const submitBtn = document.getElementById('submit-btn');
+  if (!form || !titleEl || !descEl || !submitBtn) throw new Error('Missing elements');
 
-  descEl.addEventListener('input', () => { countEl.textContent = String(descEl.value.length); });
+  const topicField = document.getElementById('topic-field');
 
-  form.addEventListener('submit', async (e) => {
+  document.querySelectorAll('[data-template]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var t = btn.dataset;
+      if (t.title) titleEl.value = t.title;
+      if (t.desc) descEl.value = t.desc;
+      if (t.topic) topicEl.value = t.topic;
+      countEl.textContent = String(descEl.value.length);
+      // 非冰山图模板隐藏分类
+      if (topicField) topicField.style.display = t.hasTopic === 'true' ? '' : 'none';
+    });
+  });
+
+  descEl.addEventListener('input', function() { countEl.textContent = String(descEl.value.length); });
+
+  form.addEventListener('submit', async function(e) {
     e.preventDefault();
-    const title = titleEl.value.trim();
+    var title = titleEl.value.trim();
     if (title.length < 5) { msgEl.textContent = '标题至少 5 个字'; msgEl.classList.remove('hidden'); return; }
 
     msgEl.classList.add('hidden');
@@ -86,25 +177,25 @@ if (!session) {
     submitBtn.textContent = '提交中…';
 
     try {
-      const res = await fetch('/api/ideas', {
+      var res = await fetch('/api/ideas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title,
+          title: title,
           topic: topicEl.value,
           description: descEl.value.trim() || undefined,
         }),
       });
-      const data = await res.json();
+      var data = await res.json();
       if (data.success) {
-        window.location.href = `/ideas/${data.data.idea.id}`;
+        window.location.href = '/ideas/' + data.data.idea.id;
       } else {
         msgEl.textContent = data.error?.message || '提交失败';
         msgEl.classList.remove('hidden');
         submitBtn.disabled = false;
         submitBtn.textContent = '提交';
       }
-    } catch {
+    } catch (e) {
       msgEl.textContent = '网络错误，请重试';
       msgEl.classList.remove('hidden');
       submitBtn.disabled = false;

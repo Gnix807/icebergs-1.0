@@ -2,139 +2,256 @@
 import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
 import { getSessionById } from '../../lib/auth/index';
-import { getIcebergTopicLabel } from '../../lib/icebergTopic';
+import { ICEBERG_TOPICS, getIcebergTopicLabel } from '../../lib/icebergTopic';
 
 const sessionId = Astro.cookies.get('session')?.value;
 const session = await getSessionById(sessionId);
 const isLoggedIn = !!session;
 
-const topics = [
-  { key: 'general', label: '综合' },
-  { key: 'game', label: '游戏' },
-  { key: 'urban_legend', label: '都市传说' },
-  { key: 'conspiracy', label: '阴谋论' },
-  { key: 'science', label: '科学' },
-  { key: 'history', label: '历史' },
-  { key: 'internet', label: '网络文化' },
-  { key: 'anime', label: '动漫' },
-];
+const topics = ICEBERG_TOPICS.map(t => ({ key: t.value, label: t.label }));
 
 const activeTopic = Astro.url.searchParams.get('topic') || null;
 const selectedStatus = Astro.url.searchParams.get('status') || 'OPEN';
+const view = Astro.url.searchParams.get('view') || 'list';
+const sort = Astro.url.searchParams.get('sort') || 'newest';
+const search = Astro.url.searchParams.get('q') || '';
 
-const where: any = { status: selectedStatus };
+const topicColors: Record<string, string> = {
+  general:'#6b7280', game:'#22c55e', urban_legend:'#8b5cf6',
+  conspiracy:'#f59e0b', history:'#ef4444', science:'#3b82f6',
+  technology:'#06b6d4', culture:'#ec4899', horror:'#dc2626',
+  anime:'#f472b6', internet:'#38bdf8', military:'#84cc16',
+  religion:'#a78bfa', nature:'#34d399', medicine:'#fb923c',
+  sports:'#facc15', food:'#f97316', music:'#e879f9',
+  art:'#c084fc', space:'#818cf8', crime:'#fb7185',
+  politics:'#94a3b8', education:'#4ade80', finance:'#fbbf24',
+  folklore:'#a3e635', travel:'#2dd4bf', literature:'#c4b5fd',
+  other:'#6b7280',
+};
+
+const statusLabel: Record<string, string> = {
+  OPEN: '待认领', CLAIMED: '进行中', COMPLETED: '已完成',
+};
+const statusColor: Record<string, string> = {
+  OPEN: '#f59e0b', CLAIMED: '#3b82f6', COMPLETED: '#22c55e',
+};
+
+// Kanban: fetch all statuses
+const where: any = {};
 if (activeTopic) where.topic = activeTopic;
+if (search) where.OR = [{ title: { contains: search } }, { description: { contains: search } }];
+if (view !== 'board') where.status = selectedStatus;
+
+const orderBy: any = sort === 'votes' ? { votes: { _count: 'desc' } } : { createdAt: 'desc' };
 
 const ideas = await prisma.idea.findMany({
   where,
-  orderBy: { createdAt: 'desc' },
-  take: 30,
+  orderBy,
+  take: view === 'board' ? 100 : 30,
   select: {
-    id: true,
-    title: true,
-    description: true,
-    topic: true,
-    status: true,
-    createdAt: true,
+    id: true, title: true, description: true, topic: true,
+    status: true, createdAt: true,
     _count: { select: { votes: true } },
     creator: { select: { id: true, username: true, nickname: true, avatar: true } },
-    claimedBy: true,
-    icebergId: true,
+    claimedBy: true, icebergId: true,
   },
 });
 
-const statusLabel: Record<string, string> = {
-  OPEN: '待认领',
-  CLAIMED: '已认领',
-  COMPLETED: '已完成',
-};
+// Group for kanban
+const kanbanColumns = { OPEN: [] as typeof ideas, CLAIMED: [] as typeof ideas, COMPLETED: [] as typeof ideas };
+if (view === 'board') {
+  for (const idea of ideas) kanbanColumns[idea.status as keyof typeof kanbanColumns]?.push(idea);
+}
+
+function topicDot(color: string) {
+  return `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:4px;vertical-align:middle"></span>`;
+}
 ---
 
 <Layout title="创意板 | 冰山图宇宙">
   <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
-  <main class="bg-grid max-w-5xl mx-auto px-4 md:px-6 py-12 relative z-10">
+  <main class="max-w-7xl mx-auto bg-grid px-4 md:px-6 py-12 relative z-10">
 
-    <header class="mb-10 reveal">
+    <header class="mb-8 reveal">
       <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">[ IDEA BOARD ]</div>
-      <div class="flex items-end justify-between gap-4">
+      <div class="flex items-end justify-between gap-4 flex-wrap">
         <div>
           <h1 class="text-3xl font-mono font-semibold">
             <span class="text-brand">#</span> 创意板
           </h1>
           <p class="mt-2 text-sm text-text-body font-mono">有想做但没时间做的冰山图？提交创意，让社区帮你实现</p>
         </div>
-        {isLoggedIn ? (
-          <a href="/ideas/new" class="flex-shrink-0 px-5 py-2 bg-brand text-[#171717] font-mono font-semibold text-sm hover:opacity-90 transition-opacity">
-            + 提交创意
+        <div class="flex items-center gap-2">
+          <a href={`/ideas?view=${view === 'board' ? 'list' : 'board'}&status=${selectedStatus}${activeTopic ? '&topic=' + activeTopic : ''}`}
+            class="px-3 py-1.5 border border-border text-xs font-mono text-text-mid hover:border-brand hover:text-brand transition-colors"
+            title={view === 'board' ? '列表视图' : '看板视图'}>
+            {view === 'board' ? '☰ 列表' : '▦ 看板'}
           </a>
-        ) : (
-          <a href="/login" class="flex-shrink-0 px-5 py-2 border border-brand text-brand font-mono text-sm hover:bg-brand hover:text-[#171717] transition-colors">
-            登录后提交
-          </a>
-        )}
+          {isLoggedIn ? (
+            <a href="/ideas/new" class="px-5 py-2 bg-brand text-[#171717] font-mono font-semibold text-sm hover:opacity-90 transition-opacity">
+              + 提交创意
+            </a>
+          ) : (
+            <a href="/login" class="px-5 py-2 border border-brand text-brand font-mono text-sm hover:bg-brand hover:text-[#171717] transition-colors">
+              登录后提交
+            </a>
+          )}
+        </div>
       </div>
     </header>
 
-    <!-- 筛选 -->
-    <div class="mb-8 flex flex-wrap items-center gap-3 reveal" style="animation-delay:50ms">
-      <a href="/ideas" class="text-[10px] font-mono px-2.5 py-1 border transition-colors {selectedStatus === 'OPEN' && !activeTopic ? 'border-brand text-brand bg-[var(--color-brand)]/10' : 'border-border text-text-body hover:border-brand'}">
-        全部
-      </a>
-      {topics.map(t => (
-        <a href={`/ideas?topic=${t.key}`} class="text-[10px] font-mono px-2.5 py-1 border transition-colors {activeTopic === t.key ? 'border-brand text-brand bg-[var(--color-brand)]/10' : 'border-border text-text-body hover:border-brand'}">
-          {t.label}
-        </a>
-      ))}
-    </div>
-
-    <!-- 创意卡片 -->
-    <div class="space-y-3">
-      {ideas.length === 0 ? (
-        <div class="p-8 border border-dashed border-border text-center">
-          <p class="text-sm text-text-mid font-mono">暂无创意</p>
-          {isLoggedIn && <p class="text-xs text-text-lo font-mono mt-1">成为第一个提交创意的人！</p>}
+    <!-- 筛选栏 -->
+    <div class="mb-6 reveal" style="animation-delay:50ms">
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        <!-- 状态筛选 -->
+        <div class="flex gap-1">
+          {['OPEN','CLAIMED','COMPLETED'].map(s => (
+            <a href={`/ideas?status=${s}&view=${view}${activeTopic ? '&topic=' + activeTopic : ''}`}
+              class={`text-[10px] font-mono px-3 py-1 border transition-colors ${selectedStatus === s ? 'border-current' : 'border-border text-text-body hover:border-brand'}`}
+              style={selectedStatus === s ? `color:${statusColor[s]};border-color:${statusColor[s]}40;background:${statusColor[s]}10` : ''}>
+              {statusLabel[s]}
+            </a>
+          ))}
         </div>
-      ) : (
-        ideas.map((idea, i) => (
-          <a
-            href={`/ideas/${idea.id}`}
-            class="block p-4 border border-border hover:border-brand bg-surface-2 transition-all hover:-translate-y-0.5 reveal"
-            style={`animation-delay:${80 + i * 40}ms`}
-          >
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap mb-1.5">
-                  <span class={`text-[10px] font-mono px-1.5 py-0.5 border ${idea.status === 'OPEN' ? 'text-warning border-warning/30' : idea.status === 'CLAIMED' ? 'text-info border-info/30' : 'text-success border-success/30'}`}>
-                    {statusLabel[idea.status]}
-                  </span>
-                  <span class="text-[10px] font-mono text-text-lo">{getIcebergTopicLabel(idea.topic)}</span>
-                </div>
-                <h3 class="text-sm font-mono text-text-hi truncate">{idea.title}</h3>
-                {idea.description && (
-                  <p class="text-xs text-text-body mt-1 line-clamp-2">{idea.description}</p>
-                )}
-              </div>
-              <div class="flex items-center gap-3 shrink-0 text-[10px] font-mono text-text-lo">
-                <span title="投票数">{idea._count.votes} 票</span>
-                <span title="创建者">{idea.creator.nickname || idea.creator.username}</span>
-              </div>
-            </div>
+
+        <!-- 话题切换 + 展开 -->
+        <button id="topic-toggle" class="text-[10px] font-mono px-2 py-1 border border-border text-text-body hover:border-brand transition-colors">
+          <span id="topic-arrow" class="inline-block w-2">▸</span> 分类{activeTopic && <span class="text-brand"> ·1</span>}
+        </button>
+
+        <!-- 排序 -->
+        <div class="flex border border-border overflow-hidden">
+          <a href={`/ideas?sort=newest&status=${selectedStatus}&view=${view}${activeTopic ? '&topic=' + activeTopic : ''}`}
+            class={`text-[10px] font-mono px-2.5 py-1 transition-colors ${sort === 'newest' ? 'bg-brand/15 text-brand' : 'text-text-body hover:bg-surface-2'}`}>
+            最新
           </a>
-        ))
-      )}
+          <a href={`/ideas?sort=votes&status=${selectedStatus}&view=${view}${activeTopic ? '&topic=' + activeTopic : ''}`}
+            class={`text-[10px] font-mono px-2.5 py-1 border-l border-border transition-colors ${sort === 'votes' ? 'bg-brand/15 text-brand' : 'text-text-body hover:bg-surface-2'}`}>
+            最多票
+          </a>
+        </div>
+
+        <!-- 搜索 -->
+        <form method="get" action="/ideas" class="ml-auto w-48">
+          <input type="hidden" name="status" value={selectedStatus} />
+          <input type="hidden" name="view" value={view} />
+          {activeTopic && <input type="hidden" name="topic" value={activeTopic} />}
+          <input type="text" name="q" value={search} placeholder="搜索…"
+            class="w-full px-2.5 py-1 text-[10px] font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none" />
+        </form>
+      </div>
+
+      <!-- 话题列表（折叠） -->
+      <div id="topic-list" class="flex flex-wrap gap-1.5 mt-2 hidden">
+        {topics.map(t => (
+          <a href={`/ideas?${activeTopic === t.key ? '' : 'topic=' + t.key}&status=${selectedStatus}&view=${view}`}
+            class={`text-[10px] font-mono px-2 py-0.5 border transition-colors ${activeTopic === t.key ? 'border-current' : 'border-border text-text-body hover:border-brand'}`}
+            style={activeTopic === t.key ? `color:${topicColors[t.key]};border-color:${topicColors[t.key]}40;background:${topicColors[t.key]}10` : ''}>
+            <span class="inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle" style={`background:${topicColors[t.key]}`}></span>{t.label}
+          </a>
+        ))}
+      </div>
     </div>
 
-    <!-- 状态切换 -->
-    <div class="mt-10 flex justify-center gap-3">
-      <a href="/ideas?status=OPEN" class={`text-[10px] font-mono px-3 py-1 border transition-colors ${selectedStatus === 'OPEN' ? 'border-brand text-brand' : 'border-border text-text-body hover:border-brand'}`}>
-        待认领
-      </a>
-      <a href="/ideas?status=CLAIMED" class={`text-[10px] font-mono px-3 py-1 border transition-colors ${selectedStatus === 'CLAIMED' ? 'border-brand text-brand' : 'border-border text-text-body hover:border-brand'}`}>
-        已认领
-      </a>
-      <a href="/ideas?status=COMPLETED" class={`text-[10px] font-mono px-3 py-1 border transition-colors ${selectedStatus === 'COMPLETED' ? 'border-brand text-brand' : 'border-border text-text-body hover:border-brand'}`}>
-        已完成
-      </a>
-    </div>
+    <!-- 内容区 -->
+    {view === 'board' ? (
+      /* ── 看板视图 ── */
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {Object.entries(kanbanColumns).map(([status, col]) => (
+          <div class="border border-border-minimal bg-surface-1 p-3">
+            <div class="flex items-center justify-between mb-3 pb-2 border-b border-border-minimal">
+              <span class="text-xs font-mono font-bold" style={`color:${statusColor[status]}`}>{statusLabel[status]}</span>
+              <span class="text-[10px] font-mono text-text-lo">{col.length}</span>
+            </div>
+            <div class="space-y-2 min-h-[200px]">
+              {col.length === 0 ? (
+                <p class="text-[10px] font-mono text-text-lo text-center py-8">
+                  {status === 'OPEN' ? '🌊 等待第一个探险家抛锚' : status === 'CLAIMED' ? '⛵ 等待第一支船队起航' : '🏔️ 等待第一座冰山浮出水面'}
+                </p>
+              ) : (
+                col.map(idea => (
+                  <a href={`/ideas/${idea.id}`}
+                    class="block p-3 border border-border hover:border-brand bg-surface-2 transition-all hover:-translate-y-0.5">
+                    <div class="flex items-center gap-1.5 mb-1">
+                      <span class="inline-block w-2 h-2 rounded-full flex-shrink-0" style={`background:${topicColors[idea.topic] ?? '#6b7280'}`}></span>
+                      <span class="text-[9px] font-mono text-text-lo">{getIcebergTopicLabel(idea.topic)}</span>
+                    </div>
+                    <h3 class="text-xs font-mono text-text-hi truncate mb-1">{idea.title}</h3>
+                    {idea.description && (
+                      <p class="text-[10px] text-text-body line-clamp-2 mb-2">{idea.description}</p>
+                    )}
+                    <div class="flex items-center gap-2 text-[9px] font-mono text-text-lo">
+                      <span>{idea._count.votes} 票</span>
+                      <span>{idea.creator.nickname || idea.creator.username}</span>
+                    </div>
+                  </a>
+                ))
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      /* ── 列表视图 ── */
+      <div class="space-y-3">
+        {ideas.length === 0 ? (
+          <div class="p-8 border border-dashed border-border text-center">
+            {selectedStatus === 'OPEN' ? (
+              <>
+                <p class="text-sm text-text-mid font-mono">海面风平浪静，还没有人抛下锚点</p>
+                {isLoggedIn && <p class="text-xs text-text-lo font-mono mt-1">成为第一个探险家，提交你的创意吧</p>}
+              </>
+            ) : selectedStatus === 'CLAIMED' ? (
+              <p class="text-sm text-text-mid font-mono">探险队都在待命，还没有人起锚出航</p>
+            ) : (
+              <p class="text-sm text-text-mid font-mono">深海之下尚无发现，第一座冰山等待浮出水面</p>
+            )}
+          </div>
+        ) : (
+          ideas.map((idea, i) => (
+            <a href={`/ideas/${idea.id}`}
+              class="block p-4 border border-border hover:border-brand bg-surface-2 transition-all hover:-translate-y-0.5 reveal"
+              style={`animation-delay:${80 + i * 40}ms`}>
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap mb-1.5">
+                    <span class="inline-block w-2 h-2 rounded-full" style={`background:${topicColors[idea.topic] ?? '#6b7280'}`}></span>
+                    <span class="text-[10px] font-mono text-text-lo">{getIcebergTopicLabel(idea.topic)}</span>
+                    <span class={`text-[10px] font-mono px-1.5 py-0.5 border`}
+                      style={`color:${statusColor[idea.status]};border-color:${statusColor[idea.status]}40`}>
+                      {statusLabel[idea.status]}
+                    </span>
+                  </div>
+                  <h3 class="text-sm font-mono text-text-hi truncate">{idea.title}</h3>
+                  {idea.description && (
+                    <p class="text-xs text-text-body mt-1 line-clamp-2">{idea.description}</p>
+                  )}
+                </div>
+                <div class="flex items-center gap-3 shrink-0 text-[10px] font-mono text-text-lo">
+                  <span title="投票数">{idea._count.votes} 票</span>
+                  <span title="创建者">{idea.creator.nickname || idea.creator.username}</span>
+                </div>
+              </div>
+            </a>
+          ))
+        )}
+      </div>
+    )}
   </main>
 </Layout>
+
+<script>
+  function initTopicToggle() {
+    const toggle = document.getElementById('topic-toggle');
+    const list = document.getElementById('topic-list');
+    const arrow = document.getElementById('topic-arrow');
+    if (toggle && list && arrow) {
+      toggle.onclick = () => {
+        const hidden = list.classList.toggle('hidden');
+        arrow.textContent = hidden ? '▸' : '▾';
+      };
+    }
+  }
+  initTopicToggle();
+  document.addEventListener('astro:page-load', initTopicToggle);
+</script>

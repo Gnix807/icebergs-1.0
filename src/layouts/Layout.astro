@@ -58,7 +58,7 @@ const features = await getFeatureFlags();
     <!-- 全站 Footer -->
     <footer class="hidden md:block relative z-10 border-t border-border-subtle bg-surface-1 mt-16">
       <!-- ASCII 装饰线 -->
-      <div class="max-w-7xl mx-auto px-4 md:px-6 font-mono">
+      <div class="px-4 md:px-6 font-mono">
         <div class="text-[10px] text-text-lo select-none overflow-hidden leading-none py-3 tracking-widest">
           ─────────────────────────────────────────────────────────────────────────────────────
         </div>
@@ -86,7 +86,8 @@ const features = await getFeatureFlags();
               <a href="/iceberg/list" class="block text-xs text-text-body hover:text-brand transition-colors">冰山广场</a>
               <a href="/iceberg/random" class="block text-xs text-text-body hover:text-brand transition-colors">随机漫游</a>
               <a href="/leaderboard" class="block text-xs text-text-body hover:text-brand transition-colors">排行榜</a>
-              <a href="/iceberg/new" class="block text-xs text-text-body hover:text-brand transition-colors">创建冰山图</a>
+              <a href="/featured" class="block text-xs text-text-body hover:text-brand transition-colors">精选内容</a>
+              <a href="/topic/general" class="block text-xs text-text-body hover:text-brand transition-colors">主题门户</a>
               <a href="/ideas" class="block text-xs text-text-body hover:text-brand transition-colors">创意板</a>
             </nav>
           </div>
@@ -162,11 +163,6 @@ const features = await getFeatureFlags();
     <div id="cursor-dot" class="pointer-events-none fixed z-[99999] hidden" aria-hidden="true"></div>
     <!-- CRT 扫描线叠加层 -->
     <div id="crt-scanlines" class="crt-scanlines pointer-events-none fixed inset-0 z-[9999]"></div>
-
-    <!-- CRT 开关（仅桌面端） -->
-      <button id="crt-toggle" class="hidden md:flex fixed bottom-4 left-4 z-decorator items-center gap-1.5 px-2 py-1 text-[10px] font-display text-text-lo border border-border-subtle hover:border-brand hover:text-brand transition-colors" style="background: rgba(36, 36, 36, 0.9)" title="切换 CRT 扫描线效果" aria-label="切换 CRT 扫描线效果">
-      <span id="crt-toggle-icon">⊟</span> CRT
-    </button>
 
     <!-- 全局 Toast 通知 -->
     <Toast client:load />
@@ -292,29 +288,55 @@ const features = await getFeatureFlags();
       initReveal();
       initCursor();
 
-      // ── CRT 扫描线开关 ──────────────────────────────────
-      function initCrtToggle() {
-        const scanlines = document.getElementById('crt-scanlines');
-        const toggleBtn = document.getElementById('crt-toggle');
-        const icon = document.getElementById('crt-toggle-icon');
-        if (!scanlines || !toggleBtn) return;
-
+      // ── CRT 动态效果 ────────────────────────────────────
+      let _crtTimer = 0;
+      function initCrtFx() {
+        const el = document.getElementById('crt-scanlines');
+        if (!el) return;
         const stored = localStorage.getItem('crt-scanlines');
-        if (stored === 'off') {
-          scanlines.style.display = 'none';
-          if (icon) icon.textContent = '⊡';
+        clearTimeout(_crtTimer);
+        if (stored !== 'on') { el.style.display = 'none'; el.style.transform = ''; el.style.textShadow = ''; return; }
+        el.style.display = '';
+
+        function glitch() {
+          if (el.style.display === 'none') return;
+          // 随机水平偏移（模拟信号干扰）
+          const offset = (Math.random() - 0.5) * 2;
+          const skewX = (Math.random() - 0.5) * 0.6;
+          el.style.transform = `translateX(${offset}px) skewX(${skewX}deg)`;
+          // 随机色彩偏移
+          const r = Math.random() < 0.08 ? '0.5px' : '0';
+          const g = Math.random() < 0.08 ? '-0.5px' : '0';
+          el.style.textShadow = `${r} 0 0 rgba(255,0,0,0.3), ${g} 0 0 rgba(0,255,255,0.3)`;
+
+          clearTimeout(_crtTimer);
+          // 98% 概率 50-500ms 后恢复正常
+          _crtTimer = window.setTimeout(() => {
+            el.style.transform = '';
+            el.style.textShadow = '';
+            scheduleNext();
+          }, Math.random() < 0.98 ? 50 + Math.random() * 450 : 800 + Math.random() * 2200);
         }
-        toggleBtn.addEventListener('click', () => {
-          const isOff = scanlines.style.display === 'none';
-          scanlines.style.display = isOff ? '' : 'none';
-          if (icon) icon.textContent = isOff ? '⊟' : '⊡';
-          localStorage.setItem('crt-scanlines', isOff ? 'on' : 'off');
+
+        function scheduleNext() {
+          _crtTimer = window.setTimeout(glitch, 1000 + Math.random() * 7000);
+        }
+
+        scheduleNext();
+
+        const observer = new MutationObserver(() => {
+          if (el.style.display === 'none') {
+            clearTimeout(_crtTimer);
+            el.style.transform = '';
+            el.style.textShadow = '';
+          } else if (!_crtTimer) {
+            scheduleNext();
+          }
         });
+        observer.observe(el, { attributes: true, attributeFilter: ['style'] });
       }
-      initCrtToggle();
-      document.addEventListener('astro:page-load', initCrtToggle);
-      // ViewTransitions 导航后重新初始化
-      document.addEventListener('astro:page-load', initCrtToggle);
+      initCrtFx();
+      document.addEventListener('astro:page-load', initCrtFx);
 
       // ── ViewTransitions 页面导航进度条 ───────────────────
       (function initProgress() {

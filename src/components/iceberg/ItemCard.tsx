@@ -3,6 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Item } from '../../stores/icebergStore';
 import { renderMarkdownWithMath } from '../../lib/markdown';
+import { LABEL_DEFS, labelEmoji } from '../../lib/labels';
 
 interface ItemCardProps {
   item: Item;
@@ -10,12 +11,13 @@ interface ItemCardProps {
   onDelete: (itemId: string) => void;
 }
 
-const ITEM_LABELS: { key: string; color: string; borderColor: string }[] = [
-  { key: 'NSFW',   color: '#ef4444', borderColor: '#ef444440' },
-  { key: '争议',   color: '#f59e0b', borderColor: '#f59e0b40' },
-  { key: '猜测',   color: '#6b7280', borderColor: '#6b728040' },
-  { key: '未证实', color: '#3b82f6', borderColor: '#3b82f640' },
+const LABEL_CATEGORIES: { key: string; label: string; color: string }[] = [
+  { key: '标记', label: '性质标记', color: '#f59e0b' },
+  { key: '内容', label: '内容主题', color: '#22c55e' },
+  { key: '来源', label: '信息来源', color: '#3b82f6' },
 ];
+
+const PREDEFINED_KEYS = new Set(LABEL_DEFS.map(d => d.key));
 
 function parseLabels(raw: unknown): string[] {
   if (Array.isArray(raw)) return raw as string[];
@@ -24,8 +26,6 @@ function parseLabels(raw: unknown): string[] {
   }
   return [];
 }
-
-const PREDEFINED_KEYS = ITEM_LABELS.map(l => l.key);
 
 /** textarea 高度自动跟随内容 */
 function useAutoResize(value: string) {
@@ -46,6 +46,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
   const [editLabels, setEditLabels]   = useState<string[]>(() => parseLabels(item.labels));
   const [customInput, setCustomInput] = useState('');
   const [previewMode, setPreviewMode] = useState(false);
+  const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({ '标记': true });
 
   const descRef = useAutoResize(editDesc);
 
@@ -106,7 +107,9 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
   const toggleLabel = (key: string) => {
     setEditLabels(prev => prev.includes(key) ? prev.filter(l => l !== key) : [...prev, key]);
   };
-
+  const toggleCat = (key: string) => {
+    setExpandedCats(prev => ({ ...prev, [key]: !prev[key] }));
+  };
   const addCustomLabel = () => {
     const val = customInput.trim();
     if (!val || val.length > 20 || editLabels.includes(val) || editLabels.length >= 10) return;
@@ -179,24 +182,52 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
         <div className="border border-border-subtle bg-surface-1 p-3 space-y-3">
           <div className="text-[11px] font-mono text-text-mid">标签（最多 10 个）</div>
 
-          {/* 预设标签 */}
-          <div className="flex gap-2 flex-wrap">
-            {ITEM_LABELS.map(({ key, color }) => {
-              const active = editLabels.includes(key);
+          {/* 预设标签（按类别分组，可折叠） */}
+          <div className="space-y-1">
+            {LABEL_CATEGORIES.map(cat => {
+              const boxes = LABEL_DEFS.filter(d => d.category === cat.key);
+              const selectedInCat = boxes.filter(b => editLabels.includes(b.key));
+              const expanded = expandedCats[cat.key];
               return (
-                <button key={key} type="button" onClick={() => toggleLabel(key)}
-                  className="text-xs font-mono px-3 py-1.5 border transition-all"
-                  style={{ color: active ? color : '#6b7280', borderColor: active ? color : '#30363d', background: active ? `${color}15` : 'transparent' }}>
-                  {active ? '✓ ' : ''}{key}
-                </button>
+                <div key={cat.key}>
+                  <div
+                    onClick={() => toggleCat(cat.key)}
+                    className="w-full flex items-center justify-between px-2 py-1.5 text-[10px] font-mono text-text-lo hover:text-text-body transition-colors cursor-pointer select-none">
+                    <span>
+                      <span className="inline-block w-3 text-center transition-transform duration-200 ease-out" style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>▸</span>
+                      {' '}{cat.label}
+                    </span>
+                    {selectedInCat.length > 0 && (
+                      <span className="text-[9px] text-text-mid">{selectedInCat.map(b => b.emoji).join('')}</span>
+                    )}
+                  </div>
+                  {expanded && (
+                    <div className="flex gap-1.5 flex-wrap px-1 pb-1.5" style={{ animation: 'slideDown 200ms ease-out' }}>
+                      {boxes.map(d => {
+                        const active = editLabels.includes(d.key);
+                        return (
+                          <button key={d.key} type="button" onClick={() => toggleLabel(d.key)}
+                            className="text-[11px] font-mono px-2 py-1 border transition-all"
+                            style={{
+                              color: active ? cat.color : '#6b7280',
+                              borderColor: active ? cat.color : '#30363d',
+                              background: active ? `${cat.color}12` : 'transparent',
+                            }}>
+                            <span className="mr-1">{d.emoji}</span>{d.key}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
 
           {/* 自定义标签已选 */}
-          {editLabels.filter(l => !PREDEFINED_KEYS.includes(l)).length > 0 && (
+          {editLabels.filter(l => !PREDEFINED_KEYS.has(l)).length > 0 && (
             <div className="flex gap-1.5 flex-wrap">
-              {editLabels.filter(l => !PREDEFINED_KEYS.includes(l)).map(label => (
+              {editLabels.filter(l => !PREDEFINED_KEYS.has(l)).map(label => (
                 <span key={label} className="flex items-center gap-1 text-xs font-mono px-2 py-1 border border-dashed border-border text-text-body">
                   {label}
                   <button type="button" onClick={() => setEditLabels(prev => prev.filter(l => l !== label))}
@@ -279,11 +310,12 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
       {displayLabels.length > 0 && (
         <div className="flex gap-1 mt-1.5 flex-wrap">
           {displayLabels.map(label => {
-            const meta = ITEM_LABELS.find(l => l.key === label);
+            const def = LABEL_DEFS.find(d => d.key === label);
+            const catColor = LABEL_CATEGORIES.find(c => c.key === def?.category)?.color ?? '#6b7280';
             return (
               <span key={label} className="text-[9px] font-mono px-1 py-px border leading-tight"
-                style={{ color: meta?.color ?? '#6b7280', borderColor: meta?.borderColor ?? '#6b728040' }}>
-                {label}
+                style={{ color: catColor, borderColor: `${catColor}40`, background: `${catColor}08` }}>
+                {def?.emoji && <span className="mr-0.5">{def.emoji}</span>}{label}
               </span>
             );
           })}

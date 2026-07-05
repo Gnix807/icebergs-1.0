@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from '../ui/Toast';
+import { renderMarkdownWithMath } from '../../lib/markdown';
 import { MessageSquare, Trash2, Send, ThumbsUp, CornerDownRight, Clock, Flame } from 'lucide-react';
 
 interface CommentUser {
@@ -408,9 +409,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                       )}
                       <span className="text-[10px] font-mono text-text-mid">{formatDate(comment.createdAt)}</span>
                     </div>
-                    <p className="text-sm text-text-hi leading-relaxed whitespace-pre-wrap break-words mb-2">
-                      {comment.content}
-                    </p>
+                    <div className="text-sm text-text-hi leading-relaxed break-words mb-2 markdown-content" dangerouslySetInnerHTML={{ __html: renderMarkdownWithMath(comment.content) }} />
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => toggleLike(comment.id, false)}
@@ -515,9 +514,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                               )}
                               <span className="text-[10px] font-mono text-text-mid">{formatDate(reply.createdAt)}</span>
                             </div>
-                            <p className="text-sm text-text-hi leading-relaxed whitespace-pre-wrap break-words mb-1.5">
-                              {reply.content}
-                            </p>
+                            <div className="text-sm text-text-hi leading-relaxed break-words mb-1.5 markdown-content" dangerouslySetInnerHTML={{ __html: renderMarkdownWithMath(reply.content) }} />
                             <div className="flex items-center gap-3">
                               <button
                                 onClick={() => toggleLike(reply.id, true, comment.id)}

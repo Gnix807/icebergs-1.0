@@ -1,4 +1,4 @@
-﻿---
+---
 import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
 import FeatureGate from '../../components/FeatureGate.astro';
@@ -44,7 +44,7 @@ const STATUS_COLOR: Record<string, string> = {
 
 <Layout title="弹劾案 — 冰山图宇宙">
   <FeatureGate feature="feature_impeach" name="弹劾流程">
-  <main class="max-w-2xl mx-auto px-4 py-8 reveal">
+  <main class="max-w-3xl mx-auto px-4 py-8 reveal">
 
     <div class="text-[10px] font-mono text-text-lo mb-6">
       <a href="/org" class="hover:text-text-body transition-colors">机构</a>

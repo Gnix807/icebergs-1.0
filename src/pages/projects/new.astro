@@ -1,0 +1,71 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+import { getSessionById } from '../../lib/auth/index';
+import { ICEBERG_TOPICS } from '../../lib/icebergTopic';
+
+const sessionId = Astro.cookies.get('session')?.value;
+const session = await getSessionById(sessionId);
+if (!session) return Astro.redirect('/login');
+---
+
+<Layout title="创建专题 | 冰山图宇宙">
+  <main class="max-w-3xl mx-auto bg-grid px-4 py-12 relative z-10">
+    <header class="mb-8">
+      <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">
+        <a href="/projects" class="hover:text-brand transition-colors">← 专题协作</a>
+      </div>
+      <h1 class="text-2xl font-mono font-semibold"><span class="text-brand">#</span> 创建专题</h1>
+    </header>
+
+    <form id="project-form" class="space-y-5">
+      <div>
+        <label class="block text-[10px] font-mono text-text-mid mb-1.5">名称 <span class="text-danger">*</span></label>
+        <input id="p-name" type="text" required minlength="2" maxlength="100"
+          placeholder="例：中国历史专题"
+          class="w-full px-3 py-2 text-sm font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none" />
+      </div>
+      <div>
+        <label class="block text-[10px] font-mono text-text-mid mb-1.5">分类</label>
+        <select id="p-topic" class="w-full px-3 py-2 text-sm font-mono border border-border bg-surface-2 text-text-hi focus:border-brand focus:outline-none">
+          {ICEBERG_TOPICS.map(t => (<option value={t.value}>{t.label}</option>))}
+        </select>
+      </div>
+      <div>
+        <label class="block text-[10px] font-mono text-text-mid mb-1.5">简介</label>
+        <textarea id="p-desc" rows="3" maxlength="500"
+          placeholder="描述这个专题的目标和范围…"
+          class="w-full px-3 py-2 text-sm font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none resize-none"></textarea>
+      </div>
+      <div class="flex items-center gap-3">
+        <button type="submit" id="submit-btn" class="px-6 py-2 bg-brand text-[#171717] font-mono font-semibold text-sm hover:opacity-90 disabled:opacity-50">创建</button>
+        <a href="/projects" class="px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand transition-colors">取消</a>
+        <span id="msg" class="text-[10px] font-mono text-danger hidden"></span>
+      </div>
+    </form>
+  </main>
+</Layout>
+
+<script>
+  (function(){
+    var f = document.getElementById('project-form');
+    var n = document.getElementById('p-name');
+    var t = document.getElementById('p-topic');
+    var d = document.getElementById('p-desc');
+    var m = document.getElementById('msg');
+    var b = document.getElementById('submit-btn');
+    if (!f || !n) return;
+  f.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    var nm = n.value.trim();
+    if (nm.length < 2) { m.textContent = '名称至少2个字'; m.classList.remove('hidden'); return; }
+    m.classList.add('hidden'); b.disabled = true; b.textContent = '创建中…';
+    try {
+      var r = await fetch('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: nm, topic: t.value, description: d.value.trim() || undefined }) });
+      var j = await r.json();
+      if (j.success) { window.location.href = '/projects/' + j.data.project.slug; }
+      else { m.textContent = j.error?.message || '创建失败'; m.classList.remove('hidden'); b.disabled = false; b.textContent = '创建'; }
+    } catch (ex) { m.textContent = '网络错误'; m.classList.remove('hidden'); b.disabled = false; b.textContent = '创建'; }
+  });
+  })();
+</script>

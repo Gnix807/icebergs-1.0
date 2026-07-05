@@ -15,11 +15,14 @@ const { slug } = Astro.params;
 const sessionId = Astro.cookies.get('session')?.value;
 const session   = await getSessionById(sessionId);
 const isLoggedIn = !!session;
+const isAdmin = !!(session?.isFounder || session?.role === 'ADMIN');
 const canPreviewUnpublished = !!session && (session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR');
 
 let iceberg: any = null;
 let error = null;
-
+let linkedIdea: any = null;
+let readCount = 0;
+let stubLevel: string | null = null;
 try {
   if (slug) {
     const whereClause: any = {
@@ -49,6 +52,7 @@ try {
     });
 
     if (iceberg) {
+      try { linkedIdea = await prisma.idea.findFirst({ where: { icebergId: iceberg.id }, select: { id: true, title: true } }); } catch {}
       if (iceberg.status === 'PUBLISHED') {
         // 更新浏览计数 + 写入浏览日志（同一事务，确保一致性）
         await prisma.$transaction([
@@ -61,6 +65,7 @@ try {
 
         // 追踪首次访问该冰山图（visitedIcebergCount）
         if (session) {
+          try { readCount = await prisma.itemRead.count({ where: { userId: session.userId, icebergId: iceberg.id } }); } catch {}
           const alreadyRead = await prisma.itemRead.findFirst({
             where: { userId: session.userId, icebergId: iceberg.id },
           });
@@ -177,6 +182,10 @@ const allItemsFlat: FlatItem[] = (iceberg?.tiers ?? []).flatMap((tier: any, ti: 
 
 // 阅读时间预估（按平均每分钟 12 个词条）
 const estimatedMinutes = allItemsFlat.length > 0 ? Math.max(1, Math.ceil(allItemsFlat.length / 12)) : 0;
+const totalItems = allItemsFlat.length;
+const itemsWithDesc = (iceberg?.tiers ?? []).reduce((s: number, t: any) => s + t.items.filter((i: any) => i.desc).length, 0);
+const descRatio = totalItems > 0 ? itemsWithDesc / totalItems : 0;
+stubLevel = totalItems < 5 ? 'stub' : totalItems < 10 && descRatio < 0.3 ? 'expand' : null;
 
 // 每层词条的全局起始 index（用于按钮的 data-index）
 let globalIdx = 0;
@@ -1240,3 +1249,80 @@ if (iceberg?.status === 'PUBLISHED') {
     border-top-color: var(--color-brand);
   }
 </style>
+
+<!-- Infobox 侧边抽屉 -->
+<div id="ib-anchor" class="hidden lg:flex fixed right-0 top-24 z-30">
+  <button id="ib-handle" class="w-8 h-12 border border-border-subtle bg-surface-1 flex items-center justify-center text-text-mid hover:text-brand transition-colors shadow-lg flex-shrink-0">
+    <span id="ib-handle-icon" class="text-xs">◀</span>
+  </button>
+  <div id="ib-card" class="border border-border-subtle bg-surface-1 space-y-3 shadow-lg overflow-hidden transition-all duration-300 ease-out" style="width:0">
+    <div class="p-4 w-[260px] box-border">
+    <div class="flex items-center justify-between">
+      <div class="text-[10px] font-mono text-text-mid tracking-widest">冰山图信息</div>
+      <button id="ib-collapse-btn" class="text-text-lo hover:text-text-body text-xs leading-none">✕</button>
+    </div>
+    <div class="space-y-1.5 text-[10px] font-mono">
+      <div class="flex justify-between"><span class="text-text-mid">作者</span><span class="text-text-body" id="ib-author">—</span></div>
+      <div class="flex justify-between"><span class="text-text-mid">状态</span><span class="text-text-body" id="ib-status">—</span></div>
+      <div class="flex justify-between"><span class="text-text-mid">层级</span><span class="text-text-body" id="ib-tiers">—</span></div>
+      <div class="flex justify-between"><span class="text-text-mid">词条</span><span class="text-text-body" id="ib-items">—</span></div>
+      <div class="flex justify-between"><span class="text-text-mid">浏览量</span><span class="text-text-body" id="ib-views">—</span></div>
+      <div class="flex justify-between hidden" id="ib-read-row"><span class="text-text-mid">已读</span><span class="text-text-body" id="ib-read">—</span></div>
+      <div class="flex justify-between"><span class="text-text-mid">阅读时间</span><span class="text-text-body" id="ib-time">—</span></div>
+      <div class="flex justify-between hidden" id="ib-stub-row"><span class="text-text-mid">完善度</span><span class="text-text-body" id="ib-stub">—</span></div>
+      <div class="flex justify-between hidden" id="ib-featured-row"><span class="text-text-mid">⭐</span><span class="text-text-body text-warning">精选</span></div>
+      <div class="pt-2 border-t border-border-subtle hidden" id="ib-admin-row">
+        <button id="ib-featured-toggle" class="w-full text-center px-3 py-1.5 border border-warning/30 text-warning text-xs font-mono hover:bg-warning/10 transition-colors"></button>
+      </div>
+      <div class="pt-2 border-t border-border-subtle hidden" id="ib-idea-row">
+        <a id="ib-idea-link" href="#" class="block w-full text-center px-3 py-1.5 border border-border text-xs font-mono text-info hover:text-brand transition-colors">💡 创意来源</a>
+      </div>
+    </div>
+    </div>{/* close inner padding */}
+  </div>{/* close ib-card */}
+</div>{/* close ib-anchor */}
+
+<script define:vars={{ tiers: iceberg?.tiers?.length ?? 0, items: allItemsFlat?.length ?? 0, views: iceberg?.viewCount ?? 0, readC: readCount, time: estimatedMinutes, author: iceberg?.author?.nickname || iceberg?.author?.username || '匿名', status: statusLabelMap[iceberg?.status] ?? '—', linkedId: linkedIdea?.id ?? '', stubLevel: stubLevel, featured: iceberg?.featured ?? false, isAdmin: isAdmin, icebergId: iceberg?.id ?? '' }}>
+(function(){
+  var card=document.getElementById('ib-card');
+  var handle=document.getElementById('ib-handle');
+  var closeBtn=document.getElementById('ib-collapse-btn');
+  var icon=document.getElementById('ib-handle-icon');
+  if(!card||!handle)return;
+  // Fill data
+  document.getElementById('ib-author').textContent=author;
+  document.getElementById('ib-status').textContent=status;
+  document.getElementById('ib-tiers').textContent=tiers+' 层';
+  document.getElementById('ib-items').textContent=items+' 个';
+  document.getElementById('ib-views').textContent=views.toLocaleString();
+  if(readC>0){document.getElementById('ib-read-row').classList.remove('hidden');document.getElementById('ib-read').textContent=readC+'/'+items}
+  document.getElementById('ib-time').textContent='~'+time+' 分钟';
+  if(featured)document.getElementById('ib-featured-row').classList.remove('hidden');
+  if(stubLevel){document.getElementById('ib-stub-row').classList.remove('hidden');document.getElementById('ib-stub').textContent=stubLevel==='stub'?'🌱 小作品':'🔧 待完善'}
+  if(linkedId){document.getElementById('ib-idea-row').classList.remove('hidden');document.getElementById('ib-idea-link').href='/ideas/'+linkedId}
+
+  // Admin featured toggle
+  if(isAdmin){
+    var ftBtn=document.getElementById('ib-featured-toggle');
+    var ftRow=document.getElementById('ib-admin-row');
+    if(ftBtn&&ftRow){ftRow.classList.remove('hidden');ftBtn.textContent=featured?'取消精选':'⭐ 设为精选';
+    ftBtn.addEventListener('click',function(){
+      fetch('/api/icebergs/'+icebergId+'/featured',{method:'POST'}).then(function(r){return r.json()}).then(function(d){
+        if(d.success){var f=d.data.featured;ftBtn.textContent=f?'取消精选':'⭐ 设为精选';if(f){document.getElementById('ib-featured-row').classList.remove('hidden')}else{document.getElementById('ib-featured-row').classList.add('hidden')}}
+      });
+    });}
+  }
+
+  // Toggle logic
+  var expanded=localStorage.getItem('ib-expanded')!=='0';
+  function setState(open){
+    expanded=open;
+    card.style.width=open?'260px':'0';
+    if(icon)icon.textContent=open?'▶':'◀';
+    localStorage.setItem('ib-expanded',open?'1':'0');
+  }
+  if(handle)handle.addEventListener('click',function(){setState(!expanded)});
+  if(closeBtn)closeBtn.addEventListener('click',function(){setState(false)});
+  setState(expanded);
+})();
+</script>

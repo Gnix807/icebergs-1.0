@@ -56,15 +56,15 @@ export async function PUT(event: APIContext) {
       });
     }
 
-    let body: { status?: string; claimedBy?: string; icebergId?: string };
+    let body: { status?: string; claimedBy?: string; icebergId?: string; title?: string; description?: string };
     try { body = await event.request.json(); } catch {
       return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '请求格式错误')), {
         status: 400, headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // 认领：任何登录用户都可以认领 OPEN 状态的创意
-    if (body.status === 'CLAIMED' && idea.status === 'OPEN' && idea.creatorId !== session.userId) {
+    // 认领：任何登录用户都可以认领 OPEN 状态的创意（包括创建者自己）
+    if (body.status === 'CLAIMED' && idea.status === 'OPEN') {
       if (idea.claimedBy && idea.claimedBy !== session.userId) {
         return new Response(JSON.stringify(error(ErrorCodes.CONFLICT, '已被其他人认领')), {
           status: 409, headers: { 'Content-Type': 'application/json' },
@@ -91,6 +91,11 @@ export async function PUT(event: APIContext) {
     }
 
     const data: any = {};
+    // 创建者可以编辑标题和描述
+    if (isOwner) {
+      if (typeof body.title === 'string' && body.title.trim().length >= 2) data.title = body.title.trim();
+      if (typeof body.description === 'string') data.description = body.description.trim();
+    }
     if (body.status && ['OPEN', 'CLAIMED', 'COMPLETED'].includes(body.status)) {
       data.status = body.status;
     }

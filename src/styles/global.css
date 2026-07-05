@@ -166,12 +166,61 @@ canvas {
   background: repeating-linear-gradient(
     0deg,
     transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.1) 2px,
-    rgba(0, 0, 0, 0.1) 4px
+    transparent 3px,
+    rgba(255, 255, 255, 0.06) 3px,
+    rgba(255, 255, 255, 0.06) 5px
   );
   pointer-events: none;
   z-index: 9999;
+  animation: crt-drift 8s linear infinite;
+}
+/* 扫描线缓慢下移 */
+@keyframes crt-drift {
+  from { background-position: 0 0; }
+  to   { background-position: 0 100px; }
+}
+
+/* 整体 CRT 蒙层：微弱偏绿发光 + 边缘暗角 */
+.crt-scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+}
+.crt-scanlines::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background:
+    radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.35) 100%);
+  animation: crt-flicker 4s ease-in-out infinite alternate;
+}
+/* 模拟 CRT 亮度波动 */
+@keyframes crt-flicker {
+  0%, 95%   { opacity: 0.45; }
+  96%, 100% { opacity: 0.60; }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 浅色模式 */
+html.light .crt-scanlines::before {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.04) 3px,
+    rgba(0, 0, 0, 0.04) 5px
+  );
+}
+html.light .crt-scanlines::after {
+  background:
+    radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.18) 100%);
 }
 
 /* 终端绿发光效果 */
@@ -783,11 +832,6 @@ html.light .vote-btn.active-up {
 html.light .vote-btn.active-down {
   border-color: #dc2626 !important;
   color: #dc2626 !important;
-}
-
-/* CRT扫描线在浅色下隐藏 */
-html.light .crt-scanlines {
-  display: none !important;
 }
 
 /* ── 冰山图查看页浅色模式 ─────────────────────── */
