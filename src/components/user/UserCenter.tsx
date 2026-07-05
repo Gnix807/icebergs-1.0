@@ -853,65 +853,62 @@ export function UserCenter({
 
       {/* ── 档案头部 ──────────────────────────────────── */}
       <div className="border border-border bg-surface-2 mb-6 overflow-hidden boot-animate" style={{ animationDelay: '20ms' }}>
-
         <div className="p-5 md:p-6">
           <div className="flex items-start gap-5">
-            {/* 头像 — 质量分色环 */}
+            {/* 头像 */}
             <div className="flex-shrink-0">
-              <div className="relative p-1 rounded-full" style={{ background: `conic-gradient(${levelColor} 0deg, ${levelColor} ${Math.round(qLevel.progress * 360)}deg, transparent ${Math.round(qLevel.progress * 360)}deg)` }}>
-                <div className="p-0.5 rounded-full bg-surface-2">
-                  {user.avatar ? (
-                    <img src={user.avatar} alt={displayName} className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover block"
-                      onError={e => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex'; }} />
-                  ) : null}
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-surface-3 items-center justify-center" style={{ display: user.avatar ? 'none' : 'flex' }}>
-                    <span className="font-mono text-3xl font-bold" style={{ color: levelColor }}>{displayName.charAt(0).toUpperCase()}</span>
-                  </div>
+              <div className="relative p-0.5 rounded-full" style={{ background: `conic-gradient(${levelColor} 0deg, ${levelColor} ${Math.round(qLevel.progress * 360)}deg, #21262d ${Math.round(qLevel.progress * 360)}deg)` }}>
+                {user.avatar ? (
+                  <img src={user.avatar} alt={displayName} className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover block"
+                    onError={e => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex'; }} />
+                ) : null}
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-surface-3 items-center justify-center" style={{ display: user.avatar ? 'none' : 'flex' }}>
+                  <span className="font-mono text-2xl font-bold" style={{ color: levelColor }}>{displayName.charAt(0).toUpperCase()}</span>
                 </div>
-              </div>
-              <div className="text-[10px] font-mono border px-2 py-0.5 mt-2 text-center inline-block w-full" style={{ color: roleBadge.color, borderColor: `${roleBadge.color}50`, background: `${roleBadge.color}10` }}>
-                {roleBadge.label}
               </div>
             </div>
 
             {/* 信息 */}
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
+              <div className="flex flex-wrap items-center gap-2 mb-1.5">
                 <h1 className="text-xl font-mono font-bold text-text-hi">{displayName}</h1>
                 {user.nickname && <span className="text-xs font-mono text-text-mid">@{user.username}</span>}
+                <span className="text-[10px] font-mono px-1.5 py-0.5 border rounded" style={{ color: roleBadge.color, borderColor: `${roleBadge.color}40`, background: `${roleBadge.color}10` }}>
+                  {roleBadge.label}
+                </span>
                 {user.isFounder && (
-                  <span className="text-[10px] font-mono px-1.5 py-0.5 border" style={{ color: '#f59e0b', borderColor: '#f59e0b50', background: '#f59e0b10' }}>✦ FOUNDER</span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 border rounded" style={{ color: '#f59e0b', borderColor: '#f59e0b50', background: '#f59e0b10' }}>✦ FOUNDER</span>
                 )}
-                {isOwner && <span className="text-[10px] font-mono border border-border-subtle text-text-mid px-1.5 py-0.5 bg-surface-3">YOU</span>}
+                {isOwner && <span className="text-[10px] font-mono border border-border-subtle text-text-mid px-1.5 py-0.5 rounded bg-surface-3">YOU</span>}
               </div>
 
               {user.bio
-                ? <p className="text-xs text-text-body leading-relaxed mb-3 border-l-2 border-border pl-3">{user.bio}</p>
+                ? <p className="text-xs text-text-body leading-relaxed mb-2.5 max-w-2xl">{user.bio}</p>
                 : isOwner
-                  ? <p className="text-[10px] font-mono text-text-lo mb-3 italic">点击「设置」添加简介</p>
-                  : <div className="mb-3" />
+                  ? <p className="text-[10px] font-mono text-text-lo mb-2.5 italic">在设置中添加一段简介，让其他用户了解你</p>
+                  : <div className="mb-2.5" />
               }
 
               {/* 关注按钮 */}
               {!isOwner && (
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2.5">
                   <button onClick={toggleFollow} disabled={followBusy}
-                    className={`text-[10px] font-mono border px-2.5 py-0.5 transition-colors ${
+                    className={`text-[10px] font-mono border px-2.5 py-0.5 rounded transition-colors ${
                       following ? 'border-success/30 text-success bg-success/5 hover:border-danger hover:text-danger' : 'border-brand/30 text-brand hover:bg-brand/10'
                     }`}>
-                    {following ? '已关注' : '+ 关注'}
+                    {following ? '✓ 已关注' : '+ 关注'}
                   </button>
                   {followerCount > 0 && (
-                    <span className="text-[10px] font-mono text-text-lo">{followerCount} 粉丝</span>
+                    <span className="text-[10px] font-mono text-text-mid">{followerCount} 位关注者</span>
                   )}
                 </div>
               )}
 
               {/* 用户框 */}
               {userboxDefs.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-2">
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
                   {userboxDefs.map(box => (
-                    <span key={box.id} className="inline-flex items-center text-[10px] font-mono border rounded overflow-hidden"
+                    <span key={box.id} className="inline-flex items-center text-[10px] font-mono rounded overflow-hidden"
                       title={box.text}>
                       <span className="px-1.5 py-0.5 font-bold" style={{ background: box.leftBg, color: box.leftFg }}>{box.leftText}</span>
                       <span className="px-1.5 py-0.5 text-text-body border-l border-border-subtle bg-surface-3">{box.text}</span>
@@ -920,30 +917,19 @@ export function UserCenter({
                 </div>
               )}
               {isOwner && userboxDefs.length === 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 border rounded text-text-lo border-border-subtle">
-                    📌 在「设置」→「用户框」中选择展示的成就
-                  </span>
-                </div>
+                <p className="text-[10px] font-mono text-text-lo mb-2.5">在设置中选择要展示的用户框</p>
               )}
 
-              <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-text-lo bg-surface-3 border border-border-subtle px-2 py-0.5 rounded">
-                  加入 {new Date(user.createdAt).toLocaleDateString('zh-CN')}
-                </span>
+              {/* 统计行 */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-mono text-text-mid">
+                <span className="flex items-center gap-1"><span className="text-text-lo">加入于</span> {new Date(user.createdAt).toLocaleDateString('zh-CN')}</span>
                 {showStats && (
                   <>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-mono text-text-hi bg-surface-3 border border-border-subtle px-2 py-0.5 rounded">
-                      {user._count.icebergs} 冰山图
-                    </span>
+                    <span className="text-text-hi">{user._count.icebergs} <span className="text-text-mid">张冰山图</span></span>
                     {socialStats && (
                       <>
-                        <span className="inline-flex items-center gap-1 text-[10px] font-mono text-text-hi bg-surface-3 border border-border-subtle px-2 py-0.5 rounded">
-                          {socialStats.totalViews.toLocaleString()} 阅读
-                        </span>
-                        <span className="inline-flex items-center gap-1 text-[10px] font-mono text-text-hi bg-surface-3 border border-border-subtle px-2 py-0.5 rounded">
-                          +{socialStats.totalVotes} 票
-                        </span>
+                        <span className="text-text-hi">{socialStats.totalViews.toLocaleString()} <span className="text-text-mid">次浏览</span></span>
+                        <span className="text-text-hi">+{socialStats.totalVotes} <span className="text-text-mid">票</span></span>
                       </>
                     )}
                   </>
@@ -951,17 +937,17 @@ export function UserCenter({
               </div>
             </div>
 
-            {/* 等级 — 环形进度 */}
+            {/* 等级环 */}
             {showStats && (
-              <div className="flex-shrink-0 hidden sm:flex flex-col items-center gap-1.5">
-                <div className="relative w-20 h-20">
-                  <svg className="w-20 h-20 -rotate-90" viewBox="0 0 72 72">
-                    <circle cx="36" cy="36" r="30" fill="none" stroke="var(--color-border)" strokeWidth="4" />
-                    <circle cx="36" cy="36" r="30" fill="none" stroke={levelColor} strokeWidth="4"
+              <div className="flex-shrink-0 hidden sm:flex flex-col items-center gap-1">
+                <div className="relative w-16 h-16">
+                  <svg className="w-16 h-16 -rotate-90" viewBox="0 0 72 72">
+                    <circle cx="36" cy="36" r="30" fill="none" stroke="var(--color-border)" strokeWidth="3" />
+                    <circle cx="36" cy="36" r="30" fill="none" stroke={levelColor} strokeWidth="3"
                       strokeDasharray={`${qLevel.progress * 188.5} 188.5`} strokeLinecap="round" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-xl font-mono font-bold tabular-nums leading-none" style={{ color: levelColor }}>{qLevel.level}</span>
+                    <span className="text-lg font-mono font-bold tabular-nums leading-none" style={{ color: levelColor }}>{qLevel.level}</span>
                     <span className="text-[8px] font-mono text-text-lo">{qLevel.label}</span>
                   </div>
                 </div>
@@ -976,7 +962,7 @@ export function UserCenter({
         {/* 成就条 */}
         {topAchievements.length > 0 && (
           <div className="border-t border-border-subtle px-5 py-2 flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-mono text-text-mid tracking-widest">成就</span>
+            <span className="text-[10px] font-mono text-text-mid tracking-widest flex-shrink-0">成就</span>
             {(showAllAchievements ? topAchievements : topAchievements.slice(0, 4)).map(ach => (
               <span key={ach.key} className="text-[10px] font-mono px-1.5 py-0.5 border rounded"
                 style={{ color: ach.color, borderColor: `${ach.color}40`, background: `${ach.color}10` }}>
@@ -984,24 +970,19 @@ export function UserCenter({
               </span>
             ))}
             {totalUnlocked > 4 && (
-              <button onClick={() => setShowAllAch(!showAllAchievements)} className="text-[10px] font-mono text-text-mid ml-auto hover:text-brand transition-colors">
-                {showAllAchievements ? '收起' : `+${totalUnlocked - 4} 更多`}
+              <button onClick={() => setShowAllAch(!showAllAchievements)} className="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
+                {showAllAchievements ? '收起' : `+${totalUnlocked - 4}`}
               </button>
             )}
             {isOwner && (
-              <button
-                onClick={async () => {
-                  try {
-                    const res = await fetch('/api/achievements/recheck', { method: 'POST' });
-                    const data = await res.json();
-                    alert(data.data?.message || data.error?.message || '复核完成');
-                    window.location.reload();
-                  } catch {
-                    alert('检测失败，请稍后重试');
-                  }
-                }}
-                className="text-[10px] font-mono text-text-mid hover:text-brand border border-border-subtle px-1.5 py-0.5 ml-1 transition-colors"
-              >
+              <button onClick={async () => {
+                try {
+                  const res = await fetch('/api/achievements/recheck', { method: 'POST' });
+                  const data = await res.json();
+                  alert(data.data?.message || data.error?.message || '复核完成');
+                  window.location.reload();
+                } catch { alert('检测失败'); }
+              }} className="text-[10px] font-mono text-text-mid hover:text-brand border border-border-subtle px-1.5 py-0.5 transition-colors ml-auto">
                 🔄 检测
               </button>
             )}
@@ -1011,24 +992,23 @@ export function UserCenter({
 
       {/* Actions Bar (owner only) */}
       {isOwner && (
-        <div className="flex items-center gap-2 mb-5 flex-wrap">
-          <a href="/iceberg/new" className="px-3 py-1.5 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors">+ 创建冰山图</a>
-          <a href="/feedback" className="px-3 py-1.5 border border-border-subtle text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">! 反馈</a>
-          <a href={`/user/${user.id}?tab=settings`} className="px-3 py-1.5 border border-border-subtle text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">⚙ 设置</a>
-          {unreadCount > 0 && (
-            <a href="#" onClick={(e) => { e.preventDefault(); setShowNotifPanel(true); }} className="px-3 py-1.5 border border-border-subtle text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors ml-auto">
-              通知({unreadCount})
-            </a>
-          )}
+        <div className="flex items-center gap-3 mb-5 flex-wrap boot-animate" style={{ animationDelay: '40ms' }}>
+          <a href="/iceberg/new" className="px-4 py-2 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors">+ 创建冰山图</a>
+          <a href={`/user/${user.id}?tab=settings`} className="px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">⚙ 设置</a>
+          <a href="/feedback" className="px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">反馈</a>
           {promotionEligible && features.feature_promotion !== false && (
-            <button onClick={() => setShowPromotion(true)} className="px-3 py-1.5 border border-warning/30 text-xs font-mono text-warning hover:border-warning hover:bg-warning/5 transition-colors">
+            <button onClick={() => setShowPromotion(true)} className="px-4 py-2 border border-warning/30 text-xs font-mono text-warning hover:border-warning hover:bg-warning/5 transition-colors">
               申请晋升
+            </button>
+          )}
+          {unreadCount > 0 && (
+            <button onClick={() => setShowNotifPanel(true)} className="ml-auto text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
+              通知({unreadCount})
             </button>
           )}
         </div>
       )}
 
-        <div className="flex-1 min-w-0">
 
           {/* Tab 导航 */}
           <div className="flex border-b border-border-subtle mb-6 boot-animate" style={{ animationDelay: '60ms' }}>
@@ -1036,17 +1016,20 @@ export function UserCenter({
               <button
                 key={tab.id}
                 onClick={() => setTabAndSyncUrl(tab.id)}
-                className={`px-4 md:px-5 py-3 text-sm font-mono transition-colors border-b-2 -mb-px ${
+                className={`relative px-4 md:px-6 py-3 text-sm font-mono transition-colors ${
                   activeTab === tab.id
-                    ? tab.amber ? 'border-warning text-warning' : 'border-brand text-brand'
-                    : 'border-transparent text-text-lo hover:text-text-body'
+                    ? tab.amber ? 'text-warning' : 'text-brand'
+                    : 'text-text-lo hover:text-text-body'
                 }`}
               >
                 {tab.label}
                 {tab.amber
                   ? <span className="ml-1.5 text-[10px] opacity-50">[RESTRICTED]</span>
-                  : <span className="ml-1.5 opacity-30 text-xs">// {tab.code}</span>
+                  : null
                 }
+                {activeTab === tab.id && (
+                  <span className={`absolute bottom-0 left-4 right-4 h-0.5 ${tab.amber ? 'bg-warning' : 'bg-brand'}`} />
+                )}
               </button>
             ))}
           </div>
