@@ -73,6 +73,9 @@ interface AchievementDef {
   triggerTarget: number;
   sortOrder: number;
   isHidden: boolean;
+  conditions: string;
+  category: string | null;
+  rarity: string | null;
 }
 
 interface Props {
@@ -301,9 +304,17 @@ function ExploreTab({
 }) {
   const [achFilter, setAchFilter] = useState('全部');
   const getCat = (d: AchievementDef) => (d as any).category || achCategory(d.key);
+  const getRarity = (d: AchievementDef) => (d as any).rarity || '普通';
   const allDefs = achievementDefs.filter(d => !d.isHidden || d.key in achievementMap);
   const categories = ['全部', ...new Set(allDefs.map(d => getCat(d)))];
-  const visible = allDefs.filter(d => achFilter === '全部' || getCat(d) === achFilter);
+  const rarities = ['全部', ...new Set(allDefs.map(d => getRarity(d)))].sort((a,b) => {
+    const order: Record<string,number> = {'传说':1,'史诗':2,'稀有':3,'普通':4};
+    return (order[a] || 5) - (order[b] || 5);
+  });
+  const isCat = categories.includes(achFilter);
+  const visible = allDefs.filter(d =>
+    achFilter === '全部' || (isCat ? getCat(d) === achFilter : getRarity(d) === achFilter)
+  );
 
   if (visible.length === 0) {
     return (
@@ -334,6 +345,19 @@ function ExploreTab({
             </button>
           );
         })}
+      </div>
+
+      {/* 稀有度 */}
+      <div className="flex flex-wrap gap-1 mb-3">
+        {rarities.map(r => (
+          <button key={r} onClick={() => setAchFilter(r)}
+            className={`text-[10px] font-mono px-2 py-1 border transition-colors ${
+              achFilter === r ? 'border-brand text-brand bg-brand/10' : 'border-border-subtle text-text-mid hover:border-brand'
+            }`}>
+            <span className="mr-0.5" style={{color: r === '传说' ? '#f59e0b' : r === '史诗' ? '#8b5cf6' : r === '稀有' ? '#22c55e' : '#6b7280'}}>◆</span>
+            {r}
+          </button>
+        ))}
       </div>
 
       {/* 顶部进度栏 */}
@@ -432,6 +456,14 @@ function ExploreTab({
                     >
                       {ach.labelZh}
                     </span>
+                    {(ach as any).rarity && (
+                      <span className="text-[9px] font-mono px-1.5 py-px border rounded" style={{
+                        color: (ach as any).rarity === '传说' ? '#f59e0b' : (ach as any).rarity === '史诗' ? '#8b5cf6' : (ach as any).rarity === '稀有' ? '#22c55e' : '#6b7280',
+                        borderColor: (ach as any).rarity === '传说' ? '#f59e0b50' : (ach as any).rarity === '史诗' ? '#8b5cf650' : (ach as any).rarity === '稀有' ? '#22c55e50' : '#6b728050',
+                      }}>
+                        {(ach as any).rarity}
+                      </span>
+                    )}
                     {isUnlocked && (
                       <span className="ml-auto text-xs font-mono text-success flex-shrink-0">
                         ✓ {dateStr}
@@ -920,6 +952,23 @@ export function UserCenter({
                 <p className="text-[10px] font-mono text-text-lo mb-2.5">在设置中选择要展示的用户框</p>
               )}
 
+              {/* 勋章展示 */}
+              {awards.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  {awards.map(aw => {
+                    const def = AWARD_TYPES.find(a => a.id === aw.type);
+                    if (!def) return null;
+                    return (
+                      <span key={aw.id} className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded border"
+                        style={{ color: def.color, borderColor: `${def.color}50`, background: `${def.color}10` }}
+                        title={aw.message || def.label}>
+                        {def.icon} {def.label}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+
               {/* 统计行 */}
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-mono text-text-mid">
                 <span className="flex items-center gap-1"><span className="text-text-lo">加入于</span> {new Date(user.createdAt).toLocaleDateString('zh-CN')}</span>
@@ -1075,7 +1124,7 @@ export function UserCenter({
         )}
         {activeTab === 'admin' && isOwner && (viewerRole || viewerIsFounder) && <AdminPanel role={viewerRole ?? 'USER'} isFounder={viewerIsFounder} />}
       </div>
-    </div>
+
       {notifMounted && (
         <div className={`${notifLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/60 flex items-start justify-center z-50 pt-16 px-4`}>
           <div ref={notifPanelRef} className={`${notifLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-md font-mono max-h-[75vh] flex flex-col`}>

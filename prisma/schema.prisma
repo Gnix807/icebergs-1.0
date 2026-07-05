@@ -495,6 +495,7 @@ model Achievement {
   isHidden     Boolean  @default(false) // true = 未解锁时不展示
   conditions   String   @default("[]") // JSON Condition[] 可视化积木
   category     String?  // 分类：创作/阅读/投票/收藏/质量/搜索/随机/深夜/时刻/标签/词条/坚持/隐藏/其他
+  rarity       String?  @default("普通") // 普通 | 稀有 | 史诗 | 传说
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
