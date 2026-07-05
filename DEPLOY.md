@@ -35,6 +35,8 @@ cp .env.example .env      # 编辑 .env（见下方说明）
 npm install
 npx prisma generate
 npx prisma db push
+node prisma/seed.mjs
+node prisma/seed-achievements.mjs
 npm run build
 ```
 
