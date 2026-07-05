@@ -1073,6 +1073,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           description: iceberg.description,
           topic: iceberg.topic,
           status: iceberg.status,
+          updatedAt: iceberg.updatedAt,
         };
         const res = await fetch(`/api/icebergs/${iceberg.id}`, {
           method: 'PUT',
@@ -1111,6 +1112,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
             description: iceberg.description,
             topic: iceberg.topic,
             status: iceberg.status,
+            updatedAt: iceberg.updatedAt,
           },
         });
       }
@@ -1194,12 +1196,6 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
       if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveRef.current(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); submitRef.current(); }
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') { e.preventDefault(); handleAddTier(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'n' && !e.shiftKey) {
-        e.preventDefault();
-        const tiers = iceberg?.tiers;
-        if (tiers && tiers.length > 0) handleAddItem(tiers[tiers.length - 1].id);
-      }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);

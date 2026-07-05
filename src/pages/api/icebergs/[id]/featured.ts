@@ -1,7 +1,7 @@
 import type { APIContext } from 'astro';
-import { prisma } from '../../../lib/prisma';
-import { success, error, ErrorCodes } from '../../../lib/api';
-import { getSession } from '../../../lib/auth/index';
+import { prisma } from '../../../../lib/prisma';
+import { success, error, ErrorCodes } from '../../../../lib/api';
+import { getSession } from '../../../../lib/auth/index';
 
 export async function POST(event: APIContext) {
   const { id } = event.params;

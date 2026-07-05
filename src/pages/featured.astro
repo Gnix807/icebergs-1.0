@@ -13,43 +13,160 @@ const featured = await prisma.iceberg.findMany({
   orderBy: { updatedAt: 'desc' },
   select: {
     id: true, slug: true, title: true, description: true,
-    viewCount: true, createdAt: true,
+    viewCount: true, createdAt: true, updatedAt: true, topic: true,
     author: { select: { id: true, nickname: true, username: true, avatar: true } },
     _count: { select: { tiers: true } },
+    tiers: {
+      take: 2,
+      orderBy: { order: 'asc' },
+      select: {
+        name: true,
+        items: {
+          take: 5,
+          orderBy: { order: 'asc' },
+          select: { id: true, title: true },
+        },
+      },
+    },
   },
 });
+
+const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
+
+function formatDate(date: Date | string) {
+  const d = new Date(date);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  if (diffMs < 0) return '即将';
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return '今天';
+  if (diffDays === 1) return '昨天';
+  if (diffDays < 7) return `${diffDays} 天前`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} 周前`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)} 个月前`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 ---
 
 <Layout title="精选内容 | 冰山图宇宙">
   <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
-  <main class="max-w-6xl mx-auto bg-grid px-4 md:px-6 py-12 relative z-10">
+  <main class="bg-grid px-4 md:px-6 py-12 relative z-10">
 
-    <header class="mb-8 reveal">
-      <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">[ FEATURED ]</div>
-      <h1 class="text-3xl font-mono font-semibold">
-        <span class="text-brand">#</span> 精选内容
+    <!-- Hero -->
+    <header class="text-center mb-10 reveal">
+      <div class="inline-block font-mono text-[10px] text-text-mid mb-4 tracking-widest border border-warning/30 px-3 py-1">
+        ⭐ FEATURED COLLECTION
+      </div>
+      <h1 class="text-3xl md:text-4xl font-mono font-semibold terminal-glow mb-3">
+        <span class="text-warning">#</span> 精选内容
       </h1>
-      <p class="mt-2 text-sm text-text-body font-mono">管理员精选的优质冰山图，值得一读</p>
+      <p class="text-sm text-text-body font-mono max-w-xl mx-auto leading-relaxed">
+        管理员甄选的优质冰山图。<br/>每一张都经过人工评审，在深度、结构或话题上具有突出价值。
+      </p>
     </header>
 
+    <!-- Stats bar -->
+    {featured.length > 0 && (
+      <div class="flex justify-center gap-12 mb-10 reveal">
+        <div class="text-center">
+          <div class="text-3xl font-mono font-bold text-warning">{featured.length}</div>
+          <div class="text-[10px] font-mono text-text-mid mt-1 tracking-widest">精选作品</div>
+        </div>
+        <div class="w-px bg-gradient-to-b from-transparent via-border to-transparent"></div>
+        <div class="text-center">
+          <div class="text-3xl font-mono font-bold text-warning">{featured.reduce((s: number, f: any) => s + f.viewCount, 0).toLocaleString()}</div>
+          <div class="text-[10px] font-mono text-text-mid mt-1 tracking-widest">累计浏览</div>
+        </div>
+        <div class="w-px bg-gradient-to-b from-transparent via-border to-transparent"></div>
+        <div class="text-center">
+          <div class="text-3xl font-mono font-bold text-warning">{featured.reduce((s: number, f: any) => s + f._count.tiers, 0).toLocaleString()}</div>
+          <div class="text-[10px] font-mono text-text-mid mt-1 tracking-widest">累计层级</div>
+        </div>
+      </div>
+    )}
+
     {featured.length === 0 ? (
-      <div class="p-8 border border-dashed border-border text-center">
-        <p class="text-sm text-text-mid font-mono">暂无精选内容</p>
+      <div class="py-20 text-center border border-dashed border-border-subtle bg-surface-2/30 reveal">
+        <div class="font-mono text-text-lo text-3xl mb-4 leading-none select-none">⭐</div>
+        <p class="text-text-body font-mono text-sm mb-1">暂无精选内容</p>
+        <p class="text-text-mid font-mono text-xs">管理员正在评审中，敬请期待</p>
       </div>
     ) : (
-      <div class="space-y-3">
-        {featured.map(f => (
-          <a href={`/iceberg/${f.slug || f.id}`} class="block p-5 border border-warning/20 bg-warning/5 hover:border-warning/40 transition-colors reveal">
-            <div class="flex items-start gap-2 mb-2">
-              <span class="text-warning text-sm">⭐</span>
-              <h2 class="text-lg font-mono font-bold text-text-hi">{f.title}</h2>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {featured.map((f, index) => (
+          <a
+            href={`/iceberg/${f.slug || f.id}`}
+            class="archive-card reveal-grid group relative block p-5 border-warning/20"
+            data-reveal-delay={`${index * 60}`}
+          >
+            <!-- Tier color strip -->
+            <div class="flex gap-px mb-3 h-3 opacity-50 group-hover:opacity-90 transition-opacity duration-200 rounded-sm overflow-hidden">
+              {Array.from({ length: Math.max(f._count.tiers, 1) }).map((_, i: number) => (
+                <div class="flex-1" style={`background-color: ${tierColors[i % 6]}`} />
+              ))}
             </div>
-            {f.description && <p class="text-xs text-text-body line-clamp-2 mb-3 ml-6">{f.description}</p>}
-            <div class="flex items-center gap-4 ml-6 text-[10px] font-mono text-text-mid">
-              <span>{f._count.tiers} 层</span>
-              <span>{f.viewCount.toLocaleString()} 浏览</span>
-              <span>{f.author?.nickname || f.author?.username}</span>
+
+            <!-- Featured badge -->
+            <div class="text-[10px] font-mono text-warning/60 mb-1 tracking-widest">⭐ FEATURED</div>
+
+            <!-- Title -->
+            <h2 class="font-mono text-sm font-semibold text-text-hi group-hover:text-warning transition-colors mb-2 line-clamp-1">
+              <span class="text-text-lo mr-1">#</span>{f.title}
+            </h2>
+
+            <!-- Description -->
+            {f.description && (
+              <p class="text-xs text-text-body mb-3 line-clamp-2 leading-relaxed">{f.description}</p>
+            )}
+
+            <!-- Tier preview (up to 2 tiers) -->
+            {f.tiers.length > 0 && (
+              <div class="mb-3 space-y-0.5">
+                {f.tiers.map((t: any, ti: number) => (
+                  <div class="text-[10px] font-mono text-text-mid truncate">
+                    <span class="mr-1" style={`color: ${tierColors[ti % 6]}`}>●</span>
+                    {t.name}
+                    {t.items.length > 0 && <span class="text-text-lo ml-1">({t.items.slice(0, 3).map((it: any) => it.title).join(', ')}{t.items.length > 3 ? '...' : ''})</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <!-- Author + Topic -->
+            <div class="flex items-center justify-between mt-auto pt-3 border-t border-border-subtle">
+              <div class="flex items-center gap-1.5">
+                {f.author?.avatar ? (
+                  <img src={f.author.avatar} class="w-4 h-4 rounded-full border border-border object-cover" alt="" />
+                ) : (
+                  <div class="w-4 h-4 rounded-full border border-border bg-surface-2 flex items-center justify-center text-[7px] font-mono text-text-mid">{(f.author?.nickname || f.author?.username || '?').charAt(0)}</div>
+                )}
+                <span class="text-[10px] font-mono text-text-mid truncate max-w-[100px]">{f.author?.nickname || f.author?.username}</span>
+              </div>
+              <div class="flex items-center gap-2 text-[10px] font-mono text-text-mid">
+                {f.topic && <span class="border border-border px-1 py-px">{getIcebergTopicLabel(f.topic)}</span>}
+                <span class="flex items-center gap-0.5">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  {f.viewCount.toLocaleString()}
+                </span>
+              </div>
             </div>
+
+            <!-- Hover tier preview -->
+            {f.tiers[0]?.items?.length > 0 && (
+              <div class="card-preview absolute left-0 right-0 top-full mt-px z-50
+                          bg-surface-1 border border-warning/20 px-3 py-2.5
+                          opacity-0 pointer-events-none group-hover:opacity-100
+                          transition-all duration-150">
+                <div class="text-[10px] font-mono text-warning/60 mb-1.5 uppercase tracking-widest truncate">
+                  {f.tiers[0].name}
+                </div>
+                {f.tiers[0].items.map((item: any) => (
+                  <div class="text-xs font-mono text-text-body py-0.5 truncate">
+                    <span class="text-text-mid mr-1.5">›</span>{item.title}
+                  </div>
+                ))}
+              </div>
+            )}
           </a>
         ))}
       </div>
@@ -57,3 +174,15 @@ const featured = await prisma.iceberg.findMany({
 
   </main>
 </Layout>
+
+<style>
+  .card-preview {
+    position: absolute;
+    transform: translateY(4px);
+    transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .group:hover .card-preview {
+    opacity: 1 !important;
+    transform: translateY(0);
+  }
+</style>

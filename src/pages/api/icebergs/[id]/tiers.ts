@@ -3,6 +3,16 @@ import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 
+async function isProjectMember(userId: string, projectId: string | null): Promise<boolean> {
+  if (!projectId) return false;
+  try {
+    const m = await prisma.projectMember.findFirst({
+      where: { projectId, userId },
+    });
+    return !!m;
+  } catch { return false; }
+}
+
 export async function GET(event: APIContext) {
   try {
     const { id } = event.params;
@@ -73,7 +83,8 @@ export async function POST(event: APIContext) {
     }
 
     const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
-    if (iceberg.authorId !== session.userId && !canManageAny) {
+    const inProject = await isProjectMember(session.userId, iceberg.projectId);
+    if (iceberg.authorId !== session.userId && !canManageAny && !inProject) {
       return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },

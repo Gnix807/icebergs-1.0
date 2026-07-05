@@ -36,9 +36,11 @@ interface SearchResult {
 const navLinks = [
   { href: '/', label: '首页' },
   { href: '/iceberg/list', label: '冰山广场' },
+  { href: '/topic', label: '主题' },
   { href: '/ideas', label: '创意板' },
   { href: '/leaderboard', label: '排行榜' },
   { href: '/featured', label: '精选' },
+  { href: '/projects', label: '协作' },
   { href: '/iceberg/new', label: '创建' },
 ];
 

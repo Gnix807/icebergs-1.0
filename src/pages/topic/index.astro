@@ -1,0 +1,124 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+import { ICEBERG_TOPICS } from '../../lib/icebergTopic';
+
+const topicData = await Promise.all(
+  ICEBERG_TOPICS.map(async (t) => {
+    const [count, featuredCount, ideaCount] = await Promise.all([
+      prisma.iceberg.count({ where: { topic: t.value, status: 'PUBLISHED' } }),
+      prisma.iceberg.count({ where: { topic: t.value, status: 'PUBLISHED', featured: true } }),
+      prisma.idea.count({ where: { topic: t.value, status: 'OPEN' } }),
+    ]);
+    const latest = count > 0 ? await prisma.iceberg.findFirst({
+      where: { topic: t.value, status: 'PUBLISHED' },
+      orderBy: { updatedAt: 'desc' },
+      select: { title: true, slug: true },
+    }) : null;
+    return { ...t, count, featuredCount, ideaCount, latest };
+  })
+);
+
+const totalIcebergs = topicData.reduce((s, t) => s + t.count, 0);
+const sorted = [...topicData].sort((a, b) => b.count - a.count);
+const hot = sorted.slice(0, 6);
+const rest = sorted.slice(6);
+
+const topicIcons: Record<string, string> = {
+  general: '🌐', history: '📜', science: '🔬', technology: '💻',
+  philosophy: '🤔', culture: '🎭', art: '🏛️', literature: '📖',
+  music: '🎵', game: '🎮', anime: '🎌', internet: '🌍',
+  education: '📚', language: '🗣️', politics: '🏛️', finance: '💰',
+  military: '⚔️', religion: '🙏', folklore: '🧚', space: '🚀',
+  nature: '🌿', biology: '🧬', geography: '🌏', medicine: '🏥',
+  math: '🔢', physics: '⚛️', chemistry: '🧪', sports: '⚽',
+  food: '🍔', travel: '✈️', crime: '🔪', horror: '👹',
+  urban_legend: '👻', conspiracy: '🕵️', other: '📦',
+};
+
+const tierColors = ['#f59e0b', '#ef4444', '#3b82f6', '#22c55e', '#8b5cf6', '#ec4899'];
+function maxCount() { return Math.max(...topicData.map(t => t.count), 1); }
+---
+
+<Layout title="主题门户 | 冰山图宇宙">
+  <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
+  <main class="bg-grid px-4 md:px-6 py-12 relative z-10">
+
+    <!-- Hero -->
+    <header class="text-center mb-10 reveal">
+      <div class="text-xs font-mono text-text-mid mb-4 tracking-widest">
+        <a href="/" class="hover:text-brand transition-colors">← 首页</a>
+        <span class="text-text-lo mx-1">/</span>
+        <span class="text-text-body">主题门户</span>
+      </div>
+      <h1 class="text-4xl md:text-5xl font-mono font-semibold terminal-glow mb-4">
+        <span class="text-brand">#</span> 主题门户
+      </h1>
+      <p class="text-sm text-text-body font-mono max-w-xl mx-auto leading-relaxed">
+        共收录 <span class="text-brand font-bold">{totalIcebergs.toLocaleString()}</span> 张冰山图，覆盖 <span class="text-brand font-bold">{ICEBERG_TOPICS.length}</span> 个主题领域。每一扇门通往一个话题的深处。
+      </p>
+    </header>
+
+    <!-- Hot topics: 6-wide cards with bar charts -->
+    <section class="mb-12 reveal">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-mono text-brand">
+          <span class="text-text-lo">// </span>热门主题
+        </h2>
+        <span class="text-[10px] font-mono text-text-mid border border-border px-1.5 py-0.5">TOP {Math.min(6, hot.length)}</span>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {hot.map((t, index) => (
+          <a
+            href={`/topic/${t.value}`}
+            class="reveal-grid group block border border-border-subtle bg-surface-2 p-5 hover:border-brand transition-colors"
+            data-reveal-delay={`${index * 60}`}
+          >
+            <div class="flex items-start gap-3 mb-3">
+              <span class="text-2xl flex-shrink-0">{topicIcons[t.value] ?? '📂'}</span>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-mono font-bold text-text-hi group-hover:text-brand transition-colors truncate">{t.label}</div>
+                <div class="text-[10px] font-mono text-text-mid mt-0.5">{t.count.toLocaleString()} 张冰山图{t.featuredCount > 0 ? ` · ⭐ ${t.featuredCount} 精选` : ''}{t.ideaCount > 0 ? ` · 💡 ${t.ideaCount} 创意` : ''}</div>
+              </div>
+            </div>
+            <!-- Progress bar -->
+            <div class="h-1 bg-surface-1 overflow-hidden">
+              <div class="h-full transition-all duration-500" style={`width:${(t.count / maxCount() * 100).toFixed(1)}%; background:${tierColors[index % 6]}`}></div>
+            </div>
+            {t.latest && (
+              <div class="mt-2.5 pt-2.5 border-t border-border-subtle text-[10px] font-mono text-text-mid truncate">
+                最近更新：{t.latest.title}
+              </div>
+            )}
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <!-- All topics: compact grid -->
+    <section class="reveal" style="animation-delay:150ms">
+      <h2 class="text-sm font-mono text-text-mid mb-4">
+        <span class="text-text-lo">// </span>全部主题
+      </h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-2">
+        {sorted.map((t, index) => (
+          <a
+            href={`/topic/${t.value}`}
+            class="reveal-grid group block border border-border-subtle bg-surface-2 px-3 py-3 hover:border-brand hover:bg-surface-1 transition-colors"
+            data-reveal-delay={`${200 + index * 20}`}
+          >
+            <div class="flex items-center gap-2">
+              <span class="text-sm">{topicIcons[t.value] ?? '📂'}</span>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-mono font-bold text-text-hi group-hover:text-brand transition-colors truncate">{t.label}</div>
+                <div class="text-[9px] font-mono text-text-mid">{t.count}</div>
+              </div>
+              {t.featuredCount > 0 && <span class="text-[9px] text-warning flex-shrink-0">⭐</span>}
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+  </main>
+</Layout>

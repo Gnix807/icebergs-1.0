@@ -8,7 +8,7 @@ import Layout from '../layouts/Layout.astro';
       <div class="text-[10px] font-mono text-text-mid tracking-widest mb-2">// TERMS OF SERVICE</div>
       <h1 class="text-2xl font-mono text-text-hi mb-3">服务条款</h1>
       <p class="text-sm font-mono text-text-body leading-relaxed">
-        生效日期：2026-04-29。继续访问或使用本站，即视为你已阅读并同意本条款。
+        生效日期：2026-07-05。继续访问或使用本站，即视为你已阅读并同意本条款。
       </p>
     </div>
 
@@ -16,7 +16,7 @@ import Layout from '../layouts/Layout.astro';
       <div class="border border-border-subtle bg-surface-2 p-4">
         <div class="text-text-hi mb-2">1. 服务说明</div>
         <p class="text-text-body leading-relaxed">
-          冰山图宇宙是面向公众的内容创作与讨论平台。我们提供账号、内容发布、互动与治理功能，具体能力可能随版本迭代调整。
+          冰山图宇宙是面向公众的内容创作与讨论平台。我们提供冰山图创作、主题门户浏览、专题协作（WikiProject）、精选内容展示、创意板点子征集与认领、评论互动与投票治理等功能，具体能力可能随版本迭代调整。
         </p>
       </div>
 
@@ -35,6 +35,7 @@ import Layout from '../layouts/Layout.astro';
           <li class="before:content-['·'] before:text-text-lo before:mr-2">你对自己发布的内容负责，应确保不侵犯他人合法权益。</li>
           <li class="before:content-['·'] before:text-text-lo before:mr-2">你授权本站在站内展示、存储、索引并用于功能优化与治理审查。</li>
           <li class="before:content-['·'] before:text-text-lo before:mr-2">公开发布内容默认可被其他访客浏览与引用站内链接。</li>
+          <li class="before:content-['·'] before:text-text-lo before:mr-2">在专题协作中提交的内容，视为同意在协作组范围内共同编辑与维护。</li>
         </ul>
       </div>
 
@@ -48,21 +49,51 @@ import Layout from '../layouts/Layout.astro';
       </div>
 
       <div class="border border-border-subtle bg-surface-2 p-4">
-        <div class="text-text-hi mb-2">5. 处罚与申诉</div>
+        <div class="text-text-hi mb-2">5. 专题协作（WikiProject）规则</div>
+        <ul class="space-y-1.5 text-text-body">
+          <li class="before:content-['·'] before:text-text-lo before:mr-2">专题协作者应围绕协作主题进行内容编写，不得在协作组内发布无关或恶意内容。</li>
+          <li class="before:content-['·'] before:text-text-lo before:mr-2">协作组成员须遵守创建者及管理员的调度安排，成员角色（成员/管理员）由组内治理决定。</li>
+          <li class="before:content-['·'] before:text-text-lo before:mr-2">看板任务应由相关责任人在约定时间内完成或主动转交；长期未响应可能被移出协作组。</li>
+          <li class="before:content-['·'] before:text-text-lo before:mr-2">协作产生的冰山图与内容归协作组共有，平台保留根据违规情况移除内容或解散协作组的权利。</li>
+        </ul>
+      </div>
+
+      <div class="border border-border-subtle bg-surface-2 p-4">
+        <div class="text-text-hi mb-2">6. 精选内容策展</div>
+        <ul class="space-y-1.5 text-text-body">
+          <li class="before:content-['·'] before:text-text-lo before:mr-2">精选内容由平台管理员（ADMIN）依据质量标准手工遴选，不代表平台立场背书。</li>
+          <li class="before:content-['·'] before:text-text-lo before:mr-2">入选精选的冰山图将获得 ⭐ 标识并在精选内容页及对应主题门户优先展示。</li>
+          <li class="before:content-['·'] before:text-text-lo before:mr-2">精选内容遴选过程不接受外部干预，管理员保留添加或移除精选的权利。</li>
+          <li class="before:content-['·'] before:text-text-lo before:mr-2">如发现已入选的精选内容存在违规，平台可随时撤销精选资格并依规处罚。</li>
+        </ul>
+      </div>
+
+      <div class="border border-border-subtle bg-surface-2 p-4">
+        <div class="text-text-hi mb-2">7. 创意板参与规则</div>
+        <ul class="space-y-1.5 text-text-body">
+          <li class="before:content-['·'] before:text-text-lo before:mr-2">创意板用于社区成员提交冰山图创作主题或改进建议，供他人认领完成。</li>
+          <li class="before:content-['·'] before:text-text-lo before:mr-2">提交创意点子应具备可行性与原创性，禁止提交重复、低质或违规主题。</li>
+          <li class="before:content-['·'] before:text-text-lo before:mr-2">认领创意后应在合理时间内完成或主动放弃；恶意占用创意可能被取消认领资格。</li>
+          <li class="before:content-['·'] before:text-text-lo before:mr-2">创意板评论与投票须遵守社区准则，禁止利用留言刷票或进行广告导流。</li>
+        </ul>
+      </div>
+
+      <div class="border border-border-subtle bg-surface-2 p-4">
+        <div class="text-text-hi mb-2">8. 处罚与申诉</div>
         <p class="text-text-body leading-relaxed">
-          对违规行为，平台可采取内容下架、限流、封禁、撤销权限等措施。你可通过“反馈建议/反馈进展”发起申诉，管理员将结合证据处理。
+          对违规行为，平台可采取内容下架、限流、封禁、撤销权限、移出协作组等措施。你可通过"反馈建议/反馈进展"发起申诉，管理员将结合证据处理。
         </p>
       </div>
 
       <div class="border border-border-subtle bg-surface-2 p-4">
-        <div class="text-text-hi mb-2">6. 免责声明</div>
+        <div class="text-text-hi mb-2">9. 免责声明</div>
         <p class="text-text-body leading-relaxed">
           平台内容主要由用户生成，不保证其完全准确、完整或实时。对因使用本站信息产生的直接或间接损失，平台在法律允许范围内不承担责任。
         </p>
       </div>
 
       <div class="border border-border-subtle bg-surface-2 p-4">
-        <div class="text-text-hi mb-2">7. 条款更新</div>
+        <div class="text-text-hi mb-2">10. 条款更新</div>
         <p class="text-text-body leading-relaxed">
           我们可能根据产品与法律要求更新条款。重大变更会通过公告或更新日志提示；继续使用即视为接受更新后的条款。
         </p>

@@ -5,6 +5,16 @@ import { getSession } from '../../../../lib/auth';
 import { checkAchievements, updateDailyStreak } from '../../../../lib/achievementService';
 import { normalizeIcebergTopic } from '../../../../lib/icebergTopic';
 
+async function isProjectMember(userId: string, projectId: string | null): Promise<boolean> {
+  if (!projectId) return false;
+  try {
+    const m = await prisma.projectMember.findFirst({
+      where: { projectId, userId },
+    });
+    return !!m;
+  } catch { return false; }
+}
+
 // GET /api/icebergs/:id - 获取冰山图详情
 export async function GET(event: APIContext) {
   try {
@@ -50,7 +60,8 @@ export async function GET(event: APIContext) {
 
     const isOwner = !!session && iceberg.authorId === session.userId;
     const isPrivileged = !!session && (session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR');
-    const canViewUnpublished = isOwner || isPrivileged;
+    const inProject = !!session && await isProjectMember(session.userId, iceberg.projectId);
+    const canViewUnpublished = isOwner || isPrivileged || inProject;
 
     if (iceberg.status !== 'PUBLISHED' && !canViewUnpublished) {
       return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '冰山图不存在')), {
@@ -126,7 +137,7 @@ export async function PUT(event: APIContext) {
     }
 
     const body = await event.request.json();
-    const { title, description, status, topic } = body;
+    const { title, description, status, topic, updatedAt: clientUpdatedAt } = body;
 
     // 检查冰山图是否存在且属于当前用户
     const existing = await prisma.iceberg.findFirst({
@@ -141,15 +152,31 @@ export async function PUT(event: APIContext) {
     }
 
     const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
-    if (existing.authorId !== session.userId && !canManageAny) {
+    const inProject = await isProjectMember(session.userId, existing.projectId);
+    if (existing.authorId !== session.userId && !canManageAny && !inProject) {
       return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
+    // 乐观锁：避免协作时多人同时编辑互相覆盖
+    if (clientUpdatedAt && existing.projectId) {
+      const serverTime = new Date(existing.updatedAt).getTime();
+      const clientTime = new Date(clientUpdatedAt).getTime();
+      if (clientTime < serverTime) {
+        return new Response(JSON.stringify(error(
+          ErrorCodes.CONFLICT,
+          '编辑冲突：自你打开此页面后，有其他协作者保存了修改。请刷新页面后重新编辑。',
+        )), {
+          status: 409,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     const updateData: { title?: string; description?: string; status?: string; topic?: string } = {};
-    if (title !== undefined) updateData.title = title.trim();
+    if (title != null && title !== undefined) updateData.title = String(title).trim();
     if (description !== undefined) updateData.description = description;
     if (status !== undefined) updateData.status = status;
     if (topic !== undefined) updateData.topic = normalizeIcebergTopic(topic);
@@ -174,7 +201,8 @@ export async function PUT(event: APIContext) {
     });
   } catch (err) {
     console.error('更新冰山图失败:', err);
-    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '更新失败')), {
+    const msg = err instanceof Error ? err.message : String(err);
+    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '更新失败: ' + msg)), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

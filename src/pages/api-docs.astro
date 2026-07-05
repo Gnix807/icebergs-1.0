@@ -14,6 +14,12 @@ const sections = [
     ],
   },
   {
+    title: '精选',
+    items: [
+      { method: 'POST', path: '/api/icebergs/[id]/featured', desc: '切换精选状态（ADMIN）' },
+    ],
+  },
+  {
     title: '层级与词条',
     items: [
       { method: 'GET', path: '/api/icebergs/:id/tiers', desc: '层级列表' },
@@ -62,6 +68,30 @@ const sections = [
       { method: 'POST', path: '/api/ideas', desc: '提交创意' },
       { method: 'PUT', path: '/api/ideas/:id', desc: '更新/认领创意' },
       { method: 'POST', path: '/api/ideas/:id/vote', desc: '创意投票' },
+      { method: 'GET', path: '/api/ideas/[id]/comments', desc: '获取创意评论' },
+      { method: 'POST', path: '/api/ideas/[id]/comments', desc: '发表创意评论' },
+      { method: 'POST', path: '/api/ideas/[id]/claimants', desc: '加入/退出创意认领' },
+    ],
+  },
+  {
+    title: '专题协作',
+    items: [
+      { method: 'GET', path: '/api/projects', desc: '获取项目列表' },
+      { method: 'POST', path: '/api/projects', desc: '创建项目' },
+      { method: 'PATCH', path: '/api/projects/[slug]', desc: '编辑项目（Moderator+）' },
+      { method: 'DELETE', path: '/api/projects/[slug]', desc: '删除项目（Creator/Admin）' },
+      { method: 'POST', path: '/api/projects/[slug]/members', desc: '加入/邀请成员' },
+      { method: 'PATCH', path: '/api/projects/[slug]/members', desc: '管理成员（踢出/晋升/降级/移交）' },
+      { method: 'GET', path: '/api/projects/[slug]/members', desc: '获取成员列表' },
+      { method: 'GET', path: '/api/projects/[slug]/tasks', desc: '获取任务列表' },
+      { method: 'POST', path: '/api/projects/[slug]/tasks', desc: '创建任务' },
+      { method: 'PATCH', path: '/api/projects/[slug]/tasks', desc: '更新任务（assign/unassign/status）' },
+      { method: 'DELETE', path: '/api/projects/[slug]/tasks', desc: '删除任务' },
+      { method: 'GET', path: '/api/projects/[slug]/task-comments', desc: '获取任务评论' },
+      { method: 'POST', path: '/api/projects/[slug]/task-comments', desc: '发表任务评论' },
+      { method: 'GET', path: '/api/projects/[slug]/discussions', desc: '获取讨论消息' },
+      { method: 'POST', path: '/api/projects/[slug]/discussions', desc: '发送讨论消息' },
+      { method: 'POST', path: '/api/projects/[slug]/link', desc: '关联/取消关联冰山图或创意' },
     ],
   },
   {

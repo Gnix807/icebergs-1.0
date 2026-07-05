@@ -139,5 +139,10 @@ export interface AchievementContext {
     unlockedAchievementCount: number
     daysSinceRegister: number
     hasUnreadNotification: boolean
+    projectJoinedCount: number
+    projectCreatedCount: number
+    ideaSubmittedCount: number
+    taskCompletedCount: number
+    collabEditCount: number
   }
 }

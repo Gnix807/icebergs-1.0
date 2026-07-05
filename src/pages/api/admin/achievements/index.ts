@@ -39,7 +39,7 @@ export async function POST(event: APIContext) {
       key?: string; icon?: string; label?: string; labelZh?: string;
       desc?: string; color?: string; triggerType?: string;
       triggerTarget?: number; sortOrder?: number; isHidden?: boolean;
-      conditions?: string;
+      conditions?: string; category?: string;
     };
 
     if (!body.key?.trim() || !body.icon?.trim() || !body.labelZh?.trim() || !body.desc?.trim()) {

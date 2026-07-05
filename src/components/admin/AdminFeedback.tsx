@@ -26,6 +26,23 @@ const STATUS_MAP = {
   wontfix:  { label: '不处理', color: '#6b7280' },
 };
 
+const FEEDBACK_TEMPLATES: Record<'resolved' | 'wontfix', { label: string; text: string }[]> = {
+  resolved: [
+    { label: '已修复', text: '你反馈的问题已在近期更新中修复，感谢指出。' },
+    { label: '内容已修正', text: '经核查，相关内容确有错误，已联系作者修正或由管理组直接更正。' },
+    { label: '建议已采纳', text: '感谢你的建议，我们已在后续版本中实现了该功能。' },
+    { label: '已添加功能', text: '该功能建议已加入开发计划，将在后续版本中上线。' },
+    { label: '已处理', text: '收到反馈，已进行相应处理。' },
+  ],
+  wontfix: [
+    { label: '非平台问题', text: '该问题属于浏览器或网络环境引起，非平台代码层面可修复，建议检查本地环境。' },
+    { label: '设计如此', text: '你描述的行为是当前版本的预期设计，暂不考虑修改。如有更好的方案欢迎继续讨论。' },
+    { label: '无法复现', text: '我们尝试了多种环境均未能复现你描述的问题，如果有更详细的复现步骤请补充后重新提交。' },
+    { label: '优先级较低', text: '我们理解这个需求的价值，但目前资源有限，已记录但短期内暂不安排。' },
+    { label: '已有方案', text: '该功能已有类似的替代方案可以实现，建议尝试现有功能。如有具体场景可以进一步讨论。' },
+  ],
+};
+
 function timeStr(iso: string) {
   return new Date(iso).toLocaleString('zh-CN', {
     year: 'numeric', month: '2-digit', day: '2-digit',
@@ -207,6 +224,22 @@ export function AdminFeedback() {
                 {/* 处理操作区 */}
                 {isResolvingThis ? (
                   <div className="pt-1 space-y-2">
+                    <div className="flex flex-wrap gap-1">
+                      {FEEDBACK_TEMPLATES.resolved.map((tpl) => (
+                        <button key={tpl.label} type="button"
+                          onClick={() => setNoteMap(prev => ({ ...prev, [fb.id]: tpl.text }))}
+                          className="text-[10px] px-1.5 py-0.5 border border-success/30 text-success hover:bg-success/10 transition-colors">
+                          {tpl.label}
+                        </button>
+                      ))}
+                      {FEEDBACK_TEMPLATES.wontfix.map((tpl) => (
+                        <button key={tpl.label} type="button"
+                          onClick={() => setNoteMap(prev => ({ ...prev, [fb.id]: tpl.text }))}
+                          className="text-[10px] px-1.5 py-0.5 border border-[#6b7280]/30 text-text-mid hover:bg-surface-3 transition-colors">
+                          {tpl.label}
+                        </button>
+                      ))}
+                    </div>
                     <textarea
                       placeholder="处理备注（可选）"
                       rows={2}

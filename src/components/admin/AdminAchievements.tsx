@@ -82,6 +82,16 @@ const BLOCK_CATEGORIES: { label: string; blocks: BlockDef[] }[] = [
       { key: 'varEqual', label: '变量A 等于 变量B', ops: ['=='], valueType: 'varPair' },
     ],
   },
+  {
+    label: '⑦ 社区协作',
+    blocks: [
+      { key: 'projectJoinedCount',  label: '加入的协作组数',  ops: ['>=','=='], valueType: 'number' },
+      { key: 'projectCreatedCount', label: '创建的协作组数',  ops: ['>=','=='], valueType: 'number' },
+      { key: 'ideaSubmittedCount',  label: '提交的创意数',    ops: ['>=','=='], valueType: 'number' },
+      { key: 'taskCompletedCount',  label: '完成的协作任务数',ops: ['>=','=='], valueType: 'number' },
+      { key: 'collabEditCount',     label: '编辑过的他人冰山图',ops: ['>=','=='], valueType: 'number' },
+    ],
+  },
 ];
 
 const ALL_BLOCKS = BLOCK_CATEGORIES.flatMap(c => c.blocks);
@@ -89,9 +99,71 @@ const BLOCK_BY_KEY = Object.fromEntries(ALL_BLOCKS.map(b => [b.key, b]));
 const VAR_OPTIONS = [
   'totalRead','searchCount','randomCount','nightReadCount',
   'visitedIcebergCount','consecutiveDays','totalVotesCast','currentIcebergReadCount',
+  'watchlistCount','createdIcebergCount','qualityLevel',
+  'projectJoinedCount','projectCreatedCount','ideaSubmittedCount','taskCompletedCount','collabEditCount',
 ];
 const DAY_OPTIONS = ['周日','周一','周二','周三','周四','周五','周六'];
 const MONTH_OPTIONS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+
+const EMOJI_PICKER = [
+  '😀','😃','😄','😁','😆','😅','🤣','😂','🙂','😊','😇','😍','🤩','😘','😗','😚','😋','😛','😜','🤪','😝','🤑',
+  '🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','😮','😯','😲','😳','🥺','😢','😭','😤','😡',
+  '🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖','😺','😸','😹','😻','😼','😽','🙀','😿','😾',
+  '👶','🧒','👦','👧','🧑','👨','👩','🧓','👴','👵','🙍','🙎','🙅','🙆','💁','🙋','🧏','🙇','🤦','🤷',
+  '💪','🦵','🦶','👂','🦻','👃','🧠','🦷','🦴','👀','👁️','👅','👄',
+  '🧳','🌂','☂️','🎒','👝','👛','👜','💼','👓','🕶️','🥽','🥼','🦺','👔','👕','👖','🧣','🧤','🧥','🧦',
+  '🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐤','🐣','🐥',
+  '🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜','🦟','🦗','🕷️','🦂','🐢','🐍','🦎',
+  '🦖','🦕','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🐊','🐅','🐆','🦓','🦍','🦧','🐘',
+  '🦛','🦏','🐪','🐫','🦒','🦘','🐃','🐂','🐄','🐎','🐖','🐏','🐑','🦙','🐐','🦌','🐕','🐩','🦮','🐕‍🦺','🐈',
+  '🐓','🦃','🦚','🦜','🦢','🦩','🕊️','🐇','🦝','🦨','🦡','🦦','🦥','🐁','🐀','🐿️','🦔','🐾','🐉','🐲',
+  '🌵','🎄','🌲','🌳','🌴','🌱','🌿','☘️','🍀','🎍','🎋','🍃','🍂','🍁','🍄','🐚','🌾','💐','🌷','🌹','🥀',
+  '🌺','🌸','🌼','🌻','🌞','🌝','🌛','🌜','🌚','🌕','🌖','🌗','🌘','🌑','🌒','🌓','🌔','🌙','🌎','🌍','🌏',
+  '🪐','💫','⭐','🌟','✨','⚡','☄️','💥','🔥','🌪️','🌈','☀️','🌤️','⛅','🌥️','☁️','🌦️','🌧️','⛈️','🌩️',
+  '🌨️','❄️','☃️','⛄','🌬️','💨','💧','💦','🌊',
+  '🍏','🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦',
+  '🥬','🥒','🌶️','🫑','🌽','🥕','🫒','🧄','🧅','🥔','🍠','🥐','🍞','🥖','🥨','🧀','🥚','🍳','🧈','🥞','🧇',
+  '🥓','🥩','🍗','🍖','🦴','🌭','🍔','🍟','🍕','🫓','🥪','🥙','🧆','🌮','🌯','🫔','🥗','🥘','🫕','🥫','🍝',
+  '🍜','🍲','🍛','🍣','🍱','🥟','🦪','🍤','🍙','🍚','🍘','🍥','🥠','🥮','🍢','🍡','🍧','🍨','🍦','🥧','🧁',
+  '🍰','🎂','🍮','🍭','🍬','🍫','🍿','🍩','🍪','🌰','🥜','🍯','🥛','🍼','☕','🍵','🧃','🥤','🍶','🍺','🍻',
+  '🥂','🍷','🥃','🍸','🍹','🧉','🍾','🧊','🥄','🍴','🍽️','🥣','🥡','🥢','🧂',
+  '⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪀','🏓','🏸','🏒','🏑','🥍','🏏','🪃','🥅','⛳','🪁',
+  '🏹','🎣','🤿','🥊','🥋','🎽','🛹','🛼','🛷','⛸️','🥌','🎿','⛷️','🏂','🪂','🏋️','🤼','🤸','🤺','⛹️','🤾',
+  '🏌️','🏇','🧘','🏄','🏊','🤽','🚣','🧗','🚵','🚴','🏆','🥇','🥈','🥉','🏅','🎖️','🏵️','🎗️','🎫','🎟️',
+  '🎪','🤹','🎭','🩰','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🎷','🎺','🎸','🪕','🎻','🎲','♟️','🎯','🎳','🎮',
+  '👾','🎰',
+  '🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🏍️','🛵','🛺','🚲','🛴','🚨','🚔',
+  '🚍','🚘','🚖','🚡','🚠','🚟','🚃','🚋','🚝','🚄','🚅','🚈','🚞','🚂','🚆','🚇','🚊','🚉','✈️','🛫','🛬',
+  '🛩️','💺','🛰️','🚀','🛸','🚁','🛶','⛵','🚤','🛥️','🛳️','⛴️','🚢','⚓','🪝','🚧','🚦','🚥','🚏','🗺️',
+  '🗿','🗽','🗼','🏰','🏯','🏟️','🎡','🎢','🎠','⛲','⛱️','🏖️','🏝️','🏜️','🌋','⛰️','🏔️','🗻','🏕️','⛺',
+  '🛖','🏠','🏡','🏘️','🏚️','🏗️','🏭','🏢','🏬','🏣','🏤','🏥','🏦','🏨','🏪','🏫','🏩','💒','🏛️','⛪','🕌',
+  '🕍','🛕','🕋','⛩️','🛤️','🛣️','🗾','🎑','🏞️','🌅','🌄','🌠','🎇','🎆','🌇','🌆','🏙️','🌃','🌌','🌉','🌁',
+  '⌚','📱','📲','💻','⌨️','🖥️','🖨️','🖱️','🖲️','🕹️','🗜️','💽','💾','💿','📀','📼','📷','📸','📹','🎥',
+  '📽️','🎞️','📞','☎️','📟','📠','📺','📻','🎙️','🎚️','🎛️','🧭','⏱️','⏲️','⏰','🕰️','⌛','📡','🔋','🔌',
+  '💡','🔦','🕯️','🪔','🧯','🗑️','🛢️','💸','💵','💴','💶','💷','🪙','💰','💳','💎','⚖️','🪜','🧰','🪛',
+  '🔧','🔨','⚒️','🛠️','⛏️','🪚','🔩','⚙️','🪤','🧱','⛓️','🧲','🔫','💣','🧨','🪓','🔪','🗡️','⚔️','🛡️',
+  '🚬','⚰️','🪦','⚱️','🏺','🔮','📿','🧿','💈','⚗️','🔭','🔬','🕳️','🩻','🩹','🩺','💊','💉','🩸','🧬',
+  '🦠','🧫','🧪','🌡️','🧹','🧺','🧻','🚽','🚰','🚿','🛁','🛀','🧼','🪥','🪒','🧽','🪣','🧴','🛎️','🔑',
+  '🗝️','🚪','🪑','🛋️','🛏️','🛌','🧸','🪆','🖼️','🪞','🪟','🛍️','🛒','🎁','🎈','🎏','🎀','🪄','🪅','🎊',
+  '🎉','🎎','🏮','🎐','🧧','✉️','📩','📨','📧','💌','📥','📤','📦','🏷️','🪧','📪','📫','📬','📭','📮','📯',
+  '📜','📃','📄','📑','🧾','📊','📈','📉','🗒️','🗓️','📆','📅','🗑️','📇','🗃️','🗳️','🗄️','📋','📁','📂',
+  '🖊️','🖋️','✒️','🖌️','🖍️','📝','✏️','🔍','🔎','🔏','🔐','🔒','🔓',
+  '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟',
+  '☮️','✝️','☪️','🕉️','☸️','✡️','🔯','🕎','☯️','☦️','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐',
+  '♑','♒','♓','🆔','⚛️','🉑','☢️','☣️','📴','📳','🈶','🈚','🈸','🈺','🈷️','✴️','🆚','💮','🉐','㊙️',
+  '㊗️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📛','🚫','💯','💢','♨️',
+  '🚷','🚯','🚳','🚱','🔞','📵','🚭','❗','❕','❓','❔','‼️','⁉️','🔅','🔆','〽️','⚠️','🚸','🔱','⚜️',
+  '🔰','♻️','✅','🈯','💹','❇️','✳️','❎','🌐','💠','Ⓜ️','🌀','💤','🏧','🚾','♿','🅿️','🛗','🈳','🈂️',
+  '🛂','🛃','🛄','🛅','🚹','🚺','🚼','⚧','🚻','🚮','🎦','📶','🈁','🔣','ℹ️','🔤','🔡','🔠','🆖','🆗',
+  '🆙','🆒','🆕','🆓','0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟','🔢','#️⃣','*️⃣',
+  '⏏️','▶️','⏸️','⏯️','⏹️','⏺️','⏭️','⏮️','⏩','⏪','⏫','⏬','◀️','🔼','🔽','➡️','⬅️','⬆️','⬇️',
+  '↗️','↘️','↙️','↖️','↕️','↔️','↩️','↪️','⤴️','⤵️','🔀','🔁','🔂','🔄','🔃','🎵','🎶','➕','➖','➗',
+  '✖️','♾️','💲','💱','™️','©️','®️','〰️','➰','➿','🔚','🔙','🔛','🔝','🔜','✔️','☑️','🔘','🔴','🟠',
+  '🟡','🟢','🔵','🟣','⚫','⚪','🟤','🔺','🔻','🔸','🔹','🔶','🔷','🔳','🔲','▪️','▫️','◾','◽','◼️',
+  '◻️','🟥','🟧','🟨','🟩','🟦','🟪','⬛','⬜','🟫',
+];
+
+const ACHIEVEMENT_CATEGORIES = ['阅读','创作','协作','投票','收藏','质量','坚持','搜索','随机','标签','词条','深夜','时刻','综合','隐藏','其他'];
 
 // ── 单条积木编辑器 ────────────────────────────────────────
 
@@ -280,6 +352,7 @@ function InlineForm({ editId, initialForm, initialConditions, onSave, onCancel }
   const [form, setForm]             = useState({ ...initialForm });
   const [conditions, setConditions] = useState<Condition[]>(initialConditions);
   const [busy, setBusy]             = useState(false);
+  const [showEmoji, setShowEmoji]   = useState(false);
 
   // 切换编辑目标时同步数据
   useEffect(() => { setForm({ ...initialForm }); setConditions(initialConditions); },
@@ -305,18 +378,41 @@ function InlineForm({ editId, initialForm, initialConditions, onSave, onCancel }
   return (
     <div className="border-t border-border-subtle bg-surface-1 px-4 py-4 space-y-3">
       {[
-        { label: '唯一Key *', field: 'key', disabled: !!editId },
-        { label: '图标(emoji) *', field: 'icon' },
+        { label: '唯一Key *', field: 'key', disabled: !!editId, hint: !editId ? '创建后不可修改，建议用英文+数字如 p3_create_5' : undefined },
+        { label: '图标(emoji) *', field: 'icon', emoji: true },
         { label: '中文标题 *', field: 'labelZh' },
         { label: '英文标题', field: 'label' },
         { label: '描述 *', field: 'desc' },
-      ].map(({ label, field, disabled }) => (
+      ].map(({ label, field, disabled, hint, emoji }) => (
         <div key={field}>
           <div className="text-[10px] font-mono text-text-body mb-1">{label}</div>
-          <input value={(form as any)[field]}
-            onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
-            disabled={disabled}
-            className="w-full bg-surface-2 border border-border text-text-hi text-xs px-2 py-1.5 font-mono disabled:opacity-50" />
+          {emoji ? (
+            <div className="flex gap-2">
+              <input value={(form as any)[field]}
+                onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
+                className="flex-1 bg-surface-2 border border-border text-text-hi text-xs px-2 py-1.5 font-mono" />
+              <button type="button" onClick={() => setShowEmoji(!showEmoji)}
+                className="px-2 py-1 border border-border text-text-body text-xs font-mono hover:border-brand transition-colors">
+                {(form as any)[field] || '😀'}
+              </button>
+            </div>
+          ) : (
+            <div>
+              <input value={(form as any)[field]}
+                onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
+                disabled={disabled}
+                className="w-full bg-surface-2 border border-border text-text-hi text-xs px-2 py-1.5 font-mono disabled:opacity-50" />
+              {hint && <div className="text-[9px] font-mono text-text-lo mt-0.5">{hint}</div>}
+            </div>
+          )}
+          {emoji && showEmoji && (
+            <div className="mt-1.5 p-2 border border-border bg-surface-1 grid grid-cols-12 gap-0.5 max-h-32 overflow-y-auto">
+              {EMOJI_PICKER.map(e => (
+                <button key={e} type="button" onClick={() => { setForm(f => ({ ...f, icon: (f as any).icon + e })); setShowEmoji(false); }}
+                  className="text-base hover:scale-125 transition-transform">{e}</button>
+              ))}
+            </div>
+          )}
         </div>
       ))}
 
@@ -335,7 +431,7 @@ function InlineForm({ editId, initialForm, initialConditions, onSave, onCancel }
           <div className="text-[10px] font-mono text-text-body mb-1">分类</div>
           <select value={(form as any).category || '阅读'} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
             className="w-full bg-surface-2 border border-border text-text-hi text-xs px-2 py-1.5 font-mono">
-            {['阅读','创作','投票','收藏','质量','坚持','搜索','随机','深夜','时刻','标签','词条','隐藏','其他'].map(c =>
+            {ACHIEVEMENT_CATEGORIES.map(c =>
               <option key={c} value={c}>{c}</option>
             )}
           </select>

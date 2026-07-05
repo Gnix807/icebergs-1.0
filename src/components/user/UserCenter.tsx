@@ -270,23 +270,26 @@ function ScoreLogTab({ userId }: { userId: string }) {
 // ── 探索成就 Tab 子组件 ────────────────────────────────────────────────────
 
 function achCategory(key: string): string {
-  if (/^(explore_first|explore_10|explore_50|explore_depth|explore_all_clear|pioneer|curious|tracker|overload|abyss|hazard|omniscient|meme|read_|num_|devil|brain_jar|allclear|deepdive|speedrun|epic|firstclear|shallow|squid|404)/.test(key)) return '阅读';
-  if (/^create_/.test(key)) return '创作';
-  if (/^vote_/.test(key)) return '投票';
-  if (/^watch_/.test(key)) return '收藏';
-  if (/^quality_/.test(key)) return '质量';
-  if (/^search/.test(key) || /^(monk|blind|chaos_order)/.test(key)) return '搜索';
-  if (/^random|^lucky/.test(key)) return '随机';
-  if (/^nightowl|^3am/.test(key)) return '深夜';
-  if (/^streak_|^globe_/.test(key)) return '坚持';
-  if (/^time_|^day_/.test(key)) return '时刻';
-  if (/^label_/.test(key)) return '标签';
-  if (/^item_|^minimal|^redacted/.test(key)) return '词条';
-  if (/^o5|^immune|^meta_|^444/.test(key)) return '隐藏';
+  if (/^(explore_first|explore_10|explore_50|explore_depth|explore_all_clear|pioneer|curious|tracker|overload|abyss|hazard|omniscient|meme|read_|num_|devil|brain_jar|allclear|deepdive|speedrun|epic|firstclear|shallow|squid|404|p3_all_clear|p3_1000_read)/.test(key)) return '阅读';
+  if (/^create_|^p3_create_/.test(key)) return '创作';
+  if (/^vote_|^p3_vote_/.test(key)) return '投票';
+  if (/^watch_|^p3_watch_/.test(key)) return '收藏';
+  if (/^quality_|^p3_quality_/.test(key)) return '质量';
+  if (/^search|^p3_search_|^(monk|blind|p3_nosearch|chaos_order|p3_dual_)/.test(key)) return '搜索';
+  if (/^random|^lucky|^p3_randomdeep/.test(key)) return '随机';
+  if (/^nightowl|^3am|^p3_latenight/.test(key)) return '深夜';
+  if (/^streak_|^globe_|^p3_globe_|^p3_streak_/.test(key)) return '坚持';
+  if (/^time_|^day_|^p3_afterwork|^p3_weekend|^p3_leap|^p3_founders|^p3_session_3h/.test(key)) return '时刻';
+  if (/^label_|^p3_label_/.test(key)) return '标签';
+  if (/^item_|^minimal|^redacted|^p3_gargantuan|^p3_prime|^p3_777/.test(key)) return '词条';
+  if (/^p3_join_|^p3_proj_|^p3_createproj|^p3_both_|^p3_idea_|^p3_task_|^p3_collab_/.test(key)) return '协作';
+  if (/^p3_balance|^p3_fork|^p3_wellrounded|^p3_notif|^p3_ach_30/.test(key)) return '综合';
+  if (/^p3_newcomer|^p3_warned/.test(key)) return '隐藏';
+  if (/^o5|^immune|^meta_|^444|^p3_newcomer|^p3_warned/.test(key)) return '隐藏';
   return '其他';
 }
 
-const ACH_CATEGORIES = ['全部','阅读','创作','投票','收藏','质量','坚持','搜索','随机','深夜','时刻','标签','词条','隐藏','其他'];
+const ACH_CATEGORIES = ['全部','阅读','创作','协作','投票','收藏','质量','坚持','搜索','随机','标签','词条','深夜','时刻','综合','隐藏','其他'];
 
 function ExploreTab({
   achievementDefs, achievementMap, userReadCount, isLight,
@@ -983,6 +986,23 @@ export function UserCenter({
             {totalUnlocked > 4 && (
               <button onClick={() => setShowAllAch(!showAllAchievements)} className="text-[10px] font-mono text-text-mid ml-auto hover:text-brand transition-colors">
                 {showAllAchievements ? '收起' : `+${totalUnlocked - 4} 更多`}
+              </button>
+            )}
+            {isOwner && (
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/achievements/recheck', { method: 'POST' });
+                    const data = await res.json();
+                    alert(data.data?.message || data.error?.message || '复核完成');
+                    window.location.reload();
+                  } catch {
+                    alert('检测失败，请稍后重试');
+                  }
+                }}
+                className="text-[10px] font-mono text-text-mid hover:text-brand border border-border-subtle px-1.5 py-0.5 ml-1 transition-colors"
+              >
+                🔄 检测
               </button>
             )}
           </div>

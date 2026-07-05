@@ -74,14 +74,13 @@ export async function PUT(event: APIContext) {
       },
     });
 
-    const resultText = action === 'RESOLVED_ACTION' ? '已采取处理措施' : '举报已记录，暂不处理';
     pendingReports.forEach((report) => {
       if (!report.filerId) return;
       notify(
         report.filerId,
         'report_resolved',
-        '你的举报已被处理',
-        `${resultText}。处理说明：${resolution}`,
+        '你的举报已处理',
+        `处理结果：${resolution}`,
       );
     });
 

@@ -3,6 +3,16 @@ import { success, error, ErrorCodes } from '../../../lib/api';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 
+async function isProjectMember(userId: string, projectId: string | null): Promise<boolean> {
+  if (!projectId) return false;
+  try {
+    const m = await prisma.projectMember.findFirst({
+      where: { projectId, userId },
+    });
+    return !!m;
+  } catch { return false; }
+}
+
 /** Allow any label up to 20 chars; strip dangerous chars; cap at 10 labels. */
 function sanitizeLabels(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
@@ -47,7 +57,8 @@ export async function PUT(event: APIContext) {
     }
 
     const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
-    if (existing.tier.iceberg.authorId !== session.userId && !canManageAny) {
+    const inProject = await isProjectMember(session.userId, existing.tier.iceberg.projectId);
+    if (existing.tier.iceberg.authorId !== session.userId && !canManageAny && !inProject) {
       return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
@@ -76,7 +87,7 @@ export async function PUT(event: APIContext) {
             headers: { 'Content-Type': 'application/json' },
           });
         }
-        if (targetTier.iceberg.authorId !== session.userId && !canManageAny) {
+        if (targetTier.iceberg.authorId !== session.userId && !canManageAny && !inProject) {
           return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作目标层级')), {
             status: 403,
             headers: { 'Content-Type': 'application/json' },
@@ -144,7 +155,8 @@ export async function DELETE(event: APIContext) {
     }
 
     const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
-    if (existing.tier.iceberg.authorId !== session.userId && !canManageAny) {
+    const inProject = await isProjectMember(session.userId, existing.tier.iceberg.projectId);
+    if (existing.tier.iceberg.authorId !== session.userId && !canManageAny && !inProject) {
       return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },

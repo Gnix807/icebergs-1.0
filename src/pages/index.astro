@@ -222,7 +222,7 @@ const KNOWLEDGE_ENTRANCES = [
   {
     title: '主题门户',
     desc: '按话题分类浏览冰山图与创意。',
-    href: '/topic/general',
+    href: '/topic',
     tag: '分类',
   },
   {
@@ -280,13 +280,13 @@ const QUICK_QA = [
     )}
 
     <!-- 左侧快速入口浮栏（xl+ 显示） -->
-    <aside class="hidden xl:block absolute left-4 md:left-6 top-12 w-64 z-20">
+    <aside class="hidden xl:block absolute left-4 md:left-6 top-12 w-64 z-20 overflow-hidden">
       <div class="border border-border-subtle bg-surface-1">
         <div class="px-3 py-2 border-b border-border-subtle flex items-center justify-between">
           <span class="font-mono text-[9px] text-text-mid tracking-widest">// 快速入口</span>
           <button id="quicklinks-edit" class="font-mono text-[10px] px-1.5 py-0.5 text-text-mid hover:text-brand hover:bg-surface-2 transition-colors" title="自定义">⚙</button>
         </div>
-        <div id="quicklinks-grid" class="grid grid-cols-2 gap-px p-1.5">
+        <div id="quicklinks-grid" class="grid grid-cols-2 gap-px p-1.5 max-h-[200px] overflow-hidden overflow-y-auto">
           {[
             { href: '/iceberg/new', label: '创建冰山图', icon: '✏️' },
             { href: '/ideas', label: '创意板', icon: '💡' },

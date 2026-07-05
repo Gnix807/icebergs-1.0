@@ -4,6 +4,15 @@
  */
 import Layout from '../layouts/Layout.astro';
 import { prisma } from '../lib/prisma';
+import { LABEL_DEFS } from '../lib/labels';
+import { ICEBERG_TOPICS } from '../lib/icebergTopic';
+
+const labelCount = LABEL_DEFS.length;
+const topicCount = ICEBERG_TOPICS.length;
+const nsfwLabels = LABEL_DEFS.filter(d => d.key === 'NSFW').length;
+const contentLabels = LABEL_DEFS.filter(d => d.category === '内容').length;
+const markerLabels = LABEL_DEFS.filter(d => d.category === '标记').length;
+const sourceLabels = LABEL_DEFS.filter(d => d.category === '来源').length;
 
 const settingKeys = [
   'contributor_min_score', 'contributor_min_icebergs', 'contributor_min_days',
@@ -16,6 +25,7 @@ const settingKeys = [
   'activity_vote_score',    'activity_vote_daily_cap',
   'activity_like_score',
   'activity_weekly_threshold', 'activity_weekly_bonus',
+  'impeach_vote_days', 'impeach_pass_ratio', 'impeach_min_votes',
 ];
 const rows = await prisma.systemSettings.findMany({ where: { key: { in: settingKeys } } });
 const cfg: Record<string, string> = {};
@@ -23,7 +33,8 @@ rows.forEach(r => { cfg[r.key] = r.value; });
 
 const c = (key: string, fallback: string) => cfg[key] ?? fallback;
 
-const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
+const passRatioPct    = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
+const impeachRatioPct = Math.round(parseFloat(c('impeach_pass_ratio', '0.67')) * 100);
 ---
 
 <Layout title="平台规则 — 冰山图宇宙">
@@ -33,11 +44,11 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
     <div class="mb-10">
       <div class="text-[10px] font-mono text-text-lo tracking-widest mb-2">// RULES · 平台规则</div>
       <h1 class="text-2xl font-mono text-text-hi mb-2">冰山图宇宙 · 平台规则</h1>
-      <p class="text-xs font-mono text-text-lo">本页说明角色体系、晋升路径、RfA 制度与社区行为准则。所有数值均从当前系统设置动态读取。</p>
+      <p class="text-xs font-mono text-text-lo">本页说明角色体系、晋升路径、RfA 制度、内容规范、协作机制与社区行为准则。所有数值均从当前系统设置动态读取。</p>
     </div>
 
     <!-- 一、角色体系 -->
-    <section class="mb-10">
+    <section class="mb-10" id="roles">
       <div class="flex items-center gap-2 mb-4">
         <span class="text-[10px] font-mono text-warning tracking-widest">01 · 角色体系</span>
         <div class="flex-1 border-t border-border-minimal"></div>
@@ -50,7 +61,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
             <span class="font-mono text-sm" style="color:#f59e0b">◆ FOUNDER</span>
             <span class="text-[10px] font-mono text-text-lo">平台创始人 · 永久席位</span>
           </div>
-          <p class="text-[11px] font-mono text-text-lo leading-relaxed">对平台拥有最终权力。永久免疫封禁、警告等操作，不参与换届选举。可以任命 ADMIN，可以直接提升或降级任意用户。</p>
+          <p class="text-[11px] font-mono text-text-lo leading-relaxed">对平台拥有最终权力。永久免疫封禁、警告等操作，不参与换届选举。可以任命 ADMIN，可以直接提升或降级任意用户，可以设置精选内容。</p>
         </div>
 
         <!-- ADMIN -->
@@ -59,7 +70,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
             <span class="font-mono text-sm" style="color:#f59e0b">★ ADMIN</span>
             <span class="text-[10px] font-mono text-text-lo">管理员 · 上限 {c('admin_max','3')} 席</span>
           </div>
-          <p class="text-[11px] font-mono text-text-lo leading-relaxed">由 FOUNDER 任命或通过全站选举产生。负责平台日常治理：审批版主任命、处理申诉、管理选举。任期无硬性限制，可通过新一轮选举更换。</p>
+          <p class="text-[11px] font-mono text-text-lo leading-relaxed">由 FOUNDER 任命或通过全站选举产生。负责平台日常治理：审批版主任命、管理精选内容、处理申诉、管理选举、配置系统参数。任期无硬性限制，可通过新一轮选举更换。</p>
         </div>
 
         <!-- MODERATOR -->
@@ -68,7 +79,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
             <span class="font-mono text-sm" style="color:#3b82f6">▲ MODERATOR</span>
             <span class="text-[10px] font-mono text-text-lo">版主 · 上限 {c('moderator_max','5')} 席</span>
           </div>
-          <p class="text-[11px] font-mono text-text-lo leading-relaxed">由 ADMIN 任命，协助内容审核与社区维护。可警告用户、处理举报。晋升门槛：质量分 ≥ {c('moderator_min_score','300')} · 注册 ≥ {c('moderator_min_days','60')} 天。</p>
+          <p class="text-[11px] font-mono text-text-lo leading-relaxed">由 ADMIN 任命，协助内容审核与社区维护。可警告用户、处理举报、审核冰山图、管理专题协作组成员。晋升门槛：质量分 ≥ {c('moderator_min_score','300')} · 注册 ≥ {c('moderator_min_days','60')} 天。</p>
         </div>
 
         <!-- EDITOR -->
@@ -77,7 +88,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
             <span class="font-mono text-sm" style="color:#22c55e">● EDITOR</span>
             <span class="text-[10px] font-mono text-text-lo">编辑 · 申请制（RfA）</span>
           </div>
-          <p class="text-[11px] font-mono text-text-lo leading-relaxed">由 CONTRIBUTOR 通过公开 RfA 投票晋升。负责审核冰山图、管理词条内容。申请门槛：质量分 ≥ {c('editor_min_score','100')} · 注册 ≥ {c('editor_min_days','30')} 天。</p>
+          <p class="text-[11px] font-mono text-text-lo leading-relaxed">由 CONTRIBUTOR 通过公开 RfA 投票晋升。负责审核冰山图、管理词条内容。编辑提交的冰山图默认跳过人工审核直接发布。申请门槛：质量分 ≥ {c('editor_min_score','100')} · 注册 ≥ {c('editor_min_days','30')} 天。</p>
         </div>
 
         <!-- CONTRIBUTOR -->
@@ -86,7 +97,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
             <span class="font-mono text-sm text-text-body">◎ CONTRIBUTOR</span>
             <span class="text-[10px] font-mono text-text-lo">贡献者 · 自动晋升</span>
           </div>
-          <p class="text-[11px] font-mono text-text-lo leading-relaxed">注册后满足条件自动晋升：质量分 ≥ {c('contributor_min_score','20')} · 冰山图 ≥ {c('contributor_min_icebergs','2')} 篇 · 注册 ≥ {c('contributor_min_days','7')} 天。可发布冰山图、投 RfA 票（权重 1）。</p>
+          <p class="text-[11px] font-mono text-text-lo leading-relaxed">注册后满足条件自动晋升：质量分 ≥ {c('contributor_min_score','20')} · 冰山图 ≥ {c('contributor_min_icebergs','2')} 篇 · 注册 ≥ {c('contributor_min_days','7')} 天。可发布冰山图（提交审核后上线）、投 RfA 票（权重 1）、在创意板提交点子、参与专题协作。</p>
         </div>
 
         <!-- USER -->
@@ -95,13 +106,13 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
             <span class="font-mono text-sm text-text-body">○ USER</span>
             <span class="text-[10px] font-mono text-text-lo">普通用户 · 初始角色</span>
           </div>
-          <p class="text-[11px] font-mono text-text-lo leading-relaxed">注册后默认角色。可创建冰山图（提交审核后上线）、收藏冰山图、发表评论、为冰山图点赞、关注其他用户。</p>
+          <p class="text-[11px] font-mono text-text-lo leading-relaxed">注册后默认角色。可创建冰山图（提交审核后上线）、收藏冰山图、发表评论、为冰山图点赞、关注其他用户。可浏览创意板并为创意点子投票。</p>
         </div>
       </div>
     </section>
 
     <!-- 二、晋升路径 -->
-    <section class="mb-10">
+    <section class="mb-10" id="promotion">
       <div class="flex items-center gap-2 mb-4">
         <span class="text-[10px] font-mono text-info tracking-widest">02 · 晋升路径</span>
         <div class="flex-1 border-t border-border-minimal"></div>
@@ -140,7 +151,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
     </section>
 
     <!-- 三、RfA 制度 -->
-    <section class="mb-10">
+    <section class="mb-10" id="rfa">
       <div class="flex items-center gap-2 mb-4">
         <span class="text-[10px] font-mono text-success tracking-widest">03 · RfA（编辑资格申请）制度</span>
         <div class="flex-1 border-t border-border-minimal"></div>
@@ -178,29 +189,234 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
     </section>
 
     <!-- 四、内容准则 -->
-    <section class="mb-10">
+    <section class="mb-10" id="content">
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">04 · 内容准则</span>
+        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">04 · 内容准则与质量标准</span>
         <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
-      <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono text-text-lo space-y-2">
-        <div class="text-text-body mb-2">冰山图内容要求</div>
-        <ul class="space-y-1.5">
-          <li class="before:content-['✓'] before:text-success before:mr-2">内容应有据可查，鼓励引用来源</li>
-          <li class="before:content-['✓'] before:text-success before:mr-2">层级结构应体现"冰山"逻辑：越深越冷门、越离奇</li>
-          <li class="before:content-['✓'] before:text-success before:mr-2">NSFW 内容必须添加相应标签，否则将被驳回</li>
-          <li class="before:content-['✕'] before:text-danger before:mr-2">禁止散布不实信息、人身攻击、歧视内容</li>
-          <li class="before:content-['✕'] before:text-danger before:mr-2">禁止未打标的血腥、色情内容</li>
-          <li class="before:content-['✕'] before:text-danger before:mr-2">禁止与主题无关的广告、垃圾信息</li>
-        </ul>
+      <div class="space-y-3 text-[11px] font-mono text-text-lo">
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">冰山图内容要求</div>
+          <ul class="space-y-1.5">
+            <li class="before:content-['✓'] before:text-success before:mr-2">内容应有据可查，鼓励引用来源</li>
+            <li class="before:content-['✓'] before:text-success before:mr-2">层级结构应体现"冰山"逻辑：越深越冷门、越离奇</li>
+            <li class="before:content-['✓'] before:text-success before:mr-2">标题至少 5 字，摘要至少 20 字</li>
+            <li class="before:content-['✓'] before:text-success before:mr-2">至少 3 层结构，每层至少 2 个词条</li>
+            <li class="before:content-['✓'] before:text-success before:mr-2">至少 50% 的词条需有描述说明</li>
+            <li class="before:content-['✓'] before:text-success before:mr-2">NSFW 内容必须添加相应标签，否则将被驳回</li>
+            <li class="before:content-['✕'] before:text-danger before:mr-2">禁止散布不实信息、人身攻击、歧视内容</li>
+            <li class="before:content-['✕'] before:text-danger before:mr-2">禁止未打标的血腥、色情内容</li>
+            <li class="before:content-['✕'] before:text-danger before:mr-2">禁止与主题无关的广告、垃圾信息</li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">小作品标记（Stub）</div>
+          <p class="mb-2 text-[10px]">系统自动识别内容不足的冰山图，在侧边栏显示完善度提示：</p>
+          <ul class="space-y-1">
+            <li class="before:content-['·'] before:text-text-lo before:mr-2"><span class="text-[#f97316]">🌱 小作品</span> — 词条总数不足 5 个</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2"><span class="text-info">🔧 待完善</span> — 词条数不足 10 个且描述覆盖率不足 30%</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">小作品标记仅作为社区完善提示，不影响发布状态</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">鼓励社区成员认领补充词条（通过创意板或专题协作）</li>
+          </ul>
+        </div>
+
+        <div class="border border-warning/20 bg-[#f59e0b05] p-4">
+          <div class="text-text-body mb-2">精选内容标准</div>
+          <p class="mb-2 text-[10px]">ADMIN 可手动将优质冰山图设为"精选"，展示在精选页面与相关主题的门户首页：</p>
+          <ul class="space-y-1">
+            <li class="before:content-['·'] before:text-warning before:mr-2">内容深度：层级结构合理，深层词条具有独特价值</li>
+            <li class="before:content-['·'] before:text-warning before:mr-2">完整性：词条数 ≥ 10，每层均有完整描述</li>
+            <li class="before:content-['·'] before:text-warning before:mr-2">引用规范：关键事实有可靠来源引用</li>
+            <li class="before:content-['·'] before:text-warning before:mr-2">排版清晰：Markdown 格式规范，无排版错误</li>
+            <li class="before:content-['·'] before:text-warning before:mr-2">标签完整：正确标注了内容标签与来源标签</li>
+            <li class="before:content-['·'] before:text-warning before:mr-2">精选资格可被撤销，由 ADMIN 或 FOUNDER 操作</li>
+          </ul>
+        </div>
       </div>
     </section>
 
-    <!-- 五、社区行为准则 -->
-    <section class="mb-10">
+    <!-- 五、词条标签系统 -->
+    <section class="mb-10" id="labels">
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-purple tracking-widest">05 · 社区行为准则</span>
+        <span class="text-[10px] font-mono text-[#a78bfa] tracking-widest">05 · 词条标签系统</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3 text-[11px] font-mono text-text-lo">
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">标签体系概览</div>
+          <p class="mb-2">平台内置 <strong class="text-text-hi">{labelCount}</strong> 个标准标签，分为三类：</p>
+          <ul class="space-y-1">
+            <li class="before:content-['🏷️'] before:mr-2"><strong>标记类</strong>（{markerLabels} 个）— 标识词条的性质与状态，如 NSFW、争议、猜测、未证实、冷门、机密、入门、进阶等</li>
+            <li class="before:content-['📚'] before:mr-2"><strong>内容类</strong>（{contentLabels} 个）— 标识词条所属的主题领域，如游戏、历史、科学、都市传说、犯罪、医学、AI 等</li>
+            <li class="before:content-['📝'] before:mr-2"><strong>来源类</strong>（{sourceLabels} 个）— 标识词条的信息来源类型，如论文、访谈、新闻、纪录片、实地考察、一手资料等</li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">NSFW 内容规则</div>
+          <ul class="space-y-1">
+            <li class="before:content-['🔞'] before:mr-2">含血腥、暴力、色情、恐怖等内容的词条必须标注 <strong class="text-danger">NSFW</strong> 标签</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">提交审核时检测到 NSFW 标签，须勾选确认方可进入专项审核队列</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">故意漏标 NSFW 内容的，视情节给予警告至封禁处理</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">NSFW 冰山图在浏览时会在卡片上显示 NSFW 标识</li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">主题分类</div>
+          <p class="mb-2">冰山图须选择所属主题，平台预设 <strong class="text-text-hi">{topicCount}</strong> 个主题分类，用户可通过 <a href="/topic" class="text-brand hover:underline">主题门户</a> 按分类浏览所有冰山图。主题分类包括：综合、游戏、都市传说、阴谋论、历史、科学、科技、文化、恐怖、动漫、网络文化、军事、宗教哲学、自然生态、医学心理、体育、美食、音乐、建筑艺术、天文太空、犯罪悬疑、政治社会、教育学术、经济金融、民俗神话、交通旅行、文学影视等。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 六、精选内容 -->
+    <section class="mb-10" id="featured">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-warning tracking-widest">06 · 精选内容</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3 text-[11px] font-mono text-text-lo">
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">什么是精选内容？</div>
+          <p>精选内容是由 ADMIN 手动遴选的高质量冰山图，代表平台的内容标杆。精选冰山图会获得 ⭐ 标识，并在 <a href="/featured" class="text-brand hover:underline">精选内容页</a> 集中展示。</p>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">精选规则</div>
+          <ul class="space-y-1">
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">仅 ADMIN 和 FOUNDER 可设置/撤销精选资格</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">精选冰山图必须在精选页面首页优先展示</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">各主题门户页也会优先展示该主题下的精选内容</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">被撤销精选的冰山图将恢复普通显示，已有浏览数据不受影响</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">精选资格与质量分无关——精选举措纯取决于内容质量</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 七、专题协作 -->
+    <section class="mb-10" id="projects">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-info tracking-widest">07 · 专题协作（WikiProject）</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3 text-[11px] font-mono text-text-lo">
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">什么是专题协作？</div>
+          <p>专题协作是围绕特定主题的长期协作工作组（WikiProject），成员可在专题下共同编辑冰山图、创建关联创意、分配任务。专题为冰山图提供了归属关系——每张冰山图可关联一个专题，每条创意也可关联一个专题。</p>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">成员角色</div>
+          <ul class="space-y-1">
+            <li><span class="text-brand">创建者（Creator）</span> — 创建专题的用户，拥有完整管理权限，可转移创建者身份</li>
+            <li><span class="text-warning">管理员（Moderator）</span> — 由创建者提拔，可踢出成员、编辑专题信息、创建/分配任务、关联冰山图与创意</li>
+            <li><span class="text-text-body">成员（Member）</span> — 普通协作者，可参与讨论、创建和认领任务、关联自己的内容</li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">加入与退出</div>
+          <ul class="space-y-1">
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">任何已登录用户可自由加入任意活跃专题</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">成员可随时退出专题</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">MODERATOR 可踢出违规成员</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">被踢出的成员不能立即重新加入同一专题（需等待管理审核）</li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">任务认领</div>
+          <ul class="space-y-1">
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">MODERATOR 可创建任务（撰写/审核/补充/研究/修复/推广）并指派优先级（P0–P3）</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">任务可指派给特定成员，被指派的成员需在规定时间内完成或释放任务</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">任务状态：OPEN（待处理）→ IN_PROGRESS（进行中）→ COMPLETED（已完成）</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">成员之间不可重复认领同一任务</li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">专题内容关联</div>
+          <ul class="space-y-1">
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">冰山图创建时可选择一个专题归属</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">创意板上的点子也可关联到专题</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">关联操作需 MODERATOR 及以上权限</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 八、创意板 -->
+    <section class="mb-10" id="ideas">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">08 · 创意板</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3 text-[11px] font-mono text-text-lo">
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">什么是创意板？</div>
+          <p>创意板是社区贡献创意点子的中心。用户可以提交冰山图创作主题或改进建议供他人认领完成。灵感来源于维基百科的「Requested Articles」机制。</p>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">点子提交模板</div>
+          <ul class="space-y-1">
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">标题：简明扼要，5 字以上</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">分类：从预设主题中选择</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">描述：说明创作方向、推荐层级结构、参考来源（可选）</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">所有用户均可提交点子，无需特殊权限</li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">点子状态与认领</div>
+          <ul class="space-y-1">
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">点子状态：<span class="text-[#f59e0b]">OPEN</span>（待认领）→ <span class="text-info">CLAIMED</span>（已认领）→ <span class="text-success">COMPLETED</span>（已完成）</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">任何用户均可为点子投票（赞同），热度高的点子优先展示</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">多人可同时认领同一个点子（Multi-claimant），由提交者在完成后选择关联</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">认领后应积极创作，长时间无进展的点子可能被其他人二次认领</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">每个点子有唯一的短 ID，便于分享与引用</li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">认领礼仪</div>
+          <ul class="space-y-1">
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">避免"霸占"大量点子而不创作——影响社区协作效率</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">认领后建议在评论中说明预计完成时间</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">完成创作后可在点子页面关联已发布的冰山图</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">点子被完成后自动标记为 COMPLETED，关联的冰山图可从侧边栏跳转查看</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 九、主题门户 -->
+    <section class="mb-10" id="topics">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-success tracking-widest">09 · 主题门户</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3 text-[11px] font-mono text-text-lo">
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">主题浏览</div>
+          <p>主题门户（<a href="/topic" class="text-brand hover:underline">/topic</a>）提供按主题分类浏览冰山图的功能。每个主题展示该分类下的精选内容、最新作品、热门排行榜和相关创意点子。</p>
+          <p class="mt-2">平台共收录 {topicCount} 个主题领域，每张冰山图必须选择一个主分类。不同主题相互独立——你的霓虹都市传说可以从游戏、动漫等完全不同主题的精华中汲取灵感。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 十、社区行为准则 -->
+    <section class="mb-10" id="community">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-purple tracking-widest">10 · 社区行为准则</span>
         <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
@@ -229,14 +445,14 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
       </div>
     </section>
 
-    <!-- 六、质量分获取 -->
-    <section class="mb-10">
+    <!-- 十一、质量分获取 -->
+    <section class="mb-10" id="quality">
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-success tracking-widest">06 · 质量分获取</span>
+        <span class="text-[10px] font-mono text-success tracking-widest">11 · 质量分获取</span>
         <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
-      <p class="text-[11px] font-mono text-text-lo mb-4">质量分决定晋升资格与 RfA 申请门槛，通过以下行为积累。所有数值均由管理员动态配置。</p>
+      <p class="text-[11px] font-mono text-text-lo mb-4">质量分决定晋升资格与 RfA 申请门槛，通过以下行为积累。所有数值均由管理员动态配置。质量分等级分为：VISITOR（0–9）→ RESEARCHER（10–99）→ ANALYST（100–499）→ SUPERVISOR（500+）。</p>
 
       <div class="space-y-3 text-[11px] font-mono text-text-lo">
 
@@ -254,6 +470,14 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
                 <span class="text-text-lo">（每日最多 {c('activity_comment_daily_cap','5')} 条计分）</span>
               </span>
               <span class="text-success flex-shrink-0">+{c('activity_comment_score','1')} / 条</span>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+              <span>在创意板提交点子</span>
+              <span class="text-success flex-shrink-0">+2</span>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+              <span>创意板点子被他人认领完成</span>
+              <span class="text-success flex-shrink-0">+3</span>
             </div>
           </div>
         </div>
@@ -275,6 +499,29 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
                 <span class="text-text-lo">（给评论作者；无每日上限）</span>
               </span>
               <span class="text-success flex-shrink-0">+{c('activity_like_score','1')} / 次</span>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+              <span>为创意板点子投票（赞同他人点子，每日限 5 次）</span>
+              <span class="text-success flex-shrink-0">+1 / 次</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 协作贡献 -->
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-3">协作贡献</div>
+          <div class="space-y-2">
+            <div class="flex items-start justify-between gap-4">
+              <span>创建专题协作组</span>
+              <span class="text-success flex-shrink-0">+10</span>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+              <span>加入专题协作组</span>
+              <span class="text-success flex-shrink-0">+3</span>
+            </div>
+            <div class="flex items-start justify-between gap-4">
+              <span>完成专题协作中的任务</span>
+              <span class="text-success flex-shrink-0">+5 / 个</span>
             </div>
           </div>
         </div>
@@ -299,7 +546,7 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
           <div class="space-y-1.5">
             <div class="flex items-start justify-between gap-4">
               <span>
-                本周（评论 + 首次投票）≥ {c('activity_weekly_threshold','10')} 次
+                本周（评论 + 首次投票 + 创意投票）≥ {c('activity_weekly_threshold','10')} 次
               </span>
               <span class="text-success flex-shrink-0">+{c('activity_weekly_bonus','5')}</span>
             </div>
@@ -327,10 +574,10 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
       </div>
     </section>
 
-    <!-- 七、选举制度 -->
-    <section class="mb-10">
+    <!-- 十二、选举制度 -->
+    <section class="mb-10" id="election">
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-warning tracking-widest">07 · 管理员选举制度</span>
+        <span class="text-[10px] font-mono text-warning tracking-widest">12 · 管理员选举制度</span>
         <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
@@ -343,6 +590,53 @@ const passRatioPct = Math.round(parseFloat(c('rfa_pass_ratio', '0.67')) * 100);
           <li class="before:content-['·'] before:text-text-lo before:mr-2">得票最高者当选，由 ADMIN/FOUNDER 确认生效</li>
           <li class="before:content-['·'] before:text-text-lo before:mr-2">选举历史公开透明，可在 <a href="/org" class="text-brand hover:underline">组织架构页</a> 查看</li>
         </ul>
+      </div>
+    </section>
+
+    <!-- 十三、弹劾制度 -->
+    <section class="mb-10" id="impeach">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-danger tracking-widest">13 · 弹劾制度</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3 text-[11px] font-mono text-text-lo leading-relaxed">
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">弹劾说明</div>
+          <p>MODERATOR 或 ADMIN 在履职过程中若出现失职、滥用权力或违反社区准则的行为，EDITOR 及以上用户可发起弹劾。</p>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">弹劾流程</div>
+          <ol class="space-y-1.5 list-none">
+            <li class="before:content-['1.'] before:text-text-lo before:mr-2">EDITOR 及以上用户在 <a href="/impeach" class="text-brand hover:underline">弹劾页面</a> 提交申请，必须附清晰正当的弹劾理由</li>
+            <li class="before:content-['2.'] before:text-text-lo before:mr-2">申请进入 {c('impeach_vote_days','7')} 天公开投票期，EDITOR 及以上均可在投票箱内投支持 / 反对 / 弃权</li>
+            <li class="before:content-['3.'] before:text-text-lo before:mr-2">投票结束后自动结算</li>
+          </ol>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">通过条件（同时满足）</div>
+          <ul class="space-y-1">
+            <li class="before:content-['·'] before:text-danger before:mr-2">至少获得 <strong class="text-text-hi">{c('impeach_min_votes','3')}</strong> 张有效支持票（原始票数，不加权）</li>
+            <li class="before:content-['·'] before:text-danger before:mr-2">加权支持票 ÷ 加权总票数 ≥ <strong class="text-text-hi">{impeachRatioPct}%</strong>（弃权票不计入）</li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">投票权重（弹劾）</div>
+          <p>EDITOR×1 · MODERATOR×2 · ADMIN×3 · FOUNDER×5</p>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-body mb-2">结果处理</div>
+          <ul class="space-y-1">
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">弹劾通过：被弹劾人降级为 EDITOR，由 ADMIN/FOUNDER 确认执行</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">弹劾未通过：被弹劾人继续履职，发起人需等待冷却期</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">同一人不能同时对同一对象发起多个弹劾</li>
+            <li class="before:content-['·'] before:text-text-lo before:mr-2">弹劾记录在 <a href="/org" class="text-brand hover:underline">组织架构页</a> 公开可查</li>
+          </ul>
+        </div>
       </div>
     </section>
 

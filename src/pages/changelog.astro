@@ -58,9 +58,115 @@ const [rows, updateCount, maintenanceCount, warningCount] = await Promise.all([
   prisma.announcement.count({ where: { type: 'warning' } }),
 ]);
 
+const STATIC_PHASE3_ENTRIES: Array<{
+  _staticKey: string;
+  id: string;
+  title: string;
+  content: string;
+  type: string;
+  pinned: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  author: { username: string; nickname: string };
+}> = [
+  {
+    _staticKey: 'phase3-v31',
+    id: 'phase3-v31',
+    title: '界面体验升级',
+    type: 'update',
+    pinned: false,
+    createdAt: new Date('2026-04-28T10:00:00.000Z'),
+    updatedAt: new Date('2026-04-28T10:00:00.000Z'),
+    author: { username: 'icebergs', nickname: 'Icebergs 团队' },
+    content: `## 界面体验升级
+
+冰山图宇宙迎来了视觉与交互上的多项改进，让浏览和创作更加顺手。
+
+- **🖥 新增 CRT 复古滤镜**：在导航栏用户菜单中可以打开 CRT 扫描线效果，经典的荧光屏质感搭配动态漂移和随机闪烁动画，深色模式下效果尤为出色。
+- **⚡ 首页快捷入口支持自定义**：左侧浮窗新增 ⚙ 设置按钮，可从 16 个快捷方式中自由选择，配置保存在浏览器中，刷新不丢失。
+- **🔔 通知中心优化**：导航栏铃铛图标现在会显示未读数量角标，下拉面板中提供了「全部已读」按钮和「查看全部通知」快捷入口，日常信息处理更高效。
+- **🔖 词条标签系统统一**：上线 97 个预设标签，分为标记、内容、来源三大类。编辑器中可按 emoji 分类展开，详情页支持按标签筛选词条，让内容归类更加规范。`,
+  },
+  {
+    _staticKey: 'phase3-v32',
+    id: 'phase3-v32',
+    title: '内容发现与呈现优化',
+    type: 'update',
+    pinned: false,
+    createdAt: new Date('2026-05-15T10:00:00.000Z'),
+    updatedAt: new Date('2026-05-15T10:00:00.000Z'),
+    author: { username: 'icebergs', nickname: 'Icebergs 团队' },
+    content: `## 内容发现与呈现优化
+
+本版聚焦于冰山图的浏览体验和内容质量的呈现方式，帮助用户更快地找到感兴趣的内容。
+
+- **📊 冰山图信息面板上线**：浏览任意冰山图时，右侧新增可折叠的信息抽屉，展示作者、发布状态、层级数、词条总量、浏览量等关键元数据。面板展开状态会自动记忆，无需每次手动调整。
+- **🌱 完善度自动评估**：系统会根据冰山图的词条密度和描述覆盖率自动评估内容完善程度。词条较少的作品会被标记为「🌱 小作品」，鼓励作者持续扩充；尚未达标的作品则标记为「🔧 待完善」。
+- **🖼 导出图片体验升级**：导出的 PNG 图片现在带有标题前缀、元数据副标题和页脚链接，色彩条更加醒目，方便在社交平台上分享和传播。
+- **⭐ 精选内容功能上线**：管理员可以在冰山图信息面板中一键标记优质内容为精选，所有精选作品会集中展示在全新的 \`/featured\` 专题页，也会在首页和主题门户中优先呈现，帮助优质内容获得更多曝光。`,
+  },
+  {
+    _staticKey: 'phase3-v33',
+    id: 'phase3-v33',
+    title: '社区协作系统正式上线',
+    type: 'update',
+    pinned: false,
+    createdAt: new Date('2026-06-08T10:00:00.000Z'),
+    updatedAt: new Date('2026-06-08T10:00:00.000Z'),
+    author: { username: 'icebergs', nickname: 'Icebergs 团队' },
+    content: `## 社区协作系统正式上线
+
+这是平台最重要的一次功能更新。从今天起，创作不再是一个人的事。
+
+- **🏗 专题协作（WikiProject）**：全新的 \`/projects\` 模块正式上线。你可以围绕一个大主题创建协作项目，邀请志同道合的社区成员加入。每个项目都配备了看板式任务管理（待开发 / 进行中 / 已完成）、成员列表和实时讨论聊天侧栏，方便团队协调分工、追踪进度。
+- **✏️ 协作编辑**：关联到项目的冰山图，组内所有成员都可以直接参与编辑——包括新增层级、调整词条、修改标签等。无需原作者逐一授权，真正实现了多人协同创作。出于安全考虑，删除操作仍仅限原文件作者。
+- **💡 创意板全面升级**：新增看板视图（可在 URL 中添加 \`?view=board\` 切换），支持 28 种话题分类的可折叠筛选器，以及按最新发布或投票数排序。每条创意现在拥有唯一的短 ID（\`i_\` + 8 位字符），方便分享和引用。此外，创意页新增了评论讨论区、多人认领协作功能，提交时还可选择冰山、反馈、建议三种模板。`,
+  },
+  {
+    _staticKey: 'phase3-v34',
+    id: 'phase3-v34',
+    title: '导航与排名全新设计',
+    type: 'update',
+    pinned: false,
+    createdAt: new Date('2026-06-25T10:00:00.000Z'),
+    updatedAt: new Date('2026-06-25T10:00:00.000Z'),
+    author: { username: 'icebergs', nickname: 'Icebergs 团队' },
+    content: `## 导航与排名全新设计
+
+浏览和发现体验在这一版中得到了系统性优化，帮助大家更便捷地探索平台内容。
+
+- **🏆 排行榜视觉重塑**：排行榜页面增加了前三名 Hero 展示区，分别以金、银、铜三色区分。新增热门、高赞、用户三个标签页，以及全部 / 本月 / 本周的时间维度筛选。每位用户的贡献数据和排名一目了然。
+- **📂 主题门户上线**：\`/topic\` 新增总览索引页，完整展示全部 28 个主题分类以及各分类下的冰山图数量。每个主题都设有独立的子页面，可以查看该领域的精选作品、最新发布、热门内容和活跃贡献者。
+- **🧭 导航栏结构调整**：导航栏新增「主题」和「协作」入口，「精选」也拥有了独立位置，方便快速跳转。所有核心功能入口均已整合到顶部导航中，一站式即可触达。`,
+  },
+  {
+    _staticKey: 'phase3-v35',
+    id: 'phase3-v35',
+    title: '文档同步与稳定性提升',
+    type: 'update',
+    pinned: false,
+    createdAt: new Date('2026-07-05T22:00:00.000Z'),
+    updatedAt: new Date('2026-07-05T22:00:00.000Z'),
+    author: { username: 'icebergs', nickname: 'Icebergs 团队' },
+    content: `## 文档同步与系统稳定性提升
+
+本次更新聚焦于帮助文档的全面翻新和底层稳定性优化，为接下来更多的功能迭代打好基础。
+
+- **📝 帮助文档全面重写**：关于、使用指南、平台规则、功能大厅、API 文档、服务条款、隐私政策共 7 个介绍页面的内容已全部更新，覆盖了近期上线的所有新功能（专题协作、创意板、精选内容、主题门户等），方便新老用户查阅。
+- **🔧 API 文档扩展**：新增精选内容、专题协作（涵盖项目、成员、任务、讨论等 16 个接口）、创意板评论与认领相关的接口文档，方便有需要的开发者进行集成。
+- **🐛 多项问题修复**：修复了冰山图信息面板在特定情况下的布局异常、首页个性化入口展开后的页面遮挡、任务详情弹窗偶发的显示错误、讨论侧栏加载状态卡死等问题。同时优化了部分 API 路由的正确性。
+- **🗄️ 数据库运维**：清理了遗留的无效触发器，解决了在特定场景下更新冰山图时出现的异常。移除了部分重复的路由定义文件，减少系统日志中的冗余警告。`,
+  },
+];
+
+const staticEntries = STATIC_PHASE3_ENTRIES.map((entry) => ({
+  ...entry,
+  rendered: renderMarkdown((entry.content || '').trim() || '暂无详细说明。'),
+}));
+
 const filterCounts = {
-  all: updateCount + maintenanceCount + warningCount,
-  update: updateCount,
+  all: updateCount + maintenanceCount + warningCount + STATIC_PHASE3_ENTRIES.length,
+  update: updateCount + STATIC_PHASE3_ENTRIES.length,
   maintenance: maintenanceCount,
   warning: warningCount,
 };
@@ -77,10 +183,14 @@ const filterHrefs = {
   warning: filterHref('warning'),
 };
 
-const entries = rows.map((row) => ({
+const dbEntries = rows.map((row) => ({
   ...row,
   rendered: renderMarkdown((row.content || '').trim() || '暂无详细说明。'),
 }));
+
+const entries = currentType === 'all' || currentType === 'update'
+  ? [...staticEntries, ...dbEntries]
+  : dbEntries;
 
 type Entry = typeof entries[number];
 
@@ -119,6 +229,10 @@ function fmtDateTime(date: Date) {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function isStatic(e: Entry): e is Entry & { _staticKey: string } {
+  return '_staticKey' in e;
 }
 ---
 
@@ -184,7 +298,11 @@ function fmtDateTime(date: Date) {
                         <div class="changelog-item-main">
                           <span class="changelog-badge" style={`color:${meta.color};border-color:${meta.color}55;`}>{meta.label}</span>
                           {item.pinned && <span class="changelog-pin">置顶</span>}
-                          <h3><a href={`/changelog/${item.id}`}>{item.title}</a></h3>
+                          {isStatic(item) ? (
+                            <h3>{item.title}</h3>
+                          ) : (
+                            <h3><a href={`/changelog/${item.id}`}>{item.title}</a></h3>
+                          )}
                         </div>
                         <time title={fmtDateTime(item.createdAt)}>{fmtDate(item.createdAt)}</time>
                       </div>

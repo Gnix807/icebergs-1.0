@@ -17,16 +17,18 @@ const sort = Astro.url.searchParams.get('sort') || 'newest';
 const search = Astro.url.searchParams.get('q') || '';
 
 const topicColors: Record<string, string> = {
-  general:'#6b7280', game:'#22c55e', urban_legend:'#8b5cf6',
-  conspiracy:'#f59e0b', history:'#ef4444', science:'#3b82f6',
-  technology:'#06b6d4', culture:'#ec4899', horror:'#dc2626',
-  anime:'#f472b6', internet:'#38bdf8', military:'#84cc16',
-  religion:'#a78bfa', nature:'#34d399', medicine:'#fb923c',
-  sports:'#facc15', food:'#f97316', music:'#e879f9',
-  art:'#c084fc', space:'#818cf8', crime:'#fb7185',
-  politics:'#94a3b8', education:'#4ade80', finance:'#fbbf24',
-  folklore:'#a3e635', travel:'#2dd4bf', literature:'#c4b5fd',
-  other:'#6b7280',
+  general:'#6b7280', history:'#ef4444', science:'#3b82f6',
+  technology:'#06b6d4', philosophy:'#8b5cf6', culture:'#ec4899',
+  art:'#c084fc', literature:'#c4b5fd', music:'#e879f9',
+  game:'#22c55e', anime:'#f472b6', internet:'#38bdf8',
+  education:'#4ade80', language:'#d946ef', politics:'#94a3b8',
+  finance:'#fbbf24', military:'#84cc16', religion:'#a78bfa',
+  folklore:'#a3e635', space:'#818cf8', nature:'#34d399',
+  biology:'#10b981', geography:'#14b8a6', medicine:'#fb923c',
+  math:'#6366f1', physics:'#0ea5e9', chemistry:'#f43f5e',
+  sports:'#facc15', food:'#f97316', travel:'#2dd4bf',
+  crime:'#fb7185', horror:'#dc2626', urban_legend:'#8b5cf6',
+  conspiracy:'#f59e0b', other:'#6b7280',
 };
 
 const statusLabel: Record<string, string> = {

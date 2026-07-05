@@ -41,7 +41,8 @@ interface TriggerParams {
 }
 
 async function buildContext(userId: string, trigger: TriggerParams): Promise<AchievementContext> {
-  const [stats, user, watchlistCount, createdCount, warningCount, unlockedCount, hasUnread] =
+  const [stats, user, watchlistCount, createdCount, warningCount, unlockedCount, hasUnread,
+    projectJoinedCount, projectCreatedCount, ideaSubmittedCount, taskCompletedCount, collabEditCount] =
     await Promise.all([
       getOrCreateStats(userId),
       prisma.user.findUnique({
@@ -53,6 +54,15 @@ async function buildContext(userId: string, trigger: TriggerParams): Promise<Ach
       prisma.userWarning.count({ where: { userId, clearedAt: null } }),
       prisma.userAchievement.count({ where: { userId } }),
       prisma.notification.count({ where: { userId, read: false } }),
+      prisma.projectMember.count({ where: { userId } }),
+      prisma.project.count({ where: { creatorId: userId } }),
+      prisma.idea.count({ where: { creatorId: userId } }),
+      prisma.projectTask.count({ where: { status: 'COMPLETED', assigneeId: userId } }),
+      prisma.projectMember.findMany({ where: { userId }, select: { projectId: true } }).then(members =>
+        members.length === 0 ? 0 : prisma.iceberg.count({
+          where: { projectId: { in: members.map(m => m.projectId) }, NOT: { authorId: userId } },
+        })
+      ),
     ]);
 
   if (!user) throw new Error(`User ${userId} not found`);
@@ -86,6 +96,11 @@ async function buildContext(userId: string, trigger: TriggerParams): Promise<Ach
       unlockedAchievementCount: unlockedCount,
       daysSinceRegister,
       hasUnreadNotification: hasUnread > 0,
+      projectJoinedCount,
+      projectCreatedCount,
+      ideaSubmittedCount,
+      taskCompletedCount,
+      collabEditCount,
     },
   };
 }
@@ -179,6 +194,61 @@ export async function checkAchievements(
     return toUnlock.map(a => ({ key: a.key, icon: a.icon, labelZh: a.labelZh, desc: a.desc, color: a.color }));
   } catch (err) {
     console.error('[checkAchievements] 检查失败:', err);
+    return [];
+  }
+}
+
+// ── 全量复核：不依赖触发事件，用当前状态检查所有成就 ──────
+export async function recheckAllAchievements(
+  userId: string,
+): Promise<UnlockedAchievement[]> {
+  try {
+    const ctx = await buildContext(userId, {
+      type: 'visit',
+    });
+
+    const [allAchievements, existingRaw] = await Promise.all([
+      prisma.achievement.findMany({ orderBy: { sortOrder: 'asc' } }),
+      prisma.userAchievement.findMany({
+        where: { userId },
+        select: { achievementId: true },
+      }),
+    ]);
+
+    const existingKeys = new Set(existingRaw.map(a => a.achievementId));
+    const toUnlock: typeof allAchievements = [];
+
+    for (const ach of allAchievements) {
+      if (existingKeys.has(ach.key)) continue;
+
+      let conditions: Condition[] = [];
+      try {
+        conditions = JSON.parse((ach as any).conditions || '[]');
+      } catch { continue; }
+
+      if (conditions.length === 0 && ach.triggerType !== 'manual') {
+        conditions = legacyToConditions(ach.triggerType, ach.triggerTarget);
+      }
+
+      if (conditions.length > 0 && evaluateConditions(conditions, ctx)) {
+        toUnlock.push(ach);
+      }
+    }
+
+    if (toUnlock.length === 0) return [];
+
+    const keys = toUnlock.map(a => a.key);
+    await prisma.userAchievement.createMany({
+      data: keys.map(achievementId => ({ userId, achievementId })),
+    });
+
+    for (const ach of toUnlock) {
+      notify(userId, 'achievement_unlocked', `成就解锁：${ach.labelZh}`, ach.desc).catch(() => {});
+    }
+
+    return toUnlock.map(a => ({ key: a.key, icon: a.icon, labelZh: a.labelZh, desc: a.desc, color: a.color }));
+  } catch (err) {
+    console.error('[recheckAllAchievements] 检查失败:', err);
     return [];
   }
 }

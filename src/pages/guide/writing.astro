@@ -1,0 +1,769 @@
+---
+/**
+ * /guide/writing — 冰山图写作指南：从选题到发表
+ */
+import Layout from '../../layouts/Layout.astro';
+import { renderMarkdownWithMath } from '../../lib/markdown';
+import { ICEBERG_TOPICS } from '../../lib/icebergTopic';
+
+const latexInlineExampleSource = '质能等价 $E = mc^2$ 由爱因斯坦提出';
+const latexBlockExampleSource = '$$\n\\int_{-\\infty}^{\\infty} e^{-x^2} \\, dx = \\sqrt{\\pi}\n$$';
+const latexInlineExampleHtml = renderMarkdownWithMath(latexInlineExampleSource);
+const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
+---
+
+<Layout title="写作指南 — 冰山图宇宙">
+  <main class="max-w-4xl mx-auto px-4 py-8">
+
+    <!-- 返回链接 -->
+    <div class="mb-6">
+      <a href="/guide" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
+        ← 返回使用指南
+      </a>
+    </div>
+
+    <!-- 标题 -->
+    <div class="mb-10">
+      <div class="text-[10px] font-mono text-text-mid tracking-widest mb-2">// WRITING GUIDE · 写作指南</div>
+      <h1 class="text-2xl font-mono text-text-hi mb-2">冰山图宇宙 · 写作指南</h1>
+      <p class="text-xs font-mono text-text-body">从选题到发表，系统学习冰山图的创作方法与规范。</p>
+      <!-- 跳转索引 -->
+      <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1">
+        {[
+          ['#what',       '什么是好的冰山图'],
+          ['#topic',      '主题选择与标题'],
+          ['#tiers',      '层级设计'],
+          ['#items',      '词条撰写'],
+          ['#principles', '撰写细则'],
+          ['#nsfw',       'NSFW 与内容规范'],
+          ['#markdown',   'Markdown 与 LaTeX'],
+          ['#advanced',   '进阶技巧'],
+        ].map(([href, label]) => (
+          <a href={href} class="text-[10px] font-mono text-text-body hover:text-brand transition-colors">
+            › {label}
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- ── 01 什么是好的冰山图 ── -->
+    <section id="what" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-brand tracking-widest">01 · 什么是好的冰山图</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3">
+
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <p class="text-[11px] font-mono text-text-body leading-relaxed mb-3">
+            冰山图的本质是<strong class="text-text-hi">用层级结构呈现知识的纵深</strong>。就像真实的冰山——露出水面的只是冰山一角，而真正庞大、震撼的部分藏在水面之下。一张好的冰山图，能让读者从"我知道这个"逐步走向"天啊，竟然还有这种事"。
+          </p>
+          <p class="text-[11px] font-mono text-text-body leading-relaxed">
+            评价一张冰山图的深度，通常看三个维度：<strong class="text-text-hi">冷门度</strong>（这个知识点有多小众）、<strong class="text-text-hi">具体度</strong>（是否指向确切的实体/事件/理论，而非泛泛而谈）、<strong class="text-text-hi">冲击力</strong>（读者看到时的惊讶程度——"居然有这种事"比"嗯听说过"更好）。
+          </p>
+        </div>
+
+        <div class="border border-border-subtle bg-surface-0 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-mid mb-3">// 好冰山 vs 差冰山</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <div class="text-[10px] text-danger mb-1.5">差的冰山图</div>
+              <div class="border border-danger/20 bg-[#ef444405] px-3 py-2 text-text-body leading-relaxed">
+                <div class="text-text-body mb-1">标题：「宇宙」</div>
+                主题过泛，层级无梯度，词条描述空洞或直接复制 Wikipedia 首段。读者看完全层感觉"每一层都知道"——没有发现感，没有探索感。顶层写"太阳系"，底层还在写"太阳系"，只是换了种说法。
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] text-success mb-1.5">好的冰山图</div>
+              <div class="border border-success/20 bg-[#22c55e05] px-3 py-2 text-text-body leading-relaxed">
+                <div class="text-text-body mb-1">标题：「冷战时期的情报暗战」</div>
+                主题精确，层级清晰——顶层是"CIA""KGB"等常识，中层是"剑桥五杰""柏林隧道"等历史爱好者才知道的事件，底层则是"VENONA 计划""幽灵号潜艇追踪"等冷门机密。每层都有明确的门槛跳跃，描述中注明了信息来源和为什么该事件"冷门"。
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border border-success/20 bg-[#22c55e05] p-4">
+          <div class="text-[10px] font-mono text-success mb-3">// 好冰山的三个特征</div>
+          <ul class="space-y-2 text-[11px] font-mono text-text-body">
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">有真正的梯度。</strong>每一层都明显比上一层更冷门。如果第 5 层的内容在第 2 层出现也毫无违和感，那说明分层失败。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">每一条都有出处。</strong>深层内容尤其需要附上来源，让读者可以进一步深挖。这也是你和其他创作者拉开差距的关键。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">读完想分享。</strong>一张好冰山图应该让读者产生"我得发给朋友看看"的冲动。这通常来自于底层那些令人震惊或大开眼界的冷知识。</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── 02 主题选择与标题 ── -->
+    <section id="topic" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-brand tracking-widest">02 · 主题选择与标题</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3">
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">如何选择主题</div>
+          <ul class="space-y-2 text-text-body">
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">✓</span>
+              <span><strong class="text-text-hi">聚焦一个可深挖的领域。</strong>「日本近现代史」比「历史」好，「日本战后经济奇迹」比「日本近现代史」更好。选题越精准，冰山图的梯度感越强。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">✓</span>
+              <span><strong class="text-text-hi">选你真正了解的领域。</strong>冰山图的深层内容需要专业知识或深度阅读。如果你自己都需要临时百度，写出来的描述容易流于表面。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">✓</span>
+              <span><strong class="text-text-hi">考虑读者认知门槛。</strong>一个好的主题应该是"大众知道顶层，但不知道底层"。如果连顶层内容读者都不知道，那整张图会失去参考系，读者无法感知"深处有多深"。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-danger flex-shrink-0">✕</span>
+              <span><strong class="text-text-hi">不要太宽泛。</strong>「科学」「音乐」「游戏」这类主题需要几十层才能覆盖，必然导致梯度混乱。拆分成「量子力学发展史」「日本视觉系摇滚」「Roguelike 游戏演变」会好很多。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-danger flex-shrink-0">✕</span>
+              <span><strong class="text-text-hi">不要太窄。</strong>「我家小区三楼电梯按钮的磨损规律」——如果主题窄到无法展开 3 层以上有意义的内容，说明它不适合做冰山图。</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">标题撰写规范</div>
+          <ul class="space-y-1.5 text-text-body">
+            <li class="flex gap-2"><span class="text-success">✓</span> 简洁、准确，一般不使用感叹号或问号</li>
+            <li class="flex gap-2"><span class="text-success">✓</span> 说明主题与范围，让读者一眼就知道讲的是什么</li>
+            <li class="flex gap-2"><span class="text-success">✓</span> 中英文均可，但建议以中文为主（平台用户主要为中文读者）</li>
+            <li class="flex gap-2"><span class="text-danger">✕</span> 不要使用标题党写法，如「80%的人不知道的……」「史上最全……」——高质量内容不需要标题党吸引点击。内容本身才是最好的标题。</li>
+            <li class="flex gap-2"><span class="text-danger">✕</span> 不要使用夸张修辞，例如「震惊！XX 的恐怖真相」——保持冷静专业的措辞。</li>
+          </ul>
+          <div class="mt-3 border-t border-border-minimal pt-3">
+            <div class="text-[10px] text-text-mid mb-1.5">// 好的标题示例</div>
+            <div class="space-y-1 text-text-body">
+              <div><span class="text-success">✓</span> 冷战时期的情报暗战</div>
+              <div><span class="text-success">✓</span> 深海生物演化史</div>
+              <div><span class="text-success">✓</span> 日本泡沫经济始末</div>
+              <div><span class="text-success">✓</span> 电子游戏音乐发展简史</div>
+              <div><span class="text-success">✓</span> 人类睡眠科学研究</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">主题分类选择</div>
+          <p class="text-text-body mb-2">
+            平台提供 <strong class="text-text-hi">{ICEBERG_TOPICS.length} 种主题分类</strong>，创建冰山图时需要从中选择一个。选择最能代表你内容方向的分类：
+          </p>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 text-[10px] text-text-mid">
+            {ICEBERG_TOPICS.map(t => (
+              <span class="border border-border-minimal px-2 py-1">{t.label}</span>
+            ))}
+          </div>
+          <p class="text-[10px] text-text-mid mt-2">如果内容跨多个领域，选择最主要的那个。主题分类帮助读者在 /topic 门户页按兴趣浏览。</p>
+        </div>
+
+        <div class="border border-border-subtle bg-surface-0 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-mid mb-2">// 选题自测：回答以下问题，全部答"是"再动笔</div>
+          <ul class="space-y-1.5 text-text-body">
+            <li class="flex gap-2"><span class="text-text-mid">▸</span> 这个领域我是否已经有一定知识储备？</li>
+            <li class="flex gap-2"><span class="text-text-mid">▸</span> 我能列出至少 3 层有明显梯度的内容吗？</li>
+            <li class="flex gap-2"><span class="text-text-mid">▸</span> 这个主题的顶层内容是大众常识吗？（如果不是，底层会失去冲击力）</li>
+            <li class="flex gap-2"><span class="text-text-mid">▸</span> 搜索广场后，是否有高度重复的已有作品？（重复主题可能被驳回）</li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── 03 层级设计 ── -->
+    <section id="tiers" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">03 · 层级设计</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3">
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">层级数量建议</div>
+          <div class="space-y-2 text-text-body">
+            <div class="flex items-center justify-between">
+              <span>最少层数（提交要求下限）</span>
+              <span class="text-text-hi">3 层</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>推荐层数</span>
+              <span class="text-success">5 — 8 层</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>优秀作品常见层数</span>
+              <span class="text-brand">6 — 7 层</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>层数过多时</span>
+              <span class="text-warning">≥ 10 层：考虑拆分或检查是否存在没有实质梯度的层</span>
+            </div>
+          </div>
+          <p class="text-[10px] text-text-mid mt-3">层数越多，对梯度设计的要求越高。不建议为了"看起来深"而强行堆层——如果某两层的冷门度没有明显差异，合并它们更好。</p>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">层级命名风格</div>
+          <p class="text-text-body mb-3">层名是读者的阅读向导，好的层名能强化"向下探索"的沉浸感：</p>
+          <div class="space-y-3">
+            {[
+              {
+                style: '比喻风格（推荐）',
+                desc: '最契合冰山隐喻，读者一眼就能感知到"往下更深"的心理预期。',
+                examples: ['水面', '浅水区', '深水区', '深渊', '海底未知带'],
+              },
+              {
+                style: '数字与安全分级风格',
+                desc: '用等级/编号表达深度，适合偏严肃或学术型的主题。',
+                examples: ['Level 1 · 未分级', 'Level 2 · 内部', 'Level 3 · 机密', 'Level 4 · 绝密', 'Level 5 · 宇宙级机密'],
+              },
+              {
+                style: '认知层次风格',
+                desc: '以"知道这个的人是谁"来定义层级，直观但注意措辞避免冒犯。',
+                examples: ['路人皆知', '爱好者知道', '资深玩家知道', '从业者知道', '考古学家才知道'],
+              },
+              {
+                style: '自定义风格',
+                desc: '根据主题特色自由命名。例如历史类可以用年代划分，科技类可以用技术代际。关键是保持一致性。',
+                examples: ['古代', '中世纪', '近代', '现代', '未来推测'],
+              },
+            ].map(({ style, desc, examples }) => (
+              <div class="border border-border-subtle bg-surface-0 px-3 py-2">
+                <div class="text-text-hi text-[11px] mb-1">{style}</div>
+                <div class="text-text-body text-[10px] mb-1">{desc}</div>
+                <div class="text-text-mid text-[10px]">
+                  {(examples as string[]).map((e, i, arr) => (
+                    <span>{e}{i < arr.length - 1 ? ' → ' : ''}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">层级内容配比</div>
+          <div class="space-y-1.5 text-text-body">
+            <div class="flex items-center gap-2">
+              <div class="w-32 text-right text-[10px]">顶层（第 1–2 层）</div>
+              <div class="flex-1 bg-surface-0 h-2 relative overflow-hidden">
+                <div class="absolute inset-y-0 left-0" style="width:80%;background:var(--color-brand);opacity:0.4"></div>
+              </div>
+              <span class="text-text-body w-40">词条多（6–10 条），内容浅</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-32 text-right text-[10px]">中上层（第 3–4 层）</div>
+              <div class="flex-1 bg-surface-0 h-2 relative overflow-hidden">
+                <div class="absolute inset-y-0 left-0" style="width:55%;background:#22c55e;opacity:0.4"></div>
+              </div>
+              <span class="text-text-body w-40">适量词条（4–6 条），含描述</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-32 text-right text-[10px]">中下层（第 5–6 层）</div>
+              <div class="flex-1 bg-surface-0 h-2 relative overflow-hidden">
+                <div class="absolute inset-y-0 left-0" style="width:30%;background:#3b82f6;opacity:0.4"></div>
+              </div>
+              <span class="text-text-body w-40">少而精（2–4 条），描述充分</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-32 text-right text-[10px]">底层（第 7 层+）</div>
+              <div class="flex-1 bg-surface-0 h-2 relative overflow-hidden">
+                <div class="absolute inset-y-0 left-0" style="width:15%;background:#8b5cf6;opacity:0.4"></div>
+              </div>
+              <span class="text-text-body w-40">极少（1–3 条），冲击力强</span>
+            </div>
+          </div>
+          <p class="text-[10px] text-text-mid mt-3">顶层内容多但浅，越往下词条越少但信息密度和冲击力越高——给读者一种"越挖越惊心"的探索体验。</p>
+        </div>
+
+        <div class="border border-[#f97316]/20 bg-[#f9731605] p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-[#f97316] mb-3">// 层级梯度自测练习</div>
+          <p class="text-text-body mb-3">写完所有层级后，逐层做这个测试：</p>
+          <ol class="space-y-2 text-text-body list-decimal list-outside pl-5">
+            <li><strong class="text-text-hi">找一个不了解这个领域的朋友</strong>（或想象一个普通读者），让他看第 N 层的词条。他知道多少？</li>
+            <li>如果大部分词条他都知道，<strong class="text-text-hi">这一层太浅了</strong>——把这些词条上移一层，或者换成更冷门的内容。</li>
+            <li>如果大部分词条他不知道但看了解释觉得"原来如此"，<strong class="text-text-hi">这一层梯度刚好</strong>。</li>
+            <li>如果底层词条连了解该领域的人都觉得震惊，<strong class="text-text-hi">恭喜，你的冰山底层成功了</strong>。</li>
+          </ol>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── 04 词条撰写 ── -->
+    <section id="items" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">04 · 词条撰写</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3">
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-2">词条标题</div>
+          <ul class="space-y-1.5 text-text-body">
+            <li class="flex gap-2"><span class="text-success">✓</span> <strong class="text-text-hi">使用具体的专有名词、事件名、理论名、人名。</strong>例如「曼德拉效应」「薛定谔的猫」「切尔诺贝利事故」「图灵测试」</li>
+            <li class="flex gap-2"><span class="text-success">✓</span> <strong class="text-text-hi">标题即答案。</strong>读者看到标题就知道"这个层级有什么"。好的标题自带信息量。</li>
+            <li class="flex gap-2"><span class="text-success">✓</span> <strong class="text-text-hi">中英文均可</strong>，但保持一张图内的风格统一。</li>
+            <li class="flex gap-2"><span class="text-danger">✕</span> <strong class="text-text-hi">不要用整句话作标题。</strong>例如「有一种理论认为宇宙可能是一个模拟器」——这应该放进描述里。标题精简为「模拟宇宙假说」即可。</li>
+            <li class="flex gap-2"><span class="text-danger">✕</span> <strong class="text-text-hi">不要用问句作标题。</strong>「人类真的去过月球吗？」——标题应该是陈述形式，描述可以补充争议背景。</li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-2">词条描述的核心要素</div>
+          <p class="text-text-body mb-2">好的词条描述回答三个问题：<strong class="text-text-hi">这是什么？为什么它在这个深度？从哪里可以了解更多？</strong></p>
+          <ul class="space-y-1.5 text-text-body">
+            <li class="flex gap-2"><span class="text-success">✓</span> <strong class="text-text-hi">说明核心事实：</strong>给出关键信息——时间、地点、人物、事件、数据。不要假设读者已经知道。</li>
+            <li class="flex gap-2"><span class="text-success">✓</span> <strong class="text-text-hi">解释深度原因：</strong>为什么这个内容"冷门"？是因为信息被封锁、被遗忘、只存在于学术圈，还是因为它太新？这一句是你的冰山的"深度感"的来源。</li>
+            <li class="flex gap-2"><span class="text-success">✓</span> <strong class="text-text-hi">注明信息来源：</strong>书刊名称、纪录片标题、论文 DOI、网页链接、档案编号。可查证的来源让你的冰山图更有说服力。</li>
+            <li class="flex gap-2"><span class="text-success">✓</span> <strong class="text-text-hi">用 Markdown 排版：</strong>善用加粗、列表、链接、LaTeX 公式，让描述可读性更强。大段纯文本会让读者跳过。</li>
+            <li class="flex gap-2"><span class="text-danger">✕</span> <strong class="text-text-hi">不要只写「见百度百科」或「可自行搜索」</strong>——这等于什么都没写。如果读者需要自己去搜，那词条就失去了意义。</li>
+            <li class="flex gap-2"><span class="text-danger">✕</span> <strong class="text-text-hi">不要大段复制粘贴 Wikipedia 原文。</strong>提炼核心信息，用自己的话重构。复制粘贴的内容没有经过筛选，往往过于冗长且缺乏深度判断。</li>
+          </ul>
+        </div>
+
+        <!-- 好描述 vs 差描述对比 -->
+        <div class="border border-border-subtle bg-surface-0 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-mid mb-3">// 描述质量对比示例</div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <div>
+              <div class="text-[10px] text-danger mb-1.5">差的描述（空洞）</div>
+              <div class="border border-danger/20 bg-[#ef444405] px-3 py-2 text-text-body leading-relaxed">
+                <div class="text-text-body mb-1">词条：曼德拉效应</div>
+                "这是一个很有意思的心理现象，感兴趣的朋友可以自己搜索。"
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] text-success mb-1.5">好的描述（有信息量）</div>
+              <div class="border border-success/20 bg-[#22c55e05] px-3 py-2 text-text-body leading-relaxed">
+                <div class="text-text-body mb-1">词条：曼德拉效应</div>
+                "大量人群对某一历史事件拥有错误的集体记忆。得名于许多人错误地记得南非前总统曼德拉死于20世纪80年代狱中（实际于2013年去世）。心理学上解释为记忆的可塑性与社会暗示效应。"
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <div class="text-[10px] text-danger mb-1.5">差的描述（抄百科）</div>
+              <div class="border border-danger/20 bg-[#ef444405] px-3 py-2 text-text-body leading-relaxed">
+                <div class="text-text-body mb-1">词条：VENONA 计划</div>
+                "VENONA 计划（Project VENONA）是美国和英国情报机构于二战期间启动的一项联合情报解密计划，旨在截获和破译苏联情报机构的通讯内容。该计划从 1943 年持续至 1980 年……<span class='text-text-mid'>（后文为 Wikipedia 式罗列，无选择性提炼）</span>"
+              </div>
+            </div>
+            <div>
+              <div class="text-[10px] text-success mb-1.5">好的描述（提炼后）</div>
+              <div class="border border-success/20 bg-[#22c55e05] px-3 py-2 text-text-body leading-relaxed">
+                <div class="text-text-body mb-1">词条：VENONA 计划</div>
+                "美英情报机构在二战期间启动的苏联密码破译计划，持续近 40 年。之所以冷门是因为直到 1995 年才部分解密。最震撼的成果是揭露了曼哈顿计划中的苏联间谍网络，包括克劳斯·福克斯等人。来源：NSA 官网 VENONA 档案区、Haynes & Klehr 著 *Venona: Decoding Soviet Espionage in America*。"
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border border-[#f97316]/20 bg-[#f9731605] p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-[#f97316] mb-2">// 写作流程建议</div>
+          <p class="text-text-body mb-2">按照以下顺序推进，可以避免最常见的新手问题：</p>
+          <ul class="space-y-1.5 text-text-body">
+            <li class="flex items-start gap-2"><span class="text-text-hi font-bold flex-shrink-0">1.</span> <span class="flex-1"><strong class="text-text-hi">先排题干，再写描述。</strong>把所有层级的词条标题先铺好，检查冷门度梯度无误后，再逐一补充描述。边写边想容易导致梯度混乱。</span></li>
+            <li class="flex items-start gap-2"><span class="text-text-hi font-bold flex-shrink-0">2.</span> <span class="flex-1"><strong class="text-text-hi">每个词条说明它在这一层的理由。</strong>描述不只是「这是什么东西」，更要解释「为什么它不是常识」——冷门度是冰山图的灵魂。</span></li>
+            <li class="flex items-start gap-2"><span class="text-text-hi font-bold flex-shrink-0">3.</span> <span class="flex-1"><strong class="text-text-hi">用中文表达，保留关键术语原文。</strong>例如「量子退相干（Quantum Decoherence）」而非纯音译。术语准确比"看起来像中文"更重要。</span></li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── 05 撰写细则 ── -->
+    <section id="principles" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">05 · 撰写细则</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3">
+
+        <div class="border border-success/20 bg-[#22c55e05] p-4">
+          <div class="text-[10px] font-mono text-success mb-3">// 五项核心要求</div>
+          <ul class="space-y-2 text-[11px] font-mono text-text-body">
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">层级梯度分明。</strong>越深处的层级，词条越冷门、越小众、越令人意外。如果读者看到第 5 层内容觉得"这我也知道"，说明层次设计有问题。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">内容可追溯查证。</strong>每一项事实都应有据可查。建议在描述中注明出处——书刊、纪录片、学术论文、官方档案皆可。严禁凭空编造。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">描述简明充实。</strong>词条控制在 50–200 字为宜。描述不是标题的扩写，而是要提供背景、解释冷门原因、引导读者继续深入。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">单一主题聚焦。</strong>一张冰山图只围绕一个核心话题展开，不把不相干的领域硬拼在一起。觉得内容不够深就继续往下挖，而不是横向拓宽。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">观点归因，事实陈述。</strong>主观判断（如"这是史上最伟大的"）需标明出处或归因于某人/某机构。客观事实和主观评价之间要有清晰的边界。</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="border border-danger/20 bg-[#ef444405] p-4">
+          <div class="text-[10px] font-mono text-danger mb-3">// 提交被拒的常见原因</div>
+          <ul class="space-y-2 text-[11px] font-mono text-text-body">
+            <li class="flex items-start gap-2">
+              <span class="text-danger flex-shrink-0">✕</span>
+              <span><strong class="text-text-body">层级缺乏冷门梯度。</strong>把常识内容放进深层——比如"爱因斯坦"出现在第 5 层。自测方法：把第 N 层词条放到第 N-2 层，如果读起来毫无违和感，说明梯度无效。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-danger flex-shrink-0">✕</span>
+              <span><strong class="text-text-body">NSFW 标签漏标。</strong>含成人内容、血腥暴力、极端恐怖题材的词条未打标签即提交，将直接被驳回并需补标后重审。一个词条涉及就要标注。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-danger flex-shrink-0">✕</span>
+              <span><strong class="text-text-body">提交了重复主题。</strong>提交前未在广场搜索，已有高度相似的作品。如果角度不同（例如已有「日本近代史」，你写「日本近代教育制度演变」），可以正常投稿。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-danger flex-shrink-0">✕</span>
+              <span><strong class="text-text-body">顶层内容门槛太高。</strong>如果第一层的内容大部分读者都不熟悉，他们就没有参照系来判断后面"到底有多深"。顶层必须是该领域的基本常识。</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">提交前自审清单</div>
+          <p class="text-text-body mb-2 text-[10px]">在下述每一项前方打勾确认后，再点击"提交审核"：</p>
+          <ul class="space-y-1.5">
+            {[
+              '标题 ≥ 5 字，简洁描述主题',
+              '摘要 ≥ 20 字，说明冰山图的范围与视角',
+              '已从 35 个分类中选择最匹配的主题分类',
+              '层级 ≥ 3 层，每层之间有明显的冷门度梯度',
+              '每层词条 ≥ 2 条，整体词条描述覆盖率 ≥ 50%',
+              '深层词条（第 4 层及以下）均有有效描述和来源标注',
+              '检查了所有层级：没有把常识内容放在深层',
+              '含 NSFW 内容的词条已打 NSFW 标签，并勾选了确认框',
+              '在广场搜索过，未发现高度重复的主题',
+              '没有主观评价伪装成事实的内容',
+              '词条标签（争议、猜测等）已正确标注',
+            ].map(item => (
+              <li class="flex items-center gap-2">
+                <span class="text-brand">☐</span>
+                <span class="text-text-body">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── 06 NSFW 与内容规范 ── -->
+    <section id="nsfw" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">06 · NSFW 与内容规范</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3">
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">NSFW 标签要求</div>
+          <p class="text-text-body mb-3">
+            平台对 NSFW（Not Safe For Work）内容实行<strong class="text-text-hi">强制标注制度</strong>。NSFW 标签不是惩罚性标记，而是让读者在了解内容性质后再选择是否查看的保护机制。
+          </p>
+          <div class="space-y-1.5 text-text-body">
+            <div class="flex items-center gap-2">
+              <span class="border border-danger/25 text-danger px-1.5 py-0.5 text-[10px] flex-shrink-0">NSFW</span>
+              <span><strong class="text-text-hi">必须标注的场景：</strong>含成人/色情内容、强烈血腥暴力画面或文字描述、涉及极端心理恐怖或创伤类内容。即使只有一个词条涉及，也要给该词条打标签并勾选确认。</span>
+            </div>
+            <div class="mt-2 text-[10px] text-text-mid">
+              · 漏标 NSFW 标签将导致冰山图被<strong class="text-danger">直接驳回</strong>，需补标签后重新提交审核。<br/>
+              · 含 NSFW 内容会进入专项审核队列，审核周期可能比常规内容更长。<br/>
+              · 详情页中，NSFW 词条默认折叠，读者需主动点击展开。
+            </div>
+          </div>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">争议与猜测标签</div>
+          <div class="space-y-1.5 text-text-body">
+            <div class="flex items-center gap-2">
+              <span class="border border-warning/25 text-warning px-1.5 py-0.5 text-[10px] flex-shrink-0">争议</span>
+              <span>内容存在较大争议性或学界尚无定论时建议标注。例如历史事件的多种解释、有争议的科学假说等。标签提醒读者"这不是公认事实"。</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="border border-info/25 text-info px-1.5 py-0.5 text-[10px] flex-shrink-0">猜测</span>
+              <span>内容为推测、假说、未经证实（或暂无法证实）的理论。例如"Illuminati 操控世界"类的阴谋论、超自然现象的未经验证的解释等。猜测标签不等于内容有问题，但需要读者带着批判思维阅读。</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="border border-danger/20 bg-[#ef444405] p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-danger mb-3">// 内容红线（以下内容将直接驳回，严重者封禁）</div>
+          <ul class="space-y-1.5 text-text-body">
+            <li class="flex gap-2"><span class="text-danger flex-shrink-0">⛔</span> <strong class="text-text-hi">编造虚假事实。</strong>不能为了"深层效果"而凭空捏造事件、数据、理论。冰山图不是科幻小说。</li>
+            <li class="flex gap-2"><span class="text-danger flex-shrink-0">⛔</span> <strong class="text-text-hi">仇恨言论与歧视内容。</strong>种族、性别、地域、宗教等歧视性言论，无论以什么形式出现。</li>
+            <li class="flex gap-2"><span class="text-danger flex-shrink-0">⛔</span> <strong class="text-text-hi">人身攻击。</strong>词条内容不得对他人的身份、观点、能力进行攻击性评价。评论事实可以，攻击人不可以。</li>
+            <li class="flex gap-2"><span class="text-danger flex-shrink-0">⛔</span> <strong class="text-text-hi">非法内容。</strong>犯罪方法、恶意软件传播、隐私侵犯等任何违法内容。</li>
+            <li class="flex gap-2"><span class="text-danger flex-shrink-0">⛔</span> <strong class="text-text-hi">广告与垃圾信息。</strong>冰山图不是推广渠道，不要把词条描述写成广告文案。</li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── 07 Markdown 与 LaTeX 公式 ── -->
+    <section id="markdown" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-[#a78bfa] tracking-widest">07 · Markdown 与 LaTeX 公式</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3">
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">Markdown 基础语法</div>
+          <div class="space-y-1.5 text-text-body">
+            {[
+              ['**加粗**',              '加粗文字'],
+              ['*斜体*',               '斜体文字'],
+              ['~~删除线~~',           '删除线文字'],
+              ['`行内代码`',           '行内代码'],
+              ['[链接文字](URL)',       '超链接'],
+              ['> 引用内容',            '块引用'],
+              ['```\\n代码块\\n```',   '代码块（支持语言高亮）'],
+              ['- 无序列表项',          '无序列表（也可用 *）'],
+              ['1. 有序列表项',         '有序列表'],
+              ['---',                   '分隔线'],
+            ].map(([syntax, desc]) => (
+              <div class="flex items-center gap-4">
+                <code class="text-text-hi w-36 flex-shrink-0 truncate">{syntax}</code>
+                <span class="text-text-body">→ {desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div class="border border-border-subtle bg-surface-0 px-4 py-2.5 text-[10px] font-mono text-text-mid">
+          // 语法基于 CommonMark GFM，完整参考见 <a href="https://www.runoob.com/markdown/md-tutorial.html" target="_blank" rel="noopener" class="text-text-body hover:text-brand transition-colors border-b border-border">runoob.com/markdown</a>
+        </div>
+
+        <!-- LaTeX 公式 -->
+        <div class="border border-[#a78bfa30] bg-[#a78bfa05] p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-[#a78bfa] mb-1">LaTeX 数学公式（由 KaTeX 渲染）</div>
+          <p class="text-text-body mb-3 text-[10px]">适合数学、物理、化学、经济等需要精确符号表达的词条描述。</p>
+
+          <div class="space-y-3">
+            <!-- 行内公式 -->
+            <div>
+              <div class="text-[10px] text-text-body mb-1.5">行内公式 — 用单个 $ 包裹</div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div class="bg-surface-1 border border-border-subtle px-3 py-2">
+                  <div class="text-[10px] text-text-mid mb-1">写法</div>
+                  <code class="text-text-hi">质能等价 $E = mc^2$ 由爱因斯坦提出</code>
+                </div>
+                <div class="bg-surface-1 border border-border-subtle px-3 py-2">
+                  <div class="text-[10px] text-text-mid mb-1">效果</div>
+                  <div class="markdown-content text-text-body" set:html={latexInlineExampleHtml}></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 块级公式 -->
+            <div>
+              <div class="text-[10px] text-text-body mb-1.5">块级公式 — 用双 $$ 包裹，独占一行</div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div class="bg-surface-1 border border-border-subtle px-3 py-2">
+                  <div class="text-[10px] text-text-mid mb-1">写法</div>
+                  <code class="text-text-hi whitespace-pre-line">{'$$\n\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}\n$$'}</code>
+                </div>
+                <div class="bg-surface-1 border border-border-subtle px-3 py-2">
+                  <div class="text-[10px] text-text-mid mb-1">效果</div>
+                  <div class="markdown-content text-text-body" set:html={latexBlockExampleHtml}></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 常用符号速查 -->
+            <div>
+              <div class="text-[10px] text-text-body mb-1.5">常用 LaTeX 符号速查</div>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[10px]">
+                {[
+                  ['x^{2}',          '上标 x²'],
+                  ['x_{i}',          '下标 xᵢ'],
+                  ['\\frac{a}{b}',   '分式 a/b'],
+                  ['\\sqrt{x}',      '根号'],
+                  ['\\sum_{i=1}^n',  '求和'],
+                  ['\\int_a^b',      '积分'],
+                  ['\\alpha \\beta', 'α β 希腊字母'],
+                  ['\\infty',        '∞ 无穷'],
+                  ['\\leq \\geq',    '≤ ≥'],
+                  ['\\times \\div',  '× ÷'],
+                  ['\\vec{v}',       '向量箭头'],
+                  ['\\hat{x}',       '帽子符号'],
+                ].map(([sym, desc]) => (
+                  <div class="flex items-center gap-1.5 border border-border-subtle px-2 py-1">
+                    <code class="text-text-hi flex-shrink-0">{sym}</code>
+                    <span class="text-text-mid truncate">→ {desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border border-border-subtle bg-surface-0 px-4 py-2.5 text-[10px] font-mono text-text-mid">
+          // 公式语法基于 KaTeX，完整符号表见 <a href="https://www.latexlive.com/help" target="_blank" rel="noopener" class="text-text-body hover:text-brand transition-colors border-b border-border">latexlive.com/help</a>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── 08 进阶技巧 ── -->
+    <section id="advanced" class="mb-10">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-info tracking-widest">08 · 进阶技巧</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="space-y-3">
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">如何寻找深层内容素材</div>
+          <p class="text-text-body mb-3">深层内容是冰山图的灵魂。如果你觉得"写不出深层内容"，问题通常是素材获取渠道不够丰富：</p>
+          <ul class="space-y-2 text-text-body">
+            <li class="flex items-start gap-2">
+              <span class="text-brand flex-shrink-0">▸</span>
+              <span><strong class="text-text-hi">学术论文数据库：</strong>Google Scholar、arXiv、PubMed、CNKI。搜索与主题相关的综述论文（review article），它们通常会汇总领域内已被广泛研究和尚未解决的问题——后者就是你深层的候选素材。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand flex-shrink-0">▸</span>
+              <span><strong class="text-text-hi">回忆录与口述历史：</strong>冷战相关？找 CIA 退休人员的回忆录。科技史？找早期工程师的个人博客。这些第一手资料往往包含正式文献中找不到的细节。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand flex-shrink-0">▸</span>
+              <span><strong class="text-text-hi">纪录片与播客：</strong>BBC、Netflix、NHK 的深度纪录片；学术播客如 Lex Fridman、Sean Carroll 等。纪录片的"B-roll 部分"和播客偏离主题的讨论往往潜藏冰山深层素材。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand flex-shrink-0">▸</span>
+              <span><strong class="text-text-hi">政府与机构的解密档案：</strong>NSA、CIA 的 FOIA 解密库；NASA 的技术报告；日本的国立国会图书馆数字化档案。这些原始档案经常含有被主流叙事忽略的一手信息。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand flex-shrink-0">▸</span>
+              <span><strong class="text-text-hi">小众社区与论坛：</strong>Reddit 的分板块（r/AskHistorians、r/DepthHub）、Hacker News、知乎专业领域回答者的长文。注意辨别信息来源的可信度。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand flex-shrink-0">▸</span>
+              <span><strong class="text-text-hi">非英语资料：</strong>很多领域（特别是历史、人类学）有大量未被翻译成英文/中文的资料。如果你能阅读原文语言，这是一个巨大的内容优势。</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">社区协作与迭代</div>
+          <div class="space-y-3">
+            <div>
+              <div class="text-text-hi mb-1">使用创意板（/ideas）</div>
+              <p class="text-text-body text-[10px]">
+                如果你有好的冰山图主题但暂时没时间写，可以提交到创意板。其他用户可以认领并实现你的创意。创意板支持看板视图管理、短 ID 引用（#xxxx）和评论区讨论，是一个活跃的想法孵化池。
+              </p>
+            </div>
+            <div>
+              <div class="text-text-hi mb-1">使用专题协作（/projects）</div>
+              <p class="text-text-body text-[10px]">
+                对于需要多人协作的大型主题（例如「人类航天史」可能需要 10 层以上的深度），可以创建或加入专题项目。项目支持成员管理、看板任务分配、讨论区，以及将冰山图链接到项目中共同编辑。多人协作可以在不同领域发挥各自的知识优势。编辑时请注意：如果自你上次保存后有其他成员修改了同一张图，系统会提示编辑冲突并要求刷新页面重新加载，避免互相覆盖。
+              </p>
+            </div>
+            <div>
+              <div class="text-text-hi mb-1">使用草稿功能</div>
+              <p class="text-text-body text-[10px]">
+                新建冰山图时退出编辑器会自动保存为草稿（仅自己可见）。不必一次性写完——可以先搭好层级骨架加一两条词条，保存草稿，在接下来的几天里慢慢填充。草稿在个人主页「草稿」Tab 中管理。
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">迭代改进策略</div>
+          <p class="text-text-body mb-3">一张冰山图很少能一次写到完美。以下是一种经过验证的迭代路径：</p>
+          <ol class="space-y-2 text-text-body list-decimal list-outside pl-5">
+            <li><strong class="text-text-hi">先发最小可行版本。</strong>填满 3–4 层，每层至少 2 个词条，描述覆盖率达标。发布后观察读者反馈。</li>
+            <li><strong class="text-text-hi">从评论区发现薄弱环节。</strong>关注读者在整体评论区中提到了哪些词条的问题——质疑、纠正或"没看懂"的反馈，通常指向梯度不当或描述不够清晰的地方，优先修正。</li>
+            <li><strong class="text-text-hi">补充深层内容。</strong>当发现读者对已有深层内容反应强烈时，继续向下挖掘。通常一个好的主题可以扩展到 6–7 层。</li>
+            <li><strong class="text-text-hi">更新已有词条。</strong>随着新信息（新出版的书籍、新解密的档案）出现，回头更新旧的词条描述，保持内容时效性。</li>
+            <li><strong class="text-text-hi">接受社区贡献。</strong>如果启用了项目协作，其他成员可能会为你的冰山图补充你没想到的内容。社区协同往往比单打独斗更深。</li>
+          </ol>
+        </div>
+
+        <div class="border border-[#22c55e15] bg-[#22c55e05] p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-success mb-3">// 利用反馈提升作品</div>
+          <ul class="space-y-2 text-text-body">
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">关注评论区的讨论方向。</strong>当读者围绕某个具体词条展开讨论时，说明那个话题引起了共鸣。记录这些讨论，它们可能指向下一层可以深挖的方向。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">关注投票比例而非绝对数。</strong>一张冰山图赞多踩少说明整体质量好；赞踩比例接近 1:1 可能说明内容存在争议性或质量问题。尤其关注那些被踩以后没有评论的——可能读者觉得不值一评但还是要表达不满。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">看别人的精品。</strong>浏览精选内容（/featured）和排行榜前排的冰山图，分析它们的层级设计、描述质量、主题选择。模仿优秀作品的模式而不抄袭内容。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-success flex-shrink-0">▶</span>
+              <span><strong class="text-text-body">参与社区讨论。</strong>在别人的冰山图评论区提出好问题或补充来源，建立个人声誉。活跃的社区参与者在申请晋升时会更有说服力。</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+          <div class="text-[10px] text-text-body mb-3">写作习惯建立</div>
+          <div class="space-y-2 text-text-body">
+            <p><strong class="text-text-hi">保持素材笔记。</strong>日常浏览互联网时遇到冷门知识，随手记录到一个笔记文件中。等积累到一定量，这些素材会自然组成一张冰山图。</p>
+            <p><strong class="text-text-hi">从短到长。</strong>第一张冰山图不必追求完美。先写 3 层、每层 2–3 条词条的小规模作品（可能会被标记为 🌱 小作品），熟悉流程后再挑战更深的主题。</p>
+            <p><strong class="text-text-hi">主题深耕。</strong>与其写 10 张不同主题的浅层冰山图，不如在 1–2 个你真正擅长的领域持续深耕。深度内容积累的用户群更有粘性。</p>
+            <p><strong class="text-text-hi">定期回顾。</strong>每隔几个月回头看你早期发表的作品——如果觉得"写得不够好"，说明你的鉴赏力提升了，这是好现象。更新它们。</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 底部链接 -->
+    <div class="flex items-center justify-between flex-wrap gap-4 border-t border-border-minimal pt-6">
+      <div class="flex gap-4">
+        <a href="/guide" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
+          ← 返回使用指南
+        </a>
+        <a href="/iceberg/list" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
+          前往冰山广场 →
+        </a>
+      </div>
+      <a href="/feedback" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
+        反馈与建议 →
+      </a>
+    </div>
+
+  </main>
+</Layout>

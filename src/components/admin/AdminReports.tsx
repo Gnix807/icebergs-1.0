@@ -39,16 +39,25 @@ const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   rfa_candidate: { label: 'RfA候选', color: '#8b5cf6' },
 };
 
-const RESOLUTION_TEMPLATES: Record<ResolveAction, string[]> = {
+const RESOLUTION_TEMPLATES: Record<ResolveAction, { label: string; text: string }[]> = {
   RESOLVED_ACTION: [
-    '已确认违规，相关内容已下线并记录处理。',
-    '已完成核查并采取限制措施，后续将持续观察。',
-    '已通知当事人整改，重复违规将升级处罚。',
+    { label: '内容下线', text: '经核查确认违规，相关内容已下线。请创作者注意遵守平台内容规范，避免再次违规。' },
+    { label: '部分编辑', text: '已对目标内容进行编辑处理，删除了违规部分，其余内容保留。请创作者后续注意。' },
+    { label: '书面警告', text: '已向当事人发出书面警告（WARNED_1），账户功能暂时不受影响。如再次违规将升级为限制措施。' },
+    { label: '限制账户', text: '已对涉事账户采取限制措施（READ_ONLY）。如需申诉，请在个人主页通知区提交申诉请求。' },
+    { label: '人身攻击', text: '涉及人身攻击/辱骂内容，已删除并记录。社区讨论中请保持理性与尊重。' },
+    { label: 'NSFW漏标', text: '该内容含有未标注的 NSFW 素材，已退回并要求补打 NSFW 标签后重新提交。' },
+    { label: '虚假内容', text: '确认存在虚假编造内容，已删除并通知创作者。冰山图应以事实为基础，禁止凭空捏造。' },
+    { label: '记录在案', text: '已执行处理并记录在案。如发现同一用户反复违规，将提交 ADMIN 进一步审核。' },
   ],
   RESOLVED_DISMISSED: [
-    '经核查未发现明确违规，暂不处理。',
-    '举报证据不足，暂不支持处理结论。',
-    '目标内容不在本平台处理范围，已归档。',
+    { label: '未违规', text: '经核查，目标内容未违反当前平台规则，举报不予成立。感谢你对社区秩序的关注。' },
+    { label: '观点分歧', text: '举报描述的情况属于内容观点分歧而非规则违规，平台不予干预。建议通过评论区理性讨论。' },
+    { label: '重复举报', text: '该问题已有其他举报记录并处理完毕，本条为重复举报，已归档。' },
+    { label: '证据不足', text: '举报信息不足以支持核查结论，请提供更具体的违规内容描述或截图后再提交。' },
+    { label: '超出范围', text: '目标内容涉及的问题不在本平台管辖范围内，已归档。如涉及法律问题，建议直接联系相关部门。' },
+    { label: '目标不符', text: '经审查，举报内容与实际目标内容不符，可能为误操作。举报已记录但暂不处理。' },
+    { label: '已自删', text: '该内容已被创作者自行修改/删除，举报目标不存在，已归档关闭。' },
   ],
 };
 
@@ -390,12 +399,12 @@ export function AdminReports() {
             <div className="flex flex-wrap gap-1.5 mb-2">
               {RESOLUTION_TEMPLATES[modal.action].map((tpl) => (
                 <button
-                  key={tpl}
+                  key={tpl.label}
                   type="button"
-                  onClick={() => setResolution(tpl)}
+                  onClick={() => setResolution(tpl.text)}
                   className="text-[10px] px-2 py-1 border border-border text-text-body hover:border-brand hover:text-brand transition-colors"
                 >
-                  套用模板
+                  {tpl.label}
                 </button>
               ))}
             </div>
@@ -447,12 +456,12 @@ export function AdminReports() {
             <div className="flex flex-wrap gap-1.5 mb-2">
               {RESOLUTION_TEMPLATES[batchModal.action].map((tpl) => (
                 <button
-                  key={tpl}
+                  key={tpl.label}
                   type="button"
-                  onClick={() => setBatchResolution(tpl)}
+                  onClick={() => setBatchResolution(tpl.text)}
                   className="text-[10px] px-2 py-1 border border-border text-text-body hover:border-brand hover:text-brand transition-colors"
                 >
-                  套用模板
+                  {tpl.label}
                 </button>
               ))}
             </div>

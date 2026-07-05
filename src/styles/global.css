@@ -717,7 +717,7 @@ a:focus-visible,
    浅色主题 (html.light)
    ============================================ */
 html.light {
-  background-color: #ffffff;
+  background-color: #f1f3f5;
   /* ── V1 旧令牌亮色 ─────────────────────────────── */
   --text-primary: #171717;
   --text-secondary: #404040;
@@ -728,23 +728,23 @@ html.light {
   --cursor-link-fill: rgba(62, 207, 142, 0.2);
   --cursor-base-opacity: 0.95;
   /* ── V2 语义化颜色令牌亮色 (Supabase light) ────── */
-  --color-surface-0: #f5f5f5;
+  --color-surface-0: #e9ecef;
   --color-surface-1: #ffffff;
-  --color-surface-2: #ffffff;
-  --color-surface-3: #fafafa;
+  --color-surface-2: #f8f9fa;
+  --color-surface-3: #f1f3f5;
   --color-surface-4: #ffffff;
   --color-text-hi:   #171717;
   --color-text-body: #4a4a4a;
   --color-text-mid:  #707070;
   --color-text-lo:   #9a9a9a;
-  --color-border:    #dfdfdf;
-  --color-border-2:  #efefef;
-  --color-border-3:  #ededed;
+  --color-border:    #c8cdd4;
+  --color-border-2:  #dde0e4;
+  --color-border-3:  #e5e8ec;
   --color-brand:     #3ecf8e;
   --color-brand-2:   #24b47e;
 }
 html.light body {
-  background-color: #ffffff;
+  background-color: #f1f3f5;
   color: #171717;
 }
 /* 浅色模式正文段落 */

@@ -1,6 +1,6 @@
 ---
 /**
- * /guide — 平台使用指南与冰山图撰写细则
+ * /guide — 平台使用指南
  */
 import Layout from '../layouts/Layout.astro';
 import { renderMarkdownWithMath } from '../lib/markdown';
@@ -11,25 +11,34 @@ const latexInlineExampleHtml = renderMarkdownWithMath(latexInlineExampleSource);
 const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
 ---
 
-<Layout title="使用指南 — 冰山图宇宙">
+<Layout title="平台使用指南 — 冰山图宇宙">
   <main class="max-w-4xl mx-auto px-4 py-8 reveal">
 
     <!-- 标题 -->
     <div class="mb-10">
-      <div class="text-[10px] font-mono text-text-mid tracking-widest mb-2">// GUIDE · 使用指南</div>
-      <h1 class="text-2xl font-mono text-text-hi mb-2">冰山图宇宙 · 使用指南</h1>
-      <p class="text-xs font-mono text-text-body">本页介绍平台核心功能与冰山图撰写规范，帮助你快速上手并创作高质量内容。</p>
+      <div class="text-[10px] font-mono text-text-mid tracking-widest mb-2">// GUIDE · 平台使用指南</div>
+      <h1 class="text-2xl font-mono text-text-hi mb-2">冰山图宇宙 · 平台使用指南</h1>
+      <p class="text-xs font-mono text-text-body mb-3">从注册到创作，快速掌握冰山图宇宙的所有功能。</p>
+
+      <!-- 写作指南入口 -->
+      <a href="/guide/writing" class="inline-block border border-brand/30 bg-brand/5 px-4 py-2.5 mb-3 hover:border-brand/50 transition-colors">
+        <div class="flex items-center gap-2">
+          <span class="text-brand font-mono text-xs">&#x270E;</span>
+          <span class="text-xs font-mono text-text-hi">查看冰山撰写指南</span>
+          <span class="text-[10px] font-mono text-text-mid ml-auto">/guide/writing →</span>
+        </div>
+        <p class="text-[10px] font-mono text-text-body mt-1">撰写细则、层级规范、词条规范、Markdown 与公式语法 —— 详见撰写指南。</p>
+      </a>
+
       <!-- 跳转索引 -->
       <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1">
         {[
           ['#what',    '什么是冰山图'],
           ['#start',   '快速开始'],
           ['#create',  '创建冰山图'],
-          ['#writing', '撰写细则'],
-          ['#tiers',   '层级规范'],
-          ['#items',   '词条规范'],
-          ['#markdown', 'Markdown 与公式'],
-          ['#features','功能一览'],
+          ['#project', '专题协作'],
+          ['#ideas',   '创意板'],
+          ['#features','其他功能'],
           ['#faq',     '常见问题'],
         ].map(([href, label]) => (
           <a href={href} class="text-[10px] font-mono text-text-body hover:text-brand transition-colors">
@@ -48,7 +57,8 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
 
       <div class="border border-border-minimal bg-surface-2 p-4 mb-3">
         <p class="text-[11px] font-mono text-text-body leading-relaxed mb-3">冰山图是一种将某一主题的知识按"大众认知 → 深层奥秘"分层呈现的结构化内容形式。就像冰山一样，浮出水面的只是表层，而真正庞大而有趣的部分藏在水面之下。</p>
-        <p class="text-[11px] font-mono text-text-body leading-relaxed">例如，一张关于"宇宙"的冰山图，顶层可能是"太阳系""银河系"这样的常识；往下则是"暗物质""弦理论"；更深处是"时间的本质""多宇宙猜想"……每一层都比上一层更冷门、更深入、更令人震惊。</p>
+        <p class="text-[11px] font-mono text-text-body leading-relaxed mb-3">例如，一张关于"宇宙"的冰山图，顶层可能是"太阳系""银河系"这样的常识；往下则是"暗物质""弦理论"；更深处是"时间的本质""多宇宙猜想"……每一层都比上一层更冷门、更深入、更令人震惊。</p>
+        <p class="text-[11px] font-mono text-text-body leading-relaxed">本平台围绕冰山图构建了一个完整的内容社区 —— 你不仅可以浏览和创作冰山图，还能通过 <strong class="text-text-hi">主题门户</strong> 按 35 个分类探索内容、在 <strong class="text-text-hi">精选区</strong> 发现高质量作品、通过 <strong class="text-text-hi">排行榜</strong> 了解社区热门趋势，以及参与 <strong class="text-text-hi">专题协作</strong> 与他人共同策划大型主题。</p>
       </div>
 
       <!-- 视觉结构示意 -->
@@ -93,17 +103,37 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
 
       <div class="space-y-2">
         {[
-          ['注册 / 登录', '点击右上角"登录"，使用 GitHub 账号或邮箱注册。新账号默认为 USER 角色。', '#30363d'],
-          ['浏览内容', '前往冰山广场（/iceberg/list）探索公开内容，点击卡片进入详情页，可展开各层词条并查看描述。', '#30363d'],
-          ['投票与评论', '登录后可对冰山图投赞 / 踩，可在词条详情中发表评论并对评论点赞。这些互动都会为你积累质量分。', '#30363d'],
-          ['创建你的第一张冰山图', '点击导航栏上的「创建」按钮进入编辑器。填写标题、描述、层级与词条后，通过提交前检查单即可提交审核。也可点击个人主页的「+ 创建冰山图」按钮。', '#00FF41'],
-          ['成为 CONTRIBUTOR', '累积足够的质量分与冰山图数量后，可申请晋升 CONTRIBUTOR。CONTRIBUTOR 可发布冰山图并参与 RfA 投票。', '#30363d'],
-        ].map(([title, desc, color], i) => (
+          {
+            step: '注册 / 登录',
+            desc: '点击右上角"登录"，支持 GitHub 账号或邮箱注册。新账号默认为 USER 角色，登录后解锁投票、评论、收藏、创建冰山图等全部互动功能。',
+            color: '#30363d',
+          },
+          {
+            step: '浏览内容',
+            desc: '前往 <strong class="text-text-hi">冰山广场</strong>（/iceberg/list）浏览所有已发布的冰山图，可按分类、主题、关键词筛选。通过 <strong class="text-text-hi">主题门户</strong>（/topic）按 35 个分类浏览内容，每个主题有独立页面展示该分类下的作品和创意。查看 <strong class="text-text-hi">精选内容</strong>（/featured）发现管理员推荐的高质量作品，或通过 <strong class="text-text-hi">排行榜</strong>（/leaderboard）了解热门趋势。也可从 <strong class="text-text-hi">功能大厅</strong>（/sitemap）浏览所有可用页面。',
+            color: '#30363d',
+          },
+          {
+            step: '发现内容',
+            desc: '在冰山广场可使用 <strong class="text-text-hi">随机浏览</strong> 功能碰运气发现冷门佳作。按 <strong class="text-text-hi">Ctrl+K</strong>（Mac 为 ⌘K）打开全局搜索，输入至少 2 个关键字即可搜索已发布的冰山图标题。在详情页中可按标签筛选过滤特定类型的词条。',
+            color: '#30363d',
+          },
+          {
+            step: '投票、评论与关注',
+            desc: '登录后可对冰山图 <strong class="text-text-hi">投赞（+1）或踩（-1）</strong>，改变投票方向会抵消上一次投票。可在词条详情中 <strong class="text-text-hi">发表评论</strong> 并对评论点赞，支持楼中楼回复。在他人主页点击「+ 关注」即可 <strong class="text-text-hi">关注作者</strong>，首页将显示其更新动态。这些互动都会为你积累质量分。',
+            color: '#30363d',
+          },
+          {
+            step: '创建你的第一张冰山图',
+            desc: '点击导航栏「创建」按钮进入编辑器，也可从个人主页「+ 创建冰山图」按钮进入。填写标题、摘要、层级与词条，选择主题分类和词条标签后，通过提交前检查单即可提交审核。退出编辑器时会自动保存草稿。',
+            color: '#00FF41',
+          },
+        ].map(({ step, desc, color }, i) => (
           <div class="border border-border-minimal bg-surface-2 p-4 flex gap-4">
             <span class="font-mono text-sm flex-shrink-0 w-6 text-right" style={`color:${color}`}>{i + 1}.</span>
             <div>
-              <div class="text-xs font-mono text-text-hi mb-1">{title}</div>
-              <p class="text-[11px] font-mono text-text-body leading-relaxed">{desc}</p>
+              <div class="text-xs font-mono text-text-hi mb-1">{step}</div>
+              <p class="text-[11px] font-mono text-text-body leading-relaxed" set:html={desc}></p>
             </div>
           </div>
         ))}
@@ -132,16 +162,20 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
               <span class="text-text-body">对冰山图主题的简短介绍。至少 <strong class="text-text-hi">20 个字</strong>，帮助读者了解该冰山图的范围与视角。</span>
             </div>
             <div class="flex gap-3 items-start">
+              <span class="text-brand w-14 flex-shrink-0">主题</span>
+              <span class="text-text-body">从 35 种主题分类中选择一个，如"历史""科学""哲学""游戏"等。主题分类帮助读者按兴趣浏览内容，也用于 /topic 门户页的索引。</span>
+            </div>
+            <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">层级</span>
-              <span class="text-text-body">代表知识深度的分层。至少需要 <strong class="text-text-hi">3 层</strong>，可自定义层名（如"水面""浅水区""深水区""深渊"）。</span>
+              <span class="text-text-body">代表知识深度的分层。至少需要 <strong class="text-text-hi">3 层</strong>，可自定义层名（如"水面""浅水区""深水区""深渊"）。关于层级设计和命名的详细规范，请参阅撰写指南。</span>
             </div>
             <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">词条</span>
-              <span class="text-text-body">每个知识点。每层至少 <strong class="text-text-hi">2 个词条</strong>，词条有标题（必填）和描述（推荐填写，全图 50% 以上词条须有描述）。</span>
+              <span class="text-text-body">每个知识点。每层至少 <strong class="text-text-hi">2 个词条</strong>，词条有标题（必填）和描述（推荐填写，全图 50% 以上词条须有描述）。词条数少于 5 个将被标记为 🌱 小作品。词条撰写规范详见 <a href="/guide/writing" class="text-brand hover:underline border-b border-brand/30">撰写指南 →</a></span>
             </div>
             <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">标签</span>
-              <span class="text-text-body">给词条打上分类标签，包含成人内容须打 <strong class="text-danger">NSFW</strong> 标签，提交时需额外勾选确认。</span>
+              <span class="text-text-body">给词条打上分类标签，平台提供 <strong class="text-text-hi">169 种标签</strong>（分标记/内容/来源三大类），编辑器中按类别以 emoji 折叠展开。含成人内容须打 <strong class="text-danger">NSFW</strong> 标签并勾选确认。</span>
             </div>
           </div>
         </div>
@@ -153,6 +187,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
             {[
               '标题已填写（≥ 5 字）',
               '摘要已填写（≥ 20 字）',
+              '已选择主题分类',
               '层数 ≥ 3 层',
               '每层词条数 ≥ 2 条',
               '词条描述覆盖率 ≥ 50%（超过一半的词条有描述）',
@@ -164,350 +199,133 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
               </li>
             ))}
           </ul>
+          <p class="text-[10px] font-mono text-text-mid mt-3">关于层级梯度、词条描述质量标准、NSFW 规则等撰写细则，请参阅 <a href="/guide/writing" class="text-brand hover:underline border-b border-brand/30">冰山撰写指南</a>。</p>
         </div>
 
-        <!-- 审核流程 -->
+        <!-- 草稿与审核流程 -->
         <div class="border border-border-minimal bg-surface-2 p-4">
-          <div class="text-[10px] font-mono text-text-body mb-3">审核流程</div>
-          <div class="flex items-center gap-2 flex-wrap text-[11px] font-mono text-text-body">
-            <span class="border border-border-minimal px-2 py-1 text-text-body">草稿</span>
-            <span class="text-text-body">──通过检查单──▶</span>
-            <span class="border border-warning/20 px-2 py-1 text-warning">待审核</span>
-            <span class="text-text-body">──EDITOR 审核──▶</span>
-            <span class="border border-[#22c55e30] px-2 py-1 text-success">已发布</span>
+          <div class="text-[10px] font-mono text-text-body mb-3">草稿保存与审核流程</div>
+          <div class="space-y-3 text-[11px] font-mono text-text-body">
+            <p>新建冰山图时退出编辑器会自动保存草稿（仅自己可见）。草稿可在个人主页「草稿」Tab 中继续编辑或删除。</p>
+            <p>完成编辑后点击提交，通过检查单即进入审核队列：</p>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="border border-border-minimal px-2 py-1 text-text-body">草稿</span>
+              <span class="text-text-body">──通过检查单──▶</span>
+              <span class="border border-warning/20 px-2 py-1 text-warning">待审核</span>
+              <span class="text-text-body">──EDITOR 审核──▶</span>
+              <span class="border border-[#22c55e30] px-2 py-1 text-success">已发布</span>
+            </div>
+            <p class="text-[10px] text-text-mid">
+              · 审核通常在 24–48 小时内完成。NSFW 内容进入专项审核队列，审核时间可能更长。<br/>
+              · 被驳回时会收到通知并附上驳回原因，修改后可重新提交。<br/>
+              · 编辑器支持 <strong class="text-text-hi">Ctrl+S</strong> 快速保存草稿，<strong class="text-text-hi">Ctrl+Enter</strong> 提交审核。
+            </p>
           </div>
-          <p class="text-[10px] font-mono text-text-mid mt-3">
-            · 审核通常在 24–48 小时内完成。NSFW 内容进入专项审核队列，审核时间可能更长。<br/>
-            · 被驳回时会收到通知并附上驳回原因，修改后可重新提交。
-          </p>
         </div>
 
       </div>
     </section>
 
-    <!-- ── 04 撰写细则 ── -->
-    <section id="writing" class="mb-10">
+    <!-- ── 04 专题协作 ── -->
+    <section id="project" class="mb-10">
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">04 · 冰山撰写细则</span>
+        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">04 · 专题协作（WikiProject）</span>
         <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
-      <div class="space-y-3">
+      <div class="border border-border-minimal bg-surface-2 p-4 mb-3 text-[11px] font-mono text-text-body">
+        <p class="leading-relaxed mb-3">专题协作参考 Wikipedia 的 WikiProject 机制，让多位创作者围绕同一主题协同工作。你可以创建或加入一个专题项目，使用看板分配任务、通过讨论区交流想法，并将多张冰山图链接到项目中形成系列内容。关联到项目的冰山图可由 <strong class="text-text-hi">组内任意成员共同编辑</strong>，无需原作者单独授权。</p>
+        <p class="leading-relaxed">前往 <a href="/projects" class="text-brand hover:underline border-b border-brand/30">/projects</a> 浏览现有项目或创建新项目。</p>
+      </div>
 
-        <div class="border border-success/20 bg-[#22c55e05] p-4">
-          <div class="text-[10px] font-mono text-success mb-3">// 核心原则</div>
-          <ul class="space-y-2 text-[11px] font-mono text-text-body">
-            <li class="flex items-start gap-2">
-              <span class="text-success flex-shrink-0">▶</span>
-              <span><strong class="text-text-body">层级要有梯度。</strong>越靠下的层级，内容应越冷门、越偏门、越令人意外。如果读者对你的"第 5 层"内容感到"这我知道啊"，说明分层不够深。</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="text-success flex-shrink-0">▶</span>
-              <span><strong class="text-text-body">内容要可查证。</strong>所有词条内容应有据可查，建议在描述中注明来源（文章、视频、论文、Wikipedia 等）。禁止编造事实。</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="text-success flex-shrink-0">▶</span>
-              <span><strong class="text-text-body">描述要有信息量。</strong>描述不应只是标题的同义反复。好的描述能解释"为什么这个词条在这一层"，提供背景、来源或延伸信息。</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="text-success flex-shrink-0">▶</span>
-              <span><strong class="text-text-body">主题要聚焦。</strong>一张冰山图应围绕单一主题展开，不要把不同领域的内容混合在同一张图里。宁可做多张，不要做一张什么都有的大杂烩。</span>
-            </li>
-          </ul>
-        </div>
-
-        <div class="border border-danger/20 bg-[#ef444405] p-4">
-          <div class="text-[10px] font-mono text-danger mb-3">// 常见问题与避雷指南</div>
-          <ul class="space-y-2 text-[11px] font-mono text-text-body">
-            <li class="flex items-start gap-2">
-              <span class="text-danger flex-shrink-0">✕</span>
-              <span><strong class="text-text-body">层级梯度混乱。</strong>比如把"爱因斯坦"放在第 5 层——这是常识，不是深层内容。每层的冷门度应明显高于上一层。</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="text-danger flex-shrink-0">✕</span>
-              <span><strong class="text-text-body">词条描述空洞。</strong>描述如"这是一个很有趣的事情""详见百度百科"无法通过审核。描述至少要说明该词条的核心信息。</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="text-danger flex-shrink-0">✕</span>
-              <span><strong class="text-text-body">未打标的 NSFW 内容。</strong>含血腥、色情、强烈暴力内容的词条必须打上 NSFW 标签。漏标将导致冰山图被直接驳回。</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="text-danger flex-shrink-0">✕</span>
-              <span><strong class="text-text-body">主观评价代替事实。</strong>"某某是最伟大的……""某某绝对是错的……"——观点性内容需标明为观点，不可作为客观事实呈现。</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="text-danger flex-shrink-0">✕</span>
-              <span><strong class="text-text-body">重复提交相似主题。</strong>提交前请在广场搜索是否已有类似主题。重复主题可能被驳回或要求合并。</span>
-            </li>
-          </ul>
-        </div>
-
+      <div class="space-y-2">
+        {[
+          {
+            icon: '+', label: '创建与加入项目',
+            desc: '点击「创建专题」新建项目：设置项目名称、简介、封面图、主题分类，可选择公开或邀请制。公开项目任何人都可申请加入；邀请制项目只能通过 <strong class="text-text-hi">邀请链接</strong> 加入。浏览项目列表时可点击「申请加入」，项目负责人审批后即可成为成员。',
+          },
+          {
+            icon: '▣', label: '任务看板',
+            desc: '每个项目内置看板（Kanban），按"待开始 / 进行中 / 已完成"三列管理任务。成员可创建任务卡片，设置标题、描述、优先级和指派成员。拖动卡片切换状态，整个项目的进度一目了然。适合协调多人分工的大型冰山图系列创作。',
+          },
+          {
+            icon: '◈', label: '成员管理',
+            desc: '项目负责人可管理成员角色：OWNER（创建者，最高权限）、ADMIN（可管理成员和设置）、MEMBER（普通成员，可编辑关联冰山图）。成员列表清晰展示每个人的角色和加入时间。',
+          },
+          {
+            icon: '▸', label: '协作编辑',
+            desc: '将冰山图链接到项目后，项目内所有成员均可 <strong class="text-text-hi">直接在编辑器中共编</strong> 该冰山图。修改记录会追踪作者信息，适合团队共同打磨大型主题冰山图。也可以将创意板条目链接到项目中，供成员认领实现。',
+          },
+          {
+            icon: '◎', label: '讨论区',
+            desc: '每个项目自带讨论区，成员可在其中交流选题、协调分工、讨论内容方向。支持 Markdown 格式和 @ 提及成员，讨论记录永久保存。',
+          },
+          {
+            icon: '⎉', label: '邀请链接',
+            desc: '项目设置中可生成或重置邀请链接，分享给外部人员即可快速加入。链接可随时失效重生成，确保项目安全性。',
+          },
+        ].map(({ icon, label, desc }, i) => (
+          <div class="border border-border-minimal bg-surface-2 p-4 flex gap-4">
+            <span class="font-mono text-xs text-text-mid mt-0.5 w-4 flex-shrink-0 text-center">{icon}</span>
+            <div>
+              <div class="text-xs font-mono text-text-hi mb-1">{label}</div>
+              <p class="text-[11px] font-mono text-text-body leading-relaxed" set:html={desc}></p>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
 
-    <!-- ── 05 层级规范 ── -->
-    <section id="tiers" class="mb-10">
+    <!-- ── 05 创意板 ── -->
+    <section id="ideas" class="mb-10">
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">05 · 层级设计规范</span>
+        <span class="text-[10px] font-mono text-info tracking-widest">05 · 创意板</span>
         <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
-      <div class="space-y-3">
-        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-text-body mb-3">层级数量建议</div>
-          <div class="space-y-2 text-text-body">
-            <div class="flex items-center justify-between">
-              <span>最少层数</span>
-              <span class="text-text-hi">3 层（提交要求下限）</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span>推荐层数</span>
-              <span class="text-success">5 — 8 层</span>
-            </div>
-            <div class="flex items-center justify-between">
-              <span>层数过多时</span>
-              <span class="text-warning">考虑拆分为多张冰山图</span>
-            </div>
-          </div>
-        </div>
+      <div class="border border-border-minimal bg-surface-2 p-4 mb-3 text-[11px] font-mono text-text-body">
+        <p class="leading-relaxed mb-3">创意板是一个社区协作空间，任何人都可以在这里提交冰山图创意、Bug 反馈或功能建议，供其他创作者认领和实现。它像是社区的"需求池"——有想法但没时间做？提交创意让其他人来实现。想创作但缺灵感？浏览创意板找到你感兴趣的主题。</p>
+        <p class="leading-relaxed">前往 <a href="/ideas" class="text-brand hover:underline border-b border-brand/30">/ideas</a> 浏览创意或提交新点子。</p>
+      </div>
 
-        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-text-body mb-3">层级命名建议</div>
-          <p class="text-text-body mb-3">层名是读者的阅读引导，好的层名能强化"冰山感"。以下是几种常见风格：</p>
-          <div class="space-y-2">
-            {[
-              ['比喻风格', ['水面', '浅水区', '深水区', '深渊', '海底未知带']],
-              ['数字风格', ['第一级', '第二级', '第三级', '第四级', '密级：绝密']],
-              ['认知风格', ['常识', '教科书知识', '专业知识', '学术前沿', '阴谋论领域']],
-            ].map(([style, examples]) => (
-              <div>
-                <span class="text-text-mid">{style}：</span>
-                <span class="text-text-body">
-                  {(examples as string[]).map((e, i, arr) => (
-                    <span>{e}{i < arr.length - 1 ? ' → ' : ''}</span>
-                  ))}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-text-body mb-3">层级内容配比建议</div>
-          <div class="space-y-1.5 text-text-body">
-            <div class="flex items-center gap-2">
-              <div class="w-32 text-right text-[10px]">顶层（第 1–2 层）</div>
-              <div class="flex-1 bg-surface-0 h-2 relative overflow-hidden">
-                <div class="absolute inset-y-0 left-0" style="width:70%;background:var(--color-brand);opacity:0.4"></div>
-              </div>
-              <span class="text-text-body w-32">词条多，内容浅</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="w-32 text-right text-[10px]">中层（第 3–5 层）</div>
-              <div class="flex-1 bg-surface-0 h-2 relative overflow-hidden">
-                <div class="absolute inset-y-0 left-0" style="width:45%;background:#22c55e;opacity:0.4"></div>
-              </div>
-              <span class="text-text-body w-32">适量词条，需描述</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <div class="w-32 text-right text-[10px]">底层（第 6 层+）</div>
-              <div class="flex-1 bg-surface-0 h-2 relative overflow-hidden">
-                <div class="absolute inset-y-0 left-0" style="width:20%;background:#8b5cf6;opacity:0.4"></div>
-              </div>
-              <span class="text-text-body w-32">词条少但质量高</span>
+      <div class="space-y-2">
+        {[
+          {
+            icon: '◉', label: '看板视图与列表视图',
+            desc: '创意板支持两种浏览模式：<strong class="text-text-hi">看板视图</strong> 按"待认领 / 已认领 / 已完成"三列分组展示，类似项目管理的 Kanban 风格；<strong class="text-text-hi">列表视图</strong> 按时间线排列所有创意，适合快速浏览最新提交。可通过页面切换按钮随时切换视图。',
+          },
+          {
+            icon: '⊞', label: '主题筛选与排序',
+            desc: '左侧可折叠主题筛选器列出所有 35 个分类，点击即可只查看特定主题的创意。支持按最新、最热、最多认领等排序方式切换，方便快速找到感兴趣的内容。',
+          },
+          {
+            icon: '▣', label: '三种提交模板',
+            desc: '提交创意时可选择三种模板：<strong class="text-text-hi">🧊 冰山创意</strong>（提交冰山图选题建议，可附主题分类和简要描述）、<strong class="text-text-hi">🐛 Bug 反馈</strong>（报告平台问题，含复现步骤和严重程度）、<strong class="text-text-hi">💡 功能建议</strong>（提出新功能需求，说明使用场景）。',
+          },
+          {
+            icon: '?', label: '认领与实现',
+            desc: '看到感兴趣的创意？点击「认领」按钮即可将其标记为"已认领"，其他人看到后就不会重复认领。完成创作后将冰山图链接到创意条目，再标记为"已完成"即可。一个创意可被多人认领，鼓励多个版本百花齐放。',
+          },
+          {
+            icon: '#', label: '短 ID 与评论区引用',
+            desc: '每个创意自动获得一个短 ID（如 <strong class="text-text-hi">#1a3f</strong>），在评论区使用 <code class="text-text-hi">#1a3f</code> 即可引用该创意。点击短 ID 可快速跳转到对应的创意详情。讨论区支持 Markdown 格式和 @ 提及，方便围绕创意展开深入讨论。',
+          },
+        ].map(({ icon, label, desc }, i) => (
+          <div class="border border-border-minimal bg-surface-2 p-4 flex gap-4">
+            <span class="font-mono text-xs text-text-mid mt-0.5 w-4 flex-shrink-0 text-center">{icon}</span>
+            <div>
+              <div class="text-xs font-mono text-text-hi mb-1">{label}</div>
+              <p class="text-[11px] font-mono text-text-body leading-relaxed" set:html={desc}></p>
             </div>
           </div>
-          <p class="text-[10px] text-text-mid mt-3">顶层内容多但浅，越往下词条越少但每个词条的信息密度越高，这样整体读起来有强烈的"探索感"。</p>
-        </div>
+        ))}
       </div>
     </section>
 
-    <!-- ── 06 词条规范 ── -->
-    <section id="items" class="mb-10">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-[#f97316] tracking-widest">06 · 词条撰写规范</span>
-        <div class="flex-1 border-t border-border-minimal"></div>
-      </div>
-
-      <div class="space-y-3">
-        <!-- 词条标题 -->
-        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-text-body mb-2">词条标题</div>
-          <ul class="space-y-1.5 text-text-body">
-            <li class="flex gap-2"><span class="text-success">✓</span> 简洁明了，一般为专有名词或短语，例如："薛定谔的猫"、"曼德拉效应"</li>
-            <li class="flex gap-2"><span class="text-success">✓</span> 中英文均可，保持一张图内的风格统一</li>
-            <li class="flex gap-2"><span class="text-danger">✕</span> 不要用整句话作为标题，例如："有一种理论认为宇宙是模拟的"（这应该是描述内容）</li>
-          </ul>
-        </div>
-
-        <!-- 词条描述 -->
-        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-text-body mb-2">词条描述（推荐所有词条都填写）</div>
-          <ul class="space-y-1.5 text-text-body">
-            <li class="flex gap-2"><span class="text-success">✓</span> 解释这个词条是什么，以及它为什么属于这一层（为什么冷门、为什么深）</li>
-            <li class="flex gap-2"><span class="text-success">✓</span> 提供背景信息：时间、地点、人物、事件起因</li>
-            <li class="flex gap-2"><span class="text-success">✓</span> 引用来源：书名、纪录片、论文标题、网址等</li>
-            <li class="flex gap-2"><span class="text-success">✓</span> 描述支持 Markdown 格式（加粗、斜体、链接、代码块）及 LaTeX 数学公式</li>
-            <li class="flex gap-2"><span class="text-danger">✕</span> 不要只写"见百度百科"或"Google 可查"——这不是有效描述</li>
-            <li class="flex gap-2"><span class="text-danger">✕</span> 不要复制粘贴大段维基百科原文，应提炼核心信息</li>
-          </ul>
-        </div>
-
-        <!-- 好描述 vs 差描述对比 -->
-        <div class="border border-border-subtle bg-surface-0 p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-text-mid mb-3">// 描述质量对比示例</div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <div class="text-[10px] text-danger mb-1.5">差的描述</div>
-              <div class="border border-danger/20 bg-[#ef444405] px-3 py-2 text-text-body leading-relaxed">
-                <div class="text-text-body mb-1">词条：曼德拉效应</div>
-                "这是一个很有意思的心理现象，感兴趣的朋友可以自己搜索。"
-              </div>
-            </div>
-            <div>
-              <div class="text-[10px] text-success mb-1.5">好的描述</div>
-              <div class="border border-success/20 bg-[#22c55e05] px-3 py-2 text-text-body leading-relaxed">
-                <div class="text-text-body mb-1">词条：曼德拉效应</div>
-                "大量人群对某一历史事件拥有错误的集体记忆。得名于许多人错误地记得南非前总统曼德拉死于20世纪80年代狱中（实际于2013年去世）。心理学上解释为记忆的可塑性与社会暗示效应。"
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 标签使用 -->
-        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-text-body mb-2">标签使用规范</div>
-          <div class="space-y-1.5 text-text-body">
-            <div class="flex items-center gap-2">
-              <span class="border border-danger/25 text-danger px-1.5 py-0.5 text-[10px]">NSFW</span>
-              <span>含成人内容、强烈血腥暴力、色情内容时必须标注</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="border border-warning/25 text-warning px-1.5 py-0.5 text-[10px]">争议</span>
-              <span>内容存在较大争议性或学界尚无定论时建议标注</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="border border-info/25 text-info px-1.5 py-0.5 text-[10px]">猜测</span>
-              <span>内容为推测、假说、未经证实的理论时标注</span>
-            </div>
-          </div>
-          <p class="text-[10px] text-text-mid mt-3">漏打 NSFW 标签将导致冰山图被直接驳回，需修改后重新提交。</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── 07 Markdown 与公式 ── -->
-    <section id="markdown" class="mb-10">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-[#a78bfa] tracking-widest">07 · Markdown 与数学公式</span>
-        <div class="flex-1 border-t border-border-minimal"></div>
-      </div>
-
-      <div class="space-y-3">
-
-        <!-- Markdown 速查 -->
-        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-text-body mb-3">Markdown 基础语法</div>
-          <div class="space-y-1.5 text-text-body">
-            {[
-              ['**加粗**',              '加粗文字'],
-              ['*斜体*',               '斜体文字'],
-              ['~~删除线~~',           '删除线文字'],
-              ['`行内代码`',           '行内代码'],
-              ['[链接文字](URL)',       '超链接'],
-              ['> 引用内容',            '块引用'],
-              ['```\\n代码块\\n```',   '代码块（支持语言高亮）'],
-              ['- 无序列表项',          '无序列表（也可用 *）'],
-              ['1. 有序列表项',         '有序列表'],
-              ['---',                   '分隔线'],
-            ].map(([syntax, desc]) => (
-              <div class="flex items-center gap-4">
-                <code class="text-text-hi w-52 flex-shrink-0">{syntax}</code>
-                <span class="text-text-body">→ {desc}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div class="border border-border-subtle bg-surface-0 px-4 py-2.5 text-[10px] font-mono text-text-mid">
-          // 语法基于 CommonMark GFM，完整参考见 <a href="https://www.runoob.com/markdown/md-tutorial.html" target="_blank" rel="noopener" class="text-text-body hover:text-brand transition-colors border-b border-border">runoob.com/markdown</a>
-        </div>
-
-        <!-- LaTeX 公式 -->
-        <div class="border border-[#a78bfa30] bg-[#a78bfa05] p-4 text-[11px] font-mono">
-          <div class="text-[10px] text-[#a78bfa] mb-1">LaTeX 数学公式（由 KaTeX 渲染）</div>
-          <p class="text-text-body mb-3 text-[10px]">适合数学、物理、化学、经济等需要精确符号表达的词条描述。</p>
-
-          <div class="space-y-3">
-            <!-- 行内公式 -->
-            <div>
-              <div class="text-[10px] text-text-body mb-1.5">行内公式 — 用单个 $ 包裹</div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div class="bg-surface-1 border border-border-subtle px-3 py-2">
-                  <div class="text-[10px] text-text-mid mb-1">写法</div>
-                  <code class="text-text-hi">质能等价 $E = mc^2$ 由爱因斯坦提出</code>
-                </div>
-                <div class="bg-surface-1 border border-border-subtle px-3 py-2">
-                  <div class="text-[10px] text-text-mid mb-1">效果</div>
-                  <div class="markdown-content text-text-body" set:html={latexInlineExampleHtml}></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 块级公式 -->
-            <div>
-              <div class="text-[10px] text-text-body mb-1.5">块级公式 — 用双 $$ 包裹，独占一行</div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div class="bg-surface-1 border border-border-subtle px-3 py-2">
-                  <div class="text-[10px] text-text-mid mb-1">写法</div>
-                  <code class="text-text-hi whitespace-pre-line">{'$$\n\\int_{-\\infty}^{\\infty} e^{-x^2} dx = \\sqrt{\\pi}\n$$'}</code>
-                </div>
-                <div class="bg-surface-1 border border-border-subtle px-3 py-2">
-                  <div class="text-[10px] text-text-mid mb-1">效果</div>
-                  <div class="markdown-content text-text-body" set:html={latexBlockExampleHtml}></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 常用符号速查 -->
-            <div>
-              <div class="text-[10px] text-text-body mb-1.5">常用 LaTeX 符号速查</div>
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 text-[10px]">
-                {[
-                  ['x^{2}',          '上标 x²'],
-                  ['x_{i}',          '下标 xᵢ'],
-                  ['\\frac{a}{b}',   '分式 a/b'],
-                  ['\\sqrt{x}',      '根号'],
-                  ['\\sum_{i=1}^n',  '求和'],
-                  ['\\int_a^b',      '积分'],
-                  ['\\alpha \\beta', 'α β 希腊字母'],
-                  ['\\infty',        '∞ 无穷'],
-                  ['\\leq \\geq',    '≤ ≥'],
-                  ['\\times \\div',  '× ÷'],
-                  ['\\vec{v}',       '向量箭头'],
-                  ['\\hat{x}',       '帽子符号'],
-                ].map(([sym, desc]) => (
-                  <div class="flex items-center gap-1.5 border border-border-subtle px-2 py-1">
-                    <code class="text-text-hi flex-shrink-0">{sym}</code>
-                    <span class="text-text-mid truncate">→ {desc}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="border border-border-subtle bg-surface-0 px-4 py-2.5 text-[10px] font-mono text-text-mid">
-          // 公式语法基于 KaTeX，完整符号表见 <a href="https://www.latexlive.com/help" target="_blank" rel="noopener" class="text-text-body hover:text-brand transition-colors border-b border-border">latexlive.com/help</a>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- ── 08 功能一览 ── -->
+    <!-- ── 06 其他功能 ── -->
     <section id="features" class="mb-10">
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-info tracking-widest">08 · 平台功能一览</span>
+        <span class="text-[10px] font-mono text-purple tracking-widest">06 · 其他功能</span>
         <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
@@ -516,47 +334,97 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           {
             icon: '⬛', label: '冰山广场',
             link: '/iceberg/list', linkLabel: '/iceberg/list',
-            desc: '浏览所有已发布的冰山图，支持按分类、关键词搜索。点击卡片展开各层词条与描述。',
+            desc: '浏览所有已发布的冰山图，支持按分类、主题、关键词搜索。点击卡片展开各层词条与描述。发布后作品自动出现在广场中。',
           },
           {
-            icon: '△', label: '投票',
-            link: null, linkLabel: null,
-            desc: '对冰山图投赞（+1）或踩（-1）。改变投票方向会抵消上一次投票。投票影响冰山图排名并给作者带来质量分变化。',
+            icon: '◉', label: '主题门户',
+            link: '/topic', linkLabel: '/topic',
+            desc: '按 35 种主题分类浏览冰山图和创意。每个主题有独立页面（/topic/[slug]），显示该主题下的冰山图、创意和统计数据，支持按状态和排序筛选。',
           },
           {
-            icon: '◎', label: '评论',
-            link: null, linkLabel: null,
-            desc: '在冰山图详情页对词条发表评论，支持楼中楼回复。评论可被点赞，点赞给评论作者加质量分。',
-          },
-          {
-            icon: '★', label: '收藏',
-            link: null, linkLabel: null,
-            desc: '登录后可收藏感兴趣的冰山图，在个人主页的"收藏"标签页中查看。',
+            icon: '★', label: '精选内容',
+            link: '/featured', linkLabel: '/featured',
+            desc: '由管理员精选的高质量冰山图合集。精选作品在广场和详情页有特殊标识，ADMIN 可在详情页切换精选状态。',
           },
           {
             icon: '▲', label: '排行榜',
             link: '/leaderboard', linkLabel: '/leaderboard',
-            desc: '查看按热度、质量分等维度排名的冰山图与用户榜单。',
+            desc: '查看平台内容与用户排行。顶部三强卡片英雄区展示冠亚季军（金银铜边框），三个标签页切换 <strong class="text-text-hi">热门/高赞/用户</strong> 榜单，支持全部/月/周时间范围筛选，点击条目直达对应冰山图或用户主页。',
+          },
+          {
+            icon: '▸', label: '冰山详情 Infobox',
+            link: null, linkLabel: null,
+            desc: '冰山详情页右上角可折叠信息抽屉，展示作者、层级数、词条总数、浏览量、是否精选、小作品标记、关联创意等元数据，一键收起不打扰阅读。',
+          },
+          {
+            icon: '↓', label: '导出为图片',
+            link: null, linkLabel: null,
+            desc: '在已发布冰山图详情页点击「导出为图片」生成 PNG 信息图。导图含 # 前缀标题、元数据副标题、加粗色条、页脚 URL 水印，支持浅色/深色主题切换。',
+          },
+          {
+            icon: '♡', label: '收藏与收藏夹',
+            link: null, linkLabel: null,
+            desc: '登录后可收藏感兴趣的冰山图，在个人主页的"收藏"标签页中集中查看和管理。收藏内容按时间排序，支持取消收藏。',
+          },
+          {
+            icon: '◈', label: '关注与动态流',
+            link: null, linkLabel: null,
+            desc: '在他人主页点击「+ 关注」即可关注作者。关注后首页显示其更新动态，/api/feed 可获取关注流。取消关注即可停止接收动态。',
+          },
+          {
+            icon: '🔔', label: '通知中心',
+            link: '/notifications', linkLabel: '/notifications',
+            desc: '导航栏铃铛图标显示未读数字角标。点开可预览最近通知（审核结果、评论回复、投票动态等），支持单条已读、一键全部已读，以及「查看全部通知」进入完整通知列表页。',
+          },
+          {
+            icon: '⚙', label: '首页快捷入口',
+            link: null, linkLabel: null,
+            desc: '首页最上方可自定义 16 个快捷链接。点击 ⚙ 按钮打开配置面板，勾选常用功能后自动排列，配置保存在浏览器本地存储中。',
+          },
+          {
+            icon: '▚', label: 'CRT 扫描线效果',
+            link: null, linkLabel: null,
+            desc: '可选的复古 CRT 扫描线视觉效果。在导航栏用户下拉菜单中一键开关，为页面叠加经典显示器扫描线纹理（浅色模式下自动隐藏）。',
+          },
+          {
+            icon: '▤', label: '阅读进度',
+            link: null, linkLabel: null,
+            desc: '登录后浏览冰山图词条时，页面顶部显示阅读进度条。已读词条数在元数据区展示，下次打开时恢复上次阅读位置。',
+          },
+          {
+            icon: '▥', label: '词条搜索与弹窗',
+            link: null, linkLabel: null,
+            desc: '冰山详情页支持搜索过滤词条，点击词条弹出居中弹窗查看完整 Markdown 描述。←→ 键切换前后词条，Esc 关闭弹窗。',
           },
           {
             icon: '◆', label: '个人主页',
             link: null, linkLabel: null,
-            desc: '查看个人发布的冰山图、收藏、评论、质量分积分记录、成就等。点击他人头像/用户名也可访问其主页。',
+            desc: '查看个人发布的冰山图、收藏、评论、质量分积分记录、成就等。点击他人头像/用户名也可访问其主页，查看其公开作品和动态。',
           },
           {
-            icon: '▣', label: '用户框',
+            icon: '⬙', label: '用户框',
             link: null, linkLabel: null,
-            desc: '个人主页展示的装饰性标签。在「设置 → 用户框定制」中选择，从 3 类 18 个预设框中挑选，默认最多 3 个。解锁更多社区成就可扩展至 6 个。部分框需特定成就（如探路者、分析师）才能选用。',
+            desc: '个人主页展示的装饰性标签。在「设置 → 用户框定制」中选择，从多类别预设框中挑选，默认最多 3 个。解锁更多社区成就可扩展至 6 个。部分框需特定成就才能选用。',
+          },
+          {
+            icon: '◉', label: '小作品（Stub）标记',
+            link: null, linkLabel: null,
+            desc: '自动评估冰山图质量：词条数 < 5 显示 🌱 标记，词条数 < 10 且描述覆盖率 < 30% 显示 🔧 标记，提示读者该作品尚待完善，欢迎作者继续补充内容。',
+          },
+          {
+            icon: '☰', label: '草稿系统',
+            link: null, linkLabel: null,
+            desc: '新建冰山图时退出编辑器会自动保存草稿。草稿仅自己可见，可在个人主页「草稿」Tab 中继续编辑或删除。',
           },
           {
             icon: '!', label: '举报',
             link: null, linkLabel: null,
-            desc: '在冰山图或评论处点击举报按钮，填写原因提交。由 MODERATOR+ 处理。',
+            desc: '在冰山图或评论处点击举报按钮，填写原因提交。由 MODERATOR+ 审查处理，违规内容将被移除。',
           },
           {
             icon: '↑', label: 'RfA（编辑申请）',
             link: '/rfa', linkLabel: '/rfa',
-            desc: 'CONTRIBUTOR 资格用户可申请晋升为 EDITOR，需通过公开投票。详见规则页。',
+            desc: 'CONTRIBUTOR 资格用户可申请晋升为 EDITOR，需通过公开投票。详见规则页了解资格门槛和流程。',
           },
           {
             icon: '⊘', label: '申诉',
@@ -564,49 +432,9 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
             desc: '账号受到处罚（限制、封禁）后，可在个人主页的通知中找到申诉入口，向 ADMIN 申请复查。',
           },
           {
-            icon: '?', label: '创意板',
-            link: '/ideas', linkLabel: '/ideas',
-            desc: '提交冰山图创意，供社区认领并实现。支持 Markdown 描述、28 种分类标签、看板视图、多人协作认领、评论区讨论、#id 引用语法及三种提交模板（创意/反馈/建议）。',
-          },
-          {
-            icon: '□', label: '词条搜索与弹窗',
-            link: null, linkLabel: null,
-            desc: '冰山详情页支持搜索过滤词条，点击词条弹出居中弹窗查看完整 Markdown 描述。←→ 键切换词条，Esc 关闭。',
-          },
-          {
             icon: '+', label: '功能大厅',
             link: '/sitemap', linkLabel: '/sitemap',
-            desc: '统一的功能入口页，列出所有可用页面。从 NavBar「功能」下拉或 Footer 链接进入。',
-          },
-          {
-            icon: '◉', label: '通知中心',
-            link: '/notifications', linkLabel: '/notifications',
-            desc: '登录后 NabvBar 铃铛图标显示未读数量。点开可预览最近通知，支持标记已读及一键全部已读。',
-          },
-          {
-            icon: '☰', label: '草稿',
-            link: null, linkLabel: null,
-            desc: '新建冰山图时退出编辑器会自动保存草稿。草稿仅自己可见，可在个人主页「草稿」Tab 中继续编辑或删除。',
-          },
-          {
-            icon: '♡', label: '关注',
-            link: null, linkLabel: null,
-            desc: '在他人主页点击「+ 关注」即可关注作者。关注后首页显示其更新动态，/api/feed 可获取关注流。',
-          },
-          {
-            icon: '▸', label: '阅读进度',
-            link: null, linkLabel: null,
-            desc: '登录后浏览冰山图词条时，页面顶部显示阅读进度条。已读词条数在元数据区展示，下次打开时恢复阅读位置。',
-          },
-          {
-            icon: '↓', label: '导出为图片',
-            link: null, linkLabel: null,
-            desc: '在任意已发布冰山图详情页点击「导出为图片」，可生成带二维码和平台水印的 PNG 信息图，支持浅色/深色主题切换。',
-          },
-          {
-            icon: '⎇', label: '编辑器快捷键',
-            link: null, linkLabel: null,
-            desc: '冰山图编辑器中按下 Ctrl+N 可快速在当前最后一层新增词条，Ctrl+Shift+N 新增层级，大幅提升编辑效率。',
+            desc: '统一的功能入口页，列出所有可用页面和功能模块。从导航栏「功能」下拉或 Footer 链接进入。',
           },
           {
             icon: '{}', label: 'API 文档',
@@ -623,22 +451,26 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
                   <a href={link} class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">{linkLabel}</a>
                 )}
               </div>
-              <p class="text-[11px] font-mono text-text-body leading-relaxed">{desc}</p>
+              <p class="text-[11px] font-mono text-text-body leading-relaxed" set:html={desc}></p>
             </div>
           </div>
         ))}
       </div>
     </section>
 
-    <!-- ── 09 常见问题 ── -->
+    <!-- ── 07 常见问题 ── -->
     <section id="faq" class="mb-10">
       <div class="flex items-center gap-2 mb-4">
-        <span class="text-[10px] font-mono text-purple tracking-widest">09 · 常见问题</span>
+        <span class="text-[10px] font-mono text-success tracking-widest">07 · 常见问题</span>
         <div class="flex-1 border-t border-border-minimal"></div>
       </div>
 
       <div class="space-y-2" id="faq-list">
         {[
+          {
+            q: '冰山图和百科有什么区别？',
+            a: '百科追求面面俱到的中立记述，而冰山图按"认知深度"分层组织知识——顶层是大众常识，底层是极小众的冷门内容。冰山图更适合呈现一个主题的"探索感"，让读者从熟悉走向未知。两者并不互斥，冰山图描述中可以引用百科来源。',
+          },
           {
             q: '我的冰山图提交后多久会被审核？',
             a: '一般 24–48 小时内由 EDITOR 审核。平台活跃度较低时可能稍长。含 NSFW 内容的会进入专项队列，时间不定。',
@@ -646,6 +478,10 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           {
             q: '冰山图被驳回后我该怎么做？',
             a: '你会收到站内通知，并附有驳回原因。根据原因修改草稿（尤其是层级结构、描述质量、NSFW 标签）后，可重新提交审核。',
+          },
+          {
+            q: '什么样的内容会被驳回？',
+            a: '无事实依据的内容、层级梯度不合理（上层常识和底层内容区分不明显）、词条描述覆盖率低于 50%、NSFW 内容未打标、含广告/垃圾信息、与主题无关、重复提交相似主题等情况均可能被驳回。',
           },
           {
             q: '我能修改已发布的冰山图吗？',
@@ -657,23 +493,35 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           },
           {
             q: '创建分是在什么时候发放？',
-            a: '不是新建草稿就给分。仅在“新冰山图首次提交审核”时发放 +5，且每日最多计 2 次；驳回后再次提交不重复发放。',
+            a: '不是新建草稿就给分。仅在"新冰山图首次提交审核"时发放 +5，且每日最多计 2 次；驳回后再次提交不重复发放。',
           },
           {
             q: '我已经是 CONTRIBUTOR，什么时候可以申请 RfA？',
-            a: '需满足：质量分达到门槛且注册天数达到要求（见规则页）。同一时刻只能有一个进行中的 RfA，失败后有冷却期。',
+            a: '需满足：质量分达到门槛且注册天数达到要求（见 /rules 规则页）。同一时刻只能有一个进行中的 RfA，失败后有冷却期。',
           },
           {
-            q: '什么样的内容会被驳回？',
-            a: '无事实依据的内容、层级梯度不合理、词条描述覆盖率低于 50%、NSFW 内容未打标、含广告/垃圾信息、与主题无关等情况均可能被驳回。',
+            q: '小作品（Stub）标记是什么？',
+            a: '词条数少于 5 个显示 🌱，词条数少于 10 个且描述覆盖率低于 30% 显示 🔧。这是自动评估标记，提示该作品内容尚浅，欢迎作者继续完善。',
+          },
+          {
+            q: '如何找到感兴趣的主题？',
+            a: '推荐三种方式：① 访问 <strong class="text-text-hi">/topic 主题门户</strong>，按 35 种分类浏览冰山图和创意，每个主题有独立页面展示该分类下的所有内容；② 在冰山广场使用 <strong class="text-text-hi">Ctrl+K 全局搜索</strong> 按关键字查找；③ 使用广场的 <strong class="text-text-hi">随机浏览</strong> 功能和排行榜发现热门或冷门佳作。',
+          },
+          {
+            q: '如何参与专题协作？',
+            a: '前往 <strong class="text-text-hi">/projects</strong> 浏览现有项目，点击「申请加入」等待审批；或自己创建一个新专题项目，设置主题和邀请方式。加入后可使用看板协调任务、在讨论区交流、共同编辑关联到项目的冰山图。也可将创意板条目链接到项目中供成员认领。',
+          },
+          {
+            q: '词条标签有什么用？',
+            a: '平台提供 <strong class="text-text-hi">169 种标签</strong>（标记/内容/来源三大类），用于标注词条的属性。标签帮助读者按类型筛选过滤词条（如在详情页只看 NSFW 警示内容或只看学术来源内容），也增强了内容的可发现性。编辑器中标签按 emoji 类别折叠展开，使用方便。漏打 NSFW 标签会导致冰山图被驳回。',
           },
           {
             q: '搜索功能怎么用？',
-            a: '点击导航栏搜索框或按 Ctrl+K（Mac 上是 ⌘K）打开全局搜索，输入至少 2 个字即可搜索已发布的冰山图标题。',
+            a: '点击导航栏搜索框或按 Ctrl+K（Mac 上是 ⌘K）打开全局搜索，输入至少 2 个字即可搜索已发布的冰山图标题。在冰山详情页内也可搜索过滤当前作品的词条。',
           },
           {
             q: '如何反馈 bug 或建议？',
-            a: '前往反馈页（/feedback）提交问题或建议，管理员会查看并回复。',
+            a: '前往反馈页（/feedback）提交问题或建议，管理员会查看并回复。也可在创意板上以「Bug 反馈」或「功能建议」模板提交，供社区讨论。',
           },
         ].map(({ q, a }, i) => (
           <div class="border border-border-minimal bg-surface-2 overflow-hidden">
@@ -687,7 +535,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
               <span class="ml-auto text-text-mid font-mono text-xs flex-shrink-0 faq-arrow">+</span>
             </button>
             <div class="faq-body px-4 pb-0 max-h-0 overflow-hidden transition-all duration-200">
-              <p class="text-[11px] font-mono text-text-body leading-relaxed pb-3 border-t border-border-minimal pt-2">{a}</p>
+              <p class="text-[11px] font-mono text-text-body leading-relaxed pb-3 border-t border-border-minimal pt-2" set:html={a}></p>
             </div>
           </div>
         ))}
@@ -697,6 +545,9 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
     <!-- 底部链接 -->
     <div class="flex items-center justify-between flex-wrap gap-4 border-t border-border-minimal pt-6">
       <div class="flex gap-4">
+        <a href="/guide/writing" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
+          查看撰写指南 →
+        </a>
         <a href="/rules" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
           查看完整规则 →
         </a>

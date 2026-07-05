@@ -52,12 +52,11 @@ export async function PUT(event: APIContext) {
     });
 
     if (report.filerId) {
-      const resultText = action === 'RESOLVED_ACTION' ? '已采取处理措施' : '举报已记录，暂不处理';
       notify(
         report.filerId,
         'report_resolved',
-        '你的举报已被处理',
-        `${resultText}。处理说明：${resolution.trim()}`,
+        '你的举报已处理',
+        `处理结果：${resolution.trim()}`,
       );
     }
 

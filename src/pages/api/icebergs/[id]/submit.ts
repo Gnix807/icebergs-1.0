@@ -15,6 +15,16 @@ import { runChecklist } from '../../../../lib/checklist';
 const CREATE_SCORE_DELTA = 5;
 const CREATE_SCORE_DAILY_LIMIT = 2;
 
+async function isProjectMember(userId: string, projectId: string | null): Promise<boolean> {
+  if (!projectId) return false;
+  try {
+    const m = await prisma.projectMember.findFirst({
+      where: { projectId, userId },
+    });
+    return !!m;
+  } catch { return false; }
+}
+
 export async function POST(event: APIContext) {
   try {
     const session = await getSession(event);
@@ -49,8 +59,9 @@ export async function POST(event: APIContext) {
 
     if (!iceberg) return json(error(ErrorCodes.NOT_FOUND, '冰山图不存在'), 404);
 
-    // Only the author can submit
-    if (iceberg.authorId !== session.userId) {
+    // Only the author or project members can submit
+    const inProject = await isProjectMember(session.userId, iceberg.projectId);
+    if (iceberg.authorId !== session.userId && !inProject) {
       return json(error(ErrorCodes.FORBIDDEN, '无权操作'), 403);
     }
 

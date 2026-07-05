@@ -7,9 +7,7 @@ export async function GET(event: APIContext) {
   const project = await prisma.project.findUnique({ where: { slug: event.params.slug }, select: { id: true } });
   if (!project) return json(error(ErrorCodes.NOT_FOUND, '专题不存在'), 404);
   const discussions = await prisma.projectDiscussion.findMany({
-    where: { projectId: project.id },
-    orderBy: { createdAt: 'desc' },
-    take: 50,
+    where: { projectId: project.id }, orderBy: { createdAt: 'desc' }, take: 50,
     select: { id: true, content: true, createdAt: true, user: { select: { id: true, nickname: true, username: true, avatar: true } } },
   });
   return json(success({ discussions }), 200);

@@ -110,6 +110,11 @@ function evaluateBlock(cond: BlockCondition, ctx: AchievementContext): boolean {
     case 'randomCount':             ctxValue = ctx.stats.randomCount; break;
     case 'nightReadCount':          ctxValue = ctx.stats.nightReadCount; break;
     case 'triggerType':             ctxValue = ctx.triggerType; break;
+    case 'projectJoinedCount':      ctxValue = ctx.user.projectJoinedCount; break;
+    case 'projectCreatedCount':     ctxValue = ctx.user.projectCreatedCount; break;
+    case 'ideaSubmittedCount':      ctxValue = ctx.user.ideaSubmittedCount; break;
+    case 'taskCompletedCount':      ctxValue = ctx.user.taskCompletedCount; break;
+    case 'collabEditCount':         ctxValue = ctx.user.collabEditCount; break;
     default:                        return false;
   }
 
