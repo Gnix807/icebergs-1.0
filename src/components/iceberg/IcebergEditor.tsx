@@ -200,7 +200,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
   const getDraftStorageKey = useCallback((target: Iceberg | null = null) => {
     if (target && !target.id.startsWith('temp_')) return `${DRAFT_STORAGE_PREFIX}${target.id}`;
-    if (icebergId && icebergId !== 'new') return `${DRAFT_STORAGE_PREFIX}${icebergId}`;
+    if (icebergId && icebergId !== 'new' && icebergId !== 'imported') return `${DRAFT_STORAGE_PREFIX}${icebergId}`;
     return `${DRAFT_STORAGE_PREFIX}new`;
   }, [icebergId]);
 
@@ -405,7 +405,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
   // 加载现有冰山图
   useEffect(() => {
-    if (!icebergId || icebergId === 'new') return;
+    if (!icebergId || icebergId === 'new' || icebergId === 'imported') return;
     if (iceberg && !iceberg.id.startsWith('temp_')) return;
 
     setLoading(true);
