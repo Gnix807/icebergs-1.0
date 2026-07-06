@@ -301,9 +301,6 @@ if (iceberg?.status === 'PUBLISHED') {
         )}
 
         {/* ── Header ─────────────────────────────────────── */}
-        {iceberg.coverImage && (
-          <div class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true" style={`background: url(${iceberg.coverImage}) center/cover no-repeat fixed; opacity: 0.08; z-index: 0`}></div>
-        )}
         <header class="mb-10 reveal relative z-[1]">
           <div class="text-xs text-text-body font-mono mb-3 flex items-center gap-2">
             <a href="/iceberg/list" class="hover:text-brand transition-colors">冰山图列表</a>
