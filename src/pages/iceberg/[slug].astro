@@ -16,7 +16,6 @@ const sessionId = Astro.cookies.get('session')?.value;
 const session   = await getSessionById(sessionId);
 const isLoggedIn = !!session;
 const isAdmin = !!(session?.isFounder || session?.role === 'ADMIN');
-const isAuthor = !!(session && iceberg?.authorId === session.userId);
 const canPreviewUnpublished = !!session && (session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR');
 
 let iceberg: any = null;
@@ -25,6 +24,7 @@ let linkedIdea: any = null;
 let readCount = 0;
 let stubLevel: string | null = null;
 let canEdit = false;
+let isAuthor = false;
 try {
   if (slug) {
     const whereClause: any = { OR: [{ slug }, { id: slug }] };
@@ -73,8 +73,10 @@ try {
     if (iceberg) {
       try { linkedIdea = await prisma.idea.findFirst({ where: { icebergId: iceberg.id }, select: { id: true, title: true } }); } catch {}
       canEdit = false;
+      let isAuthor = false;
       if (session) {
-        canEdit = session.userId === iceberg.authorId || session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
+        isAuthor = session.userId === iceberg.authorId;
+        canEdit = isAuthor || session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
         if (!canEdit && iceberg.projectId) {
           const member = await prisma.projectMember.findFirst({ where: { projectId: iceberg.projectId, userId: session.userId } });
           canEdit = !!member;
