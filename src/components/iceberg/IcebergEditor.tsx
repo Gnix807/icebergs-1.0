@@ -1358,7 +1358,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
             <span className="text-brand font-mono text-xs">▶</span>
             <span className="font-mono text-xs text-text-hi tracking-widest">冰山图::编辑器</span>
             {iceberg.id.startsWith('temp_') && (
-              <a href="/iceberg/import" className="font-mono text-[10px] text-text-mid hover:text-brand transition-colors ml-2">📥 导入</a>
+              <a href="/iceberg/import" className="font-mono text-[10px] border border-border px-2 py-1 text-text-body hover:border-brand hover:text-brand transition-colors">📥 导入</a>
             )}
           </div>
           <div className="flex items-center gap-2">

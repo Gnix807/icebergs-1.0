@@ -56,8 +56,8 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
       </div>
 
       <div class="border border-border-minimal bg-surface-2 p-4 mb-3">
-        <p class="text-[11px] font-mono text-text-body leading-relaxed mb-3">冰山图是一种将某一主题的知识按"大众认知 → 深层奥秘"分层呈现的结构化内容形式。就像冰山一样，浮出水面的只是表层，而真正庞大而有趣的部分藏在水面之下。</p>
-        <p class="text-[11px] font-mono text-text-body leading-relaxed mb-3">例如，一张关于"宇宙"的冰山图，顶层可能是"太阳系""银河系"这样的常识；往下则是"暗物质""弦理论"；更深处是"时间的本质""多宇宙猜想"……每一层都比上一层更冷门、更深入、更令人震惊。</p>
+        <p class="text-[11px] font-mono text-text-body leading-relaxed mb-3">冰山图是一种将某一主题的知识按「大众认知 → 深层奥秘」分层呈现的结构化内容形式。就像冰山一样，浮出水面的只是表层，而真正庞大而有趣的部分藏在水面之下。</p>
+        <p class="text-[11px] font-mono text-text-body leading-relaxed mb-3">例如，一张关于「宇宙」的冰山图，顶层可能是「太阳系」「银河系」这样的常识；往下则是「暗物质」「弦理论」；更深处是「时间的本质」「多宇宙猜想」……每一层都比上一层更冷门、更深入、更令人震惊。</p>
         <p class="text-[11px] font-mono text-text-body leading-relaxed">本平台围绕冰山图构建了一个完整的内容社区 —— 你不仅可以浏览和创作冰山图，还能通过 <strong class="text-text-hi">主题门户</strong> 按 35 个分类探索内容、在 <strong class="text-text-hi">精选区</strong> 发现高质量作品、通过 <strong class="text-text-hi">排行榜</strong> 了解社区热门趋势，以及参与 <strong class="text-text-hi">专题协作</strong> 与他人共同策划大型主题。</p>
       </div>
 
@@ -105,7 +105,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
         {[
           {
             step: '注册 / 登录',
-            desc: '点击右上角"登录"，支持 GitHub 账号或邮箱注册。新账号默认为 USER 角色，登录后解锁投票、评论、收藏、创建冰山图等全部互动功能。',
+            desc: '点击右上角「登录」，支持 GitHub 账号或邮箱注册。新账号默认为 USER 角色，登录后解锁投票、评论、收藏、创建冰山图等全部互动功能。',
             color: '#30363d',
           },
           {
@@ -149,13 +149,17 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
 
       <div class="space-y-3">
 
+        <div class="border border-border-minimal bg-surface-2 p-4 mb-3 text-[11px] font-mono text-text-body">
+          <p class="leading-relaxed mb-3">除了从零开始创作，你也可以从 <strong class="text-text-hi">icebergthreads.com</strong> 导入已有的冰山图数据。在编辑器中点击导入按钮，粘贴 icebergthreads.com 上的冰山图链接，系统将自动解析层级和词条结构，导入后可在编辑器中继续修改和完善。</p>
+        </div>
+
         <!-- 字段说明 -->
         <div class="border border-border-minimal bg-surface-2 p-4">
           <div class="text-[10px] font-mono text-text-body mb-3">字段说明</div>
           <div class="space-y-3 text-[11px] font-mono">
             <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">标题</span>
-              <span class="text-text-body">冰山图的主题名称。至少 <strong class="text-text-hi">5 个字</strong>，简洁说明主题即可，例如"日本近代史""深海生物演化""量子力学入门"。</span>
+              <span class="text-text-body">冰山图的主题名称。至少 <strong class="text-text-hi">5 个字</strong>，简洁说明主题即可，例如「日本近代史」「深海生物演化」「量子力学入门」。</span>
             </div>
             <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">摘要</span>
@@ -163,11 +167,11 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
             </div>
             <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">主题</span>
-              <span class="text-text-body">从 35 种主题分类中选择一个，如"历史""科学""哲学""游戏"等。主题分类帮助读者按兴趣浏览内容，也用于 /topic 门户页的索引。</span>
+              <span class="text-text-body">从 35 种主题分类中选择一个，如「历史」「科学」「哲学」「游戏」等。主题分类帮助读者按兴趣浏览内容，也用于 /topic 门户页的索引。</span>
             </div>
             <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">层级</span>
-              <span class="text-text-body">代表知识深度的分层。至少需要 <strong class="text-text-hi">3 层</strong>，可自定义层名（如"水面""浅水区""深水区""深渊"）。关于层级设计和命名的详细规范，请参阅撰写指南。</span>
+              <span class="text-text-body">代表知识深度的分层。至少需要 <strong class="text-text-hi">3 层</strong>，可自定义层名（如「水面」「浅水区」「深水区」「深渊」）。关于层级设计和命名的详细规范，请参阅撰写指南。</span>
             </div>
             <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">词条</span>
@@ -246,7 +250,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           },
           {
             icon: '▣', label: '任务看板',
-            desc: '每个项目内置看板（Kanban），按"待开始 / 进行中 / 已完成"三列管理任务。成员可创建任务卡片，设置标题、描述、优先级和指派成员。拖动卡片切换状态，整个项目的进度一目了然。适合协调多人分工的大型冰山图系列创作。',
+            desc: '每个项目内置看板（Kanban），按「待开始 / 进行中 / 已完成」三列管理任务。成员可创建任务卡片，设置标题、描述、优先级和指派成员。拖动卡片切换状态，整个项目的进度一目了然。适合协调多人分工的大型冰山图系列创作。',
           },
           {
             icon: '◈', label: '成员管理',
@@ -284,7 +288,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
       </div>
 
       <div class="border border-border-minimal bg-surface-2 p-4 mb-3 text-[11px] font-mono text-text-body">
-        <p class="leading-relaxed mb-3">创意板是一个社区协作空间，任何人都可以在这里提交冰山图创意、Bug 反馈或功能建议，供其他创作者认领和实现。它像是社区的"需求池"——有想法但没时间做？提交创意让其他人来实现。想创作但缺灵感？浏览创意板找到你感兴趣的主题。</p>
+        <p class="leading-relaxed mb-3">创意板是一个社区协作空间，任何人都可以在这里提交冰山图创意、Bug 反馈或功能建议，供其他创作者认领和实现。它像是社区的「需求池」——有想法但没时间做？提交创意让其他人来实现。想创作但缺灵感？浏览创意板找到你感兴趣的主题。</p>
         <p class="leading-relaxed">前往 <a href="/ideas" class="text-brand hover:underline border-b border-brand/30">/ideas</a> 浏览创意或提交新点子。</p>
       </div>
 
@@ -292,7 +296,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
         {[
           {
             icon: '◉', label: '看板视图与列表视图',
-            desc: '创意板支持两种浏览模式：<strong class="text-text-hi">看板视图</strong> 按"待认领 / 已认领 / 已完成"三列分组展示，类似项目管理的 Kanban 风格；<strong class="text-text-hi">列表视图</strong> 按时间线排列所有创意，适合快速浏览最新提交。可通过页面切换按钮随时切换视图。',
+            desc: '创意板支持两种浏览模式：<strong class="text-text-hi">看板视图</strong> 按「待认领 / 已认领 / 已完成」三列分组展示，类似项目管理的 Kanban 风格；<strong class="text-text-hi">列表视图</strong> 按时间线排列所有创意，适合快速浏览最新提交。可通过页面切换按钮随时切换视图。',
           },
           {
             icon: '⊞', label: '主题筛选与排序',
@@ -304,7 +308,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           },
           {
             icon: '?', label: '认领与实现',
-            desc: '看到感兴趣的创意？点击「认领」按钮即可将其标记为"已认领"，其他人看到后就不会重复认领。完成创作后将冰山图链接到创意条目，再标记为"已完成"即可。一个创意可被多人认领，鼓励多个版本百花齐放。',
+            desc: '看到感兴趣的创意？点击「认领」按钮即可将其标记为「已认领」，其他人看到后就不会重复认领。完成创作后将冰山图链接到创意条目，再标记为「已完成」即可。一个创意可被多人认领，鼓励多个版本百花齐放。',
           },
           {
             icon: '#', label: '短 ID 与评论区引用',
@@ -364,7 +368,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           {
             icon: '♡', label: '收藏与收藏夹',
             link: null, linkLabel: null,
-            desc: '登录后可收藏感兴趣的冰山图，在个人主页的"收藏"标签页中集中查看和管理。收藏内容按时间排序，支持取消收藏。',
+            desc: '登录后可收藏感兴趣的冰山图，在个人主页的「收藏」标签页中集中查看和管理。收藏内容按时间排序，支持取消收藏。',
           },
           {
             icon: '◈', label: '关注与动态流',
@@ -399,12 +403,12 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           {
             icon: '◆', label: '个人主页',
             link: null, linkLabel: null,
-            desc: '查看个人发布的冰山图、收藏、评论、质量分积分记录、成就等。点击他人头像/用户名也可访问其主页，查看其公开作品和动态。',
+            desc: '查看个人发布的冰山图、收藏、评论、质量分积分记录、成就（含稀有度等级）等。点击他人头像/用户名也可访问其主页，查看其公开作品和动态。',
           },
           {
             icon: '⬙', label: '用户框',
             link: null, linkLabel: null,
-            desc: '个人主页展示的装饰性标签。在「设置 → 用户框定制」中选择，从多类别预设框中挑选，默认最多 3 个。解锁更多社区成就可扩展至 6 个。部分框需特定成就才能选用。',
+            desc: '个人主页展示的装饰性标签。在「设置 → 用户框定制」中选择，从多类别预设框中挑选，默认最多 3 个。解锁更多社区成就可扩展至 6 个，成就拥有稀有度等级（普通/稀有/史诗/传说），稀有度越高越难得。部分框需特定成就才能选用。',
           },
           {
             icon: '◉', label: '小作品（Stub）标记',
@@ -469,7 +473,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
         {[
           {
             q: '冰山图和百科有什么区别？',
-            a: '百科追求面面俱到的中立记述，而冰山图按"认知深度"分层组织知识——顶层是大众常识，底层是极小众的冷门内容。冰山图更适合呈现一个主题的"探索感"，让读者从熟悉走向未知。两者并不互斥，冰山图描述中可以引用百科来源。',
+            a: '百科追求面面俱到的中立记述，而冰山图按「认知深度」分层组织知识——顶层是大众常识，底层是极小众的冷门内容。冰山图更适合呈现一个主题的「探索感」，让读者从熟悉走向未知。两者并不互斥，冰山图描述中可以引用百科来源。',
           },
           {
             q: '我的冰山图提交后多久会被审核？',
@@ -493,7 +497,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           },
           {
             q: '创建分是在什么时候发放？',
-            a: '不是新建草稿就给分。仅在"新冰山图首次提交审核"时发放 +5，且每日最多计 2 次；驳回后再次提交不重复发放。',
+            a: '不是新建草稿就给分。仅在「新冰山图首次提交审核」时发放 +5，且每日最多计 2 次；驳回后再次提交不重复发放。',
           },
           {
             q: '我已经是 CONTRIBUTOR，什么时候可以申请 RfA？',
