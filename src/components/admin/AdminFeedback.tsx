@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react';
+import { toast } from '../ui/Toast';
 
 interface Feedback {
   id: string;
@@ -59,6 +60,7 @@ export function AdminFeedback() {
   const [noteMap, setNoteMap]           = useState<Record<string, string>>({});
   const [saving, setSaving]             = useState<string | null>(null);
   const [deleting, setDeleting]         = useState<string | null>(null);
+  const [deleteConfirming, setDeleteConfirming] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/admin/feedback')
@@ -93,14 +95,13 @@ export function AdminFeedback() {
   }
 
   async function deleteFeedback(id: string) {
-    if (!window.confirm('确认删除这条反馈？删除后不可恢复。')) return;
-
     setDeleting(id);
+    setDeleteConfirming(null);
     try {
       const res = await fetch(`/api/admin/feedback/${id}`, { method: 'DELETE' });
       const d = await res.json();
       if (!d.success) {
-        alert(d.error?.message || '删除失败');
+        toast(d.error?.message || '删除失败', 'error');
         return;
       }
 
@@ -112,7 +113,7 @@ export function AdminFeedback() {
       });
       if (resolving === id) setResolving(null);
     } catch {
-      alert('删除失败，请稍后重试');
+      toast('删除失败，请稍后重试', 'error');
     } finally {
       setDeleting(null);
     }
@@ -276,11 +277,12 @@ export function AdminFeedback() {
                       </button>
                     )}
                     <button
-                      onClick={() => deleteFeedback(fb.id)}
+                      onClick={() => deleteConfirming === fb.id ? deleteFeedback(fb.id) : setDeleteConfirming(fb.id)}
                       disabled={deleting === fb.id}
-                      className="text-xs font-mono px-3 py-1 border border-[#7f1d1d] text-danger hover:bg-danger/10 transition-colors disabled:opacity-50"
+                      className={`text-xs font-mono px-3 py-1 border transition-colors disabled:opacity-50 ${deleteConfirming === fb.id ? 'border-danger bg-danger/10 text-danger' : 'border-[#7f1d1d] text-danger hover:bg-danger/10'}`}
                     >
-                      {deleting === fb.id ? '删除中...' : '删除'}
+                      {deleting === fb.id ? '删除中...' : deleteConfirming === fb.id ? '再次确认删除' : '删除'}
+                    </button>
                     </button>
                   </div>
                 )}

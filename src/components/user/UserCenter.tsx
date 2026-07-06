@@ -1028,9 +1028,9 @@ export function UserCenter({
                 try {
                   const res = await fetch('/api/achievements/recheck', { method: 'POST' });
                   const data = await res.json();
-                  alert(data.data?.message || data.error?.message || '复核完成');
+                  toast(data.data?.message || '复核完成');
                   window.location.reload();
-                } catch { alert('检测失败'); }
+                } catch { toast('检测失败', 'error'); }
               }} className="text-[10px] font-mono text-text-mid hover:text-brand border border-border-subtle px-1.5 py-0.5 transition-colors ml-auto">
                 🔄 检测
               </button>
@@ -1331,7 +1331,6 @@ function AwardModal({ userId, isLeaving, onClose, existingAwards, isLight }: {
   };
 
   const revoke = async (type: string, awardId: string) => {
-    if (!window.confirm('确认撤回该勋章？')) return;
     setRevokingType(type);
     setError(null);
     try {

@@ -477,6 +477,7 @@ export function AdminAchievements() {
   const [loading, setLoading]           = useState(true);
   const [expandedId, setExpandedId]     = useState<string | null>(null);
   const [deleting, setDeleting]         = useState<string | null>(null);
+  const [deleteConfirming, setDeleteConfirming] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState('全部');
 
   const load = async () => {
@@ -495,8 +496,8 @@ export function AdminAchievements() {
   };
 
   const deleteAch = async (ach: AchievementDef) => {
-    if (!confirm(`确认删除「${ach.labelZh}」？`)) return;
     setDeleting(ach.id);
+    setDeleteConfirming(null);
     try {
       const res  = await fetch(`/api/admin/achievements/${ach.id}`, { method: 'DELETE' });
       const data = await res.json();
@@ -611,9 +612,11 @@ export function AdminAchievements() {
                       <ChevronDown size={12} strokeWidth={2}
                         style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
                     </button>
-                    <button onClick={() => deleteAch(ach)} disabled={deleting === ach.id}
-                      className="text-[10px] font-mono text-text-body hover:text-danger transition-colors">
-                      {deleting === ach.id ? '...' : '删除'}
+                    <button 
+                      onClick={() => deleteConfirming === ach.id ? deleteAch(ach) : setDeleteConfirming(ach.id)} 
+                      disabled={deleting === ach.id}
+                      className={`text-[10px] font-mono transition-colors ${deleteConfirming === ach.id ? 'text-danger font-bold' : 'text-text-body hover:text-danger'}`}>
+                      {deleting === ach.id ? '...' : deleteConfirming === ach.id ? '再次确认' : '删除'}
                     </button>
                   </div>
                 </div>

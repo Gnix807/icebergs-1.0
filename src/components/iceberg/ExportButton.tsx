@@ -1,4 +1,5 @@
 ﻿import React from 'react';
+import { toast } from '../ui/Toast';
 
 interface TierData {
   name: string;
@@ -300,7 +301,7 @@ export function ExportButton({ icebergTitle, tiers, icebergUrl }: ExportButtonPr
       link.click();
     } catch (err) {
       console.error('导出失败:', err);
-      alert('导出失败，请重试');
+      toast('导出失败，请重试');
     } finally {
       setIsExporting(false);
     }
