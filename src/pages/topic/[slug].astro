@@ -84,9 +84,11 @@ const totalIcebergs = newest.length; // approximation
               ))}
               {featuredIcebergs.length > 1 && (
                 <div class="flex items-center justify-center gap-1.5 pb-2">
-                  <button class="featured-dot w-1.5 h-1.5 rounded-full bg-warning/30 aria-[current=page]:bg-warning aria-[current=page]:w-3 transition-all" data-dot="0" aria-current="page"></button>
-                  {featuredIcebergs.slice(1).map((_, i) => (
-                    <button class="featured-dot w-1.5 h-1.5 rounded-full bg-warning/30 transition-all" data-dot={String(i + 1)}></button>
+                  {featuredIcebergs.map((_, i) => (
+                    <button class="featured-dot w-1.5 h-1.5 rounded-full border-0 cursor-pointer transition-all"
+                      data-dot={String(i)}
+                      style={`background: ${i === 0 ? '#f59e0b' : 'rgba(245,158,11,0.3)'}; width: ${i === 0 ? '12px' : '6px'}`}
+                    ></button>
                   ))}
                 </div>
               )}
@@ -166,7 +168,10 @@ const totalIcebergs = newest.length; // approximation
     var current = 0;
     function showSlide(n) {
       slides.forEach(function(s, i) { s.style.display = i === n ? '' : 'none'; });
-      dots.forEach(function(d, i) { d.setAttribute('aria-current', i === n ? 'page' : 'false'); });
+      dots.forEach(function(d, i) {
+        d.style.background = i === n ? '#f59e0b' : 'rgba(245,158,11,0.3)';
+        d.style.width = i === n ? '12px' : '6px';
+      });
       current = n;
     }
     dots.forEach(function(dot) {
