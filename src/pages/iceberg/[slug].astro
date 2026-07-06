@@ -943,20 +943,11 @@ if (iceberg?.status === 'PUBLISHED') {
     var resetBtn = document.getElementById('filter-reset');
     if (resetBtn) resetBtn.classList.toggle('hidden', !isFiltered);
 
-    // Tier button styles
+    // Tier button styles — use class toggling for prominence
     document.querySelectorAll('[data-tier-filter]').forEach(function (btn) {
       var val = btn.dataset.tierFilter;
       var isActive = val === 'all' ? activeTier === null : parseInt(val, 10) === activeTier;
-      var color = btn.style.getPropertyValue('--filter-color') || '#00FF41';
-      if (isActive) {
-        btn.style.borderColor = color;
-        btn.style.color = color;
-        btn.style.backgroundColor = color + '18';
-      } else {
-        btn.style.removeProperty('border-color');
-        btn.style.removeProperty('color');
-        btn.style.removeProperty('background-color');
-      }
+      btn.classList.toggle('active', isActive);
     });
 
     // Label button styles — CSS vars handle color, JS toggles active class
@@ -1097,10 +1088,25 @@ if (iceberg?.status === 'PUBLISHED') {
     border-color: var(--color-border);
     color: var(--color-text-body);
     background-color: transparent;
+    transition: all 0.2s ease;
   }
   .filter-btn:hover {
     border-color: var(--color-text-body);
     color: var(--color-text-hi);
+  }
+  .filter-btn.active {
+    border-color: var(--filter-color, #00FF41);
+    color: var(--filter-color, #00FF41);
+    background-color: var(--color-surface-2);
+    font-weight: bold;
+    box-shadow: inset 0 0 0 1px var(--filter-color, #00FF41);
+  }
+  .filter-btn.active[data-tier-filter="all"] {
+    --filter-color: #00FF41;
+  }
+  html.light .filter-btn.active {
+    background-color: #f0fff4;
+    box-shadow: inset 0 0 0 1px var(--filter-color, #00FF41);
   }
   html.light #filter-bar {
     background-color: #f8fafc;
