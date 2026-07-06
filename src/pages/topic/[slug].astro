@@ -9,10 +9,11 @@ const { slug } = Astro.params;
 const topicDef = ICEBERG_TOPICS.find(t => t.value === slug);
 if (!topicDef) return Astro.redirect('/ideas');
 
-const [featured, newest, popular, openIdeas, topAuthors] = await Promise.all([
-  prisma.iceberg.findFirst({
+const [featuredIcebergs, newest, popular, openIdeas, topAuthors] = await Promise.all([
+  prisma.iceberg.findMany({
     where: { topic: slug, status: 'PUBLISHED', featured: true },
     orderBy: { createdAt: 'desc' },
+    take: 10,
     select: { id: true, slug: true, title: true, viewCount: true, _count: { select: { tiers: true } } },
   }),
   prisma.iceberg.findMany({
@@ -68,16 +69,28 @@ const totalIcebergs = newest.length; // approximation
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2 space-y-6">
 
-        {featured && (
+        {featuredIcebergs.length > 0 && (
           <section class="reveal">
             <div class="text-[10px] font-mono text-warning tracking-widest mb-2">📌 精选</div>
-            <a href={`/iceberg/${featured.slug || featured.id}`} class="block p-4 border border-warning/30 bg-warning/5 hover:border-warning transition-colors">
-              <h3 class="text-sm font-mono font-bold text-text-hi">{featured.title}</h3>
-              <div class="flex items-center gap-3 mt-2 text-[10px] font-mono text-text-mid">
-                <span>{featured._count.tiers} 层</span>
-                <span>{featured.viewCount.toLocaleString()} 浏览</span>
-              </div>
-            </a>
+            <div id="featured-carousel" class="relative overflow-hidden border border-warning/30 bg-warning/5 hover:border-warning transition-colors">
+              {featuredIcebergs.map((f, i) => (
+                <a href={`/iceberg/${f.slug || f.id}`} class="featured-slide block p-4" data-index={String(i)} style={i === 0 ? '' : 'display:none'}>
+                  <h3 class="text-sm font-mono font-bold text-text-hi">{f.title}</h3>
+                  <div class="flex items-center gap-3 mt-2 text-[10px] font-mono text-text-mid">
+                    <span>{f._count.tiers} 层</span>
+                    <span>{f.viewCount.toLocaleString()} 浏览</span>
+                  </div>
+                </a>
+              ))}
+              {featuredIcebergs.length > 1 && (
+                <div class="flex items-center justify-center gap-1.5 pb-2">
+                  <button class="featured-dot w-1.5 h-1.5 rounded-full bg-warning/30 aria-[current=page]:bg-warning aria-[current=page]:w-3 transition-all" data-dot="0" aria-current="page"></button>
+                  {featuredIcebergs.slice(1).map((_, i) => (
+                    <button class="featured-dot w-1.5 h-1.5 rounded-full bg-warning/30 transition-all" data-dot={String(i + 1)}></button>
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
         )}
 
@@ -144,3 +157,21 @@ const totalIcebergs = newest.length; // approximation
     </div>
   </main>
 </Layout>
+
+<script>
+  // 精选滚动轮播
+  var slides = document.querySelectorAll('.featured-slide');
+  var dots = document.querySelectorAll('.featured-dot');
+  if (slides.length > 1) {
+    var current = 0;
+    function showSlide(n) {
+      slides.forEach(function(s, i) { s.style.display = i === n ? '' : 'none'; });
+      dots.forEach(function(d, i) { d.setAttribute('aria-current', i === n ? 'page' : 'false'); });
+      current = n;
+    }
+    dots.forEach(function(dot) {
+      dot.addEventListener('click', function() { showSlide(parseInt(this.dataset.dot)); });
+    });
+    setInterval(function() { showSlide((current + 1) % slides.length); }, 4000);
+  }
+</script>
