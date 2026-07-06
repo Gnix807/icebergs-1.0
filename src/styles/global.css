@@ -54,11 +54,10 @@
 }
 
 html {
-  font-family: 'MiSans Normal', 'PingFang SC', 'Microsoft YaHei', 'Source Han Sans SC', 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  font-family: 'Space Grotesk', 'MiSans', 'PingFang SC', 'Source Han Sans SC', system-ui, sans-serif;
   font-size: clamp(17px, 16.4px + 0.24vw, 18.2px);
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.01em;
-  font-synthesis: none;
   scroll-behavior: smooth;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -69,13 +68,13 @@ input,
 textarea,
 select,
 button {
-  font-family: 'MiSans Normal', 'PingFang SC', 'Microsoft YaHei', 'Source Han Sans SC', 'Space Grotesk', system-ui, -apple-system, sans-serif;
-  font-weight: 500;
+  font-family: 'Space Grotesk', 'MiSans', 'PingFang SC', 'Source Han Sans SC', system-ui, sans-serif;
+  font-weight: 600;
 }
 
 /* 正文 */
 p, li, td, th, blockquote {
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.75;
 }
 h1, h2, h3, h4, h5, h6 {
@@ -155,7 +154,8 @@ canvas {
 
 /* 等宽字体：标题、层级编号、标签 */
 .font-mono {
-  font-family: 'Space Mono', 'MiSans Normal', 'system-ui', 'PingFang SC', 'Microsoft YaHei', monospace;
+  font-family: 'Space Mono', 'MiSans', 'PingFang SC', monospace;
+  font-weight: 500;
 }
 
 /* CRT 扫描线效果 */
@@ -516,7 +516,7 @@ a:focus-visible,
 /* Markdown 内容样式 */
 .markdown-content {
   overflow-wrap: anywhere;
-  font-family: 'MiSans Normal', 'PingFang SC', 'Microsoft YaHei', 'Source Han Sans SC', sans-serif;
+  font-family: 'Space Grotesk', 'MiSans', 'PingFang SC', 'Source Han Sans SC', sans-serif;
   font-kerning: normal;
   font-synthesis: weight style;
 }
@@ -754,7 +754,7 @@ html.light td,
 html.light th,
 html.light blockquote {
   color: #334155;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /* 顶部主导航栏（避免误伤 footer / 其它 nav） */
