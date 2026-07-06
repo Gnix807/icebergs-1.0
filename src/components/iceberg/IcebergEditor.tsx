@@ -1357,6 +1357,9 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           <div className="flex items-center gap-2">
             <span className="text-brand font-mono text-xs">▶</span>
             <span className="font-mono text-xs text-text-hi tracking-widest">冰山图::编辑器</span>
+            {iceberg.id.startsWith('temp_') && (
+              <a href="/iceberg/import" className="font-mono text-[10px] text-text-mid hover:text-brand transition-colors ml-2">📥 导入</a>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -1553,14 +1556,6 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
               aria-label="冰山图简介"
             />
           </div>
-
-          {iceberg.id.startsWith('temp_') && (
-            <div className="pt-2 border-t border-border-subtle">
-              <a href="/iceberg/import" className="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
-                📥 从 icebergthreads 导入
-              </a>
-            </div>
-          )}
 
         </div>
       </header>
