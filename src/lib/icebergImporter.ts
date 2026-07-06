@@ -63,7 +63,7 @@ export function parseIcebergThreads(
   fields: Record<string, FirestoreValue>,
   options: { maxItemsPerLayer?: number } = {},
 ): ImportedIceberg {
-  const maxItems = options.maxItemsPerLayer ?? 200;
+  const maxItems = options.maxItemsPerLayer ?? 500;
 
   const title = sv(fields.title) || '导入的冰山图';
   const description = sv(fields.description) || '';

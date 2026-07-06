@@ -36,7 +36,7 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
         粘贴 icebergthreads.com 冰山图页面的完整链接
       </p>
       <p class="text-[10px] font-mono text-text-lo mt-1">
-        每层最多导入 200 条词条以保持编辑器流畅，超出部分会添加提示
+        每层最多导入 500 条词条，超出部分会添加提示。超大冰山图导入后编辑器可能略卡
       </p>
     </div>
 
@@ -109,7 +109,7 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
       var name = sv(lf.title);
       if (/^(说明|Notes)/i.test(name) && tiers.length === 0) return;
 
-      var limit = Math.min(items.length, 200);
+      var limit = Math.min(items.length, 500);
       var tierItems = [];
       for (var i = 0; i < limit; i++) {
         var if_ = (items[i].mapValue && items[i].mapValue.fields) || {};
@@ -117,8 +117,8 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
         if (nsfw && i < 3 && tiers.length === 0) it.labels.push('NSFW');
         tierItems.push(it);
       }
-      if (items.length > 200) {
-        tierItems.push({ title: '(本层共 ' + items.length + ' 条，已截取前 200 条)', desc: '可手动补充剩余内容', labels: ['待完善'] });
+      if (items.length > 500) {
+        tierItems.push({ title: '(本层共 ' + items.length + ' 条，已截取前 500 条)', desc: '可手动补充剩余内容', labels: ['待完善'] });
       }
       tiers.push({ name: name, desc: '', items: tierItems });
       totalItems += tierItems.length;
