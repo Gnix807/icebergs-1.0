@@ -150,19 +150,11 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
         var catId = sv(if_.categoryId);
         if (catId && catMap[catId]) {
           var catName = catMap[catId];
-          if (/超自然/.test(catName)) labels.push('超自然');
-          if (/都市传说/.test(catName)) labels.push('都市传说');
-          if (/鬼宅|异常/.test(catName)) labels.push('特殊地点');
-          if (/网络/.test(catName)) labels.push('网络文化');
-          if (/自然/.test(catName)) labels.push('自然');
-          if (/生物/.test(catName)) labels.push('生物');
-          if (/民俗|信仰/.test(catName)) labels.push('民俗');
-          if (/神话|志怪/.test(catName)) labels.push('志怪');
-          if (/犯罪|事故/.test(catName)) labels.push('犯罪');
-          if (/阴谋/.test(catName)) labels.push('阴谋论');
-          if (/骗局|谣言/.test(catName)) labels.push('已辟谣');
-          if (/历史/.test(catName)) labels.push('历史');
-          if (/科学/.test(catName)) labels.push('科学');
+          // 按分隔符拆分分类名，每部分作为独立标签
+          catName.split(/[・·、，\s]+/).forEach(function(part) {
+            part = part.trim();
+            if (part && part.length <= 20 && labels.indexOf(part) === -1) labels.push(part);
+          });
         }
 
         // 映射原标记为标签
@@ -171,12 +163,10 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
           var mId = sv(mv);
           if (mId && markerMap[mId]) {
             var mName = markerMap[mId];
-            if (/伪纪实/.test(mName) && labels.indexOf('都市传说') === -1) labels.push('都市传说');
-            if (/失传/.test(mName)) labels.push('失传媒体');
-            if (/迷因/.test(mName)) labels.push('网络文化');
-            if (/曼德拉/.test(mName)) labels.push('记忆');
-            if (/语言学|文字/.test(mName)) labels.push('语言');
-            if (/考古|文物/.test(mName)) labels.push('考古');
+            mName.split(/[・·、，\s]+/).forEach(function(part) {
+              part = part.trim();
+              if (part && part.length <= 20 && labels.indexOf(part) === -1) labels.push(part);
+            });
           }
         });
 
