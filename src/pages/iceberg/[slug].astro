@@ -1328,6 +1328,20 @@ if (iceberg?.status === 'PUBLISHED') {
   </div>{/* close ib-card */}
 </div>{/* close ib-anchor */}
 
+<div id="transfer-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center" style="background: rgba(0,0,0,0.7)">
+  <div class="bg-surface-2 border border-border w-full max-w-sm p-5 shadow-2xl font-mono">
+    <div class="text-xs text-text-mid mb-1 tracking-widest">TRANSFER OWNERSHIP</div>
+    <div class="text-sm text-text-hi mb-1">转让所有权</div>
+    <p class="text-[10px] text-text-lo mb-3">输入接收方的用户名或用户 ID。转让后你不再拥有该冰山图的编辑权限。</p>
+    <input id="transfer-uid" type="text" placeholder="用户名或用户 ID" class="w-full bg-surface-1 border border-border px-3 py-2 text-xs text-text-hi focus:border-warning outline-none mb-3" />
+    <div class="flex gap-2">
+      <button id="transfer-cancel" class="flex-1 py-2 border border-border text-xs text-text-body hover:border-[#8b949e] transition-colors">取消</button>
+      <button id="transfer-confirm" class="flex-1 py-2 bg-warning text-[#0A0A0A] text-xs font-bold hover:bg-warning/80 transition-colors">确认转让</button>
+    </div>
+    <p id="transfer-error" class="hidden text-[10px] text-danger mt-2"></p>
+  </div>
+</div>
+
 <script define:vars={{ tiers: iceberg?.tiers?.length ?? 0, items: allItemsFlat?.length ?? 0, views: iceberg?.viewCount ?? 0, readC: readCount, time: estimatedMinutes, author: iceberg?.author?.nickname || iceberg?.author?.username || '匿名', status: statusLabelMap[iceberg?.status] ?? '—', linkedId: linkedIdea?.id ?? '', stubLevel: stubLevel, featured: iceberg?.featured ?? false, isAdmin: isAdmin, canEdit: canEdit ?? false, isAuthor: isAuthor ?? false, icebergId: iceberg?.id ?? '' }}>
 (function(){
   var card=document.getElementById('ib-card');
@@ -1370,18 +1384,32 @@ if (iceberg?.status === 'PUBLISHED') {
     var tfBtn=document.getElementById('ib-transfer-btn');
     if(tfRow&&tfBtn){tfRow.classList.remove('hidden');
       tfBtn.addEventListener('click',function(){
-        var uid=prompt('请输入接收方用户名或 ID：');
-        if(!uid||!uid.trim())return;
-        if(!confirm('确认将「'+document.getElementById('ib-author').textContent+'」的冰山图转让给 '+uid.trim()+' ？转让后你将不再是作者。'))return;
-        fetch('/api/icebergs/'+icebergId+'/transfer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({newAuthorId:uid.trim()})})
-        .then(function(r){return r.json()})
-        .then(function(d){
-          if(d.success){alert('转让成功！');location.reload()}
-          else alert(d.error?.message||'转让失败')
-        });
+        document.getElementById('transfer-uid').value='';
+        document.getElementById('transfer-error').classList.add('hidden');
+        document.getElementById('transfer-modal').classList.remove('hidden');
       });
     }
   }
+
+  // Transfer modal events
+  var tfModal=document.getElementById('transfer-modal');
+  var tfCancel=document.getElementById('transfer-cancel');
+  var tfConfirm=document.getElementById('transfer-confirm');
+  var tfError=document.getElementById('transfer-error');
+  if(tfCancel)tfCancel.addEventListener('click',function(){tfModal.classList.add('hidden')});
+  if(tfModal)tfModal.addEventListener('click',function(e){if(e.target===tfModal)tfModal.classList.add('hidden')});
+  if(tfConfirm)tfConfirm.addEventListener('click',function(){
+    var uid=document.getElementById('transfer-uid').value.trim();
+    if(!uid){tfError.textContent='请输入接收方用户名或 ID';tfError.classList.remove('hidden');return}
+    tfConfirm.textContent='转让中...';tfConfirm.disabled=true;
+    fetch('/api/icebergs/'+icebergId+'/transfer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({newAuthorId:uid})})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(d.success){location.reload()}
+      else{tfError.textContent=d.error?.message||'转让失败';tfError.classList.remove('hidden');tfConfirm.textContent='确认转让';tfConfirm.disabled=false}
+    })
+    .catch(function(){tfError.textContent='网络错误';tfError.classList.remove('hidden');tfConfirm.textContent='确认转让';tfConfirm.disabled=false});
+  });
 
   // Toggle logic
   var expanded=localStorage.getItem('ib-expanded')!=='0';
