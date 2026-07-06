@@ -91,8 +91,12 @@ export function parseIcebergThreads(
     for (let i = 0; i < limit; i++) {
       const itemVal = rawItems[i];
       const if_ = itemVal.mapValue?.fields ?? {};
-      const itemTitle = sv(if_.title) || `词条 ${i + 1}`;
+      const itemTitle = sv(if_.text) || sv(if_.title) || `词条 ${i + 1}`;
       const itemDesc = sv(if_.description) || sv(if_.desc) || '';
+      const itemUrl = sv(if_.url) || '';
+      const fullDesc = itemUrl && itemUrl.startsWith('http')
+        ? (itemDesc ? `${itemDesc}\n\n来源: ${itemUrl}` : `来源: ${itemUrl}`)
+        : itemDesc;
       const itemLabels: string[] = [];
 
       // 顶层：如果原图是 NSFW，给前几条打标签
@@ -109,7 +113,7 @@ export function parseIcebergThreads(
         }
       }
 
-      items.push({ title: itemTitle, desc: itemDesc, labels: itemLabels });
+      items.push({ title: itemTitle, desc: fullDesc, labels: itemLabels });
     }
 
     // 如果因为限制截断了，添加提示词条

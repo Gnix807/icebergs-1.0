@@ -113,7 +113,11 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
       var tierItems = [];
       for (var i = 0; i < limit; i++) {
         var if_ = (items[i].mapValue && items[i].mapValue.fields) || {};
-        var it = { title: sv(if_.title) || '词条 ' + (i+1), desc: sv(if_.description) || sv(if_.desc) || '', labels: [] };
+        var itText = sv(if_.text) || sv(if_.title) || ('词条 ' + (i+1));
+        var itDesc = sv(if_.description) || sv(if_.desc) || '';
+        var itUrl = sv(if_.url) || '';
+        if (itUrl && itUrl.startsWith('http')) itDesc += (itDesc ? '\n\n' : '') + '来源: ' + itUrl;
+        var it = { title: itText, desc: itDesc, labels: [] };
         if (nsfw && i < 3 && tiers.length === 0) it.labels.push('NSFW');
         tierItems.push(it);
       }
