@@ -13,7 +13,7 @@ const [featuredIcebergs, newest, popular, openIdeas, topAuthors] = await Promise
   prisma.iceberg.findMany({
     where: { topic: slug, status: 'PUBLISHED', featured: true },
     orderBy: { createdAt: 'desc' },
-    take: 10,
+    take: 5,
     select: { id: true, slug: true, title: true, viewCount: true, _count: { select: { tiers: true } } },
   }),
   prisma.iceberg.findMany({
@@ -74,7 +74,10 @@ const totalIcebergs = newest.length; // approximation
             <div class="text-[10px] font-mono text-warning tracking-widest mb-2">📌 精选</div>
             <div id="featured-carousel" class="relative overflow-hidden border border-warning/30 bg-warning/5 hover:border-warning transition-colors">
               {featuredIcebergs.map((f, i) => (
-                <a href={`/iceberg/${f.slug || f.id}`} class="featured-slide block p-4" data-index={String(i)} style={i === 0 ? '' : 'display:none'}>
+                <a href={`/iceberg/${f.slug || f.id}`}
+                  class="featured-slide block p-4 absolute inset-0 transition-opacity duration-500"
+                  style={{ opacity: i === 0 ? '1' : '0', pointerEvents: i === 0 ? 'auto' : 'none' }}
+                >
                   <h3 class="text-sm font-mono font-bold text-text-hi">{f.title}</h3>
                   <div class="flex items-center gap-3 mt-2 text-[10px] font-mono text-text-mid">
                     <span>{f._count.tiers} 层</span>
@@ -82,6 +85,14 @@ const totalIcebergs = newest.length; // approximation
                   </div>
                 </a>
               ))}
+              {/* spacer to maintain carousel height */}
+              <div class="featured-spacer block p-4 invisible" aria-hidden="true">
+                <h3 class="text-sm font-mono font-bold text-text-hi">{featuredIcebergs[0].title}</h3>
+                <div class="flex items-center gap-3 mt-2 text-[10px] font-mono text-text-mid">
+                  <span>{featuredIcebergs[0]._count.tiers} 层</span>
+                  <span>{featuredIcebergs[0].viewCount.toLocaleString()} 浏览</span>
+                </div>
+              </div>
               {featuredIcebergs.length > 1 && (
                 <div class="flex items-center justify-center gap-1.5 pb-2">
                   {featuredIcebergs.map((_, i) => (
@@ -167,7 +178,10 @@ const totalIcebergs = newest.length; // approximation
   if (slides.length > 1) {
     var current = 0;
     function showSlide(n) {
-      slides.forEach(function(s, i) { s.style.display = i === n ? '' : 'none'; });
+      slides.forEach(function(s, i) {
+        s.style.opacity = i === n ? '1' : '0';
+        s.style.pointerEvents = i === n ? 'auto' : 'none';
+      });
       dots.forEach(function(d, i) {
         d.style.background = i === n ? '#f59e0b' : 'rgba(245,158,11,0.3)';
         d.style.width = i === n ? '12px' : '6px';
