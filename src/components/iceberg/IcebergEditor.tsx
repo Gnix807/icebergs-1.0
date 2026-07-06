@@ -68,17 +68,9 @@ function buildFromImport(tempId: string): Iceberg | null {
       status: 'DRAFT',
       viewCount: 0,
       tiers: data.tiers.map((t: any, ti: number) => ({
-
-      viewCount: 0,
-      tiers: data.tiers.map((t: any, ti: number) => ({
         id: `tier_${now}_${ti}`,
         name: t.name || `第 ${ti + 1} 层`,
         desc: t.desc || '',
-        order: ti,
-        icebergId: tempId,
-        bgImage: t.bgImage || '',
-        items: (t.items || []).map((it: any, ii: number) => ({
-
         order: ti,
         icebergId: tempId,
         items: (t.items || []).map((it: any, ii: number) => ({
