@@ -16,6 +16,7 @@ const sessionId = Astro.cookies.get('session')?.value;
 const session   = await getSessionById(sessionId);
 const isLoggedIn = !!session;
 const isAdmin = !!(session?.isFounder || session?.role === 'ADMIN');
+const isAuthor = !!(session && iceberg?.authorId === session.userId);
 const canPreviewUnpublished = !!session && (session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR');
 
 let iceberg: any = null;
@@ -1314,6 +1315,9 @@ if (iceberg?.status === 'PUBLISHED') {
       <div class="pt-2 border-t border-border-subtle hidden" id="ib-edit-row">
         <a id="ib-edit-link" href="#" class="block w-full text-center px-3 py-1.5 border border-brand text-brand text-xs font-mono hover:bg-brand/10 transition-colors">✏️ 编辑冰山图</a>
       </div>
+      <div class="pt-2 border-t border-border-subtle hidden" id="ib-transfer-row">
+        <button id="ib-transfer-btn" class="block w-full text-center px-3 py-1.5 border border-warning/30 text-warning text-xs font-mono hover:bg-warning/10 transition-colors">📤 转让所有权</button>
+      </div>
       <div class="pt-2 border-t border-border-subtle hidden" id="ib-idea-row">
         <a id="ib-idea-link" href="#" class="block w-full text-center px-3 py-1.5 border border-border text-xs font-mono text-info hover:text-brand transition-colors">💡 创意来源</a>
       </div>
@@ -1322,7 +1326,7 @@ if (iceberg?.status === 'PUBLISHED') {
   </div>{/* close ib-card */}
 </div>{/* close ib-anchor */}
 
-<script define:vars={{ tiers: iceberg?.tiers?.length ?? 0, items: allItemsFlat?.length ?? 0, views: iceberg?.viewCount ?? 0, readC: readCount, time: estimatedMinutes, author: iceberg?.author?.nickname || iceberg?.author?.username || '匿名', status: statusLabelMap[iceberg?.status] ?? '—', linkedId: linkedIdea?.id ?? '', stubLevel: stubLevel, featured: iceberg?.featured ?? false, isAdmin: isAdmin, canEdit: canEdit ?? false, icebergId: iceberg?.id ?? '' }}>
+<script define:vars={{ tiers: iceberg?.tiers?.length ?? 0, items: allItemsFlat?.length ?? 0, views: iceberg?.viewCount ?? 0, readC: readCount, time: estimatedMinutes, author: iceberg?.author?.nickname || iceberg?.author?.username || '匿名', status: statusLabelMap[iceberg?.status] ?? '—', linkedId: linkedIdea?.id ?? '', stubLevel: stubLevel, featured: iceberg?.featured ?? false, isAdmin: isAdmin, canEdit: canEdit ?? false, isAuthor: isAuthor ?? false, icebergId: iceberg?.id ?? '' }}>
 (function(){
   var card=document.getElementById('ib-card');
   var handle=document.getElementById('ib-handle');
@@ -1357,6 +1361,24 @@ if (iceberg?.status === 'PUBLISHED') {
     var edRow=document.getElementById('ib-edit-row');
     var edLink=document.getElementById('ib-edit-link');
     if(edRow&&edLink){edRow.classList.remove('hidden');edLink.href='/iceberg/edit/'+icebergId}
+  }
+
+  if(isAuthor||isAdmin){
+    var tfRow=document.getElementById('ib-transfer-row');
+    var tfBtn=document.getElementById('ib-transfer-btn');
+    if(tfRow&&tfBtn){tfRow.classList.remove('hidden');
+      tfBtn.addEventListener('click',function(){
+        var uid=prompt('请输入接收方用户名或 ID：');
+        if(!uid||!uid.trim())return;
+        if(!confirm('确认将「'+document.getElementById('ib-author').textContent+'」的冰山图转让给 '+uid.trim()+' ？转让后你将不再是作者。'))return;
+        fetch('/api/icebergs/'+icebergId+'/transfer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({newAuthorId:uid.trim()})})
+        .then(function(r){return r.json()})
+        .then(function(d){
+          if(d.success){alert('转让成功！');location.reload()}
+          else alert(d.error?.message||'转让失败')
+        });
+      });
+    }
   }
 
   // Toggle logic
