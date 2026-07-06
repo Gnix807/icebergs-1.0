@@ -156,7 +156,7 @@ canvas {
 /* 等宽字体：标题、层级编号、标签 */
 .font-mono {
   font-family: 'Space Mono', 'MiSans', 'PingFang SC', monospace;
-  font-weight: 550;
+  font-weight: 400;
 }
 
 /* CRT 扫描线效果 */
