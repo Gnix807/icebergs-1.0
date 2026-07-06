@@ -1,0 +1,43 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="支持本站 | 冰山图宇宙">
+  <main class="max-w-2xl mx-auto px-4 py-12 reveal">
+
+    <div class="mb-8">
+      <a href="/" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">← 首页</a>
+      <h1 class="text-2xl font-mono font-bold text-text-hi mt-2">
+        <span class="text-warning">#</span> 支持本站
+      </h1>
+      <p class="text-xs text-text-body font-mono mt-1">如果你觉得冰山图宇宙对你有帮助，欢迎通过以下方式支持我们</p>
+    </div>
+
+    <div class="space-y-6">
+      <!-- 微信赞赏 -->
+      <div class="border border-border bg-surface-2 p-6 text-center">
+        <div class="text-sm font-mono font-bold text-success mb-3">微信赞赏</div>
+        <p class="text-xs text-text-body font-mono mb-4">扫描下方二维码，支持开发者继续维护和迭代</p>
+        <div class="inline-block bg-white p-3">
+          <img src="/wechat-qr.png" alt="微信赞赏码" class="w-48 h-48 object-contain" onerror="this.parentElement.innerHTML='<div class=\"w-48 h-48 border border-border flex items-center justify-center bg-surface-1\"><span class=\"text-xs font-mono text-text-lo\">请上传赞赏码到<br/>/public/wechat-qr.png</span></div>'" />
+        </div>
+        <p class="text-[10px] font-mono text-text-lo mt-3">保存图片 → 微信扫码 → 赞赏任意金额</p>
+      </div>
+
+      <!-- 爱发电 -->
+      <a href="https://ifdian.net/a/Gnix807" target="_blank" rel="noopener"
+        class="block border border-border bg-surface-2 p-5 hover:border-brand transition-colors">
+        <div class="text-sm font-mono font-bold text-warning mb-1">爱发电</div>
+        <p class="text-xs text-text-body font-mono">国内用户可通过爱发电平台赞助 →</p>
+      </a>
+
+      <!-- Patreon -->
+      <a href="https://www.patreon.com/" target="_blank" rel="noopener"
+        class="block border border-border bg-surface-2 p-5 hover:border-brand transition-colors">
+        <div class="text-sm font-mono font-bold text-[#f97316] mb-1">Patreon</div>
+        <p class="text-xs text-text-body font-mono">海外用户可通过 Patreon 月度赞助 →</p>
+      </a>
+    </div>
+
+  </main>
+</Layout>
