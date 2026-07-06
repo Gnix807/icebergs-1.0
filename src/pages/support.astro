@@ -3,34 +3,36 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="支持本站 | 冰山图宇宙">
-  <main class="max-w-2xl mx-auto px-4 py-12 reveal">
+  <main class="max-w-4xl mx-auto px-4 py-12">
 
-    <div class="mb-8">
-      <a href="/" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">← 首页</a>
-      <h1 class="text-2xl font-mono font-bold text-text-hi mt-2">
+    <div class="text-center mb-10 reveal">
+      <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">[ SUPPORT ]</div>
+      <h1 class="text-3xl font-mono font-semibold">
         <span class="text-warning">#</span> 支持本站
       </h1>
-      <p class="text-xs text-text-body font-mono mt-1">如果你觉得冰山图宇宙对你有帮助，欢迎通过以下方式支持我们</p>
+      <p class="text-sm text-text-body font-mono mt-2 max-w-md mx-auto">冰山图宇宙是一个独立开发项目，你的每一份支持都让这个平台走得更远。</p>
     </div>
 
-    <div class="space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <!-- 微信赞赏 -->
-      <div class="border border-border bg-surface-2 p-6 text-center">
-        <div class="text-sm font-mono font-bold text-success mb-3">微信赞赏</div>
-        <p class="text-xs text-text-body font-mono mb-4">扫描下方二维码，支持开发者继续维护和迭代</p>
-        <div class="inline-block bg-white p-3">
-          <img src="/wechat-qr.png" alt="微信赞赏码" class="w-48 h-48 object-contain" />
+      <div class="border border-border bg-surface-2 p-6 text-center reveal" style="animation-delay:50ms">
+        <div class="text-xl mb-3">💚</div>
+        <div class="text-sm font-mono font-bold text-success mb-2">微信赞赏</div>
+        <p class="text-[11px] text-text-mid font-mono mb-4">扫码赞赏任意金额</p>
+        <div class="inline-block bg-white p-2">
+          <img src="/wechat-qr.png" alt="微信赞赏码" class="w-40 h-40 object-contain" />
         </div>
-        <p class="text-[10px] font-mono text-text-lo mt-3">保存图片 → 微信扫码 → 赞赏任意金额</p>
+        <p class="text-[10px] font-mono text-text-lo mt-2">保存图片 → 微信扫码</p>
       </div>
 
       <!-- 爱发电 -->
       <a href="https://ifdian.net/a/Gnix807" target="_blank" rel="noopener"
-        class="block border border-border bg-surface-2 p-5 hover:border-brand transition-colors">
-        <div class="text-sm font-mono font-bold text-warning mb-1">爱发电</div>
-        <p class="text-xs text-text-body font-mono">国内用户可通过爱发电平台赞助 →</p>
+        class="border border-border bg-surface-2 p-6 text-center hover:border-warning transition-colors flex flex-col items-center justify-center reveal group" style="animation-delay:100ms">
+        <div class="text-xl mb-3">⚡</div>
+        <div class="text-sm font-mono font-bold text-warning mb-2">爱发电</div>
+        <p class="text-[11px] text-text-mid font-mono mb-4">支持大陆银行卡、微信、支付宝</p>
+        <span class="px-4 py-1.5 border border-warning/30 text-warning text-xs font-mono group-hover:bg-warning/10 transition-colors">前往赞助 →</span>
       </a>
-
     </div>
 
   </main>
