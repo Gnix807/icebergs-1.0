@@ -203,7 +203,6 @@ model Iceberg {
 
   viewCount   Int      @default(0)
   featured    Boolean  @default(false)
-  coverImage  String?  // 封面/横幅图片 URL
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -228,7 +227,6 @@ model Tier {
   name      String
   desc      String  @default("")
   order     Int
-  bgImage   String? // 层级配图 URL
   icebergId String
   iceberg   Iceberg @relation(fields: [icebergId], references: [id], onDelete: Cascade)
 

@@ -15,7 +15,6 @@ export interface Tier {
   name: string;
   desc: string;
   order: number;
-  bgImage?: string;
   icebergId: string;
   items: Item[];
 }
@@ -29,7 +28,6 @@ export interface Iceberg {
   authorId: string;
   status: 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED' | 'ARCHIVED';
   viewCount: number;
-  coverImage?: string;
   tiers: Tier[];
   review?: {
     status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'OVERRIDDEN';

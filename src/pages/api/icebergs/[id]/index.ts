@@ -137,7 +137,7 @@ export async function PUT(event: APIContext) {
     }
 
     const body = await event.request.json();
-    const { title, description, status, topic, coverImage, updatedAt: clientUpdatedAt } = body;
+    const { title, description, status, topic, updatedAt: clientUpdatedAt } = body;
 
     // 检查冰山图是否存在且属于当前用户
     const existing = await prisma.iceberg.findFirst({
@@ -175,12 +175,11 @@ export async function PUT(event: APIContext) {
       }
     }
 
-    const updateData: { title?: string; description?: string; status?: string; topic?: string; coverImage?: string | null } = {};
+    const updateData: { title?: string; description?: string; status?: string; topic?: string } = {};
     if (title != null && title !== undefined) updateData.title = String(title).trim();
     if (description !== undefined) updateData.description = description;
     if (status !== undefined) updateData.status = status;
     if (topic !== undefined) updateData.topic = normalizeIcebergTopic(topic);
-    if (coverImage !== undefined) updateData.coverImage = coverImage || null;
 
     const iceberg = await prisma.iceberg.update({
       where: { id: existing.id },

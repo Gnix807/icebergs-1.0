@@ -176,8 +176,7 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
       if (items.length > 500) {
         tierItems.push({ title: '(本层共 ' + items.length + ' 条，已截取前 500 条)', desc: '可手动补充剩余内容', labels: ['待完善'] });
       }
-      var bgImage = sv(lf.bgImageUrl) || '';
-      tiers.push({ name: name, desc: '', bgImage: bgImage, items: tierItems });
+      tiers.push({ name: name, desc: '', items: tierItems });
       totalItems += tierItems.length;
     });
 
@@ -185,7 +184,6 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
       title: sv(f.title) || '导入的冰山图',
       description: sv(f.description) || '',
       topic: 'general',
-      coverImage: sv(f.imageUrl) || sv(f.bgImageUrl) || '',
       tiers: tiers,
       isNsfw: nsfw,
       stats: { layerCount: tiers.length, itemCount: totalItems, originalLayerCount: layers.length },
