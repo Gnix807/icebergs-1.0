@@ -310,6 +310,12 @@ if (iceberg?.status === 'PUBLISHED') {
             </span>
           </div>
 
+          {iceberg.coverImage && (
+            <div class="mb-6 overflow-hidden border border-border-subtle" style="max-height: 280px">
+              <img src={iceberg.coverImage} alt={iceberg.title} class="w-full object-cover" style="max-height: 280px" loading="lazy" />
+            </div>
+          )}
+
           <h1 class="text-3xl md:text-4xl font-mono font-semibold mb-4 leading-tight">
             <span class="text-brand">#</span> {iceberg.title}
           </h1>
@@ -421,11 +427,14 @@ if (iceberg?.status === 'PUBLISHED') {
             return (
               <div
                 id={`tier-${ti}`}
-                class="reveal tier-section"
+                class="reveal tier-section relative overflow-hidden"
                 data-tier-idx={String(ti)}
-                style={{ borderLeft: `3px solid ${color}`, background: `${color}0d` }}
+                style={{ borderLeft: `3px solid ${color}`, background: tier.bgImage ? `url(${tier.bgImage}) center/cover no-repeat` : `${color}0d` }}
               >
-                <div class="px-4 py-2.5">
+                {tier.bgImage && (
+                  <div class="absolute inset-0 bg-surface-1/80 pointer-events-none" aria-hidden="true"></div>
+                )}
+                <div class="relative px-4 py-2.5">
                   <div class="flex items-center gap-3">
                     <h3 class="font-mono text-sm font-semibold" style={{ color }}>{tier.name}</h3>
                     <span class="text-[10px] font-mono text-text-lo">{tier.items.length}</span>

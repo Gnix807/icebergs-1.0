@@ -42,6 +42,7 @@ function buildEmptyIceberg(tempId: string): Iceberg {
     authorId: '',
     status: 'DRAFT',
     viewCount: 0,
+    coverImage: '',
     tiers: buildSeedTiers(tempId),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -67,12 +68,14 @@ function buildFromImport(tempId: string): Iceberg | null {
       authorId: '',
       status: 'DRAFT',
       viewCount: 0,
+      coverImage: data.coverImage || '',
       tiers: data.tiers.map((t: any, ti: number) => ({
         id: `tier_${now}_${ti}`,
         name: t.name || `第 ${ti + 1} 层`,
         desc: t.desc || '',
         order: ti,
         icebergId: tempId,
+        bgImage: t.bgImage || '',
         items: (t.items || []).map((it: any, ii: number) => ({
           id: `item_${now}_${ti}_${ii}`,
           title: it.title || `词条 ${ii + 1}`,
@@ -102,10 +105,12 @@ function buildCreatePayload(target: Iceberg, slug: string) {
     title: target.title,
     description: target.description,
     topic: target.topic,
+    coverImage: (target as any).coverImage || '',
     slug,
     tiers: target.tiers.map((tier, tierIndex) => ({
       name: tier.name,
       desc: tier.desc ?? '',
+      bgImage: (tier as any).bgImage || '',
       order: typeof tier.order === 'number' ? tier.order : tierIndex,
       items: tier.items.map((item, itemIndex) => ({
         title: item.title,
@@ -464,7 +469,9 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
             title: iceberg.title,
             description: iceberg.description,
             topic: iceberg.topic,
+            coverImage: (iceberg as any).coverImage || '',
             status: iceberg.status,
+            updatedAt: iceberg.updatedAt,
           };
           const res = await fetch(`/api/icebergs/${iceberg.id}`, {
             method: 'PUT',
@@ -500,6 +507,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
               title: iceberg.title,
               description: iceberg.description,
               topic: iceberg.topic,
+              coverImage: (iceberg as any).coverImage || '',
               status: iceberg.status,
             },
           });
@@ -1124,6 +1132,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           title: iceberg.title,
           description: iceberg.description,
           topic: iceberg.topic,
+          coverImage: (iceberg as any).coverImage || '',
           status: iceberg.status,
           updatedAt: iceberg.updatedAt,
         };
@@ -1163,6 +1172,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
             title: iceberg.title,
             description: iceberg.description,
             topic: iceberg.topic,
+            coverImage: (iceberg as any).coverImage || '',
             status: iceberg.status,
             updatedAt: iceberg.updatedAt,
           },
@@ -1550,6 +1560,19 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
               rows={3}
               placeholder="// 冰山图简介（可选，支持 Markdown）"
               aria-label="冰山图简介"
+            />
+          </div>
+
+          {/* COVER IMAGE */}
+          <div>
+            <p className="text-[10px] font-mono text-text-lo mb-1.5">// 封面图 URL（可选）</p>
+            <input
+              type="url"
+              value={(iceberg as any).coverImage || ''}
+              onChange={(e) => setIceberg({ ...iceberg, coverImage: e.target.value } as any)}
+              placeholder="https://... 冰山图横幅图片链接"
+              className="w-full px-3 py-2 bg-surface-0 border border-border-subtle focus:border-brand focus:outline-none font-mono text-sm text-text-hi placeholder:text-text-mid transition-colors"
+              aria-label="封面图"
             />
           </div>
         </div>

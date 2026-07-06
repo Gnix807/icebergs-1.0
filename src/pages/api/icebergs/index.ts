@@ -20,6 +20,7 @@ type SeedTierCreate = {
   name: string;
   desc: string;
   order: number;
+  bgImage?: string;
   items: { create: { title: string; desc: string; order: number; labels: string }[] };
 };
 
@@ -38,6 +39,7 @@ function normalizeSeedTiers(raw: unknown): SeedTierCreate[] {
     .map((tier, idx) => {
       const nameRaw = typeof tier.name === 'string' ? tier.name.trim() : '';
       const descRaw = typeof tier.desc === 'string' ? tier.desc : '';
+      const bgImageRaw = typeof tier.bgImage === 'string' ? tier.bgImage.trim() : '';
       const orderRaw = typeof tier.order === 'number' && Number.isFinite(tier.order) ? tier.order : idx;
       const itemsRaw = Array.isArray(tier.items) ? tier.items : [];
 
@@ -62,6 +64,7 @@ function normalizeSeedTiers(raw: unknown): SeedTierCreate[] {
       return {
         name: (nameRaw || `Tier ${idx + 1}`).slice(0, 80),
         desc: descRaw.slice(0, 240),
+        bgImage: bgImageRaw || undefined,
         order: orderRaw,
         items: { create: items },
       };
@@ -248,6 +251,7 @@ export async function POST(event: APIContext) {
       topic,
       status: 'DRAFT',
       authorId,
+      coverImage: body.coverImage || null,
       tiers: {
         create: normalizeSeedTiers(body.tiers),
       },

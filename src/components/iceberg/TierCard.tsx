@@ -191,6 +191,18 @@ export function TierCard({
         )}
       </div>
 
+      {/* ── 层级配图 URL ── */}
+      <div className="px-4 py-1.5 border-b border-border-subtle/50">
+        <input
+          type="url"
+          value={(tier as any).bgImage || ''}
+          onChange={(e) => onUpdateTier(tier.id, { bgImage: e.target.value } as any)}
+          className="w-full bg-transparent font-mono text-xs text-text-body focus:outline-none placeholder:text-text-lo"
+          placeholder="// 层级配图 URL（可选）…"
+          aria-label="层级配图"
+        />
+      </div>
+
       {/* ── Items ── */}
       {!isCollapsed && (
         <div className="p-3">
