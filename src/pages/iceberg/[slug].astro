@@ -301,7 +301,10 @@ if (iceberg?.status === 'PUBLISHED') {
         )}
 
         {/* ── Header ─────────────────────────────────────── */}
-        <header class="mb-10 reveal">
+        {iceberg.coverImage && (
+          <div class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true" style={`background: url(${iceberg.coverImage}) center/cover no-repeat fixed; opacity: 0.08; z-index: 0`}></div>
+        )}
+        <header class="mb-10 reveal relative z-[1]">
           <div class="text-xs text-text-body font-mono mb-3 flex items-center gap-2">
             <a href="/iceberg/list" class="hover:text-brand transition-colors">冰山图列表</a>
             <span class="text-text-lo">/</span>
@@ -310,11 +313,7 @@ if (iceberg?.status === 'PUBLISHED') {
             </span>
           </div>
 
-          {iceberg.coverImage && (
-            <div class="mb-6 overflow-hidden border border-border-subtle" style="max-height: 280px">
-              <img src={iceberg.coverImage} alt={iceberg.title} class="w-full object-cover" style="max-height: 280px" loading="lazy" />
-            </div>
-          )}
+          </div>
 
           <h1 class="text-3xl md:text-4xl font-mono font-semibold mb-4 leading-tight">
             <span class="text-brand">#</span> {iceberg.title}
@@ -429,12 +428,12 @@ if (iceberg?.status === 'PUBLISHED') {
                 id={`tier-${ti}`}
                 class="reveal tier-section relative overflow-hidden"
                 data-tier-idx={String(ti)}
-                style={{ borderLeft: `3px solid ${color}`, background: tier.bgImage ? `url(${tier.bgImage}) center/cover no-repeat` : `${color}0d` }}
+                style={{ borderLeft: `3px solid ${color}`, background: `${color}0d` }}
               >
                 {tier.bgImage && (
-                  <div class="absolute inset-0 bg-surface-1/80 pointer-events-none" aria-hidden="true"></div>
+                  <div class="hidden lg:block absolute left-0 top-0 bottom-0 w-48 bg-center bg-cover opacity-30" style={`background-image: url(${tier.bgImage})`} aria-hidden="true"></div>
                 )}
-                <div class="relative px-4 py-2.5">
+                <div class="relative px-4 py-2.5 lg:pl-52">
                   <div class="flex items-center gap-3">
                     <h3 class="font-mono text-sm font-semibold" style={{ color }}>{tier.name}</h3>
                     <span class="text-[10px] font-mono text-text-lo">{tier.items.length}</span>
