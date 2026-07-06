@@ -1554,6 +1554,14 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
             />
           </div>
 
+          {iceberg.id.startsWith('temp_') && (
+            <div className="pt-2 border-t border-border-subtle">
+              <a href="/iceberg/import" className="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
+                📥 从 icebergthreads 导入
+              </a>
+            </div>
+          )}
+
         </div>
       </header>
 
