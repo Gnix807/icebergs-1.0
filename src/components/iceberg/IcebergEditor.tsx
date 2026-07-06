@@ -49,6 +49,48 @@ function buildEmptyIceberg(tempId: string): Iceberg {
   };
 }
 
+function buildFromImport(tempId: string): Iceberg | null {
+  try {
+    const raw = sessionStorage.getItem('imported_iceberg');
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data.tiers || !Array.isArray(data.tiers)) return null;
+    sessionStorage.removeItem('imported_iceberg');
+
+    const now = Date.now();
+    return {
+      id: tempId,
+      slug: '',
+      title: data.title || '导入的冰山图',
+      description: data.description || '',
+      topic: data.topic || 'general',
+      authorId: '',
+      status: 'DRAFT',
+      viewCount: 0,
+      tiers: data.tiers.map((t: any, ti: number) => ({
+        id: `tier_${now}_${ti}`,
+        name: t.name || `第 ${ti + 1} 层`,
+        desc: t.desc || '',
+        order: ti,
+        icebergId: tempId,
+        items: (t.items || []).map((it: any, ii: number) => ({
+          id: `item_${now}_${ti}_${ii}`,
+          title: it.title || `词条 ${ii + 1}`,
+          desc: it.desc || '',
+          order: ii,
+          tierId: `tier_${now}_${ti}`,
+          labels: JSON.stringify(it.labels || []),
+        })),
+      })),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      review: null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function buildCreatePayload(target: Iceberg, slug: string) {
   return {
     title: target.title,
@@ -292,7 +334,11 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
   // 初始化数据：新建时始终重置 store，避免残留旧冰山图
   useEffect(() => {
-    if (!icebergId) {
+    if (icebergId === 'imported') {
+      const tempId = `temp_${Date.now()}`;
+      const imported = buildFromImport(tempId);
+      setIceberg(imported || buildEmptyIceberg(tempId));
+    } else if (!icebergId) {
       const tempId = `temp_${Date.now()}`;
       setIceberg(buildEmptyIceberg(tempId));
     } else if (!iceberg) {

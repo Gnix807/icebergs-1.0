@@ -1,0 +1,147 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
+---
+
+<Layout title="导入冰山图 | 冰山图宇宙">
+  <main class="max-w-3xl mx-auto px-4 py-8">
+
+    <div class="mb-8">
+      <a href="/iceberg/new" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">← 返回新建</a>
+      <h1 class="text-2xl font-mono font-bold text-text-hi mt-2">
+        <span class="text-brand">#</span> 导入冰山图
+      </h1>
+      <p class="text-xs text-text-body font-mono mt-1">从 icebergthreads.com 导入已有冰山图数据</p>
+    </div>
+
+    <!-- 输入区 -->
+    <div class="border border-border bg-surface-2 p-5 mb-6 reveal">
+      <div class="text-[10px] font-mono text-text-mid mb-3 tracking-widest">// 来源链接</div>
+      <div class="flex gap-2">
+        <input
+          id="import-url"
+          type="url"
+          placeholder="https://icebergthreads.com/zh/iceberg/..."
+          class="flex-1 bg-surface-1 border border-border px-3 py-2 text-sm font-mono text-text-hi focus:border-brand outline-none placeholder:text-text-mid"
+        />
+        <button
+          id="import-fetch"
+          class="px-5 py-2 bg-brand text-[#0A0A0A] text-sm font-mono font-bold hover:bg-brand-hover transition-colors flex-shrink-0"
+        >
+          获取数据
+        </button>
+      </div>
+      <p class="text-[10px] font-mono text-text-lo mt-2">
+        粘贴 icebergthreads.com 冰山图页面的完整链接
+      </p>
+      <p class="text-[10px] font-mono text-text-lo mt-1">
+        每层最多导入 200 条词条以保持编辑器流畅，超出部分会添加提示
+      </p>
+    </div>
+
+    <!-- 状态 -->
+    <div id="import-status" class="hidden mb-6 p-4 border border-brand/20 bg-brand/5 text-xs font-mono text-text-body"></div>
+
+    <!-- 预览 -->
+    <div id="import-preview" class="hidden space-y-4 mb-6">
+      <div class="border border-border bg-surface-2 p-5 view-bar" style="border-left-color: var(--color-brand)">
+        <h2 id="preview-title" class="text-lg font-mono font-bold text-text-hi mb-1"></h2>
+        <p id="preview-desc" class="text-xs text-text-body line-clamp-3 mb-3"></p>
+        <div class="flex flex-wrap gap-3 text-[10px] font-mono text-text-mid">
+          <span id="preview-layers"></span>
+          <span id="preview-items"></span>
+          <span id="preview-nsfw" class="hidden px-1 py-px border border-danger/30 text-danger">NSFW</span>
+        </div>
+      </div>
+
+      <!-- 层级预览 -->
+      <div id="preview-tiers" class="space-y-2"></div>
+
+      <!-- 导入按钮 -->
+      <button
+        id="import-go"
+        class="w-full py-3 bg-brand text-[#0A0A0A] text-sm font-mono font-bold hover:bg-brand-hover transition-colors"
+      >
+        导入到编辑器
+      </button>
+      <p class="text-[10px] font-mono text-text-lo text-center">
+        导入后可在编辑器中自由修改、补充描述和标签，然后保存为你的冰山图
+      </p>
+    </div>
+
+  </main>
+</Layout>
+
+<script>
+  var currentData = null;
+
+  function showStatus(msg, isError) {
+    var el = document.getElementById('import-status');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    el.className = el.className.replace(/border-\S+/g, '');
+    if (isError) {
+      el.classList.add('border', 'border-danger/20', 'bg-danger/5', 'text-danger', 'mb-6', 'p-4', 'text-xs', 'font-mono');
+    } else {
+      el.classList.add('border', 'border-brand/20', 'bg-brand/5', 'text-text-body', 'mb-6', 'p-4', 'text-xs', 'font-mono');
+    }
+  }
+
+  document.getElementById('import-fetch').addEventListener('click', async function() {
+    var url = document.getElementById('import-url').value.trim();
+    if (!url) { showStatus('请输入链接', true); return; }
+
+    var btn = document.getElementById('import-fetch');
+    btn.textContent = '获取中...';
+    btn.disabled = true;
+    showStatus('正在获取数据...', false);
+
+    try {
+      var res = await fetch('/api/import/icebergthreads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url, maxItems: 200 }),
+      });
+      var data = await res.json();
+      if (!data.success) {
+        showStatus(data.error?.message || '获取失败', true);
+        return;
+      }
+
+      var d = data.data;
+      currentData = d;
+      showStatus('数据获取成功！', false);
+
+      // 渲染预览
+      document.getElementById('preview-title').textContent = d.title;
+      document.getElementById('preview-desc').textContent = d.description || '（无描述）';
+      document.getElementById('preview-layers').textContent = d.tiers.length + ' 层';
+      document.getElementById('preview-items').textContent = d.stats.itemCount + ' 个词条';
+      if (d.isNsfw) document.getElementById('preview-nsfw').classList.remove('hidden');
+
+      var tiersHtml = '';
+      var colors = ['#22c55e','#3b82f6','#f59e0b','#ef4444','#ec4899','#8b5cf6'];
+      d.tiers.forEach(function(t, i) {
+        tiersHtml += '<div class="border border-border-subtle bg-surface-2 p-3 flex items-start gap-3">' +
+          '<span class="text-[10px] font-mono font-bold mt-0.5 flex-shrink-0" style="color:' + colors[i % 6] + '">' + (i + 1) + '.</span>' +
+          '<div><div class="text-xs font-mono text-text-hi">' + t.name + '</div>' +
+          '<div class="text-[10px] font-mono text-text-mid mt-0.5">' + t.items.length + ' 个词条</div>' +
+          '</div></div>';
+      });
+      document.getElementById('preview-tiers').innerHTML = tiersHtml;
+      document.getElementById('import-preview').classList.remove('hidden');
+    } catch (err) {
+      showStatus('网络错误，请重试', true);
+    } finally {
+      btn.textContent = '获取数据';
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('import-go').addEventListener('click', function() {
+    if (!currentData) return;
+    sessionStorage.setItem('imported_iceberg', JSON.stringify(currentData));
+    window.location.href = '/iceberg/edit/imported';
+  });
+</script>
