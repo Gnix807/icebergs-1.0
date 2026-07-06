@@ -282,9 +282,8 @@ const features = await getFeatureFlags();
       }
 
       // Astro ViewTransitions 每次导航后重新初始化
-      document.addEventListener('astro:page-load', initReveal);
+      document.addEventListener('astro:page-load', () => requestAnimationFrame(initReveal));
       document.addEventListener('astro:page-load', initCursor);
-      initReveal();
       initReveal();
       initCursor();
 

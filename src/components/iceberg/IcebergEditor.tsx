@@ -473,7 +473,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           });
           const data = await res.json().catch(() => null);
           if (res.ok && data?.success) {
-            setDirty(false);
+            setIceberg({ ...data.data, tiers: data.data.tiers.map((t: any) => ({ ...t, items: t.items.map((i: any) => ({ ...i, labels: typeof i.labels === 'string' ? (() => { try { return JSON.parse(i.labels); } catch { return []; } })() : (i.labels || []) })) })) });
             setLastSaved(new Date());
             pushVersionSnapshot(iceberg, 'auto');
             clearDraft(iceberg.id);
@@ -1134,8 +1134,8 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
         });
         const data = await res.json().catch(() => null);
         if (res.ok && data?.success) {
+          setIceberg({ ...data.data, tiers: data.data.tiers.map((t: any) => ({ ...t, items: t.items.map((i: any) => ({ ...i, labels: typeof i.labels === 'string' ? (() => { try { return JSON.parse(i.labels); } catch { return []; } })() : (i.labels || []) })) })) });
           clearDraft(iceberg.id);
-          setDirty(false);
           setLastSaved(new Date());
           pushVersionSnapshot(iceberg, 'manual');
           clearSyncFailure(`iceberg:update:${iceberg.id}`);
