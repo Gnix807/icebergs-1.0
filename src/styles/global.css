@@ -75,9 +75,13 @@ button {
 /* 正文 */
 /* 正文阅读 */
 p, li, td, th, blockquote {
-  font-weight: 700;
-  -webkit-text-stroke-width: 0.3px;
+  font-weight: 480;
+  -webkit-text-stroke-width: 0.25px;
   line-height: 1.75;
+}
+strong, b {
+  font-weight: 700;
+  -webkit-text-stroke-width: 0;
 }
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
