@@ -79,7 +79,7 @@ function buildFromImport(tempId: string): Iceberg | null {
           desc: it.desc || '',
           order: ii,
           tierId: `tier_${now}_${ti}`,
-          labels: JSON.stringify(it.labels || []),
+          labels: it.labels || [],
         })),
       })),
       createdAt: new Date().toISOString(),
@@ -89,6 +89,12 @@ function buildFromImport(tempId: string): Iceberg | null {
   } catch {
     return null;
   }
+}
+
+function normLabels(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw as string[];
+  if (typeof raw === 'string') { try { return JSON.parse(raw); } catch { return []; } }
+  return [];
 }
 
 function buildCreatePayload(target: Iceberg, slug: string) {
@@ -105,7 +111,7 @@ function buildCreatePayload(target: Iceberg, slug: string) {
         title: item.title,
         desc: item.desc ?? '',
         order: typeof item.order === 'number' ? item.order : itemIndex,
-        labels: item.labels ?? [],
+        labels: normLabels(item.labels),
       })),
     })),
   };

@@ -1,11 +1,20 @@
 import { marked } from 'marked';
 import katex from 'katex';
 
-// 配置 marked
+// 配置 marked — 链接强制新窗口打开
 marked.setOptions({
   gfm: true,
   breaks: true,
 });
+
+const renderer = {
+  link(this: any, { href, title, text }: { href: string; title?: string | null; text: string }) {
+    const t = title ? ` title="${title}"` : '';
+    return `<a href="${href}"${t} target="_blank" rel="noopener noreferrer">${text}</a>`;
+  },
+};
+
+marked.use({ renderer });
 
 // 轻量安全清洗：移除危险标签、事件属性、可执行协议
 const DANGEROUS_TAGS_RE = /<(?:script|style|iframe|object|embed|form|input|button|meta|link|base)[\s\S]*?>[\s\S]*?<\/(?:script|style|iframe|object|embed|form|input|button|meta|link|base)>/gi;
