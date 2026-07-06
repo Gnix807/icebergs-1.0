@@ -58,6 +58,15 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
       <!-- 层级预览 -->
       <div id="preview-tiers" class="space-y-2"></div>
 
+      <!-- 自定义标签 -->
+      <div class="border border-border-subtle bg-surface-2 p-4">
+        <div class="text-[10px] font-mono text-text-mid mb-2 tracking-widest">// 附加标签</div>
+        <input id="import-labels" type="text"
+          placeholder="逗号分隔，如：都市传说, 超自然, 知乎"
+          class="w-full bg-surface-1 border border-border px-3 py-2 text-xs font-mono text-text-hi focus:border-brand outline-none placeholder:text-text-mid" />
+        <p class="text-[10px] font-mono text-text-lo mt-1.5">这些标签会附加到所有导入词条上，可在编辑器中调整。支持自定义标签。</p>
+      </div>
+
       <!-- 导入按钮 -->
       <button
         id="import-go"
@@ -97,6 +106,23 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
 
   function parseDoc(doc) {
     var f = doc.fields || {};
+
+    // 构建分类映射（categoryId → 名称）
+    var catMap = {};
+    var cats = (f.categories && f.categories.arrayValue && f.categories.arrayValue.values) || [];
+    cats.forEach(function(c) {
+      var cf = c.mapValue && c.mapValue.fields || {};
+      catMap[sv(cf.id)] = sv(cf.name);
+    });
+
+    // 构建标记映射（markerId → 名称）
+    var markerMap = {};
+    var markers = (f.markers && f.markers.arrayValue && f.markers.arrayValue.values) || [];
+    markers.forEach(function(m) {
+      var mf = m.mapValue && m.mapValue.fields || {};
+      markerMap[sv(mf.id)] = sv(mf.name);
+    });
+
     var layers = (f.layers && f.layers.arrayValue && f.layers.arrayValue.values) || [];
     var tiers = [];
     var nsfw = !!(f.isNSFW && f.isNSFW.booleanValue);
@@ -117,8 +143,44 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
         var itDesc = sv(if_.description) || sv(if_.desc) || '';
         var itUrl = sv(if_.url) || '';
         if (itUrl && itUrl.startsWith('http')) itDesc += (itDesc ? '\n\n' : '') + '来源: ' + itUrl;
-        var it = { title: itText, desc: itDesc, labels: [] };
-        if (nsfw && i < 3 && tiers.length === 0) it.labels.push('NSFW');
+        var labels = [];
+        if (nsfw && i < 3 && tiers.length === 0) labels.push('NSFW');
+
+        // 映射原分类为标签
+        var catId = sv(if_.categoryId);
+        if (catId && catMap[catId]) {
+          var catName = catMap[catId];
+          if (/超自然/.test(catName)) labels.push('超自然');
+          if (/都市传说/.test(catName)) labels.push('都市传说');
+          if (/鬼宅|异常/.test(catName)) labels.push('特殊地点');
+          if (/网络/.test(catName)) labels.push('网络文化');
+          if (/自然/.test(catName)) labels.push('自然');
+          if (/生物/.test(catName)) labels.push('生物');
+          if (/民俗|信仰/.test(catName)) labels.push('民俗');
+          if (/神话|志怪/.test(catName)) labels.push('志怪');
+          if (/犯罪|事故/.test(catName)) labels.push('犯罪');
+          if (/阴谋/.test(catName)) labels.push('阴谋论');
+          if (/骗局|谣言/.test(catName)) labels.push('已辟谣');
+          if (/历史/.test(catName)) labels.push('历史');
+          if (/科学/.test(catName)) labels.push('科学');
+        }
+
+        // 映射原标记为标签
+        var markerIds = (if_.markerIds && if_.markerIds.arrayValue && if_.markerIds.arrayValue.values) || [];
+        markerIds.forEach(function(mv) {
+          var mId = sv(mv);
+          if (mId && markerMap[mId]) {
+            var mName = markerMap[mId];
+            if (/伪纪实/.test(mName) && labels.indexOf('都市传说') === -1) labels.push('都市传说');
+            if (/失传/.test(mName)) labels.push('失传媒体');
+            if (/迷因/.test(mName)) labels.push('网络文化');
+            if (/曼德拉/.test(mName)) labels.push('记忆');
+            if (/语言学|文字/.test(mName)) labels.push('语言');
+            if (/考古|文物/.test(mName)) labels.push('考古');
+          }
+        });
+
+        var it = { title: itText, desc: itDesc, labels: labels };
         tierItems.push(it);
       }
       if (items.length > 500) {
@@ -184,6 +246,20 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
 
   document.getElementById('import-go').addEventListener('click', function() {
     if (!currentData) return;
+
+    // 附加自定义标签
+    var labelStr = document.getElementById('import-labels').value.trim();
+    if (labelStr) {
+      var customLabels = labelStr.split(/[,，、\s]+/).filter(function(s) { return s.length > 0 && s.length <= 20; });
+      if (customLabels.length > 0) {
+        currentData.tiers.forEach(function(t) {
+          t.items.forEach(function(it) {
+            customLabels.forEach(function(l) { if (it.labels.indexOf(l) === -1) it.labels.push(l); });
+          });
+        });
+      }
+    }
+
     sessionStorage.setItem('imported_iceberg', JSON.stringify(currentData));
     window.location.href = '/iceberg/edit/imported';
   });
