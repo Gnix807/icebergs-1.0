@@ -24,6 +24,37 @@ const [notifications, unreadCount] = await Promise.all([
   prisma.notification.count({ where: { userId: session.userId, read: false } }),
 ]);
 
+function timeAgo(date: Date | string) {
+  const diff = Date.now() - new Date(date).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return '刚刚';
+  if (m < 60) return m + ' 分钟前';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + ' 小时前';
+  const d = Math.floor(h / 24);
+  if (d < 7) return d + ' 天前';
+  return new Date(date).toLocaleDateString('zh-CN');
+}
+
+function dateGroup(date: Date | string) {
+  const d = new Date(date);
+  const now = new Date();
+  const diff = Math.floor((now.getTime() - d.getTime()) / 86400000);
+  if (diff === 0) return '今天';
+  if (diff === 1) return '昨天';
+  if (diff < 7) return '本周';
+  return '更早';
+}
+
+// Group notifications by date
+const grouped: Record<string, typeof notifications> = {};
+for (const n of notifications) {
+  const g = dateGroup(n.createdAt);
+  if (!grouped[g]) grouped[g] = [];
+  grouped[g].push(n);
+}
+const groupOrder = ['今天', '昨天', '本周', '更早'];
+
 const typeLabel: Record<string, string> = {
   all: '全部', comment_reply: '评论回复', comment_liked: '点赞', achievement_unlocked: '成就',
   iceberg_approved: '审核通过', iceberg_rejected: '审核退回', promotion_approved: '晋升通过',
@@ -35,48 +66,85 @@ const typeLabel: Record<string, string> = {
 <Layout title="通知中心 | 冰山图宇宙">
   <main class="max-w-4xl mx-auto px-4 py-12">
     <header class="mb-8">
-      <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">[ NOTIFICATIONS ]</div>
-      <h1 class="text-3xl font-mono font-semibold"><span class="text-brand">#</span> 通知中心</h1>
-      {unreadCount > 0 && (
-        <p class="mt-2 text-sm text-text-body font-mono">共 {unreadCount} 条未读通知</p>
-      )}
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-xs font-mono text-text-mid mb-2 tracking-widest">NOTIFICATIONS</div>
+          <h1 class="text-2xl font-mono font-semibold text-text-hi">通知中心</h1>
+        </div>
+        {unreadCount > 0 && (
+          <button id="mark-all-btn" class="px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">
+            全部标为已读
+          </button>
+        )}
+      </div>
     </header>
 
     <div class="flex flex-wrap gap-1 mb-6">
       {types.filter(t => t !== '__unused').map(t => (
-        <a href={`/notifications?tab=${t}`} class={`text-[10px] font-mono px-2.5 py-1 border transition-colors ${tab === t ? 'border-brand text-brand bg-brand/10' : 'border-border-subtle text-text-mid hover:border-brand'}`}>
+        <a href={`/notifications?tab=${t}`}
+          class={`text-[10px] font-mono px-2.5 py-1 border rounded transition-colors ${
+            tab === t ? 'border-brand text-brand bg-brand/10' : 'border-border-subtle text-text-mid hover:border-brand hover:text-brand'
+          }`}>
           {typeLabel[t] || t}
         </a>
       ))}
     </div>
 
     {notifications.length === 0 ? (
-      <div class="py-16 text-center border border-dashed border-border-subtle">
+      <div class="py-20 text-center border border-dashed border-border-subtle">
+        <div class="font-mono text-text-lo text-2xl mb-3">🔔</div>
         <p class="text-text-mid font-mono text-sm">暂无通知</p>
       </div>
     ) : (
-      <div class="space-y-1">
-        {notifications.map(n => (
-          <a href={n.link || '#'} class={`block p-4 border transition-colors ${n.read ? 'border-border-subtle bg-surface-2 opacity-60' : 'border-border bg-surface-2 hover:border-brand'}`}>
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-0.5">
-                  {!n.read && <span class="w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0"></span>}
-                  <span class="text-[10px] font-mono text-text-lo">{typeLabel[n.type] || n.type}</span>
-                  <span class="text-[10px] font-mono text-text-lo ml-auto">{new Date(n.createdAt).toLocaleDateString('zh-CN')}</span>
-                </div>
-                <p class="text-sm font-mono text-text-hi">{n.title}</p>
-                {n.body && <p class="text-xs text-text-body mt-0.5">{n.body}</p>}
-              </div>
+      <div class="space-y-6">
+        {groupOrder.filter(g => grouped[g]).map(g => (
+          <div>
+            <div class="text-[10px] font-mono text-text-mid tracking-widest mb-2 ml-1">{g}</div>
+            <div class="space-y-0.5">
+              {grouped[g].map(n => (
+                <a href={n.link || '#'}
+                  class={`flex items-start gap-3 p-4 border transition-colors hover:border-border ${
+                    n.read ? 'border-border-subtle bg-surface-2/50' : 'border-border-subtle bg-surface-2'
+                  }`}
+                  style={{ borderLeftWidth: '3px', borderLeftColor: n.read ? 'transparent' : (
+                    n.type === 'iceberg_approved' || n.type === 'promotion_approved' || n.type === 'appeal_approved' || n.type === 'unbanned' ? '#22c55e' :
+                    n.type === 'iceberg_rejected' || n.type === 'promotion_rejected' || n.type === 'banned' ? '#ef4444' :
+                    n.type === 'warned' || n.type === 'achievement_unlocked' ? '#f59e0b' :
+                    n.type === 'restricted' ? '#3b82f6' : '#6b7280'
+                  ) }}}
+                >
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-[10px] font-mono px-1.5 py-px border rounded flex-shrink-0"
+                        style={{ color: n.type === 'iceberg_approved' || n.type === 'unbanned' ? '#22c55e' : n.type === 'iceberg_rejected' || n.type === 'banned' ? '#ef4444' : n.type === 'warned' || n.type === 'achievement_unlocked' ? '#f59e0b' : '#6b7280', borderColor: 'currentColor', opacity: n.read ? 0.5 : 1 }}>
+                        {typeLabel[n.type] || n.type}
+                      </span>
+                      {!n.read && <span class="w-1.5 h-1.5 rounded-full bg-brand flex-shrink-0"></span>}
+                    </div>
+                    <p class={`text-sm font-mono ${n.read ? 'text-text-body' : 'text-text-hi font-medium'}`}>{n.title}</p>
+                    {n.body && <p class="text-xs text-text-mid mt-0.5 leading-relaxed">{n.body}</p>}
+                  </div>
+                  <span class="text-[10px] font-mono text-text-lo flex-shrink-0 mt-1">{timeAgo(n.createdAt)}</span>
+                </a>
+              ))}
             </div>
-          </a>
+          </div>
         ))}
       </div>
     )}
 
-    <div class="flex justify-center gap-3 mt-6">
-      {page > 1 && <a href={`/notifications?tab=${tab}&page=${page-1}`} class="text-xs font-mono border border-border px-4 py-2 hover:border-brand">← 上一页</a>}
-      {notifications.length === 20 && <a href={`/notifications?tab=${tab}&page=${page+1}`} class="text-xs font-mono border border-border px-4 py-2 hover:border-brand">下一页 →</a>}
+    <div class="flex justify-center gap-3 mt-8">
+      {page > 1 && <a href={`/notifications?tab=${tab}&page=${page - 1}`}
+        class="px-5 py-2 text-xs font-mono border border-border text-text-body hover:border-brand hover:text-brand transition-colors">← 上一页</a>}
+      {notifications.length === 20 && <a href={`/notifications?tab=${tab}&page=${page + 1}`}
+        class="px-5 py-2 text-xs font-mono border border-border text-text-body hover:border-brand hover:text-brand transition-colors">下一页 →</a>}
     </div>
   </main>
 </Layout>
+
+<script>
+  var mb = document.getElementById('mark-all-btn');
+  if (mb) mb.addEventListener('click', function() {
+    fetch('/api/notifications/read-all', { method: 'PUT' }).then(function() { location.reload(); });
+  });
+</script>

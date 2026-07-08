@@ -458,37 +458,29 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                   </button>
 
                   {notifMounted && (
-                    <div className={`absolute right-0 top-full mt-2 w-80 bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden ${notifLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
-                      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border-subtle bg-surface-1">
+                    <div className={`absolute right-0 top-full mt-2 w-88 bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden rounded ${notifLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+                        <span className="text-xs font-mono font-semibold text-text-hi">通知</span>
                         <div className="flex items-center gap-3">
-                          <span className="text-xs font-mono text-text-hi">通知</span>
-                          <button
-                            onClick={unreadCount > 0 ? markAllRead : undefined}
-                            className={`text-[10px] font-mono transition-colors ${unreadCount > 0 ? 'text-text-mid hover:text-brand cursor-pointer' : 'text-text-lo cursor-default'}`}
-                          >
+                          <button onClick={unreadCount > 0 ? markAllRead : undefined}
+                            className={`text-[10px] font-mono transition-colors ${unreadCount > 0 ? 'text-text-mid hover:text-brand' : 'text-text-lo'}`}>
                             全部已读
                           </button>
+                          <a href="/notifications" onClick={() => setShowNotif(false)}
+                            className="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
+                            查看全部 →
+                          </a>
                         </div>
-                        <a href="/notifications" onClick={() => setShowNotif(false)} className="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
-                          查看全部通知 →
-                        </a>
                       </div>
 
-                      <div className="max-h-[400px] overflow-y-auto">
+                      <div className="max-h-[420px] overflow-y-auto">
                         {notifLoading && (
-                          <div className="py-8 text-center text-text-lo font-mono text-xs animate-pulse">// 加载中...</div>
+                          <div className="py-10 text-center text-text-lo font-mono text-xs animate-pulse">加载中...</div>
                         )}
                         {!notifLoading && notifications.length === 0 && (
-                          <div className="py-8 text-center text-text-lo font-mono text-xs">// 暂无通知</div>
+                          <div className="py-10 text-center text-text-lo font-mono text-xs">暂无通知</div>
                         )}
                         {!notifLoading && notifications.map(n => {
-                          const iconMap: Record<string, string> = {
-                            iceberg_approved: '✓', iceberg_rejected: '✗',
-                            promotion_approved: '↑', promotion_rejected: '↓',
-                            appeal_approved: '◎', appeal_rejected: '⊘',
-                            warned: '!', restricted: '⊘', banned: '✕', unbanned: '✓',
-                            achievement_unlocked: '★',
-                          };
                           const colorMap: Record<string, string> = {
                             iceberg_approved: '#00FF41', iceberg_rejected: '#ef4444',
                             promotion_approved: '#00FF41', promotion_rejected: '#ef4444',
@@ -497,29 +489,37 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                             achievement_unlocked: '#f59e0b',
                           };
                           const color = colorMap[n.type] ?? '#6b7280';
-                          const icon = iconMap[n.type] ?? '·';
+                          const timeStr = (() => {
+                            const diff = Date.now() - new Date(n.createdAt).getTime();
+                            const m = Math.floor(diff / 60000);
+                            if (m < 1) return '刚刚';
+                            if (m < 60) return m + '分钟前';
+                            const h = Math.floor(m / 60);
+                            if (h < 24) return h + '小时前';
+                            const d = Math.floor(h / 24);
+                            if (d < 7) return d + '天前';
+                            return new Date(n.createdAt).toLocaleDateString('zh-CN');
+                          })();
                           return (
                             <button
                               key={n.id}
                               onClick={() => markRead(n.id, n.link)}
-                              className={`w-full text-left px-4 py-3 border-b border-border-subtle last:border-0 transition-colors hover:bg-surface-2 ${!n.read ? 'bg-surface-2' : ''}`}
+                              className="w-full text-left px-4 py-3 transition-colors hover:bg-surface-3 border-l-2"
+                              style={{ borderLeftColor: !n.read ? color : 'transparent', borderBottomColor: '#21262d', borderBottomWidth: '1px', borderBottomStyle: 'solid' }}
                             >
-                              <div className="flex items-start gap-2.5">
-                                <span className="flex-shrink-0 text-xs font-mono font-bold mt-0.5" style={{ color }}>[{icon}]</span>
+                              <div className="flex items-start justify-between gap-2">
                                 <div className="flex-1 min-w-0">
-                                  <p className={`text-xs font-mono leading-snug ${n.read ? 'text-text-body' : 'text-text-hi'}`}>
+                                  <p className={`text-xs font-mono leading-snug ${n.read ? 'text-text-body' : 'text-text-hi font-medium'}`}>
                                     {n.title}
                                   </p>
                                   {n.body && (
-                                    <p className="text-[10px] text-text-lo mt-0.5 leading-relaxed line-clamp-2">{n.body}</p>
+                                    <p className="text-[10px] text-text-mid mt-0.5 leading-relaxed line-clamp-2">{n.body}</p>
                                   )}
-                                  <p className="text-[10px] text-text-lo mt-1 font-mono">
-                                    {new Date(n.createdAt).toLocaleDateString('zh-CN')}
-                                  </p>
                                 </div>
-                                {!n.read && (
-                                  <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-brand mt-1.5" />
-                                )}
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                  {!n.read && <span className="w-2 h-2 rounded-full" style={{ background: color }} />}
+                                  <span className="text-[10px] font-mono text-text-lo">{timeStr}</span>
+                                </div>
                               </div>
                             </button>
                           );

@@ -283,7 +283,6 @@ export function AdminFeedback() {
                     >
                       {deleting === fb.id ? '删除中...' : deleteConfirming === fb.id ? '再次确认删除' : '删除'}
                     </button>
-                    </button>
                   </div>
                 )}
               </div>
