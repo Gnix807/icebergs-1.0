@@ -144,7 +144,7 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
         var itUrl = sv(if_.url) || '';
         if (itUrl && itUrl.startsWith('http')) itDesc += (itDesc ? '\n\n' : '') + '来源: ' + itUrl;
         var labels = [];
-        if (nsfw && i < 3 && tiers.length === 0) labels.push('NSFW');
+        if (nsfw) labels.push('NSFW');
 
         // 映射原分类为标签
         var catId = sv(if_.categoryId);
