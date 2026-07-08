@@ -1327,11 +1327,6 @@ if (iceberg?.status === 'PUBLISHED') {
   #modal-body::-webkit-scrollbar-track { background: #0d1117; }
   #modal-body::-webkit-scrollbar-thumb { background: #30363d; }
   #modal-body::-webkit-scrollbar-thumb:hover { background: #484f58; }
-  /* ── 性能优化: 屏幕外层级延迟渲染 ── */
-  .tier-section {
-    content-visibility: auto;
-    contain-intrinsic-size: 0 80px;
-  }
   /* 浅色模式淡化层背景 */
   html.light .tier-section {
     background: transparent !important;
