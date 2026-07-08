@@ -11,13 +11,28 @@ export async function POST(event: APIContext) {
     });
   }
 
-  const result = await prisma.userAchievement.deleteMany({
-    where: { userId: session.userId },
-  });
+  const [ach, stats, user] = await Promise.all([
+    prisma.userAchievement.deleteMany({ where: { userId: session.userId } }),
+    prisma.userStats.upsert({
+      where: { userId: session.userId },
+      create: { userId: session.userId },
+      update: {
+        totalRead: 0, searchCount: 0, randomCount: 0,
+        nightReadCount: 0, visitedIcebergCount: 0,
+        consecutiveDays: 0, lastVisitDate: null,
+        totalVotesCast: 0, totalSessionMinutes: 0,
+        pendingAchievements: '[]',
+      },
+    }),
+    prisma.user.update({
+      where: { id: session.userId },
+      data: { qualityScore: 0 },
+    }),
+  ]);
 
   return new Response(JSON.stringify(success({
-    message: `已清空 ${result.count} 条成就记录`,
-    count: result.count,
+    message: `已重置：${ach.count} 条成就 + 统计数据 + 质量分归零`,
+    achievementsCleared: ach.count,
   })), {
     status: 200, headers: { 'Content-Type': 'application/json' },
   });

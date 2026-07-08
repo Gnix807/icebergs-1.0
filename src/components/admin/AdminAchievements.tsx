@@ -645,12 +645,12 @@ export function AdminAchievements({ isFounder }: { isFounder?: boolean }) {
       {isFounder && <div className="mt-8 pt-6 border-t border-danger/20">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-mono text-danger mb-1">清空我的成就进度</div>
-            <div className="text-[10px] font-mono text-text-mid">仅清除你（创始人）自己的已获得成就，其他用户不受影响。</div>
+            <div className="text-xs font-mono text-danger mb-1">重置我的数据</div>
+            <div className="text-[10px] font-mono text-text-mid">清空你的成就、统计数据和质量分，回到与新用户一样的起跑线。不影响冰山图和其他用户。</div>
           </div>
           {!resetConfirm ? (
             <button onClick={() => setResetConfirm(true)} className="px-3 py-1.5 text-xs font-mono border border-danger/40 text-danger hover:bg-danger/10 transition-colors flex-shrink-0">
-              清空我的进度
+              重置我的数据
             </button>
           ) : (
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -665,7 +665,7 @@ export function AdminAchievements({ isFounder }: { isFounder?: boolean }) {
                 } catch { toast('网络错误'); }
                 finally { setResetting(false); }
               }} disabled={resetting} className="px-3 py-1.5 text-xs font-mono bg-danger text-white hover:bg-danger/80 disabled:opacity-40 transition-colors">
-                {resetting ? '清空中…' : '确认清空'}
+                {resetting ? '重置中…' : '确认重置'}
               </button>
             </div>
           )}
