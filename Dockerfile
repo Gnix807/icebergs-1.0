@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # 复制依赖文件
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev && npm install prisma --no-save
 
 # 复制源码和配置
 COPY prisma/ prisma/
@@ -20,5 +20,8 @@ COPY public/ public/
 # 构建
 RUN npx prisma generate && npm run build
 
+COPY docker-entrypoint.sh /app/
+RUN chmod +x /app/docker-entrypoint.sh
+
 EXPOSE 4321
-CMD ["node", "dist/server/entry.mjs"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
