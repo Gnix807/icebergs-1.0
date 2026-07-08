@@ -44,8 +44,8 @@ const currentThemeId = session ? (await prisma.user.findUnique({ where: { id: se
             style="animation-delay:${t.isPreset ? 50 : 100}ms">
             {/* 预览色块 */}
             <div class="h-16 flex" style={`background: ${vars['--color-surface-0'] || '#0d1117'}`}>
-              <div class="w-1/3" style="background: ${vars['--color-brand'] || '#00FF41'};opacity:0.8"></div>
-              <div class="w-1/3" style="background: ${vars['--color-surface-1'] || '#161b22'}"></div>
+              <div class="w-1/3" style={`background: ${vars['--color-brand'] || '#00FF41'};opacity:0.8`}></div>
+              <div class="w-1/3" style={`background: ${vars['--color-surface-1'] || '#161b22'}`}></div>
               <div class="w-1/3" style={`background: ${vars['--color-border'] || '#21262d'}`}></div>
             </div>
             <div class="p-4">
