@@ -540,14 +540,14 @@ if (iceberg?.status === 'PUBLISHED') {
   {/* ── Modal Overlay ─────────────────────────────────────── */}
   <div
     id="modal-overlay"
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 opacity-0 pointer-events-none transition-opacity duration-200"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998] opacity-0 pointer-events-none transition-opacity duration-200"
     onclick="closeModal()"
   ></div>
 
   {/* ── Modal Popup ────────────────────────────────────────── */}
   <div
     id="modal-popup"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-200"
+    class="fixed inset-0 z-[9999] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-200"
   >
     <div id="modal-card" class="relative w-full max-w-lg max-h-[80vh] bg-surface-1 border border-border shadow-2xl flex flex-col scale-95 transition-transform duration-200">
       {/* Header */}
