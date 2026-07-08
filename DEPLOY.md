@@ -150,3 +150,52 @@ cd /opt/icebergs/frontend && bash deploy.sh
 - [ ] 浏览器打开 `https://你的域名` 确认可访问
 - [ ] SEO 面板配置搜索引擎验证码（Google / 百度 / Bing）
 - [ ] 搜索引擎提交 `/sitemap.xml`
+
+---
+
+## 性能调优（推荐）
+
+### Nginx 缓存静态资源
+
+在 1Panel → 网站 → 你的域名 → 配置 → 添加：
+
+```nginx
+# 静态文件缓存 30 天
+location ~* \.(js|css|png|jpg|svg|woff2)$ {
+  expires 30d;
+  add_header Cache-Control "public, immutable";
+}
+```
+
+### PostgreSQL 内存优化
+
+编辑 PostgreSQL 配置文件（通常在 `/var/lib/pgsql/data/postgresql.conf` 或 1Panel 数据库设置中）：
+
+```
+shared_buffers = 512MB
+effective_cache_size = 2GB
+work_mem = 16MB
+```
+
+### Cloudflare CDN（免费）
+
+将域名 DNS 托管到 Cloudflare，获得全球 CDN 缓存和 DDoS 防护。
+
+---
+
+## 上线前清理
+
+如果从本地数据库迁移到生产，建议清理测试数据：
+
+```bash
+# 删除演示冰山图
+psql -U icebergs icebergs -c "DELETE FROM icebergs WHERE slug LIKE 'demo_%';"
+
+# 清空测试用户的成就数据（保留成就定义）
+psql -U icebergs icebergs -c "DELETE FROM user_achievements;"
+
+# 创始人密码置空，上线后用「忘记密码」重设
+psql -U icebergs icebergs -c "UPDATE users SET \"passwordHash\" = NULL WHERE \"isFounder\" = true;"
+```
+
+测试账号（如 `test1@icebergs.local`）可直接在 1Panel 数据库界面删除。
