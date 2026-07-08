@@ -5,6 +5,8 @@ import { createSession } from '../../../lib/auth';
 import { enforceAuthRateLimit, getClientIp } from '../../../lib/auth/rateLimit';
 import { pbkdf2, randomBytes } from 'crypto';
 import { promisify } from 'util';
+import { verifyAndConsumeEmailCode } from '../../../lib/auth/emailVerification';
+import { notify } from '../../../lib/notify';
 
 const pbkdf2Async = promisify(pbkdf2);
 
@@ -96,6 +98,25 @@ export async function POST(event: APIContext) {
       });
     }
 
+    const code = typeof body.verificationCode === 'string' ? body.verificationCode.trim() : '';
+    if (!code) {
+      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '请输入邮箱验证码')), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    const verifyResult = await verifyAndConsumeEmailCode(email, 'register', code);
+    if (verifyResult !== 'valid') {
+      const msg = verifyResult === 'expired' ? '验证码已过期，请重新发送'
+        : verifyResult === 'too_many_attempts' ? '验证码尝试次数过多，请重新发送'
+        : verifyResult === 'missing' ? '请先发送验证码'
+        : '验证码错误';
+      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, msg)), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const [existingEmail, existingUsername] = await Promise.all([
       prisma.user.findUnique({
         where: { email },
@@ -139,6 +160,10 @@ export async function POST(event: APIContext) {
     });
 
     await createSession(user.id, event);
+
+    notify(user.id, 'welcome', '欢迎来到冰山图宇宙',
+      '注册成功！你可以开始创建第一张冰山图，或浏览冰山广场发现有趣的内容。',
+      '/guide');
 
     return new Response(JSON.stringify(success({
       id: user.id,

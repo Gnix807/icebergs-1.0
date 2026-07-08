@@ -294,7 +294,7 @@ async function drawExport(
   ctx.font = FONT_SMALL;
   ctx.fillStyle = T.watermark;
   ctx.textBaseline = 'middle';
-  ctx.fillText('冰山图宇宙 · iceberg.chat', PAD, y + 36);
+  ctx.fillText('冰山图宇宙 · icebergs.fun', PAD, y + 36);
   ctx.fillText(shortUrl, PAD, y + 54);
 
   const QR = 52;

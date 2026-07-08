@@ -20,7 +20,7 @@ interface Props {
 const { title, description = '冰山图宇宙 - 探索知识的深层', ogImage, canonicalURL } = Astro.props;
 const SITE = Astro.site?.origin || 'https://icebergs.fun';
 const pageUrl = canonicalURL || Astro.url.href;
-const ogImageUrl = ogImage || `${SITE}/og-default.png`;
+const ogImageUrl = ogImage || '';
 
 // 全站横幅：取最新一条 banner=true 的公告
 const bannerAnn = await prisma.announcement.findFirst({
@@ -71,6 +71,7 @@ const seoSettings = await prisma.systemSettings.findMany({
     {seoSettings.seo_google_analytics && <script async src={`https://www.googletagmanager.com/gtag/js?id=${seoSettings.seo_google_analytics}`}></script>}
     {seoSettings.seo_baidu_analytics && <script is:inline set:html={`var _hmt=_hmt||[];(function(){var hm=document.createElement("script");hm.src="https://hm.baidu.com/hm.js?${seoSettings.seo_baidu_analytics}";var s=document.getElementsByTagName("script")[0];s.parentNode.insertBefore(hm,s)})();`}></script>}
     {seoSettings.seo_custom_head && <Fragment set:html={seoSettings.seo_custom_head} />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=PingFang+SC:wght@400;500;600&display=swap" rel="stylesheet" />

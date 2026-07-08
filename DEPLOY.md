@@ -112,6 +112,20 @@ https://你的域名/api/auth/callback
 
 ---
 
+---
+
+## 数据库备份
+
+1Panel → **计划任务**，添加定时备份脚本：
+
+| 脚本名 | 周期 | 命令 |
+|--------|------|------|
+| 数据库备份 | `0 3 * * *` | `pg_dump -U icebergs icebergs > /opt/backups/icebergs_$(date +%Y%m%d).sql` |
+
+或使用 1Panel 内置的数据库备份功能：数据库 → icebergs → 备份 → 设置自动备份周期。
+
+---
+
 ## 后续更新
 
 以后每次更新代码只需要：

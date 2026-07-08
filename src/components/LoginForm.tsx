@@ -171,7 +171,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
       const body = mode === 'login'
         ? { email: normalizedEmail, password }
         : mode === 'register'
-          ? { email: normalizedEmail, password, username: username.trim(), nickname }
+          ? { email: normalizedEmail, password, username: username.trim(), nickname, verificationCode }
           : { email: normalizedEmail, newPassword: password };
 
       const res = await fetch(endpoint, {
