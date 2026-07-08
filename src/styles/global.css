@@ -1074,6 +1074,8 @@ html.light .noise-overlay { display: none !important; }
 }
 .nav-dropdown-in  { animation: navDropdownIn  0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .nav-dropdown-out { animation: navDropdownOut 0.18s ease forwards; }
+.nav-dropin { animation: navDropdownIn  0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.nav-dropout { animation: navDropdownOut 0.12s ease forwards; }
 
 /* ── 移动端底部导航栏 ───────────────────────────────── */
 .mobile-bottom-nav {

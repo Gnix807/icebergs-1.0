@@ -78,6 +78,22 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
   const [notifLoading, setNotifLoading] = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null);
+  const notifTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openNotifHover = () => {
+    if (notifTimer.current) clearTimeout(notifTimer.current);
+    if (!showNotif) {
+      setShowNotif(true);
+      setNotifLoading(true);
+      fetch('/api/notifications')
+        .then(r => r.json())
+        .then(d => { if (d.success) { setNotifications(d.data.notifications); setUnreadCount(d.data.unreadCount); } })
+        .finally(() => setNotifLoading(false));
+    }
+  };
+  const closeNotifHover = () => {
+    notifTimer.current = setTimeout(() => setShowNotif(false), 200);
+  };
 
   // 搜索状态
   const [showSearch, setShowSearch] = useState(false);
@@ -142,23 +158,6 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
       .then(r => r.json())
       .then(d => { if (d.success) setUnreadCount(d.data.unreadCount); })
       .catch(() => {});
-  };
-
-  const openNotif = async () => {
-    setShowNotif(v => !v);
-    if (!showNotif) {
-      setNotifLoading(true);
-      try {
-        const res = await fetch('/api/notifications');
-        const d = await res.json();
-        if (d.success) {
-          setNotifications(d.data.notifications);
-          setUnreadCount(d.data.unreadCount);
-        }
-      } finally {
-        setNotifLoading(false);
-      }
-    }
   };
 
   const markAllRead = async () => {
@@ -437,9 +436,9 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
 
               {/* 通知铃铛 */}
               {user && (
-                <div className="relative" ref={notifRef}>
+                <div className="relative" ref={notifRef}
+                  onMouseEnter={openNotifHover} onMouseLeave={closeNotifHover}>
                   <button
-                    onClick={openNotif}
                     className="relative w-9 h-9 flex items-center justify-center text-text-body hover:text-brand border border-border hover:border-brand transition-all"
                     title="通知"
                     aria-label="通知"
@@ -458,14 +457,19 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                   </button>
 
                   {notifMounted && (
-                    <div className={`absolute right-0 top-full mt-2 w-88 bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden rounded ${notifLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
+                    <div
+                      className={`absolute right-0 top-full mt-2 w-88 bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden rounded-lg ${notifLeaving ? 'nav-dropout' : 'nav-dropin'}`}
+                      onMouseEnter={openNotifHover}
+                    >
                       <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
-                        <span className="text-xs font-mono font-semibold text-text-hi">通知</span>
+                        <span className="text-sm font-mono font-semibold text-text-hi">通知</span>
                         <div className="flex items-center gap-3">
-                          <button onClick={unreadCount > 0 ? markAllRead : undefined}
-                            className={`text-[10px] font-mono transition-colors ${unreadCount > 0 ? 'text-text-mid hover:text-brand' : 'text-text-lo'}`}>
-                            全部已读
-                          </button>
+                          {unreadCount > 0 && (
+                            <button onClick={markAllRead}
+                              className="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
+                              全部已读
+                            </button>
+                          )}
                           <a href="/notifications" onClick={() => setShowNotif(false)}
                             className="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
                             查看全部 →
@@ -478,14 +482,17 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                           <div className="py-10 text-center text-text-lo font-mono text-xs animate-pulse">加载中...</div>
                         )}
                         {!notifLoading && notifications.length === 0 && (
-                          <div className="py-10 text-center text-text-lo font-mono text-xs">暂无通知</div>
+                          <div className="py-10 text-center">
+                            <div className="text-2xl mb-2 opacity-30">🔔</div>
+                            <div className="text-text-lo font-mono text-xs">暂无通知</div>
+                          </div>
                         )}
                         {!notifLoading && notifications.map(n => {
                           const colorMap: Record<string, string> = {
-                            iceberg_approved: '#00FF41', iceberg_rejected: '#ef4444',
-                            promotion_approved: '#00FF41', promotion_rejected: '#ef4444',
-                            appeal_approved: '#00FF41', appeal_rejected: '#ef4444',
-                            warned: '#f59e0b', restricted: '#3b82f6', banned: '#ef4444', unbanned: '#00FF41',
+                            iceberg_approved: '#22c55e', iceberg_rejected: '#ef4444',
+                            promotion_approved: '#22c55e', promotion_rejected: '#ef4444',
+                            appeal_approved: '#22c55e', appeal_rejected: '#ef4444',
+                            warned: '#f59e0b', restricted: '#3b82f6', banned: '#ef4444', unbanned: '#22c55e',
                             achievement_unlocked: '#f59e0b',
                           };
                           const color = colorMap[n.type] ?? '#6b7280';
@@ -503,24 +510,19 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                           return (
                             <button
                               key={n.id}
-                              onClick={() => markRead(n.id, n.link)}
-                              className="w-full text-left px-4 py-3 transition-colors hover:bg-surface-3 border-l-2"
-                              style={{ borderLeftColor: !n.read ? color : 'transparent', borderBottomColor: '#21262d', borderBottomWidth: '1px', borderBottomStyle: 'solid' }}
+                              onClick={() => { markRead(n.id, n.link); setShowNotif(false); }}
+                              className="w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-surface-3 transition-colors border-b border-border-subtle last:border-0"
                             >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <p className={`text-xs font-mono leading-snug ${n.read ? 'text-text-body' : 'text-text-hi font-medium'}`}>
-                                    {n.title}
-                                  </p>
-                                  {n.body && (
-                                    <p className="text-[10px] text-text-mid mt-0.5 leading-relaxed line-clamp-2">{n.body}</p>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1.5 flex-shrink-0">
-                                  {!n.read && <span className="w-2 h-2 rounded-full" style={{ background: color }} />}
-                                  <span className="text-[10px] font-mono text-text-lo">{timeStr}</span>
-                                </div>
+                              {!n.read && <span className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />}
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-xs font-mono leading-snug ${n.read ? 'text-text-body' : 'text-text-hi'}`}>
+                                  {n.title}
+                                </p>
+                                {n.body && (
+                                  <p className="text-[10px] text-text-mid mt-0.5 leading-relaxed line-clamp-2">{n.body}</p>
+                                )}
                               </div>
+                              <span className="text-[10px] font-mono text-text-lo flex-shrink-0 mt-0.5">{timeStr}</span>
                             </button>
                           );
                         })}
