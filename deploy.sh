@@ -4,7 +4,6 @@ set -e
 cd /opt/icebergs/frontend
 
 echo "==> 1/6 拉取最新代码"
-# 私有仓库需要认证：export GIT_TOKEN=你的token 或在 ~/.netrc 中配置
 git pull origin main
 
 echo "==> 2/6 安装依赖"
