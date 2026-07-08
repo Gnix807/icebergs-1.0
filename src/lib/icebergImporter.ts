@@ -107,13 +107,14 @@ export function parseIcebergThreads(
       // 从原始 tags 映射到标签
       if (tags.length > 0 && i === 0) {
         for (const tag of tags.slice(0, 3)) {
-          if (tag && !itemLabels.includes(tag)) {
-            itemLabels.push(tag);
+          const normalized = /^nsfw$/i.test(tag) ? 'NSFW' : tag;
+          if (normalized && !itemLabels.includes(normalized)) {
+            itemLabels.push(normalized);
           }
         }
       }
 
-      items.push({ title: itemTitle, desc: fullDesc, labels: itemLabels });
+      items.push({ title: itemTitle, desc: fullDesc, labels: [...new Set(itemLabels)] });
     }
 
     // 如果因为限制截断了，添加提示词条

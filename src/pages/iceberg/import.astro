@@ -171,7 +171,7 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
           }
         });
 
-        var it = { title: itText, desc: itDesc, labels: labels };
+        var it = { title: itText, desc: itDesc, labels: labels.map(function(l) { return /^nsfw$/i.test(l) ? 'NSFW' : l; }) };
         tierItems.push(it);
       }
       if (items.length > 500) {
