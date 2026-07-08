@@ -1,4 +1,41 @@
-# 部署指南 (1Panel)
+# 部署指南
+
+## Docker Compose（推荐，一键部署）
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/Gnix807/icebergs-1.0.git /opt/icebergs
+cd /opt/icebergs
+
+# 2. 配置环境变量
+cp .env.docker .env
+nano .env   # 填入 OAuth 密钥和域名
+
+# 3. 启动
+docker compose up -d
+
+# 4. 初始化数据库
+docker compose exec app npx prisma db push
+docker compose exec app node prisma/seed.mjs
+docker compose exec app node prisma/seed-achievements.mjs
+
+# 5. 初始化全文搜索
+docker compose exec db psql -U icebergs -f /app/prisma/migrations/001_fulltext_search.sql
+```
+
+应用运行在 `4321` 端口。用 1Panel 或 nginx 反代到 `127.0.0.1:4321` 即可。
+
+```bash
+# 更新：拉代码后重建
+git pull && docker compose up -d --build
+
+# 备份数据库
+docker compose exec db pg_dump -U icebergs icebergs > backups/backup_$(date +%Y%m%d).sql
+```
+
+---
+
+## 手动部署 (1Panel)
 
 ## 1. 创建 PostgreSQL 数据库
 

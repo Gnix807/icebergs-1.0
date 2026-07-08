@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: icebergs-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: icebergs
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-icebergs_dev}
+      POSTGRES_DB: icebergs
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U icebergs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: icebergs-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "4321:4321"
+    environment:
+      DATABASE_URL: postgresql://icebergs:${DB_PASSWORD:-icebergs_dev}@db:5432/icebergs
+      NODE_ENV: production
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      REDIRECT_URI: ${REDIRECT_URI}
+      CRON_SECRET: ${CRON_SECRET}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-console}
+      EMAIL_FROM: ${EMAIL_FROM}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      EMAIL_VERIFICATION_SECRET: ${EMAIL_VERIFICATION_SECRET:-change-me}
+    volumes:
+      - ./uploads:/app/public/uploads
+
+volumes:
+  pgdata:
