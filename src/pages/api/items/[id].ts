@@ -2,6 +2,7 @@ import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
+import { renderMarkdownWithMath } from '../../../lib/markdown';
 
 async function isProjectMember(userId: string, projectId: string | null): Promise<boolean> {
   if (!projectId) return false;
@@ -65,9 +66,12 @@ export async function PUT(event: APIContext) {
       });
     }
 
-    const updateData: { title?: string; desc?: string; order?: number; labels?: string; tierId?: string } = {};
+    const updateData: { title?: string; desc?: string; renderedDesc?: string; order?: number; labels?: string; tierId?: string } = {};
     if (title !== undefined) updateData.title = title.trim();
-    if (desc !== undefined) updateData.desc = desc;
+    if (desc !== undefined) {
+      updateData.desc = desc;
+      updateData.renderedDesc = renderMarkdownWithMath(desc);
+    }
     if (order !== undefined) updateData.order = order;
     if (tierId !== undefined) {
       if (typeof tierId !== 'string' || !tierId.trim()) {

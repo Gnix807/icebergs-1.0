@@ -2,7 +2,6 @@
 import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
 import { renderMarkdownWithMath } from '../../lib/markdown';
-import { getCachedMarkdown } from '../../lib/markdownCache';
 import { SocialBar } from '../../components/iceberg/SocialBar';
 import { ExportButton } from '../../components/iceberg/ExportButton';
 import { CommentSection } from '../../components/iceberg/CommentSection';
@@ -124,9 +123,6 @@ try {
 
       for (const tier of iceberg.tiers) {
         for (const item of tier.items) {
-          if (item.desc) {
-            (item as any)._descHtml = getCachedMarkdown(item.id, item.desc, item.updatedAt);
-          }
           // Parse labels JSON array
           try {
             (item as any)._labels = JSON.parse(item.labels || '[]') as string[];
@@ -144,6 +140,11 @@ try {
 } catch (err) {
   console.error('加载冰山图失败:', err);
   error = '加载失败';
+}
+
+// 已发布冰山允许浏览器/CDN缓存（未登录用户），减轻服务器压力
+if (iceberg?.status === 'PUBLISHED' && !session) {
+  Astro.response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=600');
 }
 
 const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
@@ -189,7 +190,6 @@ interface FlatItem {
   tierName: string;
   tierColor: string;
   labels: string[];
-  descHtml: string;
   icebergId: string;
   icebergTitle: string;
   isLastTier: boolean;
@@ -202,7 +202,6 @@ const allItemsFlat: FlatItem[] = (iceberg?.tiers ?? []).flatMap((tier: any, ti: 
     tierName: tier.name,
     tierColor: tierColors[ti % 6],
     labels: (item as any)._labels as string[],
-    descHtml: (item as any)._descHtml ?? '',
     icebergId: iceberg.id,
     icebergTitle: iceberg.title,
     isLastTier: ti === totalTiers - 1,
@@ -616,6 +615,10 @@ if (iceberg?.status === 'PUBLISHED') {
   let scrollSaveTimer = null;
   // 词条滚动位置记忆
   const scrollPositions = {};
+  // 描述HTML客户端缓存
+  const descCache = {};
+  // 正在加载中的词条id集合（防止重复请求）
+  var loadingDescs = {};
 
   // ── 探索成就上报 ──────────────────────────────────────────
   function reportRead(item) {
@@ -688,8 +691,8 @@ if (iceberg?.status === 'PUBLISHED') {
       var title = (chip.querySelector('.chip-title')?.textContent || '').toLowerCase();
       var itemId = chip.dataset.id;
       var item = ITEMS.find(function (it) { return it.id === itemId; });
-      var desc = item ? (item.title + ' ' + (item.descHtml || '')).toLowerCase() : title;
-      var match = title.includes(term) || desc.includes(term);
+      var searchText = item ? (item.title + ' ' + (item.labels || []).join(' ')).toLowerCase() : title;
+      var match = searchText.includes(term);
       chip.dataset.searchMatch = match ? '1' : '0';
       if (match) anyMatch = true;
     });
@@ -803,14 +806,38 @@ if (iceberg?.status === 'PUBLISHED') {
       modalLabelsRow.classList.add('hidden');
     }
 
-    // Content — 先显示加载动画，再渲染实际内容
-    var loader = '<div class="modal-loader"><div class="modal-spinner"></div><p class="modal-loader-text">加载中...</p></div>';
-    modalContent.innerHTML = loader;
+    // Content — 异步加载描述HTML
+    modalContent.innerHTML = '<div class="modal-loader"><div class="modal-spinner"></div><p class="modal-loader-text">加载中...</p></div>';
     modalContent.style.opacity = '1';
-    setTimeout(function () {
-      modalContent.innerHTML = item.descHtml || '<p class="text-text-lo">暂无描述</p>';
-      if (modalBody) modalBody.scrollTop = scrollPositions[item.id] || 0;
-    }, 250);
+
+    var itemId = item.id;
+    if (descCache[itemId]) {
+      modalContent.innerHTML = descCache[itemId] || '<p class="text-text-lo">暂无描述</p>';
+      if (modalBody) modalBody.scrollTop = scrollPositions[itemId] || 0;
+    } else if (loadingDescs[itemId]) {
+      // 已在加载中，等待
+    } else {
+      loadingDescs[itemId] = true;
+      fetch('/api/items/' + itemId + '/desc')
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          descCache[itemId] = d.data?.descHtml || '';
+          // 确保加载完成后 modal 仍在显示同一个词条
+          if (currentIndex === idx) {
+            modalContent.innerHTML = descCache[itemId] || '<p class="text-text-lo">暂无描述</p>';
+            if (modalBody) modalBody.scrollTop = scrollPositions[itemId] || 0;
+          }
+        })
+        .catch(function () {
+          descCache[itemId] = '';
+          if (currentIndex === idx) {
+            modalContent.innerHTML = '<p class="text-text-lo">加载失败</p>';
+          }
+        })
+        .finally(function () {
+          delete loadingDescs[itemId];
+        });
+    }
 
     // Feedback link
     if (modalFeedback) {
@@ -1275,6 +1302,11 @@ if (iceberg?.status === 'PUBLISHED') {
   #modal-body::-webkit-scrollbar-track { background: #0d1117; }
   #modal-body::-webkit-scrollbar-thumb { background: #30363d; }
   #modal-body::-webkit-scrollbar-thumb:hover { background: #484f58; }
+  /* ── 性能优化: 屏幕外层级延迟渲染 ── */
+  .tier-section {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 80px;
+  }
   /* 浅色模式淡化层背景 */
   html.light .tier-section {
     background: transparent !important;

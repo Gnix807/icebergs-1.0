@@ -4,6 +4,7 @@ import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 import { normalizeIcebergTopic } from '../../../lib/icebergTopic';
 import { can } from '../../../lib/permissions';
+import { renderMarkdownWithMath } from '../../../lib/markdown';
 
 const SLUG_RE = /^[a-zA-Z0-9_-]{2,60}$/;
 
@@ -20,7 +21,7 @@ type SeedTierCreate = {
   name: string;
   desc: string;
   order: number;
-  items: { create: { title: string; desc: string; order: number; labels: string }[] };
+  items: { create: { title: string; desc: string; renderedDesc?: string | null; order: number; labels: string }[] };
 };
 
 function normalizeSeedTiers(raw: unknown): SeedTierCreate[] {
@@ -51,11 +52,12 @@ function normalizeSeedTiers(raw: unknown): SeedTierCreate[] {
           return {
             title: title.slice(0, 120),
             desc,
+            renderedDesc: desc ? renderMarkdownWithMath(desc) : null,
             order: itemOrder,
             labels: JSON.stringify(sanitizeLabels(it.labels)),
           };
         })
-        .filter((it): it is { title: string; desc: string; order: number; labels: string } => !!it)
+        .filter((it): it is { title: string; desc: string; renderedDesc?: string | null; order: number; labels: string } => !!it)
         .sort((a, b) => a.order - b.order)
         .map((it, orderedIdx) => ({ ...it, order: orderedIdx }));
 

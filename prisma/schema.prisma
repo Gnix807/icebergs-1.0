@@ -239,8 +239,9 @@ model Tier {
 model Item {
   id        String   @id @default(cuid())
   title     String
-  desc      String   // Markdown
-  order     Int      @default(0)
+  desc         String   // Markdown
+  renderedDesc String?  // Pre-rendered HTML (computed on save)
+  order        Int      @default(0)
   tierId    String
   tier      Tier     @relation(fields: [tierId], references: [id], onDelete: Cascade)
   labels    String   @default("[]") // JSON array stored as string

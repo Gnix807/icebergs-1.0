@@ -2,6 +2,7 @@ import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
+import { renderMarkdownWithMath } from '../../../../lib/markdown';
 
 /** Allow any label up to 20 chars; strip dangerous chars; cap at 10 labels. */
 function sanitizeLabels(raw: unknown): string[] {
@@ -107,10 +108,13 @@ export async function POST(event: APIContext) {
       itemOrder = maxOrderItem ? maxOrderItem.order + 1 : 0;
     }
 
+    const renderedDesc = desc ? renderMarkdownWithMath(desc) : null;
+
     const item = await prisma.item.create({
       data: {
         title: title.trim(),
         desc: desc || '',
+        renderedDesc,
         order: itemOrder,
         tierId: id,
         labels: JSON.stringify(labels),
