@@ -480,6 +480,8 @@ export function AdminAchievements() {
   const [deleting, setDeleting]         = useState<string | null>(null);
   const [deleteConfirming, setDeleteConfirming] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState('全部');
+  const [resetting, setResetting]       = useState(false);
+  const [resetConfirm, setResetConfirm] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -630,7 +632,7 @@ export function AdminAchievements() {
                       initialForm={form}
                       initialConditions={conditions}
                       onSave={() => { setExpandedId(null); load(); }}
-                      onCancel={() => setExpandedId(null)}
+                        onCancel={() => setExpandedId(null)}
                     />
                   </div>
                 </div>
@@ -639,6 +641,37 @@ export function AdminAchievements() {
           })}
         </div>
       )}
+
+      <div className="mt-8 pt-6 border-t border-danger/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-mono text-danger mb-1">清空全部成就进度</div>
+            <div className="text-[10px] font-mono text-text-mid">此操作会删除所有用户的已获得成就，不可撤销。成就定义不受影响。</div>
+          </div>
+          {!resetConfirm ? (
+            <button onClick={() => setResetConfirm(true)} className="px-3 py-1.5 text-xs font-mono border border-danger/40 text-danger hover:bg-danger/10 transition-colors flex-shrink-0">
+              清空全部进度
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button onClick={() => setResetConfirm(false)} className="px-3 py-1.5 text-xs font-mono border border-border text-text-body hover:border-brand transition-colors">取消</button>
+              <button onClick={async () => {
+                setResetting(true);
+                try {
+                  const r = await fetch('/api/admin/achievements/reset-all', { method: 'POST' });
+                  const d = await r.json();
+                  if (d.success) { toast(d.data.message || '已清空'); setResetConfirm(false); load(); }
+                  else toast(d.error?.message || '操作失败');
+                } catch { toast('网络错误'); }
+                finally { setResetting(false); }
+              }} disabled={resetting} className="px-3 py-1.5 text-xs font-mono bg-danger text-white hover:bg-danger/80 disabled:opacity-40 transition-colors">
+                {resetting ? '清空中…' : '确认清空'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
+
