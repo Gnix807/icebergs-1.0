@@ -152,6 +152,25 @@ const LEGACY = [
   { key:'p3_join_5',     icon:'🦅',  labelZh:'流浪者',     label:'Wanderer',        desc:'加入了五个不同的专题组。你像一阵风，每个项目都留下过你的气息。',conditions:[{block:'projectJoinedCount',op:'>=',value:5}],                                                       color:'#22c55e', sortOrder:130, isHidden:true  },
   { key:'p3_proj_3',     icon:'🏰',  labelZh:'组织者',     label:'Organizer',       desc:'创建了三个专题项目。你不是在参与生态——你是在构建生态。',       conditions:[{block:'projectCreatedCount',op:'>=',value:3}],                                                      color:'#f59e0b', sortOrder:131, isHidden:true  },
   { key:'p3_idea_10',    icon:'💫',  labelZh:'灵感泉涌',   label:'Idea Fountain',   desc:'十个创意。你的大脑是一个源源不断的内容矿脉。',                 conditions:[{block:'ideaSubmittedCount',op:'>=',value:10}],                                                       color:'#8b5cf6', sortOrder:132, isHidden:true  },
+  // phase3-v37+ 补充（阅读/创作/投票/质量/收藏）
+  { key:'explore_first',   icon:'🤿',  labelZh:'初探深渊',     label:'DIVER',            desc:'阅读了你的第一个词条。',                                            category:'阅读', triggerType:'read_count',  triggerTarget:1,   color:'#22c55e', sortOrder:133, rarity:'普通' },
+  { key:'explore_10',      icon:'📖',  labelZh:'求知若渴',     label:'READER',           desc:'累计阅读 10 个不同的词条。',                                        category:'阅读', triggerType:'read_count',  triggerTarget:10,  color:'#3b82f6', sortOrder:134, rarity:'普通' },
+  { key:'explore_depth',   icon:'🦑',  labelZh:'触及海底',     label:'ABYSSAL',          desc:'胆量惊人，阅读了冰山最底层的一个词条。',                          category:'阅读', triggerType:'bottom_tier', triggerTarget:0,   color:'#ef4444', sortOrder:135, rarity:'普通' },
+  { key:'explore_all_clear',icon:'👑', labelZh:'全知全能',     label:'COMPLETE',          desc:'单次探索中，读完了一张冰山的所有词条。',                          category:'阅读', triggerType:'all_clear',   triggerTarget:0,   color:'#f59e0b', sortOrder:136, rarity:'普通' },
+  { key:'create_first',    icon:'🖊',  labelZh:'破冰者',       label:'ICE BREAKER',       desc:'成功创建了你的第一张冰山图。深渊从此多了一个声音。',              category:'创作', conditions:[{block:'createdIcebergCount',op:'>=',value:1}],   color:'#3ecf8e', sortOrder:137, rarity:'普通' },
+  { key:'create_3',       icon:'📋',  labelZh:'冰层测绘师',   label:'CARTOGRAPHER',      desc:'累计创建了 3 张冰山图。冰层上开始留下你的足迹。',                category:'创作', conditions:[{block:'createdIcebergCount',op:'>=',value:3}],   color:'#34d399', sortOrder:138, rarity:'普通' },
+  { key:'create_10',      icon:'📚',  labelZh:'深渊信使',     label:'ABYSSAL MESSENGER', desc:'累计创建了 10 张冰山图。你已经熟练掌握了深海的语法。',            category:'创作', conditions:[{block:'createdIcebergCount',op:'>=',value:10}],  color:'#2dd4bf', sortOrder:139, rarity:'普通' },
+  { key:'create_30',      icon:'🏛',  labelZh:'冰封编年史',   label:'FROZEN CHRONICLE',  desc:'累计创建了 30 张冰山图。你的作品足以填满一座小型档案库。',          category:'创作', conditions:[{block:'createdIcebergCount',op:'>=',value:30}],  color:'#06b6d4', sortOrder:140, rarity:'普通' },
+  { key:'create_100',     icon:'🗿',  labelZh:'极地之主',     label:'LORD OF THE POLES',  desc:'累计创建了 100 张冰山图。你是这座冰山的奠基人之一。',             category:'创作', conditions:[{block:'createdIcebergCount',op:'>=',value:100}], color:'#eab308', sortOrder:141, rarity:'普通', isHidden:true },
+  { key:'vote_first',     icon:'🗳',  labelZh:'一票入魂',     label:'ONE VOTE, ONE SOUL', desc:'投出了你的第一票。从此，你有权决定冰山的沉浮。',                  category:'投票', conditions:[{block:'totalVotesCast',op:'>=',value:1}],      color:'#8b5cf6', sortOrder:142, rarity:'普通' },
+  { key:'vote_10',        icon:'📊',  labelZh:'投票狂热者',   label:'BALLOT FANATIC',    desc:'累计投出 10 票。你的意见正在冰层深处激起回响。',                 category:'投票', conditions:[{block:'totalVotesCast',op:'>=',value:10}],     color:'#7c3aed', sortOrder:143, rarity:'普通' },
+  { key:'vote_100',       icon:'⚖',  labelZh:'影子议会',     label:'SHADOW COUNCIL',    desc:'累计投出 100 票。影子议会已为你预留了一个席位。',                 category:'投票', conditions:[{block:'totalVotesCast',op:'>=',value:100}],    color:'#6d28d9', sortOrder:144, rarity:'普通', isHidden:true },
+  { key:'quality_10',     icon:'📝',  labelZh:'案卷新丁',     label:'CASE FILE ROOKIE',  desc:'质量分累计达到 10 分。档案室开始注意到你的存在。',               category:'质量', conditions:[{block:'qualityLevel',op:'>=',value:10}],       color:'#60a5fa', sortOrder:145, rarity:'普通' },
+  { key:'quality_100',    icon:'🔬',  labelZh:'解密专员',     label:'DECLASSIFIED',      desc:'质量分累计达到 100 分。你获得了浏览机密档案的许可。',             category:'质量', conditions:[{block:'qualityLevel',op:'>=',value:100}],      color:'#3b82f6', sortOrder:146, rarity:'普通' },
+  { key:'quality_500',    icon:'🏆',  labelZh:'万物归零',     label:'RETURN TO ZERO',    desc:'质量分累计达到 500 分。冰层深处传来低语——你已被认可为最高权限持有者。',category:'质量',conditions:[{block:'qualityLevel',op:'>=',value:500}],      color:'#f59e0b', sortOrder:147, rarity:'普通', isHidden:true },
+  { key:'watch_1',        icon:'⭐',  labelZh:'目光所及',     label:'WITHIN SIGHT',      desc:'首次将一张冰山图加入收藏夹。目光所及之处，皆是猎物。',           category:'收藏', conditions:[{block:'watchlistCount',op:'>=',value:1}],       color:'#ec4899', sortOrder:148, rarity:'普通' },
+  { key:'watch_10',       icon:'📌',  labelZh:'情报网构筑者', label:'INTEL NETWORK',     desc:'收藏夹中已有 10 张冰山图。你的情报网初具规模。',                  category:'收藏', conditions:[{block:'watchlistCount',op:'>=',value:10}],      color:'#db2777', sortOrder:149, rarity:'普通' },
+  { key:'watch_50',       icon:'🗄',  labelZh:'归档狂人',     label:'ARCHIVE MANIAC',    desc:'收藏夹中已有 50 张冰山图。你的私人档案库足以令图书管理员汗颜。',   category:'收藏', conditions:[{block:'watchlistCount',op:'>=',value:50}],      color:'#be185d', sortOrder:150, rarity:'普通', isHidden:true },
 ];
 
 async function main() {
@@ -170,11 +189,13 @@ async function main() {
         labelZh:       ach.labelZh,
         desc:          ach.desc,
         color:         ach.color,
-        triggerType:   'manual',       // 新成就全用 conditions
-        triggerTarget: 0,
+        triggerType:   ach.triggerType || 'manual',
+        triggerTarget: ach.triggerTarget ?? 0,
         sortOrder:     ach.sortOrder,
-        isHidden:      ach.isHidden,
-        conditions:    JSON.stringify(ach.conditions),
+        isHidden:      !!ach.isHidden,
+        conditions:    JSON.stringify(ach.conditions || []),
+        category:      ach.category || null,
+        rarity:        ach.rarity || null,
       },
     });
     created++;
