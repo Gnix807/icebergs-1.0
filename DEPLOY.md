@@ -25,7 +25,18 @@
 - 终端执行 `git clone https://github.com/Gnix807/icebergs-1.0.git /opt/icebergs`
 - 或者下载 ZIP 后通过 1Panel 文件管理上传解压
 
-### 3. 首次安装
+### 3. 安装 Node.js（如果还没有）
+
+1Panel 终端执行：
+
+```bash
+# 使用 NodeSource 安装 Node.js 22
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+apt install -y nodejs
+node -v && npm -v   # 确认安装成功
+```
+
+### 4. 首次安装
 
 打开 1Panel 终端，执行：
 
