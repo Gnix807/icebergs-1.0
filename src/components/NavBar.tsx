@@ -488,14 +488,25 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                           </div>
                         )}
                         {!notifLoading && notifications.map(n => {
-                          const colorMap: Record<string, string> = {
-                            iceberg_approved: '#22c55e', iceberg_rejected: '#ef4444',
-                            promotion_approved: '#22c55e', promotion_rejected: '#ef4444',
-                            appeal_approved: '#22c55e', appeal_rejected: '#ef4444',
-                            warned: '#f59e0b', restricted: '#3b82f6', banned: '#ef4444', unbanned: '#22c55e',
-                            achievement_unlocked: '#f59e0b',
+                          const typeCfg: Record<string, { color: string; emoji: string; label: string }> = {
+                            iceberg_approved:    { color: '#22c55e', emoji: '✓', label: '审核通过' },
+                            iceberg_rejected:    { color: '#ef4444', emoji: '✗', label: '审核退回' },
+                            promotion_approved:  { color: '#22c55e', emoji: '⬆', label: '晋升通过' },
+                            promotion_rejected:  { color: '#ef4444', emoji: '⬇', label: '晋升退回' },
+                            appeal_approved:     { color: '#22c55e', emoji: '◎', label: '申诉通过' },
+                            appeal_rejected:     { color: '#ef4444', emoji: '⊘', label: '申诉驳回' },
+                            warned:              { color: '#f59e0b', emoji: '⚠', label: '警告' },
+                            restricted:          { color: '#3b82f6', emoji: '⊘', label: '限制' },
+                            banned:              { color: '#ef4444', emoji: '✕', label: '封禁' },
+                            unbanned:            { color: '#22c55e', emoji: '✓', label: '解封' },
+                            achievement_unlocked:{ color: '#f59e0b', emoji: '★', label: '成就' },
+                            iceberg_voted:       { color: '#8b5cf6', emoji: '▲', label: '投票' },
+                            report_resolved:     { color: '#22c55e', emoji: '✓', label: '举报处理' },
+                            comment_reply:       { color: '#3b82f6', emoji: '💬', label: '回复' },
+                            comment_liked:       { color: '#ec4899', emoji: '♥', label: '点赞' },
+                            iceberg_transferred:  { color: '#f59e0b', emoji: '📤', label: '转让' },
                           };
-                          const color = colorMap[n.type] ?? '#6b7280';
+                          const cfg = typeCfg[n.type] ?? { color: '#6b7280', emoji: '·', label: n.type };
                           const timeStr = (() => {
                             const diff = Date.now() - new Date(n.createdAt).getTime();
                             const m = Math.floor(diff / 60000);
@@ -511,11 +522,21 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                             <button
                               key={n.id}
                               onClick={() => { markRead(n.id, n.link); setShowNotif(false); }}
-                              className="w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-surface-3 transition-colors border-b border-border-subtle last:border-0"
+                              className="w-full flex items-start gap-3 px-4 py-3 hover:bg-surface-3 transition-colors border-b border-border-subtle last:border-0"
                             >
-                              {!n.read && <span className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />}
+                              <span className="text-xs flex-shrink-0 mt-0.5 w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold"
+                                style={{ background: cfg.color + '18', color: cfg.color }}>
+                                {cfg.emoji}
+                              </span>
                               <div className="flex-1 min-w-0">
-                                <p className={`text-xs font-mono leading-snug ${n.read ? 'text-text-body' : 'text-text-hi'}`}>
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                  <span className="text-[9px] font-mono px-1 py-px rounded border opacity-70"
+                                    style={{ color: cfg.color, borderColor: cfg.color + '55' }}>
+                                    {cfg.label}
+                                  </span>
+                                  {!n.read && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.color }} />}
+                                </div>
+                                <p className="text-xs font-mono leading-snug text-text-hi">
                                   {n.title}
                                 </p>
                                 {n.body && (
@@ -619,6 +640,11 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono text-left">
                               <span className="w-[15px] text-center text-[13px]">{crtOn ? '⊟' : '⊡'}</span> CRT 扫描线 <span className="ml-auto text-[10px] text-text-lo">{crtOn ? 'ON' : 'OFF'}</span>
                             </button>
+                            <a href="/themes"
+                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
+                              onClick={() => setShowDropdown(false)}>
+                              <span className="w-[15px] text-center text-[13px]">🎨</span> 主题中心
+                            </a>
                             <a href="/api/auth/logout"
                               className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-danger hover:bg-surface-3 transition-colors font-mono">
                               <LogOut size={15} strokeWidth={1.5} /> 退出登录

@@ -1,0 +1,92 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+import { getSessionById } from '../../lib/auth/index';
+
+const sessionId = Astro.cookies.get('session')?.value;
+const session = await getSessionById(sessionId);
+
+const themes = await prisma.theme.findMany({
+  where: { isPublic: true },
+  orderBy: [{ isPreset: 'desc' }, { downloads: 'desc' }],
+  select: {
+    id: true, name: true, description: true, isPreset: true,
+    downloads: true, variables: true,
+    author: { select: { id: true, nickname: true, username: true } },
+  },
+});
+
+const currentThemeId = session ? (await prisma.user.findUnique({ where: { id: session.userId }, select: { themeId: true } }))?.themeId : null;
+---
+
+<Layout title="主题中心 | 冰山图宇宙">
+  <main class="max-w-6xl mx-auto px-4 py-12">
+
+    <header class="text-center mb-10 reveal">
+      <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">[ THEME CENTER ]</div>
+      <h1 class="text-3xl font-mono font-semibold">
+        <span class="text-brand">#</span> 主题中心
+      </h1>
+      <p class="text-sm text-text-body font-mono mt-2 max-w-md mx-auto">
+        选择你喜欢的配色方案。开发者可自行创作并分享主题。
+      </p>
+    </header>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      {themes.map(t => {
+        let vars: Record<string, string> = {};
+        try { vars = JSON.parse(t.variables || '{}'); } catch {}
+        const isActive = currentThemeId === t.id;
+        return (
+          <div class="theme-card border border-border bg-surface-2 overflow-hidden rounded reveal-grid group hover:border-brand transition-colors cursor-pointer"
+            data-tid={t.id}
+            data-active={isActive ? 'true' : 'false'}
+            style="animation-delay:${t.isPreset ? 50 : 100}ms">
+            {/* 预览色块 */}
+            <div class="h-16 flex" style={`background: ${vars['--color-surface-0'] || '#0d1117'}`}>
+              <div class="w-1/3" style="background: ${vars['--color-brand'] || '#00FF41'};opacity:0.8"></div>
+              <div class="w-1/3" style="background: ${vars['--color-surface-1'] || '#161b22'}"></div>
+              <div class="w-1/3" style={`background: ${vars['--color-border'] || '#21262d'}`}></div>
+            </div>
+            <div class="p-4">
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="text-xs font-mono font-bold text-text-hi truncate">{t.name}</span>
+                {t.isPreset && <span class="text-[9px] font-mono text-text-lo border border-border px-1 py-px rounded flex-shrink-0">预设</span>}
+                {isActive && <span class="text-[9px] font-mono text-brand border border-brand/30 px-1 py-px rounded flex-shrink-0">使用中</span>}
+              </div>
+              <p class="text-[10px] text-text-mid line-clamp-2 mb-3">{t.description || '暂无描述'}</p>
+              <div class="flex items-center justify-between">
+                <span class="text-[10px] font-mono text-text-lo">{t.author?.nickname || t.author?.username}</span>
+                <button class="apply-btn text-[10px] font-mono px-2 py-0.5 border border-border rounded hover:border-brand hover:text-brand transition-colors"
+                  onclick="event.stopPropagation()">
+                  {t.downloads} 次
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+  </main>
+</Layout>
+
+<script>
+  document.querySelectorAll('.theme-card').forEach(function(card) {
+    card.addEventListener('click', async function() {
+      var tid = this.dataset.tid;
+      var isActive = this.dataset.active === 'true';
+      var btn = this.querySelector('.apply-btn');
+      if (btn) { btn.textContent = '应用中...'; btn.disabled = true; }
+      try {
+        var res = await fetch('/api/themes/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ themeId: isActive ? null : tid }),
+        });
+        var d = await res.json();
+        if (d.success) { location.reload(); }
+      } catch(e) {}
+    });
+  });
+</script>
