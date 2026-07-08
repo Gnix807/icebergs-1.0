@@ -445,7 +445,7 @@ const QUICK_QA = [
     <!-- Actions -->
     <div class="flex justify-center flex-wrap gap-3 mb-4 reveal">
       <a
-        href="/iceberg/new"
+        href={session ? '/iceberg/new' : '/login'}
         class="px-6 py-2.5 bg-brand text-[#0A0A0A] font-mono font-semibold text-sm hover:bg-brand-hover transition-colors"
       >
         + 创建冰山图
@@ -464,9 +464,17 @@ const QUICK_QA = [
       </a>
     </div>
 
-    <!-- Ctrl+K hint -->
-    <div class="text-center mb-14 reveal">
-      <span class="text-xs font-mono text-text-mid">// 按</span>
+    {!session && (
+      <div class="text-center mb-14 reveal">
+        <p class="text-sm text-text-body font-mono">
+          还没有账号？<a href="/login" class="text-brand hover:underline font-semibold">注册</a>即可开始创作你的第一张冰山图
+        </p>
+      </div>
+    )}
+
+    {session && (
+      <div class="text-center mb-14 reveal">
+        <span class="text-xs font-mono text-text-mid">// 按</span>
       <kbd class="mx-1 text-xs font-mono text-text-body bg-surface-2 border border-border px-1.5 py-0.5">Ctrl+K</kbd>
       <span class="text-xs font-mono text-text-mid">快速搜索</span>
     </div>

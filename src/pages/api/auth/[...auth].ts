@@ -262,9 +262,7 @@ async function handleCallback(event: APIContext) {
         avatar: typeof githubUser.avatar_url === 'string' ? githubUser.avatar_url : null,
       };
     } else {
-      console.log('[OAuth] Google callback - exchanging code');
       const tokens = await google.validateAuthorizationCode(code, finalCodeVerifier!);
-      console.log('[OAuth] Google tokens received');
       const accessToken = tokens.accessToken();
       const response = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
         headers: {

@@ -48,7 +48,9 @@ const [featuredIcebergs, newest, popular, openIdeas, topAuthors] = await Promise
   }),
 ]);
 
-const totalIcebergs = newest.length; // approximation
+const totalIcebergs = newest.length;
+
+const isEmpty = totalIcebergs === 0 && featuredIcebergs.length === 0 && openIdeas.length === 0;
 ---
 
 <Layout title={`${topicDef.label} · 主题门户 | 冰山图宇宙`}>
@@ -66,6 +68,17 @@ const totalIcebergs = newest.length; // approximation
       </h1>
     </header>
 
+    {isEmpty && (
+      <div class="reveal text-center py-16 border border-dashed border-border-subtle bg-surface-2/30">
+        <div class="font-mono text-text-lo text-3xl mb-4 leading-none select-none">∅</div>
+        <p class="text-sm font-mono text-text-body mb-2">这个主题下还没有内容</p>
+        <p class="text-xs font-mono text-text-mid mb-6">成为第一个在此探索的先行者</p>
+        <a href="/iceberg/new" class="inline-block px-5 py-2 bg-brand text-[#0A0A0A] font-mono font-semibold text-sm hover:bg-brand-hover transition-colors">
+          + 创建冰山图
+        </a>
+      </div>
+    )}
+    {!isEmpty && (
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2 space-y-6">
 
@@ -168,6 +181,7 @@ const totalIcebergs = newest.length; // approximation
         </div>
       </div>
     </div>
+    )}
   </main>
 </Layout>
 

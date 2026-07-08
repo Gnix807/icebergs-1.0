@@ -37,6 +37,8 @@ npx prisma generate
 npx prisma db push
 node prisma/seed.mjs
 node prisma/seed-achievements.mjs
+# 可选：生成演示数据
+node prisma/seed-demo.mjs
 ```
 
 构建前，将 `astro.config.mjs` 中的 `site` 改为你的域名：

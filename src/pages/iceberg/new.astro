@@ -1,6 +1,11 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { IcebergEditor } from '../../components/iceberg/IcebergEditor';
+import { getSessionById } from '../../lib/auth/index';
+
+const sessionId = Astro.cookies.get('session')?.value;
+const session = await getSessionById(sessionId);
+if (!session) return Astro.redirect('/login');
 ---
 
 <Layout title="创建冰山图 | 冰山图宇宙" description="创建你的冰山图——梳理任何话题的知识层级，从表面对深渊">

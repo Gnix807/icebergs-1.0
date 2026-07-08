@@ -73,6 +73,9 @@ node prisma/seed-achievements.mjs
 # 5. 初始化全文搜索索引
 psql -d icebergs -f prisma/migrations/001_fulltext_search.sql
 
+# 6. （可选）生成演示数据，解决冷启动空白问题
+node prisma/seed-demo.mjs
+
 # 6. 启动（开发端口4321会自增）
 npm run dev
 ```

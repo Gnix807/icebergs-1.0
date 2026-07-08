@@ -13,8 +13,18 @@ setInterval(() => {
   }
 }, CLEAN_INTERVAL);
 
+function getClientIP(context: any): string {
+  const addr = context.clientAddress ?? '';
+  // 仅当请求来自本机反向代理时信任 x-forwarded-for 的第一段
+  if (addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1') {
+    const xff = context.request.headers.get('x-forwarded-for');
+    if (xff) return xff.split(',')[0].trim();
+  }
+  return addr || 'unknown';
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
-  const ip = context.clientAddress ?? context.request.headers.get('x-forwarded-for') ?? 'unknown';
+  const ip = getClientIP(context);
   const now = Date.now();
   const cutoff = now - CLEAN_INTERVAL;
 
