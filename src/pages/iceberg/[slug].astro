@@ -633,27 +633,20 @@ if (iceberg?.status === 'PUBLISHED') {
       .catch(function () {});
   }
 
-  // DOM references — re-queried on each SPA nav
-  var overlay, popup, modalCard, modalTitle, modalTier, modalCount;
-  var modalContent, modalLabelsRow, modalLabels, modalFeedback, modalBody;
-  var progressText, progressFill, searchInput;
-  var filterBar, filterResetBtn;
-
-  function initPage() {
-    overlay = document.getElementById('modal-overlay');
-    popup = document.getElementById('modal-popup');
-    modalCard = document.getElementById('modal-card');
-    modalTitle   = document.getElementById('modal-title');
-    modalTier    = document.getElementById('modal-tier');
-    modalCount   = document.getElementById('modal-count');
-    modalContent = document.getElementById('modal-content');
-    modalLabelsRow = document.getElementById('modal-labels-row');
-    modalLabels  = document.getElementById('modal-labels');
-    modalFeedback = document.getElementById('modal-feedback-link');
-    modalBody    = document.getElementById('modal-body');
-    progressText = document.getElementById('read-progress-text');
-    progressFill = document.getElementById('read-progress-fill');
-    searchInput = document.getElementById('item-search-input');
+  var overlay      = document.getElementById('modal-overlay');
+  var popup        = document.getElementById('modal-popup');
+  var modalCard    = document.getElementById('modal-card');
+  var modalTitle   = document.getElementById('modal-title');
+  var modalTier    = document.getElementById('modal-tier');
+  var modalCount   = document.getElementById('modal-count');
+  var modalContent = document.getElementById('modal-content');
+  var modalLabelsRow = document.getElementById('modal-labels-row');
+  var modalLabels  = document.getElementById('modal-labels');
+  var modalFeedback = document.getElementById('modal-feedback-link');
+  var modalBody    = document.getElementById('modal-body');
+  const progressText = document.getElementById('read-progress-text');
+  const progressFill = document.getElementById('read-progress-fill');
+  const searchInput = document.getElementById('item-search-input');
   const searchCount = document.getElementById('search-count');
 
   // ── URL helpers ──────────────────────────────────────────
@@ -826,6 +819,20 @@ if (iceberg?.status === 'PUBLISHED') {
   }
 
   function openModal(idx) {
+    // Re-query DOM refs if stale (SPA navigation may replace DOM)
+    if (!overlay || !document.body.contains(overlay)) {
+      overlay = document.getElementById('modal-overlay');
+      popup = document.getElementById('modal-popup');
+      modalCard = document.getElementById('modal-card');
+      modalTitle = document.getElementById('modal-title');
+      modalTier = document.getElementById('modal-tier');
+      modalCount = document.getElementById('modal-count');
+      modalContent = document.getElementById('modal-content');
+      modalLabelsRow = document.getElementById('modal-labels-row');
+      modalLabels = document.getElementById('modal-labels');
+      modalFeedback = document.getElementById('modal-feedback-link');
+      modalBody = document.getElementById('modal-body');
+    }
     renderModal(idx);
     overlay.classList.remove('opacity-0', 'pointer-events-none');
     overlay.classList.add('opacity-100');
@@ -1432,7 +1439,5 @@ if (iceberg?.status === 'PUBLISHED') {
   if(handle)handle.addEventListener('click',function(){setState(!expanded)});
   if(closeBtn)closeBtn.addEventListener('click',function(){setState(false)});
   setState(expanded);
-  }
-  initPage();
 })();
 </script>
