@@ -880,6 +880,8 @@ if (iceberg?.status === 'PUBLISHED') {
   document.addEventListener('click', function(e) {
     var chip = e.target.closest('.item-chip');
     if (!chip) return;
+    e.preventDefault();
+    e.stopPropagation();
     var idx = parseInt(chip.dataset.index, 10);
     if (isNaN(idx)) return;
     openModal(idx);
