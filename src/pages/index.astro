@@ -598,11 +598,12 @@ const QUICK_QA = [
             </div>
           </div>
           {featuredIcebergs.length > 1 && (
-            <div class="flex items-center justify-center gap-2 pb-3 pt-1">
+            <div class="flex items-center justify-center gap-2 pb-3 pt-1 relative z-10">
               {featuredIcebergs.map((_, i: number) => (
                 <button class="home-featured-dot cursor-pointer transition-all"
                   data-dot={String(i)}
-                  style={{ background: i === 0 ? '#f59e0b' : 'rgba(245,158,11,0.3)', width: i === 0 ? '12px' : '6px', height: '6px', border: 'none', borderRadius: '3px' }}
+                  aria-label={`精选 ${i + 1}`}
+                  style={{ background: i === 0 ? '#f59e0b' : 'rgba(245,158,11,0.3)', width: i === 0 ? '14px' : '8px', height: '8px', padding: '4px', border: 'none', borderRadius: '4px', backgroundClip: 'content-box' }}
                 ></button>
               ))}
             </div>
@@ -915,11 +916,12 @@ const QUICK_QA = [
   document.addEventListener('astro:page-load', loadQuickLinks);
 
   // 精选轮播
-  (function() {
+  function initFeaturedCarousel() {
     var slides = document.querySelectorAll('.home-featured-slide');
     var dots = document.querySelectorAll('.home-featured-dot');
     if (slides.length <= 1) return;
     var current = 0;
+    var timer = null;
     function showSlide(n) {
       slides.forEach(function(s, i) {
         s.style.opacity = i === n ? '1' : '0';
@@ -927,15 +929,23 @@ const QUICK_QA = [
       });
       dots.forEach(function(d, i) {
         d.style.background = i === n ? '#f59e0b' : 'rgba(245,158,11,0.3)';
-        d.style.width = i === n ? '12px' : '6px';
+        d.style.width = i === n ? '14px' : '8px';
       });
       current = n;
     }
+    function next() { showSlide((current + 1) % slides.length); }
     dots.forEach(function(dot) {
-      dot.addEventListener('click', function() { showSlide(parseInt(this.dataset.dot)); });
+      dot.addEventListener('click', function() {
+        var n = parseInt(dot.getAttribute('data-dot') || '0', 10);
+        showSlide(n);
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(function() { timer = setInterval(next, 4500); }, 3000);
+      });
     });
-    setInterval(function() { showSlide((current + 1) % slides.length); }, 4500);
-  })();
+    timer = setInterval(next, 4500);
+  }
+  initFeaturedCarousel();
+  document.addEventListener('astro:page-load', initFeaturedCarousel);
 </script>
 
 <style>
