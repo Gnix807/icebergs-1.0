@@ -99,8 +99,8 @@ export function parseIcebergThreads(
         : itemDesc;
       const itemLabels: string[] = [];
 
-      // 如果原图标记为 NSFW，给每个词条打上标签
-      if (isNsfw) {
+      // 如果原图标记为 NSFW，给每层前几个词条打标签作为提醒
+      if (isNsfw && i < 3) {
         itemLabels.push('NSFW');
       }
 
