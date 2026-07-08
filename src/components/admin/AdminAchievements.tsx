@@ -473,7 +473,7 @@ interface AchievementDef {
   createdAt: string;
 }
 
-export function AdminAchievements() {
+export function AdminAchievements({ isFounder }: { isFounder?: boolean }) {
   const [achievements, setAchievements] = useState<AchievementDef[]>([]);
   const [loading, setLoading]           = useState(true);
   const [expandedId, setExpandedId]     = useState<string | null>(null);
@@ -642,15 +642,15 @@ export function AdminAchievements() {
         </div>
       )}
 
-      <div className="mt-8 pt-6 border-t border-danger/20">
+      {isFounder && <div className="mt-8 pt-6 border-t border-danger/20">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-mono text-danger mb-1">清空全部成就进度</div>
-            <div className="text-[10px] font-mono text-text-mid">此操作会删除所有用户的已获得成就，不可撤销。成就定义不受影响。</div>
+            <div className="text-xs font-mono text-danger mb-1">清空我的成就进度</div>
+            <div className="text-[10px] font-mono text-text-mid">仅清除你（创始人）自己的已获得成就，其他用户不受影响。</div>
           </div>
           {!resetConfirm ? (
             <button onClick={() => setResetConfirm(true)} className="px-3 py-1.5 text-xs font-mono border border-danger/40 text-danger hover:bg-danger/10 transition-colors flex-shrink-0">
-              清空全部进度
+              清空我的进度
             </button>
           ) : (
             <div className="flex items-center gap-2 flex-shrink-0">
@@ -671,6 +671,7 @@ export function AdminAchievements() {
           )}
         </div>
       </div>
+      }
     </div>
   );
 }

@@ -129,7 +129,7 @@ export function AdminPanel({ role, isFounder }: Props) {
       {activeTab === 'appeals'      && <AdminAppeals />}
       {activeTab === 'elections'    && <AdminElections />}
       {activeTab === 'announcements' && <AdminAnnouncements />}
-      {activeTab === 'achievements' && <AdminAchievements />}
+      {activeTab === 'achievements' && <AdminAchievements isFounder={isFounder} />}
       {activeTab === 'settings'     && <AdminSettings />}
       {activeTab === 'features'     && <AdminFeatureFlags />}
       {activeTab === 'seo'          && <AdminSeo />}

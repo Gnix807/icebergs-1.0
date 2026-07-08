@@ -11,7 +11,9 @@ export async function POST(event: APIContext) {
     });
   }
 
-  const result = await prisma.userAchievement.deleteMany({});
+  const result = await prisma.userAchievement.deleteMany({
+    where: { userId: session.userId },
+  });
 
   return new Response(JSON.stringify(success({
     message: `已清空 ${result.count} 条成就记录`,
