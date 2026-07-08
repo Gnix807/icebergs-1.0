@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-cd /opt/icebergs/frontend
+cd /opt/icebergs
 
 echo "==> 1/6 拉取最新代码"
 git pull origin main
@@ -25,7 +25,7 @@ echo "==> 6/6 重启服务"
 if command -v pm2 &> /dev/null && pm2 list 2>/dev/null | grep -q icebergs; then
   pm2 restart icebergs
   echo "    PM2 已重启"
-elif [ -f /opt/icebergs/frontend/dist/server/entry.mjs ]; then
+elif [ -f /opt/icebergs/dist/server/entry.mjs ]; then
   echo "    ⚠ 未检测到进程管理，请手动重启"
   echo "    1Panel: 进程守护 → 重启 icebergs"
 else

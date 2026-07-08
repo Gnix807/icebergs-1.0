@@ -30,7 +30,7 @@
 打开 1Panel 终端，执行：
 
 ```bash
-cd /opt/icebergs/frontend
+cd /opt/icebergs
 cp .env.example .env      # 编辑 .env（见下方说明）
 npm install
 npx prisma generate
@@ -80,8 +80,8 @@ CRON_SECRET=随机字符串
 
 1. 1Panel → **进程守护** → **新建**
 2. 名称：`icebergs`
-3. 启动命令：`/usr/bin/node /opt/icebergs/frontend/dist/server/entry.mjs`
-4. 工作目录：`/opt/icebergs/frontend`
+3. 启动命令：`/usr/bin/node /opt/icebergs/dist/server/entry.mjs`
+4. 工作目录：`/opt/icebergs`
 5. 进程数：`1`
 
 ### 8. 更新 GitHub OAuth 回调
@@ -131,10 +131,10 @@ https://你的域名/api/auth/callback
 以后每次更新代码只需要：
 
 ```bash
-cd /opt/icebergs/frontend && bash deploy.sh
+cd /opt/icebergs && bash deploy.sh
 ```
 
-或在 1Panel 计划任务中设置定时执行 `bash /opt/icebergs/frontend/deploy.sh`。
+或在 1Panel 计划任务中设置定时执行 `bash /opt/icebergs/deploy.sh`。
 
 唯一需要手动改的永远是 `.env`，其他全部自动。
 
