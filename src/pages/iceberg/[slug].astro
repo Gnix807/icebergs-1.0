@@ -285,7 +285,19 @@ if (iceberg?.status === 'PUBLISHED') {
 }
 ---
 
-<Layout title={`${iceberg?.title || '冰山图'} | 冰山图宇宙`}>
+<Layout title={`${iceberg?.title || '冰山图'} | 冰山图宇宙`} description={iceberg?.description?.replace(/<[^>]*>/g, '').slice(0, 160) || undefined}>
+  {/* 结构化数据: 冰山图 = CreativeWork */}
+  <script type="application/ld+json" slot="structured-data">
+    {
+      "@context": "https://schema.org",
+      "@type": "CreativeWork",
+      "name": {JSON.stringify(iceberg?.title || '')},
+      "description": {JSON.stringify(iceberg?.description?.replace(/<[^>]*>/g, '').slice(0, 200) || '')},
+      "url": {JSON.stringify(Astro.url.href)},
+      "datePublished": {JSON.stringify(iceberg?.createdAt?.toISOString().split('T')[0] || '')},
+      "dateModified": {JSON.stringify(iceberg?.updatedAt?.toISOString().split('T')[0] || '')}
+    }
+  </script>
   <main class="max-w-5xl mx-auto px-4 py-12">
     {error ? (
       <div class="p-8 bg-surface-2 border border-border text-center reveal">
@@ -550,7 +562,7 @@ if (iceberg?.status === 'PUBLISHED') {
     id="modal-popup"
     class="fixed inset-0 z-[9999] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-200"
   >
-    <div id="modal-card" class="relative w-full max-w-lg max-h-[80vh] bg-surface-1 border border-border shadow-2xl flex flex-col scale-95 transition-transform duration-200">
+    <div id="modal-card" class="relative w-full max-w-[95vw] sm:max-w-lg max-h-[85vh] sm:max-h-[80vh] bg-surface-1 border border-border shadow-2xl flex flex-col scale-95 transition-transform duration-200">
       {/* Header */}
       <div class="flex items-start justify-between px-5 py-3.5 border-b border-border-subtle shrink-0">
         <div class="flex-1 min-w-0 mr-3">
@@ -1224,6 +1236,17 @@ if (iceberg?.status === 'PUBLISHED') {
     opacity: 1 !important;
     box-shadow: 0 0 5px color-mix(in srgb, var(--lc) 70%, transparent);
     transform: scale(1.3);
+  }
+
+  /* ── 移动端触控优化 ── */
+  .item-chip {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  @media (max-width: 640px) {
+    .item-chip { padding: 8px 12px; font-size: 13px; }
+    #modal-popup { padding: 8px; }
+    #modal-body { padding: 16px; }
   }
 
   /* ── Item chips ── */

@@ -158,6 +158,9 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     removeItem,
     setDirty,
     setLastSaved,
+    undo,
+    redo,
+    clearUndoHistory,
   } = useIcebergStore();
 
   const [loading, setLoading] = useState(false);
@@ -1244,11 +1247,17 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   const submitRef = useRef(handleSubmit);
   saveRef.current = handleSave;
   submitRef.current = handleSubmit;
+  const undoRef = useRef(undo);
+  const redoRef = useRef(redo);
+  undoRef.current = undo;
+  redoRef.current = redo;
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
       if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveRef.current(); }
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); submitRef.current(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undoRef.current(); }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redoRef.current(); }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);

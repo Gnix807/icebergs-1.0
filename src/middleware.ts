@@ -13,7 +13,7 @@ setInterval(() => {
   }
 }, CLEAN_INTERVAL);
 
-export const onRequest = defineMiddleware((context, next) => {
+export const onRequest = defineMiddleware(async (context, next) => {
   const ip = context.clientAddress ?? context.request.headers.get('x-forwarded-for') ?? 'unknown';
   const now = Date.now();
   const cutoff = now - CLEAN_INTERVAL;
@@ -29,11 +29,20 @@ export const onRequest = defineMiddleware((context, next) => {
   rateMap.set(ip, valid);
 
   if (valid.length > MAX_REQUESTS) {
+    console.warn(`[rate-limit] ${ip} blocked (${valid.length} req/min)`);
     return new Response('请求过于频繁，请稍后再试', {
       status: 429,
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
   }
 
-  return next();
+  const start = Date.now();
+  const response = await next();
+  const elapsed = Date.now() - start;
+
+  if (elapsed > 2000 || response.status >= 500) {
+    console.warn(`[slow] ${context.request.method} ${context.url.pathname} — ${response.status} ${elapsed}ms ip=${ip}`);
+  }
+
+  return response;
 });

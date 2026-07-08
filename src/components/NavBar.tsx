@@ -449,7 +449,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
 
                   {notifMounted && (
                     <div
-                      className={`absolute right-0 top-full mt-2 w-96 bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden rounded-lg ${notifLeaving ? 'nav-dropout' : 'nav-dropin'}`}
+                      className={`absolute right-0 top-full mt-2 w-[min(384px,90vw)] bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden rounded-lg ${notifLeaving ? 'nav-dropout' : 'nav-dropin'}`}
                       onMouseEnter={openNotifHover}
                     >
                       <div className="flex items-center justify-between px-5 py-3 border-b border-border-subtle">
