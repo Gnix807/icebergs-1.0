@@ -137,8 +137,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
       const d = await r.json().catch(() => ({}));
       if (r.ok && d.success) {
         setUser(d.data);
-        fetchUnreadCount();
-        // 处理待展示的成就
+        if (typeof d.data.unreadCount === 'number') setUnreadCount(d.data.unreadCount);
         if (d.data.pendingAchievements?.length > 0) {
           enqueueAchievements(d.data.pendingAchievements);
           fetch('/api/auth/achievements/ack', { method: 'POST' }).catch(() => {});
@@ -151,13 +150,6 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchUnreadCount = () => {
-    fetch('/api/notifications')
-      .then(r => r.json())
-      .then(d => { if (d.success) setUnreadCount(d.data.unreadCount); })
-      .catch(() => {});
   };
 
   const markAllRead = async () => {
@@ -219,7 +211,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
     const timer = setInterval(() => {
       if (document.visibilityState === 'hidden') return;
       fetchUser();
-    }, 15000);
+    }, 60000);
     return () => clearInterval(timer);
   }, [user]);
 
@@ -229,7 +221,6 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
         // 登录态唤醒同步，未登录不重复打 /api/auth/me
         if (userRef.current) {
           fetchUser();
-          fetchUnreadCount();
         }
       }
     };

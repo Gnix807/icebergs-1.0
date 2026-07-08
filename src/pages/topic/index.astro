@@ -3,21 +3,44 @@ import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
 import { ICEBERG_TOPICS } from '../../lib/icebergTopic';
 
-const topicData = await Promise.all(
-  ICEBERG_TOPICS.map(async (t) => {
-    const [count, featuredCount, ideaCount] = await Promise.all([
-      prisma.iceberg.count({ where: { topic: t.value, status: 'PUBLISHED' } }),
-      prisma.iceberg.count({ where: { topic: t.value, status: 'PUBLISHED', featured: true } }),
-      prisma.idea.count({ where: { topic: t.value, status: 'OPEN' } }),
-    ]);
-    const latest = count > 0 ? await prisma.iceberg.findFirst({
-      where: { topic: t.value, status: 'PUBLISHED' },
-      orderBy: { updatedAt: 'desc' },
-      select: { title: true, slug: true },
-    }) : null;
-    return { ...t, count, featuredCount, ideaCount, latest };
-  })
-);
+const topicValues = ICEBERG_TOPICS.map(t => t.value);
+
+const [icebergCounts, featuredCounts, ideaCounts, latestMap] = await Promise.all([
+  prisma.iceberg.groupBy({
+    by: ['topic'],
+    where: { topic: { in: topicValues }, status: 'PUBLISHED' },
+    _count: { id: true },
+  }),
+  prisma.iceberg.groupBy({
+    by: ['topic'],
+    where: { topic: { in: topicValues }, status: 'PUBLISHED', featured: true },
+    _count: { id: true },
+  }),
+  prisma.idea.groupBy({
+    by: ['topic'],
+    where: { topic: { in: topicValues }, status: 'OPEN' },
+    _count: { id: true },
+  }),
+  prisma.$queryRawUnsafe<{ topic: string; title: string; slug: string }[]>(`
+    SELECT DISTINCT ON (topic) topic, title, slug
+    FROM icebergs
+    WHERE topic = ANY($1) AND status = 'PUBLISHED'
+    ORDER BY topic, "updatedAt" DESC
+  `, topicValues),
+]);
+
+const countByTopic = Object.fromEntries(icebergCounts.map(r => [r.topic, r._count.id]));
+const featByTopic = Object.fromEntries(featuredCounts.map(r => [r.topic, r._count.id]));
+const ideaByTopic = Object.fromEntries(ideaCounts.map(r => [r.topic, r._count.id]));
+const latestByTopic = Object.fromEntries(latestMap.map(r => [r.topic, { title: r.title, slug: r.slug }]));
+
+const topicData = ICEBERG_TOPICS.map(t => ({
+  ...t,
+  count: countByTopic[t.value] || 0,
+  featuredCount: featByTopic[t.value] || 0,
+  ideaCount: ideaByTopic[t.value] || 0,
+  latest: latestByTopic[t.value] || null,
+}));
 
 const totalIcebergs = topicData.reduce((s, t) => s + t.count, 0);
 const sorted = [...topicData].sort((a, b) => b.count - a.count);
@@ -59,7 +82,7 @@ function maxCount() { return Math.max(...topicData.map(t => t.count), 1); }
       </p>
     </header>
 
-    <!-- Hot topics: 6-wide cards with bar charts -->
+    <!-- Hot topics -->
     <section class="mb-12 reveal">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-sm font-mono text-brand">
@@ -81,7 +104,6 @@ function maxCount() { return Math.max(...topicData.map(t => t.count), 1); }
                 <div class="text-[10px] font-mono text-text-mid mt-0.5">{t.count.toLocaleString()} 张冰山图{t.featuredCount > 0 ? ` · ⭐ ${t.featuredCount} 精选` : ''}{t.ideaCount > 0 ? ` · 💡 ${t.ideaCount} 创意` : ''}</div>
               </div>
             </div>
-            <!-- Progress bar -->
             <div class="h-1 bg-surface-1 overflow-hidden">
               <div class="h-full transition-all duration-500" style={`width:${(t.count / maxCount() * 100).toFixed(1)}%; background:${tierColors[index % 6]}`}></div>
             </div>
@@ -95,7 +117,7 @@ function maxCount() { return Math.max(...topicData.map(t => t.count), 1); }
       </div>
     </section>
 
-    <!-- All topics: compact grid -->
+    <!-- All topics -->
     <section class="reveal" style="animation-delay:150ms">
       <h2 class="text-sm font-mono text-text-mid mb-4">
         <span class="text-text-lo">// </span>全部主题

@@ -117,7 +117,9 @@ try {
         }
       }
 
-      if (iceberg.description) {
+      if (iceberg.renderedDescription) {
+        iceberg.description = iceberg.renderedDescription;
+      } else if (iceberg.description) {
         iceberg.description = renderMarkdownWithMath(iceberg.description);
       }
 

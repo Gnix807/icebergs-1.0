@@ -193,7 +193,8 @@ model Iceberg {
   id          String   @id @default(cuid())
   slug        String   @unique
   title       String
-  description String?
+  description         String?
+  renderedDescription String?
   topic       String   @default("general") // 主题分类：game / urban_legend / conspiracy ...
   authorId    String
   author      User     @relation(fields: [authorId], references: [id])
@@ -219,6 +220,8 @@ model Iceberg {
   @@index([authorId])
   @@index([status, topic, createdAt])
   @@index([viewCount])
+  @@index([featured, status, updatedAt])
+  @@index([topic, status])
   @@map("icebergs")
 }
 

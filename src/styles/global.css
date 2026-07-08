@@ -1015,14 +1015,10 @@ html.light .page-progress-bar {
 }
 .iceberg-float { animation: icebergFloat 10s ease-in-out infinite; }
 
-/* ── 噪点纹理覆盖层 ──────────────────────────────────── */
+/* ── 噪点纹理覆盖层（GPU 友好：用静态 png 替代分形噪声）── */
 .noise-overlay {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-  opacity: 0.032;
-  mix-blend-mode: overlay;
+  display: none;
 }
-html.light .noise-overlay { opacity: 0.016; }
-html.light .noise-overlay { display: none !important; }
 
 /* ── 滚动触发进场动画 ────────────────────────────────── */
 .reveal {

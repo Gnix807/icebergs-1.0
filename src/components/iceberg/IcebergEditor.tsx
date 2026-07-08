@@ -417,7 +417,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     setLoading(true);
     setError(null);
 
-    fetch(`/api/icebergs/${icebergId}?context=editor`)
+    fetch(`/api/icebergs/${icebergId}?context=editor&fields=minimal`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {

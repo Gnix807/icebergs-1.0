@@ -4,6 +4,7 @@ import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { checkAchievements, updateDailyStreak } from '../../../../lib/achievementService';
 import { normalizeIcebergTopic } from '../../../../lib/icebergTopic';
+import { renderMarkdownWithMath } from '../../../../lib/markdown';
 
 async function isProjectMember(userId: string, projectId: string | null): Promise<boolean> {
   if (!projectId) return false;
@@ -21,6 +22,7 @@ export async function GET(event: APIContext) {
     const { id } = event.params;
     const url = new URL(event.request.url);
     const context = (url.searchParams.get('context') || '').toLowerCase();
+    const fieldsMinimal = url.searchParams.get('fields') === 'minimal';
     const session = await getSession(event);
 
     if (!id) {
@@ -38,9 +40,7 @@ export async function GET(event: APIContext) {
       include: {
         tiers: {
           orderBy: { order: 'asc' },
-          include: {
-            items: true,
-          },
+          include: fieldsMinimal ? undefined : { items: true } as any,
         },
         author: {
           select: { id: true, username: true, nickname: true },
@@ -175,9 +175,12 @@ export async function PUT(event: APIContext) {
       }
     }
 
-    const updateData: { title?: string; description?: string; status?: string; topic?: string } = {};
+    const updateData: { title?: string; description?: string; renderedDescription?: string | null; status?: string; topic?: string } = {};
     if (title != null && title !== undefined) updateData.title = String(title).trim();
-    if (description !== undefined) updateData.description = description;
+    if (description !== undefined) {
+      updateData.description = description;
+      updateData.renderedDescription = description ? renderMarkdownWithMath(description) : null;
+    }
     if (status !== undefined) updateData.status = status;
     if (topic !== undefined) updateData.topic = normalizeIcebergTopic(topic);
 

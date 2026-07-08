@@ -65,7 +65,7 @@ try {
       _count: { id: true },
       _sum: { viewCount: true },
     }),
-    prisma.item.count(),
+    prisma.item.count({ where: { tier: { iceberg: { status: 'PUBLISHED' } } } }),
     prisma.viewLog.groupBy({
       by: ['icebergId'],
       where: { createdAt: { gte: weekAgo } },

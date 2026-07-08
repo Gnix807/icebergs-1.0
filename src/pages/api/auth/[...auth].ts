@@ -492,6 +492,7 @@ export async function GET(event: APIContext) {
 
     const { stats: _stats, passwordHash: _passwordHash, ...userOut } = user as any;
     const linkedProviders = await getLinkedOAuthProviders(user.id);
+    const unreadCount = await prisma.notification.count({ where: { userId: user.id, read: false } });
 
     return new Response(JSON.stringify(success({
       ...userOut,
@@ -501,6 +502,7 @@ export async function GET(event: APIContext) {
         google: linkedProviders.google,
       },
       pendingAchievements,
+      unreadCount,
     })), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

@@ -57,7 +57,7 @@ function normalizeSeedTiers(raw: unknown): SeedTierCreate[] {
             labels: JSON.stringify(sanitizeLabels(it.labels)),
           };
         })
-        .filter((it): it is { title: string; desc: string; renderedDesc?: string | null; order: number; labels: string } => !!it)
+        .filter((it): it is NonNullable<typeof it> => !!it)
         .sort((a, b) => a.order - b.order)
         .map((it, orderedIdx) => ({ ...it, order: orderedIdx }));
 
@@ -242,11 +242,13 @@ export async function POST(event: APIContext) {
     const topic = normalizeIcebergTopic(body.topic);
     const authorId = session.userId;
 
+    const descRaw = body.description || '';
     const createData: any = {
       id: slug,
       slug,
       title,
-      description: body.description || '',
+      description: descRaw,
+      renderedDescription: descRaw ? renderMarkdownWithMath(descRaw) : null,
       topic,
       status: 'DRAFT',
       authorId,
