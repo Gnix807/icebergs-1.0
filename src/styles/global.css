@@ -38,22 +38,6 @@
   --color-silver:    #C0C0C0;
   --color-bronze:    #CD7F32;
 
-  /* ── V3 风格令牌（主题可覆盖） ────────────────────── */
-  --theme-radius:     0px;
-  --theme-radius-sm:  0px;
-  --theme-border-w:   1px;
-  --theme-shadow:     none;
-  --theme-shadow-lg:  none;
-  --theme-glow:       none;
-  --theme-transition: 0.2s ease;
-  --theme-bg-pattern: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
-  --theme-bg-pattern-size: 16px 16px;
-  --theme-font-ui:    'Space Grotesk', 'MiSans', sans-serif;
-  --theme-font-mono:  'Space Mono', 'MiSans', monospace;
-  --theme-font-weight: 500;
-  --theme-heading-weight: 600;
-  --theme-letter-spacing: -0.01em;
-
   --cursor-dot-color: #3ecf8e;
   --cursor-ring-color: rgba(62, 207, 142, 0.22);
   --cursor-link-fill: rgba(62, 207, 142, 0.08);
@@ -655,14 +639,13 @@ a:focus-visible,
   background: var(--color-surface-2);
   border: 1px solid var(--color-border-2);
   border-left: 4px solid var(--color-border);
-  border-radius: var(--theme-radius, 0px);
   transition: all 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 .archive-card:hover {
   border-left-color: var(--color-brand);
   background: var(--color-surface-3);
   transform: translateX(4px);
-  box-shadow: var(--theme-shadow, -4px 0 20px rgba(0,255,65,0.12));
+  box-shadow: -4px 0 20px rgba(0, 255, 65, 0.12);
   z-index: 10;
 }
 
@@ -706,8 +689,10 @@ a:focus-visible,
 
 /* 终端网格背景 */
 .bg-grid {
-  background-image: var(--theme-bg-pattern, radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px));
-  background-size: var(--theme-bg-pattern-size, 16px 16px);
+  background-image:
+    linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
 }
 
 /* Toast 通知动画 */

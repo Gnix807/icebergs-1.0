@@ -42,7 +42,6 @@ model User {
 
   // 质量分系统
   qualityScore      Int       @default(0)
-  themeId           String?   // 用户当前使用的主题
   lastWeeklyBonusAt DateTime? // 上次获得周活跃奖励的时间
 
   // 隐私设置
@@ -89,7 +88,6 @@ model User {
   drafts               Draft[]
   projects             Project[]
   projectMemberships   ProjectMember[]
-  themes               Theme[]
   projectDiscussions   ProjectDiscussion[]
   projectTasksCreated  ProjectTask[]    @relation("TaskCreator")
   projectTasksAssigned ProjectTask[]    @relation("TaskAssignee")
@@ -954,19 +952,3 @@ model TaskComment {
   @@map("task_comments")
 }
 
-model Theme {
-  id          String   @id @default(cuid())
-  name        String
-  description String   @default("")
-  authorId    String
-  isPublic    Boolean  @default(true)
-  isPreset    Boolean  @default(false)
-  variables   String   // JSON: { "--color-brand": "#00FF41", ... }
-  downloads   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
-
-  @@map("themes")
-}

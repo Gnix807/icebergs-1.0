@@ -5,7 +5,6 @@ import { Toast } from '../components/ui/Toast';
 import { AchievementToast } from '../components/ui/AchievementToast';
 import { ViewTransitions } from 'astro:transitions';
 import { prisma } from '../lib/prisma';
-import { getSessionById } from '../lib/auth/index';
 import { getFeatureFlags } from '../lib/features';
 import '../styles/global.css';
 
@@ -26,33 +25,10 @@ const bannerAnn = await prisma.announcement.findFirst({
 
 // 功能开关（带缓存，60 秒刷新一次）
 const features = await getFeatureFlags();
-
-// ── 主题 ──
-const sessionId = Astro.cookies.get('session')?.value;
-const sessionUser = await getSessionById(sessionId);
-let themeVars: string | null = null;
-if (sessionUser) {
-  try {
-    const userRecord = await prisma.user.findUnique({
-      where: { id: sessionUser.userId },
-      select: { themeId: true },
-    });
-    if (userRecord?.themeId) {
-      const theme = await prisma.theme.findUnique({ where: { id: userRecord.themeId } });
-      if (theme?.variables) {
-        try {
-          const vars = JSON.parse(theme.variables);
-          themeVars = Object.keys(vars).map((k: string) => `${k}: ${(vars as any)[k]}`).join('; ');
-        } catch {}
-      }
-    }
-  } catch {}
-}
-// Default theme CSS variables are defined in global.css, so no fallback needed
 ---
 
 <!doctype html>
-<html lang="zh" style={themeVars || ''}>
+<html lang="zh">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

@@ -640,11 +640,6 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono text-left">
                               <span className="w-[15px] text-center text-[13px]">{crtOn ? '⊟' : '⊡'}</span> CRT 扫描线 <span className="ml-auto text-[10px] text-text-lo">{crtOn ? 'ON' : 'OFF'}</span>
                             </button>
-                            <a href="/themes"
-                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
-                              onClick={() => setShowDropdown(false)}>
-                              <span className="w-[15px] text-center text-[13px]">🎨</span> 主题中心
-                            </a>
                             <a href="/api/auth/logout"
                               className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-danger hover:bg-surface-3 transition-colors font-mono">
                               <LogOut size={15} strokeWidth={1.5} /> 退出登录
