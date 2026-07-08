@@ -876,15 +876,16 @@ if (iceberg?.status === 'PUBLISHED') {
     }
   }
 
-  // Bind chip clicks
-  document.querySelectorAll('.item-chip').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.index, 10);
-      openModal(idx);
-      highlightChip(idx);
-      reportRead(ITEMS[idx]);
-      saveReaderState();
-    });
+  // Bind chip clicks via event delegation (survives ViewTransitions)
+  document.addEventListener('click', function(e) {
+    var chip = e.target.closest('.item-chip');
+    if (!chip) return;
+    var idx = parseInt(chip.dataset.index, 10);
+    if (isNaN(idx)) return;
+    openModal(idx);
+    highlightChip(idx);
+    reportRead(ITEMS[idx]);
+    saveReaderState();
   });
 
   // Keyboard navigation

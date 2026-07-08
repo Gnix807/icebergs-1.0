@@ -464,12 +464,10 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                       <div className="flex items-center justify-between px-5 py-3 border-b border-border-subtle">
                         <span className="text-xs font-mono font-semibold text-text-hi tracking-wide">通知</span>
                         <div className="flex items-center gap-3">
-                          {unreadCount > 0 && (
-                            <button onClick={markAllRead}
-                              className="text-[11px] font-mono text-text-mid hover:text-brand transition-colors">
-                              全部已读
-                            </button>
-                          )}
+                          <button onClick={unreadCount > 0 ? markAllRead : undefined}
+                            className={`text-[11px] font-mono transition-colors ${unreadCount > 0 ? 'text-text-mid hover:text-brand cursor-pointer' : 'text-text-lo cursor-default'}`}>
+                            全部已读
+                          </button>
                           <a href="/notifications" onClick={() => setShowNotif(false)}
                             className="text-[11px] font-mono text-text-mid hover:text-brand transition-colors">
                             查看全部
