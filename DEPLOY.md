@@ -21,9 +21,11 @@
 
 1Panel → **文件** → 进入 `/opt/` → 创建目录 `icebergs`。
 
-上传代码（二选一）：
-- ZIP 上传后解压
-- 终端执行 `git clone https://github.com/Gnix807/icebergs-1.0.git /opt/icebergs`
+上传代码（三选一）：
+- ZIP 上传后解压（无需 Git 认证）
+- 终端执行 `git clone https://你的GitHub用户名:你的PersonalAccessToken@github.com/Gnix807/icebergs-1.0.git /opt/icebergs`
+  - Token 获取：GitHub → Settings → Developer settings → Personal access tokens → 勾选 `repo` → 生成
+- SSH：`git clone git@github.com:Gnix807/icebergs-1.0.git /opt/icebergs`（需先在服务器配 SSH Key）
 
 ### 3. 首次安装
 
