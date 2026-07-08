@@ -37,6 +37,15 @@ npx prisma generate
 npx prisma db push
 node prisma/seed.mjs
 node prisma/seed-achievements.mjs
+```
+
+构建前，将 `astro.config.mjs` 中的 `site` 改为你的域名：
+```js
+site: 'https://你的域名',
+```
+
+然后构建：
+```bash
 npm run build
 ```
 
@@ -52,6 +61,8 @@ REDIRECT_URI=https://你的域名/api/auth/callback
 NODE_ENV=production
 CRON_SECRET=随机字符串
 ```
+
+> **注意**：SEO 相关配置（搜索引擎验证码、分析代码等）不需要写在 `.env` 里。部署后在管理后台 → SEO 面板中填入即可，数据存储在数据库中。
 
 ### 5. 初始化全文搜索
 
@@ -78,7 +89,16 @@ GitHub → Settings → Developer Settings → OAuth Apps，将回调地址改�
 https://你的域名/api/auth/callback
 ```
 
-### 9. 可选：Cron 定时任务
+### 9. 接入搜索引擎（可选，推荐）
+
+部署完成后，登录管理面板 `/user/你的用户名?tab=admin` → **SEO** 标签页：
+
+1. **Google**：Google Search Console → 添加资源 → HTML 标记验证 → 复制 `content` 值填入「Google 验证码」→ 保存 → 回到 Search Console 验证 → 提交 `/sitemap.xml`
+2. **百度**：百度搜索资源平台 → 站点验证 → HTML 标签验证 → 复制 `content` 值填入「百度验证码」→ 保存 → 验证通过 → 提交 sitemap
+3. **Bing**：Bing Webmaster Tools → 添加站点 → 复制验证码填入「Bing 验证码」→ 验证 → 提交 sitemap
+4. **分析代码**：填入 Google Analytics ID（G-XXX）和百度统计 ID，保存后全站生效
+
+### 10. 可选：Cron 定时任务
 
 1Panel → **计划任务**，添加：
 
@@ -105,10 +125,12 @@ cd /opt/icebergs/frontend && bash deploy.sh
 ## 部署检查清单
 
 - [ ] PostgreSQL 数据库已创建
-- [ ] `.env` 已配置（唯一需要手动编辑的文件）
+- [ ] `.env` 已配置
 - [ ] `npm run build` 无报错
 - [ ] 全文搜索 SQL 已执行
 - [ ] 反向代理 + SSL 已配置
 - [ ] 进程守护已启动
 - [ ] GitHub OAuth 回调地址已更新
 - [ ] 浏览器打开 `https://你的域名` 确认可访问
+- [ ] SEO 面板配置搜索引擎验证码（Google / 百度 / Bing）
+- [ ] 搜索引擎提交 `/sitemap.xml`
