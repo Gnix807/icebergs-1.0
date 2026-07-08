@@ -18,8 +18,8 @@ echo "==> 4/6 全文搜索索引"
 psql "$DATABASE_URL" -f prisma/migrations/001_fulltext_search.sql 2>/dev/null || \
   echo "    ⚠ 请手动执行: psql \$DATABASE_URL -f prisma/migrations/001_fulltext_search.sql"
 
-echo "==> 5/6 构建"
-npm run build
+echo "==> 5/6 构建（低优先级，不影响运行中服务）"
+nice -n 19 npm run build
 
 echo "==> 6/6 重启服务"
 if command -v pm2 &> /dev/null && pm2 list 2>/dev/null | grep -q icebergs; then
