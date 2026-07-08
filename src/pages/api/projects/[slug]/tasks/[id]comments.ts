@@ -1,7 +1,7 @@
 import type { APIContext } from 'astro';
-import { prisma } from '../../../../../../lib/prisma';
-import { success, error, ErrorCodes } from '../../../../../../lib/api';
-import { getSession } from '../../../../../../lib/auth/index';
+import { prisma } from '../../../../../lib/prisma';
+import { success, error, ErrorCodes } from '../../../../../lib/api';
+import { getSession } from '../../../../../lib/auth/index';
 
 export async function GET(event: APIContext) {
   const task = await prisma.projectTask.findUnique({ where: { id: event.params.id }, select: { id: true } });

@@ -5,7 +5,7 @@ import { getSession } from '../../../../lib/auth/index';
 
 export async function GET(event: APIContext) {
   const project = await prisma.project.findUnique({ where: { slug: event.params.slug }, select: { id: true } });
-  if (!project) return json(error(ErrorCodes.NOT_FOUND, '涓撻涓嶅瓨鍦?), 404);
+  if (!project) return json(error(ErrorCodes.NOT_FOUND, '专题不存在'), 404);
   const tasks = await prisma.projectTask.findMany({
     where: { projectId: project.id },
     orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
@@ -16,13 +16,13 @@ export async function GET(event: APIContext) {
 
 export async function POST(event: APIContext) {
   const session = await getSession(event);
-  if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '璇峰厛鐧诲綍'), 401);
+  if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   const project = await prisma.project.findUnique({ where: { slug: event.params.slug }, select: { id: true } });
-  if (!project) return json(error(ErrorCodes.NOT_FOUND, '涓撻涓嶅瓨鍦?), 404);
+  if (!project) return json(error(ErrorCodes.NOT_FOUND, '专题不存在'), 404);
   let body: { title?: string; description?: string; assigneeId?: string; priority?: string; dueDate?: string };
-  try { body = await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '璇锋眰鏍煎紡閿欒'), 400); }
+  try { body = await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '请求格式错误'), 400); }
   const title = (body.title ?? '').trim();
-  if (!title || title.length > 200) return json(error(ErrorCodes.BAD_REQUEST, '鏍囬 1-200 瀛?), 400);
+  if (!title || title.length > 200) return json(error(ErrorCodes.BAD_REQUEST, '标题 1-200 字'), 400);
   const task = await prisma.projectTask.create({
     data: { projectId: project.id, title, description: body.description?.trim() || null, assigneeId: body.assigneeId || null, creatorId: session.userId, priority: body.priority || null, dueDate: body.dueDate ? new Date(body.dueDate) : null },
     select: { id: true, title: true, status: true },
@@ -32,11 +32,11 @@ export async function POST(event: APIContext) {
 
 export async function PATCH(event: APIContext) {
   const session = await getSession(event);
-  if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '璇峰厛鐧诲綍'), 401);
+  if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   let body: { taskId?: string; status?: string; assigneeId?: string; priority?: string; dueDate?: string; title?: string; description?: string };
-  try { body = await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '璇锋眰鏍煎紡閿欒'), 400); }
+  try { body = await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '请求格式错误'), 400); }
   const task = await prisma.projectTask.findUnique({ where: { id: body.taskId } });
-  if (!task) return json(error(ErrorCodes.NOT_FOUND, '浠诲姟涓嶅瓨鍦?), 404);
+  if (!task) return json(error(ErrorCodes.NOT_FOUND, '任务不存在'), 404);
   const data: any = {};
   if (body.status) data.status = body.status;
   if (body.assigneeId !== undefined) data.assigneeId = body.assigneeId === '__self__' ? session.userId : (body.assigneeId || null);
@@ -50,10 +50,10 @@ export async function PATCH(event: APIContext) {
 
 export async function DELETE(event: APIContext) {
   const session = await getSession(event);
-  if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '璇峰厛鐧诲綍'), 401);
+  if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   let body: { taskId?: string };
-  try { body = await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '璇锋眰鏍煎紡閿欒'), 400); }
-  if (!body.taskId) return json(error(ErrorCodes.BAD_REQUEST, '缂哄皯 taskId'), 400);
+  try { body = await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '请求格式错误'), 400); }
+  if (!body.taskId) return json(error(ErrorCodes.BAD_REQUEST, '缺少 taskId'), 400);
   await prisma.projectTask.delete({ where: { id: body.taskId } });
   return json(success({ deleted: true }), 200);
 }
