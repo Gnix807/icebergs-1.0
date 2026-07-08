@@ -104,11 +104,6 @@ export function parseIcebergThreads(
         itemLabels.push('NSFW');
       }
 
-      // 顶层：如果原图是 NSFW，给前几条打标签
-      if (isNsfw && i < 3 && tiers.length === 0) {
-        itemLabels.push('NSFW');
-      }
-
       // 从原始 tags 映射到标签
       if (tags.length > 0 && i === 0) {
         for (const tag of tags.slice(0, 3)) {

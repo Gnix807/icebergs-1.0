@@ -146,8 +146,6 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
         var labels = [];
         // 词条自身的 NSFW 标记
         if ((if_.isNSFW && if_.isNSFW.booleanValue) || (if_.nsfw && if_.nsfw.booleanValue)) labels.push('NSFW');
-        // 顶层：如果原图标记为 NSFW，给前几条打标签
-        if (nsfw && i < 3 && tiers.length === 0) labels.push('NSFW');
 
         // 映射原分类为标签
         var catId = sv(if_.categoryId);
