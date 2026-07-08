@@ -39,7 +39,12 @@ if (sessionUser) {
     });
     if (userRecord?.themeId) {
       const theme = await prisma.theme.findUnique({ where: { id: userRecord.themeId } });
-      if (theme) themeVars = theme.variables;
+      if (theme?.variables) {
+        try {
+          const vars = JSON.parse(theme.variables);
+          themeVars = Object.entries(vars).map(([k, v]) => `${k}: ${v}`).join('; ');
+        } catch {}
+      }
     }
   } catch {}
 }
