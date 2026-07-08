@@ -82,6 +82,9 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
 
   const openNotifHover = () => {
     if (notifTimer.current) clearTimeout(notifTimer.current);
+    // 关闭用户下拉，避免同时显示
+    if (userTimer.current) clearTimeout(userTimer.current);
+    setShowDropdown(false);
     if (!showNotif) {
       setShowNotif(true);
       setNotifLoading(true);
@@ -119,6 +122,9 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
   };
   const openUser = () => {
     if (userTimer.current) clearTimeout(userTimer.current);
+    // 关闭通知下拉，避免同时显示
+    if (notifTimer.current) clearTimeout(notifTimer.current);
+    setShowNotif(false);
     setShowDropdown(true);
   };
   const closeUser = () => {
