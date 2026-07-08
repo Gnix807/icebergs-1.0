@@ -445,6 +445,21 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
             link: '/api-docs', linkLabel: '/api-docs',
             desc: '面向开发者的公开 API 参考文档，列出冰山图、评论、搜索、收藏等所有公开接口签名。',
           },
+          {
+            icon: '↩', label: '撤销/重做',
+            link: null, linkLabel: null,
+            desc: '编辑器中支持 Ctrl+Z 撤销、Ctrl+Y 重做，最多保存 80 步操作历史。添加/修改/删除/移动词条或层级均自动记录快照，误操作一键回退。',
+          },
+          {
+            icon: '⚡', label: '性能优化',
+            link: null, linkLabel: null,
+            desc: '大型冰山图（1000+ 词条）加载已全面优化：描述按需异步加载、屏幕外层级延迟渲染、描述预渲染到数据库。页面体积缩小 95%，滚动流畅无卡顿。',
+          },
+          {
+            icon: '🌐', label: 'SEO & 分享',
+            link: null, linkLabel: null,
+            desc: '全站支持 Open Graph 和 Twitter Card 分享预览卡片；每张冰山图嵌入 JSON-LD 结构化数据；已提交 sitemap.xml 到各大搜索引擎。分享链接到社交平台时自动展示标题、描述和预览图。',
+          },
         ].map(({ icon, label, link, linkLabel, desc }) => (
           <div class="border border-border-minimal bg-surface-2 px-4 py-3 flex gap-3 items-start">
             <span class="text-xs font-mono text-text-mid mt-0.5 w-4 flex-shrink-0">{icon}</span>
