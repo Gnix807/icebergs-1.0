@@ -4,7 +4,7 @@ import { toast } from '../ui/Toast';
 interface TierData {
   name: string;
   color: string;
-  items: { title: string }[];
+  items: { title: string; labels: string[] }[];
 }
 
 interface ExportButtonProps {
@@ -72,6 +72,8 @@ const PAD        = 36;
 const CONTENT_W  = W - PAD * 2;
 const CHIP_H     = 28;
 const CHIP_PX    = 12;
+const LABEL_DOT_SIZE = 6;
+const LABEL_DOT_GAP  = 3;
 const CHIP_GAP   = 8;
 const ROW_GAP    = 8;
 const TIER_GAP   = 12;
@@ -89,20 +91,21 @@ const FONT_SMALL = '11px ui-monospace,"IBM Plex Mono",Consolas,monospace';
 
 function calcItemsHeight(
   ctx: CanvasRenderingContext2D,
-  items: { title: string }[],
-): { rows: { title: string; x: number }[][]; height: number } {
+  items: { title: string; labels: string[] }[],
+): { rows: { title: string; labels: string[]; x: number }[][]; height: number } {
   if (items.length === 0) return { rows: [], height: ITEMS_PAD * 2 + 16 };
 
   ctx.font = FONT_SMALL;
   const maxW = CONTENT_W - BAR_W - ITEMS_PAD * 2;
-  const rows: { title: string; x: number }[][] = [];
-  let row: { title: string; x: number }[] = [];
+  const rows: { title: string; labels: string[]; x: number }[][] = [];
+  let row: { title: string; labels: string[]; x: number }[] = [];
   let x = 0;
 
   for (const item of items) {
-    const cw = ctx.measureText(item.title).width + CHIP_PX * 2;
+    const labelW = item.labels.length > 0 ? item.labels.length * (LABEL_DOT_SIZE + LABEL_DOT_GAP) + 4 : 0;
+    const cw = ctx.measureText(item.title).width + CHIP_PX * 2 + labelW;
     if (x > 0 && x + cw > maxW) { rows.push(row); row = []; x = 0; }
-    row.push({ title: item.title, x });
+    row.push({ title: item.title, labels: item.labels, x });
     x += cw + CHIP_GAP;
   }
   if (row.length) rows.push(row);
@@ -225,14 +228,15 @@ async function drawExport(
       ctx.fillStyle = T.emptyText;
       ctx.textBaseline = 'middle';
       ctx.fillText('暂无词条', PAD + BAR_W + ITEMS_PAD, y + itemsH / 2);
-    } else {
+      } else {
       const ox = PAD + BAR_W + ITEMS_PAD;
       const oy = y + ITEMS_PAD;
       ctx.font = FONT_SMALL;
       for (let ri = 0; ri < rows.length; ri++) {
         const ry = oy + ri * (CHIP_H + ROW_GAP);
         for (const chip of rows[ri]) {
-          const cw = ctx.measureText(chip.title).width + CHIP_PX * 2;
+          const labelW = chip.labels.length > 0 ? chip.labels.length * (LABEL_DOT_SIZE + LABEL_DOT_GAP) + 4 : 0;
+          const cw = ctx.measureText(chip.title).width + CHIP_PX * 2 + labelW;
           const cx = ox + chip.x;
           ctx.fillStyle = T.chipBg;
           ctx.fillRect(cx, ry, cw, CHIP_H);
@@ -242,6 +246,18 @@ async function drawExport(
           ctx.fillStyle = T.chipText;
           ctx.textBaseline = 'middle';
           ctx.fillText(chip.title, cx + CHIP_PX, ry + CHIP_H / 2);
+          // 标签圆点
+          if (chip.labels.length > 0) {
+            const dotY = ry + CHIP_H / 2;
+            let dotX = cx + CHIP_PX + ctx.measureText(chip.title).width + 6;
+            for (const lbl of chip.labels) {
+              ctx.fillStyle = color;
+              ctx.beginPath();
+              ctx.arc(dotX + LABEL_DOT_SIZE / 2, dotY, LABEL_DOT_SIZE / 2, 0, Math.PI * 2);
+              ctx.fill();
+              dotX += LABEL_DOT_SIZE + LABEL_DOT_GAP;
+            }
+          }
         }
       }
     }

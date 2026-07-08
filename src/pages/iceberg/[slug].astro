@@ -361,7 +361,10 @@ if (iceberg?.status === 'PUBLISHED') {
                 tiers={iceberg.tiers.map((tier: any, ti: number) => ({
                   name: tier.name,
                   color: tierColors[ti % 6],
-                  items: tier.items.map((item: any) => ({ title: item.title })),
+                  items: tier.items.map((item: any) => ({
+                    title: item.title,
+                    labels: ((item as any)._labels as string[]) || [],
+                  })),
                 }))}
                 icebergUrl={`${Astro.url.origin}/iceberg/${iceberg.slug}`}
               />
