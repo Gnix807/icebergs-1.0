@@ -1,18 +1,253 @@
 import { useState, useEffect } from 'react';
+import { toast } from '../ui/Toast';
 
-interface SitemapStats {
-  publishedCount: number;
-  totalIcebergs: number;
+interface Setting {
+  key: string;
+  value: string;
 }
 
-interface AuditItem {
-  slug: string;
-  title: string;
-  issues: string[];
+interface SeoFields {
+  seo_google_verification: string;
+  seo_baidu_verification: string;
+  seo_bing_verification: string;
+  seo_google_analytics: string;
+  seo_baidu_analytics: string;
+  seo_custom_head: string;
 }
+
+const DEFAULTS: SeoFields = {
+  seo_google_verification: '',
+  seo_baidu_verification: '',
+  seo_bing_verification: '',
+  seo_google_analytics: '',
+  seo_baidu_analytics: '',
+  seo_custom_head: '',
+};
+
+const FIELD_META: Record<keyof SeoFields, { label: string; hint: string; placeholder: string }> = {
+  seo_google_verification: {
+    label: 'Google 验证码',
+    hint: 'Google Search Console → 设置 → 所有权验证 → HTML 标记 → content 属性的值',
+    placeholder: '例如: AbCdEfGhIjKlMnOpQrStUvWxYz...',
+  },
+  seo_baidu_verification: {
+    label: '百度验证码',
+    hint: '百度搜索资源平台 → 站点管理 → 站点验证 → HTML 标签验证 → content 值',
+    placeholder: '例如: codeva-xxxxxxxxxxxxxxxx',
+  },
+  seo_bing_verification: {
+    label: 'Bing 验证码',
+    hint: 'Bing Webmaster Tools → 添加站点 → HTML Meta Tag → content 值',
+    placeholder: '例如: ABCDEF1234567890...',
+  },
+  seo_google_analytics: {
+    label: 'Google Analytics ID',
+    hint: 'Google Analytics → 管理 → 数据流 → 衡量 ID（G-XXXXXXXXXX）',
+    placeholder: '例如: G-XXXXXXXXXX',
+  },
+  seo_baidu_analytics: {
+    label: '百度统计 ID',
+    hint: '百度统计 → 管理 → 获取代码 → 代码中 hm.src 的 ? 后面的 id 参数',
+    placeholder: '例如: abcdef1234567890abcdef1234567890',
+  },
+  seo_custom_head: {
+    label: '自定义 <head>',
+    hint: '注入到每个页面 <head> 末尾的 HTML。可用于 360/搜狗/Yandex 等其他搜索引擎验证或自定义脚本',
+    placeholder: '<meta name="xxx" content="yyy" />\n<script src="..."></script>',
+  },
+};
+
+const SUBMIT_LINKS = [
+  { label: 'Google Sitemap 提交', href: 'https://search.google.com/search-console/sitemaps' },
+  { label: 'Bing Sitemap 提交', href: 'https://www.bing.com/webmasters/sitemaps' },
+  { label: '百度 Sitemap 提交', href: 'https://ziyuan.baidu.com/linksubmit/index' },
+];
 
 export function AdminSeo() {
-  const [stats, setStats] = useState<SitemapStats | null>(null);
+  const [fields, setFields] = useState<SeoFields>(DEFAULTS);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          const map: Record<string, string> = {};
+          data.data.forEach((s: Setting) => { map[s.key] = s.value; });
+          setFields({
+            seo_google_verification: map.seo_google_verification || '',
+            seo_baidu_verification: map.seo_baidu_verification || '',
+            seo_bing_verification: map.seo_bing_verification || '',
+            seo_google_analytics: map.seo_google_analytics || '',
+            seo_baidu_analytics: map.seo_baidu_analytics || '',
+            seo_custom_head: map.seo_custom_head || '',
+          });
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const update = (key: keyof SeoFields, value: string) => {
+    setFields(prev => ({ ...prev, [key]: value }));
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fields),
+      });
+      const d = await res.json();
+      if (d.success) {
+        toast('SEO 配置已保存');
+      } else {
+        toast('保存失败: ' + (d.error?.message || '未知错误'));
+      }
+    } catch {
+      toast('网络错误');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-xs font-mono text-text-mid p-8 text-center">加载中...</div>;
+  }
+
+  const fieldsList = Object.keys(DEFAULTS) as (keyof SeoFields)[];
+
+  return (
+    <div className="space-y-8">
+      {/* ── 搜索引擎验证 ── */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs text-text-mid tracking-widest">// VERIFICATION</span>
+          <span className="text-[10px] font-mono text-text-lo">搜索引擎站长验证</span>
+        </div>
+
+        {fieldsList.map(key => {
+          const meta = FIELD_META[key];
+          const hasValue = fields[key].length > 0;
+          return (
+            <div key={key} className="border border-border-subtle bg-surface-2 p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-xs font-mono font-bold text-text-hi">{meta.label}</label>
+                  <div className="text-[10px] font-mono text-text-mid mt-0.5">{meta.hint}</div>
+                </div>
+                {hasValue && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 bg-brand/10 text-brand border border-brand/20">
+                    ✓ 已配置
+                  </span>
+                )}
+              </div>
+              {key === 'seo_custom_head' ? (
+                <textarea
+                  value={fields[key]}
+                  onChange={e => update(key, e.target.value)}
+                  placeholder={meta.placeholder}
+                  rows={4}
+                  className="w-full bg-surface-1 border border-border px-3 py-2 text-xs font-mono text-text-body placeholder:text-text-lo focus:border-brand focus:outline-none resize-y"
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={fields[key]}
+                  onChange={e => update(key, e.target.value)}
+                  placeholder={meta.placeholder}
+                  className="w-full bg-surface-1 border border-border px-3 py-2 text-xs font-mono text-text-body placeholder:text-text-lo focus:border-brand focus:outline-none"
+                />
+              )}
+            </div>
+          );
+        })}
+
+        <button
+          onClick={save}
+          disabled={saving}
+          className="w-full py-2.5 bg-brand text-black text-xs font-mono font-bold hover:opacity-90 transition-opacity disabled:opacity-40"
+        >
+          {saving ? '保存中...' : '保存 SEO 配置'}
+        </button>
+      </div>
+
+      {/* ── Sitemap 提交快捷入口 ── */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs text-text-mid tracking-widest">// SUBMIT</span>
+          <span className="text-[10px] font-mono text-text-lo">Sitemap 提交入口</span>
+        </div>
+        <div className="text-[10px] font-mono text-text-mid mb-2">
+          配置验证码后，进入对应平台提交 Sitemap：<code className="text-brand bg-brand/5 px-1">https://icebergs.fun/sitemap.xml</code>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {SUBMIT_LINKS.map(link => (
+            <a key={link.label}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block border border-border-subtle bg-surface-2 p-3 hover:border-brand transition-colors text-xs font-mono text-text-hi text-center"
+            >
+              {link.label} ↗
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 页面注入预览 ── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs text-text-mid tracking-widest">// PREVIEW</span>
+            <span className="text-[10px] font-mono text-text-lo">注入到页面的代码预览</span>
+          </div>
+          <button
+            onClick={() => setShowPreview(!showPreview)}
+            className="text-[10px] font-mono text-text-mid hover:text-brand transition-colors"
+          >
+            {showPreview ? '收起' : '展开'}
+          </button>
+        </div>
+
+        {showPreview && (
+          <pre className="border border-border-subtle bg-surface-2 p-4 overflow-x-auto text-[10px] font-mono text-text-mid leading-relaxed whitespace-pre-wrap">
+{`<!-- SEO 验证 + 分析 -->
+${fields.seo_google_verification ? `<meta name="google-site-verification" content="${fields.seo_google_verification}" />` : '<!-- 未配置 Google 验证 -->'}
+${fields.seo_baidu_verification ? `<meta name="baidu-site-verification" content="${fields.seo_baidu_verification}" />` : '<!-- 未配置百度验证 -->'}
+${fields.seo_bing_verification ? `<meta name="msvalidate.01" content="${fields.seo_bing_verification}" />` : '<!-- 未配置 Bing 验证 -->'}
+${fields.seo_google_analytics ? `<script async src="https://www.googletagmanager.com/gtag/js?id=${fields.seo_google_analytics}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '${fields.seo_google_analytics}');
+</script>` : '<!-- 未配置 GA -->'}
+${fields.seo_baidu_analytics ? `<script>
+  var _hmt = _hmt || [];
+  (function() {
+    var hm = document.createElement("script");
+    hm.src = "https://hm.baidu.com/hm.js?${fields.seo_baidu_analytics}";
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(hm, s);
+  })();
+</script>` : '<!-- 未配置百度统计 -->'}
+${fields.seo_custom_head || '<!-- 无自定义 head 内容 -->'}`}
+          </pre>
+        )}
+      </div>
+
+      {/* ── Sitemap 统计 ── */}
+      <SeoStats />
+    </div>
+  );
+}
+
+function SeoStats() {
+  const [stats, setStats] = useState<{ publishedCount: number; totalIcebergs: number } | null>(null);
 
   useEffect(() => {
     fetch('/api/admin/seo/stats')
@@ -21,159 +256,35 @@ export function AdminSeo() {
       .catch(() => {});
   }, []);
 
-  const pageUrls = [
-    { path: '/', label: '首页' },
-    { path: '/topic', label: '主题门户' },
-    { path: '/leaderboard', label: '排行榜' },
-    { path: '/featured', label: '精选' },
-    { path: '/iceberg/list', label: '冰山广场' },
-    { path: '/guide', label: '使用指南' },
-  ];
-
-  return (
-    <div className="space-y-8">
-      {/* ── Sitemap 统计 ── */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-text-mid tracking-widest">// SITEMAP</span>
-          <span className="text-[10px] font-mono text-text-lo">站点地图统计</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="border border-border-subtle bg-surface-2 p-4">
-            <div className="text-[10px] font-mono text-text-mid mb-1">已发布冰山图</div>
-            <div className="text-xl font-mono font-bold text-brand">
-              {stats ? stats.publishedCount.toLocaleString() : '—'}
-            </div>
-          </div>
-          <div className="border border-border-subtle bg-surface-2 p-4">
-            <div className="text-[10px] font-mono text-text-mid mb-1">冰山图总数</div>
-            <div className="text-xl font-mono font-bold text-text-hi">
-              {stats ? stats.totalIcebergs.toLocaleString() : '—'}
-            </div>
-          </div>
-          <div className="border border-border-subtle bg-surface-2 p-4">
-            <div className="text-[10px] font-mono text-text-mid mb-1">Sitemap XML</div>
-            <div className="text-xs font-mono mt-1">
-              <a href="/sitemap.xml" target="_blank" rel="noopener"
-                className="text-brand hover:underline">/sitemap.xml ↗</a>
-              <span className="text-text-mid ml-2">·</span>
-              <a href="/robots.txt" target="_blank" rel="noopener"
-                className="text-text-mid hover:underline ml-2">/robots.txt ↗</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Meta 标签预览 ── */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-text-mid tracking-widest">// META PREVIEW</span>
-          <span className="text-[10px] font-mono text-text-lo">OG / Twitter 卡片预览</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {pageUrls.map(p => (
-            <a key={p.path} href={p.path} target="_blank" rel="noopener"
-              className="block border border-border-subtle bg-surface-2 p-3 hover:border-brand transition-colors group">
-              <div className="text-xs font-mono font-bold text-text-hi group-hover:text-brand">{p.label}</div>
-              <div className="text-[10px] font-mono text-text-lo mt-0.5">{p.path}</div>
-              <div className="mt-2 flex gap-1.5">
-                <span className="text-[9px] font-mono px-1.5 py-0.5 bg-surface-1 text-text-mid border border-border-subtle">Facebook</span>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 bg-surface-1 text-text-mid border border-border-subtle">Twitter</span>
-              </div>
-            </a>
-          ))}
-        </div>
-      </div>
-
-      {/* ── SEO 审计 ── */}
-      <SeoAudit />
-    </div>
-  );
-}
-
-function SeoAudit() {
-  const [audit, setAudit] = useState<AuditItem[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const runAudit = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const r = await fetch('/api/admin/seo/audit');
-      const d = await r.json();
-      if (d.success) setAudit(d.data);
-      else setError(d.error?.message || '审计失败');
-    } catch {
-      setError('网络错误');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-text-mid tracking-widest">// AUDIT</span>
-          <span className="text-[10px] font-mono text-text-lo">SEO 健康检查</span>
-        </div>
-        <button
-          onClick={runAudit}
-          disabled={loading}
-          className="text-[10px] font-mono px-3 py-1 border border-border hover:border-brand text-text-mid hover:text-brand transition-colors disabled:opacity-40"
-        >
-          {loading ? '检查中…' : audit ? '重新检查' : '开始检查'}
-        </button>
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-xs text-text-mid tracking-widest">// STATS</span>
+        <span className="text-[10px] font-mono text-text-lo">站点统计</span>
       </div>
-
-      {error && (
-        <div className="p-3 border border-danger/20 bg-danger/5 text-xs font-mono text-danger">{error}</div>
-      )}
-
-      {audit && audit.length === 0 && (
-        <div className="p-4 border border-brand/20 bg-brand/5 text-xs font-mono text-text-body">
-          所有冰山图 SEO 状态良好，没有发现明显问题。
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="border border-border-subtle bg-surface-2 p-4">
+          <div className="text-[10px] font-mono text-text-mid mb-1">已发布冰山图</div>
+          <div className="text-xl font-mono font-bold text-brand">
+            {stats ? stats.publishedCount.toLocaleString() : '—'}
+          </div>
         </div>
-      )}
-
-      {audit && audit.length > 0 && (
-        <div className="border border-border-subtle overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono">
-            <thead>
-              <tr className="border-b border-border-subtle bg-surface-2">
-                <th className="px-3 py-2 text-text-mid font-normal">冰山图</th>
-                <th className="px-3 py-2 text-text-mid font-normal">问题</th>
-              </tr>
-            </thead>
-            <tbody>
-              {audit.map((item, i) => (
-                <tr key={item.slug} className={i % 2 === 0 ? 'bg-surface-2' : ''}>
-                  <td className="px-3 py-2">
-                    <a href={`/iceberg/${item.slug}`} target="_blank" rel="noopener"
-                      className="text-text-hi hover:text-brand">{item.title}</a>
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="flex flex-wrap gap-1">
-                      {item.issues.map((issue, j) => (
-                        <span key={j} className="text-[10px] px-1.5 py-0.5 border border-warning/30 text-warning bg-warning/5">
-                          {issue}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="border border-border-subtle bg-surface-2 p-4">
+          <div className="text-[10px] font-mono text-text-mid mb-1">冰山图总数</div>
+          <div className="text-xl font-mono font-bold text-text-hi">
+            {stats ? stats.totalIcebergs.toLocaleString() : '—'}
+          </div>
         </div>
-      )}
-
-      {!audit && !loading && (
-        <div className="border border-border-subtle bg-surface-2 p-4 text-xs font-mono text-text-mid">
-          点击"开始检查"，扫描：缺少描述的冰山图 · 标题过短(≤3字) · 描述中的坏链 · 0词条的冰山图
+        <div className="border border-border-subtle bg-surface-2 p-4">
+          <div className="text-[10px] font-mono text-text-mid mb-1">Sitemap / Robots</div>
+          <div className="text-xs font-mono mt-1 space-x-3">
+            <a href="/sitemap.xml" target="_blank" rel="noopener"
+              className="text-brand hover:underline">sitemap.xml ↗</a>
+            <a href="/robots.txt" target="_blank" rel="noopener"
+              className="text-text-mid hover:underline">robots.txt ↗</a>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
