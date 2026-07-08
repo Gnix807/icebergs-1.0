@@ -150,7 +150,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
       <div class="space-y-3">
 
         <div class="border border-border-minimal bg-surface-2 p-4 mb-3 text-[11px] font-mono text-text-body">
-          <p class="leading-relaxed mb-3">除了从零开始创作，你也可以从 <strong class="text-text-hi">icebergthreads.com</strong> 导入已有的冰山图数据。在编辑器中点击导入按钮，粘贴 icebergthreads.com 上的冰山图链接，系统将自动解析层级和词条结构，导入后可在编辑器中继续修改和完善。</p>
+          <p class="leading-relaxed mb-3">除了从零开始创作，你也可以从 <strong class="text-text-hi">icebergthreads.com</strong> 导入已有的冰山图数据。在编辑器中点击导入按钮，粘贴 icebergthreads.com 上的冰山图链接，系统将自动解析层级和词条结构（每层最多 500 条），导入后可在编辑器中继续修改和完善。导入时自动检测词条自身的 NSFW 标记并映射为系统标签，原图的分类和标记也会自动转换为词条标签。</p>
         </div>
 
         <!-- 字段说明 -->
@@ -363,7 +363,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           {
             icon: '↓', label: '导出为图片',
             link: null, linkLabel: null,
-            desc: '在已发布冰山图详情页点击「导出为图片」生成 PNG 信息图。导图含 # 前缀标题、元数据副标题、加粗色条、页脚 URL 水印，支持浅色/深色主题切换。',
+            desc: '在已发布冰山图详情页点击「导出为图片」生成 PNG 信息图。导图含 # 前缀标题、元数据副标题、加粗色条、页脚 URL 水印和二维码，支持浅色/深色主题切换。词条 chip 附带标签小圆点，颜色与标签一致，一目了然。',
           },
           {
             icon: '♡', label: '收藏与收藏夹',

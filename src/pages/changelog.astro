@@ -70,6 +70,36 @@ const STATIC_PHASE3_ENTRIES: Array<{
   author: { username: string; nickname: string };
 }> = [
   {
+    _staticKey: 'phase3-v38',
+    id: 'phase3-v38',
+    title: '导入优化与导出增强',
+    type: 'update',
+    pinned: false,
+    createdAt: new Date('2026-07-08T18:00:00.000Z'),
+    updatedAt: new Date('2026-07-08T18:00:00.000Z'),
+    author: { username: 'icebergs', nickname: 'Icebergs 团队' },
+    content: `## 导入优化与导出增强
+
+本版聚焦于 icebergthreads 导入和导出图片的体验完善，同时修复了若干打磨阶段发现的问题。
+
+### 📥 导入优化
+
+- **词条级 NSFW 识别**：从 icebergthreads 导入时，现在检测词条自身的 \`isNSFW\` / \`nsfw\` 字段（支持大小写），精确标记需要审核的词条，不再依赖冰山级的 NSFW 标记做简单粗暴的判断。
+- **标签大小写归一化**：原图分类和标记中如果出现小写 \`nsfw\`，导入后自动映射为系统的大写 \`NSFW\` 标签并去重，避免出现 nsfw / NSFW 两条重复标签的情况。
+- **多层级标签覆盖**：NSFW 标签的检测范围从仅第一层扩展到所有层级，不再遗漏深层词条。
+
+### 🖼 导出增强
+
+- **导出图片带标签圆点**：导出的 PNG 图片中，每个词条 chip 标题后面会显示对应的标签小圆点，一目了然地展示词条的标签归属。
+- **标签颜色独立**：圆点颜色使用标签自身的颜色（NSFW 红色、争议黄色、猜测灰色等），而非千篇一律的层级色，视觉辨识度更高。
+
+### 🐛 修复
+
+- 修复导出图片时由于 \`qrcode\` 动态加载失败导致的「导出失败，请重试」崩溃，改为静态导入确保稳定
+- 修复 AdminSettings 页面字符编码异常
+- 修复专题任务 API 中文字符乱码和模块导入路径错误`,
+  },
+  {
     _staticKey: 'phase3-v37',
     id: 'phase3-v37',
     title: '性能大优化与SEO地基',
