@@ -469,6 +469,7 @@ interface AchievementDef {
   id: string; key: string; icon: string; label: string; labelZh: string;
   desc: string; color: string; triggerType: string; triggerTarget: number;
   sortOrder: number; isHidden: boolean; conditions: string; category?: string | null;
+  rarity?: string | null;
   createdAt: string;
 }
 
@@ -515,7 +516,7 @@ export function AdminAchievements() {
         key: ach.key, icon: ach.icon, label: ach.label, labelZh: ach.labelZh,
         desc: ach.desc, color: ach.color, triggerType: ach.triggerType,
         triggerTarget: ach.triggerTarget, sortOrder: ach.sortOrder,
-        isHidden: ach.isHidden, conditions: ach.conditions, category: ach.category,
+        isHidden: ach.isHidden, conditions: ach.conditions, category: ach.category || '阅读',
       },
       conditions,
     };

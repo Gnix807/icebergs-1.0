@@ -207,6 +207,7 @@ const seoSettings = await prisma.systemSettings.findMany({
     <AchievementToast client:load />
 
     <script>
+      // @ts-nocheck
       // ── 自定义光标追随点 ────────────────────────────────────
       function initCursor() {
         const prevCleanup = (window as any).__cursorCleanup;

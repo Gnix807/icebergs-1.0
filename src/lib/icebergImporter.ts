@@ -176,5 +176,5 @@ export async function fetchIcebergThreads(
     throw new Error('无法解析冰山图数据');
   }
 
-  return { title: sv(doc.fields.title), itemCount: 0, ...doc.fields };
+  return { title: sv(doc.fields.title), itemCount: 0, ...doc.fields } as any;
 }

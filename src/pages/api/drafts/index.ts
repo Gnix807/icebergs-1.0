@@ -16,7 +16,7 @@ export async function GET(event: APIContext) {
 
   try {
     const draft = await prisma.draft.findUnique({
-      where: { userId_icebergId: { userId: session.userId, icebergId: resolvedIcebergId } },
+      where: { userId_icebergId: { userId: session.userId, icebergId: resolvedIcebergId! } },
     });
 
     return new Response(JSON.stringify(success({ draft })), {
@@ -55,7 +55,7 @@ export async function POST(event: APIContext) {
 
   try {
     const draft = await prisma.draft.upsert({
-      where: { userId_icebergId: { userId: session.userId, icebergId: resolvedIcebergId } },
+      where: { userId_icebergId: { userId: session.userId, icebergId: resolvedIcebergId! } },
       create: { userId: session.userId, icebergId: resolvedIcebergId, data: body.data },
       update: { data: body.data },
     });
@@ -84,7 +84,7 @@ export async function DELETE(event: APIContext) {
 
   try {
     await prisma.draft.deleteMany({
-      where: { userId: session.userId, icebergId: resolvedIcebergId },
+      where: { userId: session.userId, icebergId: resolvedIcebergId! },
     });
     return new Response(JSON.stringify(success({ deleted: true })), {
       status: 200, headers: { 'Content-Type': 'application/json' },

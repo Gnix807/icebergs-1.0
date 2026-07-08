@@ -31,7 +31,7 @@ export async function POST(event: APIContext) {
     const content = (body.content ?? '').trim();
     if (!content || content.length > 2000) return json(error(ErrorCodes.BAD_REQUEST, '1-2000 字'), 400);
     const comment = await prisma.taskComment.create({
-      data: { taskId: event.params.id, userId: session.userId, content },
+      data: { taskId: event.params.id!, userId: session.userId, content },
       select: { id: true, content: true, createdAt: true, user: { select: { id: true, nickname: true, username: true, avatar: true } } },
     });
     return json(success({ comment }), 201);

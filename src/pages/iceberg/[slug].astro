@@ -306,8 +306,9 @@ if (iceberg?.status === 'PUBLISHED') {
           ← 返回列表
         </a>
       </div>
-    ) : (
-      <>
+    ) : null}
+    {!error && (
+      <div>
         {iceberg.tiers.length > 0 && (
           <div id="reading-progress-top" class="fixed top-14 inset-x-0 z-40 pointer-events-none">
             <div id="read-progress-track" class="h-1 border-b border-border-subtle" style="background: rgba(28, 28, 28, 0.95)">
@@ -550,7 +551,7 @@ if (iceberg?.status === 'PUBLISHED') {
             isFounder={session?.isFounder ?? false}
           />
         )}
-      </>
+      </div>
     )}
   </main>
 

@@ -46,13 +46,13 @@ export async function PUT(event: APIContext) {
 
     // Toggle: if exists, remove; else add
     const existing = await prisma.ideaClaimant.findUnique({
-      where: { ideaId_userId: { ideaId: id, userId: targetUserId } },
+      where: { ideaId_userId: { ideaId: id!, userId: targetUserId } },
     });
 
     if (existing) {
       await prisma.ideaClaimant.delete({ where: { id: existing.id } });
     } else {
-      await prisma.ideaClaimant.create({ data: { ideaId: id, userId: targetUserId } });
+      await prisma.ideaClaimant.create({ data: { ideaId: id!, userId: targetUserId } });
     }
 
     const claimants = await prisma.ideaClaimant.findMany({

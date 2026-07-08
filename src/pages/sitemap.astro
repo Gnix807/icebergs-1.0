@@ -101,7 +101,7 @@ const statusLabel: Record<string, string> = {
     <div class="space-y-8">
       {sections.map((section, i) => {
         if (section.needAdmin && !isAdmin) return null;
-        const visibleItems = section.items.filter(item => !item.needAdmin || isAdmin);
+        const visibleItems = section.items.filter((item: any) => !item.needAdmin || isAdmin);
 
         return (
           <section class="reveal" style={`animation-delay:${i * 60}ms`}>

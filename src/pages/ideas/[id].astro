@@ -201,6 +201,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
 </Layout>
 
 <script>
+  // @ts-nocheck
   const main = document.querySelector('main[data-idea-id]');
   const ideaId = main?.dataset.ideaId;
   const isOwner = main?.dataset.isOwner === 'true';

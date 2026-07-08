@@ -23,7 +23,7 @@ export async function POST(event: APIContext) {
     if (!text || text.length > 500) return json(error(ErrorCodes.BAD_REQUEST, '引用文字 1-500 字'), 400);
     const count = await prisma.citation.count({ where: { itemId: id } });
     const citation = await prisma.citation.create({
-      data: { itemId: id, text, url: body.url?.trim() || null, order: count },
+      data: { itemId: id!, text, url: body.url?.trim() || null, order: count },
       select: { id: true, text: true, url: true, order: true },
     });
     return json(success({ citation }), 201);
