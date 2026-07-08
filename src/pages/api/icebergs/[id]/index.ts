@@ -40,7 +40,7 @@ export async function GET(event: APIContext) {
       include: {
         tiers: {
           orderBy: { order: 'asc' },
-          include: fieldsMinimal ? undefined : { items: true } as any,
+          ...(fieldsMinimal ? {} : { include: { items: true } }),
         },
         author: {
           select: { id: true, username: true, nickname: true },
@@ -96,10 +96,10 @@ export async function GET(event: APIContext) {
       review: canViewUnpublished ? iceberg.review : null,
       tiers: iceberg.tiers.map((t: any) => ({
         ...t,
-        items: t.items.map((i: any) => ({
+        items: t.items ? t.items.map((i: any) => ({
           ...i,
           labels: (() => { try { return JSON.parse(i.labels || '[]'); } catch { return []; } })(),
-        })),
+        })) : [],
       })),
     };
 
