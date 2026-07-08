@@ -235,7 +235,8 @@ async function drawExport(
       for (let ri = 0; ri < rows.length; ri++) {
         const ry = oy + ri * (CHIP_H + ROW_GAP);
         for (const chip of rows[ri]) {
-          const labelW = chip.labels.length > 0 ? chip.labels.length * (LABEL_DOT_SIZE + LABEL_DOT_GAP) + 4 : 0;
+          var chipLabels = chip.labels || [];
+          const labelW = chipLabels.length > 0 ? chipLabels.length * (LABEL_DOT_SIZE + LABEL_DOT_GAP) + 4 : 0;
           const cw = ctx.measureText(chip.title).width + CHIP_PX * 2 + labelW;
           const cx = ox + chip.x;
           ctx.fillStyle = T.chipBg;
@@ -247,10 +248,11 @@ async function drawExport(
           ctx.textBaseline = 'middle';
           ctx.fillText(chip.title, cx + CHIP_PX, ry + CHIP_H / 2);
           // 标签圆点
-          if (chip.labels.length > 0) {
-            const dotY = ry + CHIP_H / 2;
-            let dotX = cx + CHIP_PX + ctx.measureText(chip.title).width + 6;
-            for (const lbl of chip.labels) {
+          var dotLabels = chip.labels || [];
+          if (dotLabels.length > 0 && color) {
+            var dotY = ry + CHIP_H / 2;
+            var dotX = cx + CHIP_PX + ctx.measureText(chip.title).width + 6;
+            for (var di = 0; di < dotLabels.length; di++) {
               ctx.fillStyle = color;
               ctx.beginPath();
               ctx.arc(dotX + LABEL_DOT_SIZE / 2, dotY, LABEL_DOT_SIZE / 2, 0, Math.PI * 2);
