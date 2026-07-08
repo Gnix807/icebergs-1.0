@@ -5,9 +5,9 @@
  * Body: { themeId: null }  — 恢复默认主题
  */
 import type { APIContext } from 'astro';
-import { prisma } from '../../../../lib/prisma';
-import { success, error, ErrorCodes } from '../../../../lib/api';
-import { getSession } from '../../../../lib/auth';
+import { prisma } from '../../../lib/prisma';
+import { success, error, ErrorCodes } from '../../../lib/api';
+import { getSession } from '../../../lib/auth';
 
 export async function POST(event: APIContext) {
   const session = await getSession(event);
