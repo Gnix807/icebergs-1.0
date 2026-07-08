@@ -4,6 +4,14 @@ import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { renderMarkdownWithMath } from '../../../../lib/markdown';
 
+async function isProjectMember(userId: string, projectId: string | null): Promise<boolean> {
+  if (!projectId) return false;
+  try {
+    const m = await prisma.projectMember.findFirst({ where: { projectId, userId } });
+    return !!m;
+  } catch { return false; }
+}
+
 /** Allow any label up to 20 chars; strip dangerous chars; cap at 10 labels. */
 function sanitizeLabels(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
@@ -91,7 +99,8 @@ export async function POST(event: APIContext) {
     }
 
     const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
-    if (tier.iceberg.authorId !== session.userId && !canManageAny) {
+    const inProject = await isProjectMember(session.userId, tier.iceberg.projectId);
+    if (tier.iceberg.authorId !== session.userId && !canManageAny && !inProject) {
       return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
