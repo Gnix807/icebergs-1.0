@@ -12,6 +12,7 @@ interface ExportButtonProps {
   icebergTitle: string;
   tiers: TierData[];
   icebergUrl: string;
+  labelColors?: Record<string, string>;
 }
 
 type Theme = 'light' | 'dark';
@@ -122,6 +123,7 @@ async function drawExport(
   tiers: TierData[],
   icebergUrl: string,
   theme: Theme,
+  labelColors?: Record<string, string>,
 ): Promise<string> {
   const T = THEMES[theme];
   const brandColor = theme === 'dark' ? BRAND : BRAND_LIGHT;
@@ -250,11 +252,12 @@ async function drawExport(
           ctx.fillText(chip.title, cx + CHIP_PX, ry + CHIP_H / 2);
           // 标签圆点
           var dotLabels = chip.labels || [];
-          if (dotLabels.length > 0 && color) {
+          if (dotLabels.length > 0) {
             var dotY = ry + CHIP_H / 2;
             var dotX = cx + CHIP_PX + ctx.measureText(chip.title).width + 6;
             for (var di = 0; di < dotLabels.length; di++) {
-              ctx.fillStyle = color;
+              var lc = (labelColors && labelColors[dotLabels[di]]) || color;
+              ctx.fillStyle = lc;
               ctx.beginPath();
               ctx.arc(dotX + LABEL_DOT_SIZE / 2, dotY, LABEL_DOT_SIZE / 2, 0, Math.PI * 2);
               ctx.fill();
@@ -305,14 +308,14 @@ async function drawExport(
   return canvas.toDataURL('image/png');
 }
 
-export function ExportButton({ icebergTitle, tiers, icebergUrl }: ExportButtonProps) {
+export function ExportButton({ icebergTitle, tiers, icebergUrl, labelColors }: ExportButtonProps) {
   const [isExporting, setIsExporting] = React.useState(false);
   const [theme, setTheme] = React.useState<Theme>('light');
 
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      const dataUrl = await drawExport(icebergTitle, tiers, icebergUrl, theme);
+      const dataUrl = await drawExport(icebergTitle, tiers, icebergUrl, theme, labelColors);
       const link = document.createElement('a');
       link.download = `${sanitizeFilename(icebergTitle)}_${formatTimestamp()}.png`;
       link.href = dataUrl;
