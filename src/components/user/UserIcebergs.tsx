@@ -87,13 +87,12 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
                   {new Date(iceberg.createdAt).toLocaleDateString('zh-CN')}
                 </div>
                 {isOwner && (
-                  <a
-                    href={`/iceberg/edit/${iceberg.id}`}
-                    onClick={e => e.stopPropagation()}
+                  <button
+                    onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = `/iceberg/edit/${iceberg.id}`; }}
                     className="block text-xs text-text-lo hover:text-brand font-mono mt-1 transition-colors"
                   >
                     编辑
-                  </a>
+                  </button>
                 )}
               </div>
             </a>
