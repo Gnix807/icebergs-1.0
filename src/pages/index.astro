@@ -75,8 +75,8 @@ try {
     }),
     prisma.iceberg.findMany({
       where: { status: 'PUBLISHED', featured: true },
-      orderBy: { createdAt: 'desc' },
-      take: 6,
+      orderBy: { updatedAt: 'desc' },
+      take: 12,
       select: ICEBERG_SELECT,
     }),
     prisma.announcement.findMany({
@@ -555,20 +555,19 @@ const QUICK_QA = [
             <span class="ml-2 text-[10px] text-text-mid border border-border px-1">FEATURED</span>
           </h2>
         </div>
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {featuredIcebergs.map((iceberg: any, index: number) => (
-            <a
-              href={`/iceberg/${iceberg.slug || iceberg.id}`}
-              class="archive-card reveal-grid group relative block p-5 border-warning/20"
-              data-reveal-delay={`${index * 60}`}
+        <div id="home-featured-carousel" class="relative overflow-hidden border border-warning/20 bg-warning/[0.03] hover:border-warning/40 transition-colors">
+          {featuredIcebergs.map((iceberg: any, i: number) => (
+            <a href={`/iceberg/${iceberg.slug || iceberg.id}`}
+              class="home-featured-slide block p-5 absolute inset-0 transition-opacity duration-500"
+              style={{ opacity: i === 0 ? '1' : '0', pointerEvents: i === 0 ? 'auto' : 'none' }}
             >
-              <div class="flex gap-px mb-3 h-3 opacity-50 group-hover:opacity-90 transition-opacity duration-200">
-                {Array.from({ length: Math.max(iceberg._count.tiers, 1) }).map((_, i: number) => (
-                  <div class="flex-1" style={`background-color: ${tierColors[i % 6]}`} />
+              <div class="flex gap-px mb-3 h-2 opacity-50">
+                {Array.from({ length: Math.max(iceberg._count.tiers, 1) }).map((_, ti: number) => (
+                  <div class="flex-1" style={`background-color: ${tierColors[ti % 6]}`} />
                 ))}
               </div>
               <div class="text-[10px] font-mono text-[#f59e0b80] mb-1 tracking-widest">★ FEATURED</div>
-              <h3 class="font-mono text-sm font-semibold text-text-hi group-hover:text-warning transition-colors mb-2 line-clamp-1">
+              <h3 class="font-mono text-sm font-semibold text-text-hi mb-2 line-clamp-1">
                 <span class="text-text-lo mr-1">#</span>{iceberg.title}
               </h3>
               {iceberg.description && (
@@ -583,6 +582,31 @@ const QUICK_QA = [
               </div>
             </a>
           ))}
+          {/* spacer */}
+          <div class="home-featured-spacer block p-5 invisible" aria-hidden="true">
+            <div class="flex gap-px mb-3 h-2"></div>
+            <div class="text-[10px] mb-1 tracking-widest">★ FEATURED</div>
+            <h3 class="font-mono text-sm font-semibold mb-2 line-clamp-1">
+              <span class="mr-1">#</span>{featuredIcebergs[0].title}
+            </h3>
+            {featuredIcebergs[0].description && (
+              <p class="text-xs mb-3 line-clamp-2">{featuredIcebergs[0].description}</p>
+            )}
+            <div class="flex items-center justify-between text-xs">
+              <span>{featuredIcebergs[0]._count.tiers} 层</span>
+              <span>{featuredIcebergs[0].viewCount}</span>
+            </div>
+          </div>
+          {featuredIcebergs.length > 1 && (
+            <div class="flex items-center justify-center gap-2 pb-3 pt-1">
+              {featuredIcebergs.map((_, i: number) => (
+                <button class="home-featured-dot cursor-pointer transition-all"
+                  data-dot={String(i)}
+                  style={{ background: i === 0 ? '#f59e0b' : 'rgba(245,158,11,0.3)', width: i === 0 ? '12px' : '6px', height: '6px', border: 'none', borderRadius: '3px' }}
+                ></button>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     )}
@@ -889,6 +913,29 @@ const QUICK_QA = [
   };
   loadQuickLinks();
   document.addEventListener('astro:page-load', loadQuickLinks);
+
+  // 精选轮播
+  (function() {
+    var slides = document.querySelectorAll('.home-featured-slide');
+    var dots = document.querySelectorAll('.home-featured-dot');
+    if (slides.length <= 1) return;
+    var current = 0;
+    function showSlide(n) {
+      slides.forEach(function(s, i) {
+        s.style.opacity = i === n ? '1' : '0';
+        s.style.pointerEvents = i === n ? 'auto' : 'none';
+      });
+      dots.forEach(function(d, i) {
+        d.style.background = i === n ? '#f59e0b' : 'rgba(245,158,11,0.3)';
+        d.style.width = i === n ? '12px' : '6px';
+      });
+      current = n;
+    }
+    dots.forEach(function(dot) {
+      dot.addEventListener('click', function() { showSlide(parseInt(this.dataset.dot)); });
+    });
+    setInterval(function() { showSlide((current + 1) % slides.length); }, 4500);
+  })();
 </script>
 
 <style>
