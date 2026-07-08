@@ -458,32 +458,32 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
 
                   {notifMounted && (
                     <div
-                      className={`absolute right-0 top-full mt-2 w-88 bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden rounded-lg ${notifLeaving ? 'nav-dropout' : 'nav-dropin'}`}
+                      className={`absolute right-0 top-full mt-2 w-96 bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden rounded-lg ${notifLeaving ? 'nav-dropout' : 'nav-dropin'}`}
                       onMouseEnter={openNotifHover}
                     >
-                      <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
-                        <span className="text-sm font-mono font-semibold text-text-hi">通知</span>
+                      <div className="flex items-center justify-between px-5 py-3 border-b border-border-subtle">
+                        <span className="text-xs font-mono font-semibold text-text-hi tracking-wide">通知</span>
                         <div className="flex items-center gap-3">
                           {unreadCount > 0 && (
                             <button onClick={markAllRead}
-                              className="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
+                              className="text-[11px] font-mono text-text-mid hover:text-brand transition-colors">
                               全部已读
                             </button>
                           )}
                           <a href="/notifications" onClick={() => setShowNotif(false)}
-                            className="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
-                            查看全部 →
+                            className="text-[11px] font-mono text-text-mid hover:text-brand transition-colors">
+                            查看全部
                           </a>
                         </div>
                       </div>
 
-                      <div className="max-h-[420px] overflow-y-auto">
+                      <div className="max-h-[400px] overflow-y-auto">
                         {notifLoading && (
-                          <div className="py-10 text-center text-text-lo font-mono text-xs animate-pulse">加载中...</div>
+                          <div className="py-12 text-center text-text-lo font-mono text-xs">加载中...</div>
                         )}
                         {!notifLoading && notifications.length === 0 && (
-                          <div className="py-10 text-center">
-                            <div className="text-2xl mb-2 opacity-30">🔔</div>
+                          <div className="py-12 text-center">
+                            <div className="text-lg mb-2 opacity-40">🔔</div>
                             <div className="text-text-lo font-mono text-xs">暂无通知</div>
                           </div>
                         )}
@@ -522,28 +522,24 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                             <button
                               key={n.id}
                               onClick={() => { markRead(n.id, n.link); setShowNotif(false); }}
-                              className="w-full flex items-start gap-3 px-4 py-3 hover:bg-surface-3 transition-colors border-b border-border-subtle last:border-0"
+                              className="w-full text-left px-5 py-3 hover:bg-surface-3 transition-colors border-b border-border-subtle last:border-0 flex items-start gap-3"
                             >
-                              <span className="text-xs flex-shrink-0 mt-0.5 w-5 h-5 rounded-md flex items-center justify-center text-[11px] font-bold"
-                                style={{ background: cfg.color + '18', color: cfg.color }}>
-                                {cfg.emoji}
-                              </span>
+                              <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
+                                style={{ background: !n.read ? cfg.color : 'transparent' }} />
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 mb-0.5">
-                                  <span className="text-[9px] font-mono px-1 py-px rounded border opacity-70"
-                                    style={{ color: cfg.color, borderColor: cfg.color + '55' }}>
-                                    {cfg.label}
+                                <div className="flex items-center gap-2 mb-0.5">
+                                  <span className="text-[10px] font-mono" style={{ color: cfg.color }}>
+                                    {cfg.emoji} {cfg.label}
                                   </span>
-                                  {!n.read && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.color }} />}
+                                  <span className="text-[10px] font-mono text-text-lo">{timeStr}</span>
                                 </div>
-                                <p className="text-xs font-mono leading-snug text-text-hi">
+                                <p className={`text-xs font-mono leading-snug ${n.read ? 'text-text-body' : 'text-text-hi'}`}>
                                   {n.title}
                                 </p>
                                 {n.body && (
                                   <p className="text-[10px] text-text-mid mt-0.5 leading-relaxed line-clamp-2">{n.body}</p>
                                 )}
                               </div>
-                              <span className="text-[10px] font-mono text-text-lo flex-shrink-0 mt-0.5">{timeStr}</span>
                             </button>
                           );
                         })}
