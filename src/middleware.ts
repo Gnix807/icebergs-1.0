@@ -2,7 +2,10 @@ import { defineMiddleware } from 'astro:middleware';
 
 const rateMap = new Map<string, number[]>();
 const CLEAN_INTERVAL = 60_000;
-const MAX_REQUESTS = 60;
+const MAX_REQUESTS = 300;
+
+// 静态资源不受限流（开发模式大量模块请求）
+const STATIC_EXT = /\.(js|css|svg|png|jpg|jpeg|gif|ico|woff2?|ttf|map|json|xml|txt)$/i;
 
 setInterval(() => {
   const cutoff = Date.now() - CLEAN_INTERVAL;
@@ -24,6 +27,9 @@ function getClientIP(context: any): string {
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  // 静态资源和健康检查跳过限流
+  if (STATIC_EXT.test(context.url.pathname) || context.url.pathname === '/api/health') return next();
+
   const ip = getClientIP(context);
   const now = Date.now();
   const cutoff = now - CLEAN_INTERVAL;
