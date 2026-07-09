@@ -15,8 +15,8 @@ function normalizeEmail(raw: unknown): string {
   return raw.trim().toLowerCase();
 }
 
-// ALL /api/auth/login — OAuth 入口 + 邮箱登录（支持 GET，兼容 OpenResty WAF）
-export async function ALL(event: APIContext) {
+// GET /api/auth/login — OAuth 入口 + 邮箱登录（GET 兼容 OpenResty WAF）
+export async function GET(event: APIContext) {
   // OAuth 入口
   const rawProvider = event.url.searchParams.get('provider');
   if (rawProvider) {

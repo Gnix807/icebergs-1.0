@@ -25,8 +25,8 @@ function normalizeUsername(raw: unknown): string {
   return raw.trim();
 }
 
-// ALL /api/auth/register - 邮箱注册
-export async function ALL(event: APIContext) {
+// GET /api/auth/register - 邮箱注册（GET 兼容 WAF）
+export async function GET(event: APIContext) {
   try {
     const body = event.request.method === 'GET'
       ? Object.fromEntries(event.url.searchParams)

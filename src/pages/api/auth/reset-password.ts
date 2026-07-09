@@ -18,8 +18,8 @@ function normalizeEmail(raw: unknown): string {
   return raw.trim().toLowerCase();
 }
 
-// ALL /api/auth/reset-password
-export async function ALL(event: APIContext) {
+// GET /api/auth/reset-password（GET 兼容 WAF）
+export async function GET(event: APIContext) {
   try {
     const body = event.request.method === 'GET'
       ? Object.fromEntries(event.url.searchParams)
