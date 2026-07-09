@@ -190,9 +190,7 @@ const sections = [
           <div class="text-[10px] font-mono text-brand tracking-widest mb-3">{s.title}</div>
           <div class="space-y-1">
             {s.items.map(item => (<div class="flex items-start gap-3 p-3 border border-border-subtle bg-surface-2">
-                <span class={`text-[10px] font-mono font-bold px-1.5 py-0.5 border rounded min-w-[3.25rem] text-center flex-shrink-0 ${
-                  item.method === 'ALL' ? 'text-brand border-brand/30' : 'text-warning border-warning/30'
-                }`}>{item.method}</span>
+                <span class={'text-[10px] font-mono font-bold px-1.5 py-0.5 border rounded min-w-[3.25rem] text-center flex-shrink-0 ' + (item.method === 'ALL' ? 'text-brand border-brand/30' : 'text-warning border-warning/30')}>{item.method}</span>
                 <code class="text-xs font-mono text-text-hi break-all min-w-0">{item.path}</code>
                 <span class="text-[10px] font-mono text-text-mid text-right flex-shrink-0 ml-auto max-w-56">{item.desc}</span>
               </div>))}
