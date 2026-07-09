@@ -748,7 +748,7 @@ export function UserCenter({
   const markAllRead = async () => {
     setMarkingAll(true);
     try {
-      await fetch('/api/notifications/read-all', { method: 'PUT' });
+      await fetch('/api/notifications/read-all', { method: 'GET' });
       setNotifications(n => n.map(x => ({ ...x, read: true })));
       setUnreadCount(0);
     } finally { setMarkingAll(false); }

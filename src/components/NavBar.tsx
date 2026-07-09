@@ -159,13 +159,13 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
   };
 
   const markAllRead = async () => {
-    await fetch('/api/notifications/read-all', { method: 'PUT' });
+    await fetch('/api/notifications/read-all', { method: 'GET' });
     setNotifications(ns => ns.map(n => ({ ...n, read: true })));
     setUnreadCount(0);
   };
 
   const markRead = async (id: string, link: string | null) => {
-    await fetch(`/api/notifications/${id}`, { method: 'PUT' });
+    await fetch(`/api/notifications/${id}`, { method: 'GET' });
     setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
     setUnreadCount(c => Math.max(0, c - 1));
     if (link) window.location.href = link;

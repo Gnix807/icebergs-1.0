@@ -13,7 +13,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function PUT(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);

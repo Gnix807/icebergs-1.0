@@ -658,7 +658,7 @@ export function AdminAchievements({ isFounder }: { isFounder?: boolean }) {
               <button onClick={async () => {
                 setResetting(true);
                 try {
-                  const r = await fetch('/api/admin/achievements/reset-all', { method: 'POST' });
+                  const r = await fetch('/api/admin/achievements/reset-all', { method: 'GET' });
                   const d = await r.json();
                   if (d.success) { toast(d.data.message || '已清空'); setResetConfirm(false); load(); }
                   else toast(d.error?.message || '操作失败');

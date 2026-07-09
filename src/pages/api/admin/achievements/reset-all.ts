@@ -3,7 +3,8 @@ import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 
-export async function POST(event: APIContext) {
+// POST (原) 和 GET 都能重置
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session || !session.isFounder) {
     return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '仅限创始人操作')), {
