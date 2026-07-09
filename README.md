@@ -107,20 +107,15 @@
 ## 技术栈
 
 <p align="center">
-  <img src="https://go-skill-icons.vercel.app/api/icons?i=astro,react,typescript,tailwindcss,postgresql,prisma,docker,nodejs&perline=8" alt="tech stack" />
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=astro,react,typescript,tailwindcss,postgresql,prisma,docker,nodejs" alt="tech stack" />
+  <br />
+  <sub>Astro · React · TypeScript · Tailwind CSS · PostgreSQL · Prisma · Docker · Node.js</sub>
 </p>
 
-| 类别 | 技术 |
-|---|---|
-| 框架 | Astro 5 (SSR) + React 19 (Islands 架构) |
-| 语言 | TypeScript |
-| 样式 | Tailwind CSS + 自定义 CSS 变量 |
-| 数据库 | PostgreSQL 18 + Prisma ORM |
-| 全文搜索 | PostgreSQL tsvector + GIN 索引 |
-| 状态管理 | Zustand（含撤销/重做命令栈） |
-| 拖拽 | @dnd-kit |
-| 认证 | GitHub OAuth + Google OAuth + 邮箱密码 |
-| 部署 | Node.js standalone + Docker Compose |
+- **框架** — Astro 5 (SSR) + React 19 (Islands 架构)，Zustand 状态管理，@dnd-kit 拖拽
+- **认证** — GitHub OAuth + Google OAuth + 邮箱密码登录
+- **搜索** — PostgreSQL tsvector + GIN 全文索引，中英文混合
+- **部署** — Node.js standalone + Docker Compose 一键部署
 
 ---
 
