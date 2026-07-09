@@ -3,15 +3,9 @@ import { pbkdf2, randomBytes } from 'crypto';
 import { promisify } from 'util';
 import { prisma } from '../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../lib/api';
-import { verifyAndConsumeEmailCode } from '../../../lib/auth/emailVerification';
 import { enforceAuthRateLimit, getClientIp } from '../../../lib/auth/rateLimit';
 
 const pbkdf2Async = promisify(pbkdf2);
-
-function normalizeEmail(raw: unknown): string {
-  if (typeof raw !== 'string') return '';
-  return raw.trim().toLowerCase();
-}
 
 async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString('hex');
@@ -19,16 +13,20 @@ async function hashPassword(password: string): Promise<string> {
   return `${salt}:${hash.toString('hex')}`;
 }
 
+function normalizeEmail(raw: unknown): string {
+  if (typeof raw !== 'string') return '';
+  return raw.trim().toLowerCase();
+}
+
 // POST /api/auth/reset-password
 export async function POST(event: APIContext) {
   try {
     const body = await event.request.json().catch(() => ({}));
     const email = normalizeEmail(body.email);
-    const verificationCode = typeof body.verificationCode === 'string' ? body.verificationCode.trim() : '';
     const newPassword = typeof body.newPassword === 'string' ? body.newPassword : '';
 
-    if (!email || !verificationCode || !newPassword) {
-      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '邮箱、验证码、新密码不能为空')), {
+    if (!email || !newPassword) {
+      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '邮箱和新密码不能为空')), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -37,12 +35,6 @@ export async function POST(event: APIContext) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '邮箱格式不正确')), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    if (!/^\d{6}$/.test(verificationCode)) {
-      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '验证码应为6位数字')), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -66,8 +58,8 @@ export async function POST(event: APIContext) {
       {
         action: 'auth_password_reset_email',
         key: email,
-        limit: 8,
-        windowSec: 10 * 60,
+        limit: 6,
+        windowSec: 60 * 60,
         message: '该邮箱重置请求过于频繁，请稍后再试',
       },
     ]);
@@ -81,31 +73,22 @@ export async function POST(event: APIContext) {
       });
     }
 
-    const verifyResult = await verifyAndConsumeEmailCode(email, 'password_reset', verificationCode);
-    if (verifyResult !== 'valid') {
-      const messageMap: Record<string, string> = {
-        missing: '请先发送邮箱验证码',
-        expired: '验证码已过期，请重新发送',
-        invalid: '验证码错误',
-        too_many_attempts: '验证码错误次数过多，请重新发送',
-      };
-      return new Response(JSON.stringify(error(
-        ErrorCodes.VALIDATION_ERROR,
-        messageMap[verifyResult] || '验证码校验失败'
-      )), {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, passwordHash: true },
+    });
+
+    if (!user) {
+      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '该邮箱未注册')), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true, passwordHash: true },
-    });
-    if (!user || !user.passwordHash) {
+    if (!user.passwordHash) {
       return new Response(JSON.stringify(error(
-        ErrorCodes.BAD_REQUEST,
-        '该账号未设置邮箱密码，请使用第三方登录'
+        ErrorCodes.VALIDATION_ERROR,
+        '该账号使用 GitHub / Google 登录，无需密码。请直接用第三方登录。',
       )), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
@@ -113,27 +96,21 @@ export async function POST(event: APIContext) {
     }
 
     const passwordHash = await hashPassword(newPassword);
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: user.id },
-        data: { passwordHash },
-      }),
-      prisma.session.deleteMany({ where: { userId: user.id } }),
-    ]);
 
-    return new Response(JSON.stringify(success({
-      reset: true,
-      message: '密码重置成功，请使用新密码登录',
-    })), {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash },
+    });
+
+    return new Response(JSON.stringify(success({ message: '密码已重置，请重新登录' })), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
     console.error('重置密码失败:', err);
-    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '重置密码失败，请稍后重试')), {
+    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '重置失败')), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
 }
-
