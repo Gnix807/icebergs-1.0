@@ -95,11 +95,20 @@
 
 ## 截图
 
-> 以下为网站实际运行截图。部署后可在对应页面查看。
+<p align="center">
+  <strong>首页</strong><br />
+  <img src="public/screenshots/QQ_1783590987583.png" alt="首页" width="70%" />
+</p>
 
-| 首页 | 冰山图浏览 | 编辑器 |
-|---|---|---|
-| *待补充* | *待补充* | *待补充* |
+<p align="center">
+  <strong>冰山图浏览</strong><br />
+  <img src="public/screenshots/QQ_1783591011429.png" alt="冰山图浏览" width="70%" />
+</p>
+
+<p align="center">
+  <strong>编辑器</strong><br />
+  <img src="public/screenshots/QQ_1783591059541.png" alt="编辑器" width="70%" />
+</p>
 
 ---
 
