@@ -47,21 +47,21 @@ export async function startOAuthLogin(event: APIContext, options: StartOAuthOpti
 
   event.cookies.set('oauth_state', state, {
     httpOnly: true,
-    secure: import.meta.env.PROD,
+    secure: false,
     sameSite: 'lax',
     maxAge: 60 * 10,
     path: '/',
   });
   event.cookies.set('oauth_provider', provider, {
     httpOnly: true,
-    secure: import.meta.env.PROD,
+    secure: false,
     sameSite: 'lax',
     maxAge: 60 * 10,
     path: '/',
   });
   event.cookies.set('oauth_intent', intent, {
     httpOnly: true,
-    secure: import.meta.env.PROD,
+    secure: false,
     sameSite: 'lax',
     maxAge: 60 * 10,
     path: '/',
@@ -70,7 +70,7 @@ export async function startOAuthLogin(event: APIContext, options: StartOAuthOpti
   if (linkUserId) {
     event.cookies.set('oauth_link_user', linkUserId, {
       httpOnly: true,
-      secure: import.meta.env.PROD,
+      secure: false,
       sameSite: 'lax',
       maxAge: 60 * 10,
       path: '/',
@@ -87,7 +87,7 @@ export async function startOAuthLogin(event: APIContext, options: StartOAuthOpti
     codeVerifier = generateCodeVerifier();
     event.cookies.set('oauth_code_verifier', codeVerifier, {
       httpOnly: true,
-      secure: import.meta.env.PROD,
+      secure: false,
       sameSite: 'lax',
       maxAge: 60 * 10,
       path: '/',
