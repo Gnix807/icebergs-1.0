@@ -43,6 +43,9 @@ const seoSettings = await prisma.systemSettings.findMany({
 <!doctype html>
 <html lang="zh">
   <head>
+    <script is:inline>
+      if (localStorage.getItem('crt-scanlines') === 'on') document.documentElement.classList.add('crt-on');
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
@@ -325,68 +328,32 @@ const seoSettings = await prisma.systemSettings.findMany({
       initReveal();
       initCursor();
 
-      // ── CRT 动态效果 ────────────────────────────────────
-      let _crtTimer = 0;
-      function stopCrt(el: HTMLElement) {
-        clearTimeout(_crtTimer);
-        _crtTimer = 0;
-        el.style.display = 'none';
-        el.style.transform = '';
-        el.style.textShadow = '';
-      }
-      function startCrt(el: HTMLElement) {
-        if (el.style.display !== 'none' && _crtTimer) return; // 已经在运行
-        el.style.display = '';
-
-        function glitch() {
-          if (el.style.display === 'none') return;
-          const offset = (Math.random() - 0.5) * 2;
-          const skewX = (Math.random() - 0.5) * 0.6;
-          el.style.transform = `translateX(${offset}px) skewX(${skewX}deg)`;
-          const r = Math.random() < 0.08 ? '0.5px' : '0';
-          const g = Math.random() < 0.08 ? '-0.5px' : '0';
-          el.style.textShadow = `${r} 0 0 rgba(255,0,0,0.3), ${g} 0 0 rgba(0,255,255,0.3)`;
-
-          clearTimeout(_crtTimer);
-          _crtTimer = window.setTimeout(() => {
-            el.style.transform = '';
-            el.style.textShadow = '';
-            scheduleNext();
-          }, Math.random() < 0.98 ? 50 + Math.random() * 450 : 800 + Math.random() * 2200);
-        }
-
-        function scheduleNext() {
-          _crtTimer = window.setTimeout(glitch, 1000 + Math.random() * 7000);
-        }
-
-        scheduleNext();
-      }
-
-      function initCrtFx() {
-        const el = document.getElementById('crt-scanlines');
-        if (!el) return;
+      // ── CRT 扫描线 — 纯 CSS class 驱动，无 JS timer ──────
+      (function syncCrt() {
         if (localStorage.getItem('crt-scanlines') === 'on') {
-          startCrt(el);
+          document.documentElement.classList.add('crt-on');
         } else {
-          stopCrt(el);
+          document.documentElement.classList.remove('crt-on');
         }
-      }
+      })();
 
-      initCrtFx();
-
-      // 监听 NavBar 或其他组件发出的 crt toggle 事件
+      // 监听 NavBar toggle 事件
       document.addEventListener('crt:toggle', () => {
-        const el = document.getElementById('crt-scanlines');
-        if (!el) return;
         if (localStorage.getItem('crt-scanlines') === 'on') {
-          startCrt(el);
+          document.documentElement.classList.add('crt-on');
         } else {
-          stopCrt(el);
+          document.documentElement.classList.remove('crt-on');
         }
       });
 
-      // 页面切换时重新同步状态
-      document.addEventListener('astro:page-load', initCrtFx);
+      // 页面切换时重新同步
+      document.addEventListener('astro:page-load', () => {
+        if (localStorage.getItem('crt-scanlines') === 'on') {
+          document.documentElement.classList.add('crt-on');
+        } else {
+          document.documentElement.classList.remove('crt-on');
+        }
+      });
 
       // ── ViewTransitions 页面导航进度条 ───────────────────
       (function initProgress() {
