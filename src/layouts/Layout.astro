@@ -327,27 +327,24 @@ const seoSettings = await prisma.systemSettings.findMany({
 
       // ── CRT 动态效果 ────────────────────────────────────
       let _crtTimer = 0;
+      let _crtObserver: MutationObserver | null = null;
       function initCrtFx() {
         const el = document.getElementById('crt-scanlines');
         if (!el) return;
-        const stored = localStorage.getItem('crt-scanlines');
+        if (_crtObserver) _crtObserver.disconnect();
         clearTimeout(_crtTimer);
-        if (stored !== 'on') { el.style.display = 'none'; el.style.transform = ''; el.style.textShadow = ''; return; }
-        el.style.display = '';
+        _crtTimer = 0;
 
         function glitch() {
           if (el.style.display === 'none') return;
-          // 随机水平偏移（模拟信号干扰）
           const offset = (Math.random() - 0.5) * 2;
           const skewX = (Math.random() - 0.5) * 0.6;
           el.style.transform = `translateX(${offset}px) skewX(${skewX}deg)`;
-          // 随机色彩偏移
           const r = Math.random() < 0.08 ? '0.5px' : '0';
           const g = Math.random() < 0.08 ? '-0.5px' : '0';
           el.style.textShadow = `${r} 0 0 rgba(255,0,0,0.3), ${g} 0 0 rgba(0,255,255,0.3)`;
 
           clearTimeout(_crtTimer);
-          // 98% 概率 50-500ms 后恢复正常
           _crtTimer = window.setTimeout(() => {
             el.style.transform = '';
             el.style.textShadow = '';
@@ -359,18 +356,28 @@ const seoSettings = await prisma.systemSettings.findMany({
           _crtTimer = window.setTimeout(glitch, 1000 + Math.random() * 7000);
         }
 
-        scheduleNext();
+        const stored = localStorage.getItem('crt-scanlines');
+        if (stored !== 'on') {
+          el.style.display = 'none';
+          el.style.transform = '';
+          el.style.textShadow = '';
+        } else {
+          el.style.display = '';
+          scheduleNext();
+        }
 
-        const observer = new MutationObserver(() => {
+        // 始终注册 observer，这样 NavBar toggle 后才能立即启动效果
+        _crtObserver = new MutationObserver(() => {
           if (el.style.display === 'none') {
             clearTimeout(_crtTimer);
+            _crtTimer = 0;
             el.style.transform = '';
             el.style.textShadow = '';
           } else if (!_crtTimer) {
             scheduleNext();
           }
         });
-        observer.observe(el, { attributes: true, attributeFilter: ['style'] });
+        _crtObserver.observe(el, { attributes: true, attributeFilter: ['style'] });
       }
       initCrtFx();
       document.addEventListener('astro:page-load', initCrtFx);
