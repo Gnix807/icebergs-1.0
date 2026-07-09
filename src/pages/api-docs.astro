@@ -5,118 +5,156 @@ const sections = [
   {
     title: '冰山图',
     items: [
-      { method: 'GET', path: '/api/icebergs', desc: '冰山图列表（支持 ?q=&status=&topic=&cursor=&limit=）' },
-      { method: 'POST', path: '/api/icebergs', desc: '创建冰山图（需登录）' },
-      { method: 'GET', path: '/api/icebergs/:id', desc: '冰山图详情' },
-      { method: 'PUT', path: '/api/icebergs/:id', desc: '更新冰山图（需登录，仅作者）' },
-      { method: 'DELETE', path: '/api/icebergs/:id', desc: '删除冰山图（需登录，仅作者/管理员）' },
-      { method: 'POST', path: '/api/icebergs/:id/submit', desc: '提交审核' },
+      { method: 'GET', path: '/api/icebergs', desc: '冰山图列表（?q=&status=&topic=&cursor=&limit=）；也支持 ?data=<JSON> 创建（GET 兼容）' },
+      { method: 'ALL', path: '/api/icebergs', desc: '创建冰山图。JSON body 或 GET ?data=<JSON>' },
+      { method: 'GET', path: '/api/icebergs/:id', desc: '冰山图详情；?data=<JSON> 更新；?action=delete 删除' },
+      { method: 'ALL', path: '/api/icebergs/:id/submit', desc: '提交审核。?data={<JSON>}' },
     ],
   },
   {
     title: '精选',
     items: [
-      { method: 'POST', path: '/api/icebergs/[id]/featured', desc: '切换精选状态（ADMIN）' },
+      { method: 'ALL', path: '/api/icebergs/[id]/featured', desc: '切换精选状态（ADMIN）' },
     ],
   },
   {
     title: '层级与词条',
     items: [
-      { method: 'GET', path: '/api/icebergs/:id/tiers', desc: '层级列表' },
-      { method: 'POST', path: '/api/icebergs/:id/tiers', desc: '创建层级' },
-      { method: 'PUT', path: '/api/tiers/:id', desc: '更新层级' },
-      { method: 'DELETE', path: '/api/tiers/:id', desc: '删除层级' },
-      { method: 'GET', path: '/api/tiers/:id/items', desc: '词条列表' },
-      { method: 'POST', path: '/api/tiers/:id/items', desc: '创建词条' },
-      { method: 'PUT', path: '/api/items/:id', desc: '更新词条' },
-      { method: 'DELETE', path: '/api/items/:id', desc: '删除词条' },
+      { method: 'GET', path: '/api/icebergs/:id/tiers', desc: '层级列表；?data=<JSON> 创建' },
+      { method: 'ALL', path: '/api/tiers/:id', desc: '更新/删除层级。?data=<JSON> 或 ?action=delete' },
+      { method: 'ALL', path: '/api/tiers/:id/items', desc: '创建词条。?data=<JSON>' },
+      { method: 'ALL', path: '/api/items/:id', desc: '更新/删除词条。?data=<JSON> 或 ?action=delete' },
+      { method: 'ALL', path: '/api/items/read', desc: '标记词条已读。?data={<JSON>}' },
     ],
   },
   {
     title: '交互',
     items: [
-      { method: 'POST', path: '/api/icebergs/:id/vote', desc: '投票（body: { value: 1|-1 }）' },
-      { method: 'GET', path: '/api/icebergs/:id/comments', desc: '评论列表（?sort=time|hot）' },
-      { method: 'POST', path: '/api/icebergs/:id/comments', desc: '发表评论' },
-      { method: 'POST', path: '/api/comments/:id/like', desc: '点赞评论' },
-      { method: 'POST', path: '/api/items/read', desc: '标记词条已读（body: { itemId, icebergId }）' },
+      { method: 'ALL', path: '/api/icebergs/:id/vote', desc: '投票。?data={<JSON>}' },
+      { method: 'GET', path: '/api/icebergs/:id/comments', desc: '评论列表（?sort=time|hot）；?data=<JSON> 发表评论' },
+      { method: 'ALL', path: '/api/comments/:id/like', desc: '点赞评论' },
+      { method: 'ALL', path: '/api/comments/:id', desc: '删除评论。?action=delete' },
+      { method: 'ALL', path: '/api/icebergs/:id/watchlist', desc: '切换收藏状态' },
     ],
   },
   {
     title: '用户',
     items: [
       { method: 'GET', path: '/api/auth/me', desc: '当前用户信息' },
-      { method: 'POST', path: '/api/auth/register', desc: '邮箱注册' },
-      { method: 'POST', path: '/api/auth/login', desc: '邮箱登录' },
-      { method: 'GET', path: '/api/auth/login?provider=github', desc: 'GitHub OAuth 登录' },
+      { method: 'ALL', path: '/api/auth/register', desc: '邮箱注册。GET ?email=&password=&username=&nickname= 或 JSON body' },
+      { method: 'ALL', path: '/api/auth/login', desc: '邮箱登录（?email=&password=）或 OAuth（?provider=github|google）' },
       { method: 'GET', path: '/api/auth/logout', desc: '登出' },
-      { method: 'GET', path: '/api/users/:id', desc: '用户资料' },
+      { method: 'ALL', path: '/api/auth/change-password', desc: '修改密码。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/auth/reset-password', desc: '重置密码。?email=&newPassword=' },
+      { method: 'ALL', path: '/api/auth/email/send-code', desc: '发送验证码。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/auth/unlink-provider', desc: '解除第三方登录绑定。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/auth/sessions', desc: '管理会话。?action=delete&data=<JSON>' },
+      { method: 'ALL', path: '/api/auth/achievements/ack', desc: '确认成就通知' },
+      { method: 'GET', path: '/api/users/:id', desc: '用户资料；?data=<JSON> 更新' },
+      { method: 'ALL', path: '/api/users/:id/follow', desc: '关注/取关（toggle）' },
+      { method: 'ALL', path: '/api/users/:id/warn', desc: '警告用户（ADMIN）。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/users/:id/restrict', desc: '设为只读（ADMIN）。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/users/:id/ban', desc: '封禁用户（ADMIN）。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/users/:id/unban', desc: '解除封禁（ADMIN）。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/users/:id/role', desc: '变更角色（ADMIN）。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/users/:id/delete', desc: '删除用户及其冰山图（ADMIN）。?data=<JSON>' },
+      { method: 'ALL', path: '/api/users/:id/appeal', desc: '提交申述。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/users/:id/awards', desc: '授予勋章。?data=<JSON> 或 ?action=delete&awardId=' },
+      { method: 'ALL', path: '/api/users/:id/userboxes', desc: '更新用户框。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/users/:id/avatar', desc: '上传头像（multipart）' },
     ],
   },
   {
     title: '搜索与发现',
     items: [
-      { method: 'GET', path: '/api/search?q=', desc: '全文搜索（冰山图+用户，?cursor= 分页）' },
+      { method: 'GET', path: '/api/search?q=', desc: '全文搜索（?cursor= 分页）' },
       { method: 'GET', path: '/api/features', desc: '功能开关列表' },
-      { method: 'GET', path: '/api/announcements', desc: '公告列表' },
+      { method: 'GET', path: '/api/announcements', desc: '公告列表；?data=<JSON> 创建（ADMIN）' },
+      { method: 'ALL', path: '/api/announcements/:id', desc: '编辑（?data=<JSON>）或删除（?action=delete）。ADMIN' },
     ],
   },
   {
     title: '创意板',
     items: [
-      { method: 'GET', path: '/api/ideas', desc: '创意列表（?status=&topic=&cursor=）' },
-      { method: 'POST', path: '/api/ideas', desc: '提交创意' },
-      { method: 'PUT', path: '/api/ideas/:id', desc: '更新/认领创意' },
-      { method: 'POST', path: '/api/ideas/:id/vote', desc: '创意投票' },
-      { method: 'GET', path: '/api/ideas/[id]/comments', desc: '获取创意评论' },
-      { method: 'POST', path: '/api/ideas/[id]/comments', desc: '发表创意评论' },
-      { method: 'POST', path: '/api/ideas/[id]/claimants', desc: '加入/退出创意认领' },
+      { method: 'GET', path: '/api/ideas', desc: '创意列表（?status=&topic=&cursor=）；?data=<JSON> 提交' },
+      { method: 'ALL', path: '/api/ideas/:id', desc: '更新/删除创意。?data=<JSON> 或 ?action=delete' },
+      { method: 'ALL', path: '/api/ideas/:id/vote', desc: '创意投票。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/ideas/[id]/comments', desc: '发表创意评论。?data=<JSON>' },
+      { method: 'ALL', path: '/api/ideas/[id]/claimants', desc: '加入/退出认领。?data=<JSON>' },
     ],
   },
   {
     title: '专题协作',
     items: [
-      { method: 'GET', path: '/api/projects', desc: '获取项目列表' },
-      { method: 'POST', path: '/api/projects', desc: '创建项目' },
-      { method: 'PATCH', path: '/api/projects/[slug]', desc: '编辑项目（Moderator+）' },
-      { method: 'DELETE', path: '/api/projects/[slug]', desc: '删除项目（Creator/Admin）' },
-      { method: 'POST', path: '/api/projects/[slug]/members', desc: '加入/邀请成员' },
-      { method: 'PATCH', path: '/api/projects/[slug]/members', desc: '管理成员（踢出/晋升/降级/移交）' },
-      { method: 'GET', path: '/api/projects/[slug]/members', desc: '获取成员列表' },
-      { method: 'GET', path: '/api/projects/[slug]/tasks', desc: '获取任务列表' },
-      { method: 'POST', path: '/api/projects/[slug]/tasks', desc: '创建任务' },
-      { method: 'PATCH', path: '/api/projects/[slug]/tasks', desc: '更新任务（assign/unassign/status）' },
-      { method: 'DELETE', path: '/api/projects/[slug]/tasks', desc: '删除任务' },
-      { method: 'GET', path: '/api/projects/[slug]/task-comments', desc: '获取任务评论' },
-      { method: 'POST', path: '/api/projects/[slug]/task-comments', desc: '发表任务评论' },
-      { method: 'GET', path: '/api/projects/[slug]/discussions', desc: '获取讨论消息' },
-      { method: 'POST', path: '/api/projects/[slug]/discussions', desc: '发送讨论消息' },
-      { method: 'POST', path: '/api/projects/[slug]/link', desc: '关联/取消关联冰山图或创意' },
+      { method: 'GET', path: '/api/projects', desc: '项目列表；?data=<JSON> 创建' },
+      { method: 'ALL', path: '/api/projects/[slug]', desc: '编辑/删除项目。?data=<JSON> 或 ?action=delete' },
+      { method: 'ALL', path: '/api/projects/[slug]/members', desc: '加入/管理成员。?data=<JSON>' },
+      { method: 'ALL', path: '/api/projects/[slug]/tasks', desc: '创建/更新/删除任务。?data=<JSON> 或 ?action=delete' },
+      { method: 'ALL', path: '/api/projects/[slug]/task-comments', desc: '发表任务评论。?data=<JSON>' },
+      { method: 'ALL', path: '/api/projects/[slug]/discussions', desc: '发送讨论消息。?data=<JSON>' },
+      { method: 'ALL', path: '/api/projects/[slug]/link', desc: '关联/取消关联。?data=<JSON>' },
     ],
   },
   {
     title: '收藏集',
     items: [
-      { method: 'GET', path: '/api/collections', desc: '用户收藏集列表' },
-      { method: 'POST', path: '/api/collections', desc: '创建收藏集' },
-      { method: 'POST', path: '/api/collections/:id/items', desc: '添加冰山图到收藏集' },
+      { method: 'GET', path: '/api/collections', desc: '收藏集列表；?data=<JSON> 创建' },
+      { method: 'ALL', path: '/api/collections/:id', desc: '编辑/删除收藏集。?data=<JSON> 或 ?action=delete' },
+      { method: 'ALL', path: '/api/collections/:id/items', desc: '添加/移除冰山图。?data=<JSON> 或 ?action=delete' },
     ],
   },
   {
     title: '通知',
     items: [
       { method: 'GET', path: '/api/notifications', desc: '通知列表' },
-      { method: 'PUT', path: '/api/notifications/:id', desc: '标记已读' },
-      { method: 'PUT', path: '/api/notifications/read-all', desc: '全部已读' },
+      { method: 'ALL', path: '/api/notifications/:id', desc: '标记已读' },
+      { method: 'ALL', path: '/api/notifications/read-all', desc: '全部已读' },
     ],
   },
   {
-    title: '关注与社交',
+    title: '治理',
     items: [
-      { method: 'POST', path: '/api/users/:id/follow', desc: '关注/取关用户（toggle）' },
+      { method: 'ALL', path: '/api/elections', desc: '创建选举。?data=<JSON>' },
+      { method: 'ALL', path: '/api/elections/:id', desc: '编辑选举。?data=<JSON>' },
+      { method: 'ALL', path: '/api/elections/:id/confirm', desc: '确认选举结果。?data=<JSON>' },
+      { method: 'ALL', path: '/api/elections/:id/vote', desc: '选举投票。?data=<JSON>' },
+      { method: 'ALL', path: '/api/elections/:id/candidates', desc: '候选人操作。?data=<JSON> 或 ?action=delete' },
+      { method: 'ALL', path: '/api/rfa', desc: '提交 RfA 申请。?data=<JSON>' },
+      { method: 'ALL', path: '/api/rfa/:id', desc: '取消 RfA。?action=delete' },
+      { method: 'ALL', path: '/api/rfa/:id/vote', desc: 'RfA 投票。?data=<JSON>' },
+      { method: 'ALL', path: '/api/impeach', desc: '发起弹劾。?data=<JSON>' },
+      { method: 'ALL', path: '/api/impeach/:id', desc: '取消弹劾。?action=delete' },
+      { method: 'ALL', path: '/api/impeach/:id/vote', desc: '弹劾投票。?data=<JSON>' },
+    ],
+  },
+  {
+    title: '管理',
+    items: [
+      { method: 'ALL', path: '/api/admin/users', desc: '用户列表（ADMIN）' },
+      { method: 'ALL', path: '/api/admin/settings', desc: '系统配置读写（ADMIN）。GET 读取，?data=<JSON> 写入' },
+      { method: 'ALL', path: '/api/admin/reviews/:id', desc: '审核操作（approve/reject）。?data=<JSON>' },
+      { method: 'ALL', path: '/api/admin/reviews/:id/override', desc: '审核覆写。?data=<JSON>' },
+      { method: 'ALL', path: '/api/admin/reports/:id', desc: '处理举报。?data=<JSON>' },
+      { method: 'ALL', path: '/api/admin/reports/batch', desc: '批量处理举报。?data=<JSON>' },
+      { method: 'ALL', path: '/api/admin/appeals/:id', desc: '处理申述。?data=<JSON>' },
+      { method: 'ALL', path: '/api/admin/promotions/:id', desc: '处理晋升。?data=<JSON>' },
+      { method: 'ALL', path: '/api/admin/feedback/:id', desc: '处理反馈。?data=<JSON> 或 ?action=delete' },
+      { method: 'ALL', path: '/api/admin/achievements', desc: '创建成就配置。?data=<JSON>' },
+      { method: 'ALL', path: '/api/admin/achievements/:id', desc: '编辑/删除成就。?data=<JSON> 或 ?action=delete' },
+      { method: 'ALL', path: '/api/admin/achievements/reset-all', desc: '重置创始人成就数据' },
+      { method: 'ALL', path: '/api/achievements/recheck', desc: '复核成就解锁条件' },
+      { method: 'ALL', path: '/api/promotion/request', desc: '提交晋升申请。?data=<JSON>' },
+    ],
+  },
+  {
+    title: '其他',
+    items: [
+      { method: 'ALL', path: '/api/reports', desc: '提交举报。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/upload', desc: '图片上传（multipart, ≤2MB）' },
+      { method: 'ALL', path: '/api/import/icebergthreads', desc: '导入 icebergthreads 数据。?data=<JSON>' },
+      { method: 'ALL', path: '/api/icebergs/:id/transfer', desc: '转让冰山图所有权。?data=<JSON>' },
+      { method: 'ALL', path: '/api/drafts', desc: '草稿管理。?data=<JSON> 或 ?action=delete' },
       { method: 'GET', path: '/api/feed', desc: '关注流（关注用户的最近动态）' },
-      { method: 'POST', path: '/api/reports', desc: '举报（type: iceberg|comment, targetId, reason）' },
-      { method: 'POST', path: '/api/upload', desc: '图片上传（multipart, JPG/PNG/GIF/WebP ≤ 2MB）' },
     ],
   },
 ];
@@ -127,15 +165,34 @@ const sections = [
     <header class="mb-10">
       <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">[ API DOCS ]</div>
       <h1 class="text-3xl font-mono font-semibold"><span class="text-brand">#</span> API 文档</h1>
-      <p class="mt-2 text-sm text-text-body font-mono">所有公开 API 端点。响应格式均为 success / data / error。</p>
+      <p class="mt-2 text-sm text-text-body font-mono">所有 API 端点。响应格式为 <code>{ success: boolean, data?: T, error?: { code, message } }</code>。</p>
     </header>
+
+    <!-- WAF 说明 -->
+    <div class="border border-warning/30 bg-warning/5 p-5 mb-10">
+      <div class="text-[10px] font-mono text-warning mb-2 tracking-widest">// 兼容性说明</div>
+      <p class="text-xs font-mono text-text-body leading-relaxed">
+        所有端点标记为 <code class="text-warning">ALL</code> 的均接受<strong>任意 HTTP 方法</strong>（GET/POST/PUT/DELETE/PATCH）。
+        这是为了兼容部分服务器环境下 OpenResty / WAF 对非 GET 请求的拦截。
+      </p>
+      <p class="text-xs font-mono text-text-body leading-relaxed mt-2">
+        需要传递 JSON 数据时，除了标准 <code>Content-Type: application/json</code> 的 POST/PUT 外，
+        也支持 GET 查询参数：<code class="text-brand">?data=URL_ENCODED_JSON</code>。
+        删除操作支持 <code class="text-brand">?action=delete</code>。
+      </p>
+      <p class="text-[10px] font-mono text-text-lo mt-2">
+        示例：创建冰山图 → <code>GET /api/icebergs?data=%7B%22title%22%3A%22%E6%B5%8B%E8%AF%95%22%7D</code>
+      </p>
+    </div>
 
     <div class="space-y-8">
       {sections.map(s => (<section>
           <div class="text-[10px] font-mono text-brand tracking-widest mb-3">{s.title}</div>
           <div class="space-y-1">
             {s.items.map(item => (<div class="flex items-start gap-3 p-3 border border-border-subtle bg-surface-2">
-                <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 border rounded text-warning border-warning/30 min-w-[3.25rem] text-center flex-shrink-0">{item.method}</span>
+                <span class={`text-[10px] font-mono font-bold px-1.5 py-0.5 border rounded min-w-[3.25rem] text-center flex-shrink-0 ${
+                  item.method === 'ALL' ? 'text-brand border-brand/30' : 'text-warning border-warning/30'
+                }`}>{item.method}</span>
                 <code class="text-xs font-mono text-text-hi break-all min-w-0">{item.path}</code>
                 <span class="text-[10px] font-mono text-text-mid text-right flex-shrink-0 ml-auto max-w-56">{item.desc}</span>
               </div>))}
