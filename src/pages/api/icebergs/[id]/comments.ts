@@ -28,6 +28,120 @@ function getIp(event: APIContext): string {
 
 // GET /api/icebergs/[id]/comments?sort=time|hot
 export async function GET(event: APIContext) {
+  const dataParam = event.url.searchParams.get('data');
+  if (dataParam) {
+
+    const session = await getSession(event);
+
+    // 已登录用户：检查封禁状态
+    if (session && ['READ_ONLY', 'TEMP_BANNED', 'PERM_BANNED'].includes(session.status)) {
+      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '当前账号无法发布评论')), {
+        status: 403, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const id = event.params.id!;
+    const body = JSON.parse(dataParam || '{}');
+    const content: string = typeof body.content === 'string' ? body.content.trim() : '';
+    const parentId: string | null = typeof body.parentId === 'string' ? body.parentId : null;
+
+    // 游客：校验昵称 + 频率限制；不允许回复（只能发顶层评论）
+    let guestName: string | null = null;
+    if (!session) {
+      const rawName: string = typeof body.guestName === 'string' ? body.guestName.trim() : '';
+      if (rawName.length < 2 || rawName.length > 20) {
+        return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '游客昵称须为 2–20 个字符')), {
+          status: 400, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (parentId) {
+        return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '游客暂不支持回复，请登录后参与')), {
+          status: 403, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (!checkGuestRate(getIp(event))) {
+        return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '评论太频繁，请稍后再试')), {
+          status: 429, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      guestName = rawName;
+    }
+
+    if (!content) {
+      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '评论内容不能为空')), {
+        status: 400, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    if (content.length > 1000) {
+      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '评论不能超过 1000 字')), {
+        status: 400, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const iceberg = await prisma.iceberg.findFirst({
+      where: { OR: [{ id }, { slug: id }], status: 'PUBLISHED' },
+      select: { id: true, slug: true },
+    });
+    if (!iceberg) {
+      return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '冰山图不存在')), {
+        status: 404, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // 校验 parentId
+    let parentAuthorId: string | null = null;
+    if (parentId) {
+      const parent = await prisma.comment.findUnique({
+        where: { id: parentId },
+        select: { id: true, icebergId: true, parentId: true, userId: true },
+      });
+      if (!parent || parent.icebergId !== iceberg.id) {
+        return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '被回复的评论不存在')), {
+          status: 404, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (parent.parentId !== null) {
+        return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '只支持一级回复')), {
+          status: 400, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      parentAuthorId = parent.userId;
+    }
+
+    const comment = await (prisma.comment as any).create({
+      data: {
+        icebergId: iceberg.id,
+        userId: session?.userId ?? null,
+        guestName,
+        content,
+        parentId,
+      },
+      select: {
+        id: true, content: true, createdAt: true, parentId: true, guestName: true,
+        user: { select: { id: true, username: true, nickname: true, avatar: true } },
+      },
+    });
+
+    // 已登录用户：活跃质量分 + 回复通知
+    if (session) {
+      awardCommentScore(session.userId);
+      if (parentAuthorId && parentAuthorId !== session.userId) {
+        notifyAggregated(
+          parentAuthorId,
+          'comment_reply',
+          `comment:${parentId}`,
+          n => n === 1 ? '有人回复了你的评论' : `${n} 人回复了你的评论`,
+          `/iceberg/${iceberg.slug}`,
+        );
+      }
+    }
+
+    return new Response(JSON.stringify(success({
+      comment: { ...comment, likeCount: 0, isLikedByMe: false, replies: [] },
+    })), { status: 201, headers: { 'Content-Type': 'application/json' } });
+
+  }
+
   const id = event.params.id!;
   const sort = (event.url.searchParams.get('sort') ?? 'time') as 'time' | 'hot';
 
@@ -105,114 +219,3 @@ export async function GET(event: APIContext) {
 }
 
 // POST /api/icebergs/[id]/comments
-export async function ALL(event: APIContext) {
-  const session = await getSession(event);
-
-  // 已登录用户：检查封禁状态
-  if (session && ['READ_ONLY', 'TEMP_BANNED', 'PERM_BANNED'].includes(session.status)) {
-    return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '当前账号无法发布评论')), {
-      status: 403, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const id = event.params.id!;
-  const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
-  const content: string = typeof body.content === 'string' ? body.content.trim() : '';
-  const parentId: string | null = typeof body.parentId === 'string' ? body.parentId : null;
-
-  // 游客：校验昵称 + 频率限制；不允许回复（只能发顶层评论）
-  let guestName: string | null = null;
-  if (!session) {
-    const rawName: string = typeof body.guestName === 'string' ? body.guestName.trim() : '';
-    if (rawName.length < 2 || rawName.length > 20) {
-      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '游客昵称须为 2–20 个字符')), {
-        status: 400, headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    if (parentId) {
-      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '游客暂不支持回复，请登录后参与')), {
-        status: 403, headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    if (!checkGuestRate(getIp(event))) {
-      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '评论太频繁，请稍后再试')), {
-        status: 429, headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    guestName = rawName;
-  }
-
-  if (!content) {
-    return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '评论内容不能为空')), {
-      status: 400, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-  if (content.length > 1000) {
-    return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '评论不能超过 1000 字')), {
-      status: 400, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const iceberg = await prisma.iceberg.findFirst({
-    where: { OR: [{ id }, { slug: id }], status: 'PUBLISHED' },
-    select: { id: true, slug: true },
-  });
-  if (!iceberg) {
-    return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '冰山图不存在')), {
-      status: 404, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  // 校验 parentId
-  let parentAuthorId: string | null = null;
-  if (parentId) {
-    const parent = await prisma.comment.findUnique({
-      where: { id: parentId },
-      select: { id: true, icebergId: true, parentId: true, userId: true },
-    });
-    if (!parent || parent.icebergId !== iceberg.id) {
-      return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '被回复的评论不存在')), {
-        status: 404, headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    if (parent.parentId !== null) {
-      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '只支持一级回复')), {
-        status: 400, headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    parentAuthorId = parent.userId;
-  }
-
-  const comment = await (prisma.comment as any).create({
-    data: {
-      icebergId: iceberg.id,
-      userId: session?.userId ?? null,
-      guestName,
-      content,
-      parentId,
-    },
-    select: {
-      id: true, content: true, createdAt: true, parentId: true, guestName: true,
-      user: { select: { id: true, username: true, nickname: true, avatar: true } },
-    },
-  });
-
-  // 已登录用户：活跃质量分 + 回复通知
-  if (session) {
-    awardCommentScore(session.userId);
-    if (parentAuthorId && parentAuthorId !== session.userId) {
-      notifyAggregated(
-        parentAuthorId,
-        'comment_reply',
-        `comment:${parentId}`,
-        n => n === 1 ? '有人回复了你的评论' : `${n} 人回复了你的评论`,
-        `/iceberg/${iceberg.slug}`,
-      );
-    }
-  }
-
-  return new Response(JSON.stringify(success({
-    comment: { ...comment, likeCount: 0, isLikedByMe: false, replies: [] },
-  })), { status: 201, headers: { 'Content-Type': 'application/json' } });
-}
-

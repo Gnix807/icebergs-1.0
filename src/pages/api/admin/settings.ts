@@ -10,6 +10,52 @@ import { can } from '../../../lib/permissions';
 import { clearFeatureCache } from '../../../lib/features';
 
 export async function GET(event: APIContext) {
+  const dataParam = event.url.searchParams.get('data');
+  if (dataParam) {
+
+    try {
+      const session = await getSession(event);
+      if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
+      if (!can(session, 'user:ban')) return json(error(ErrorCodes.FORBIDDEN, '需要管理员权限'), 403);
+
+      const body = JSON.parse(dataParam || '{}') as Record<string, any>;
+      if (!body || typeof body !== 'object') {
+        return json(error(ErrorCodes.BAD_REQUEST, '请求体格式错误'), 400);
+      }
+
+      // 功能开关批量更新：{ features: { key: boolean, ... } }
+      const updates: Record<string, string> = {};
+      if (body.features && typeof body.features === 'object') {
+        Object.entries(body.features).forEach(([k, v]) => {
+          updates[k] = String(v);
+        });
+      } else {
+        // 通用 key-value 更新
+        Object.entries(body).forEach(([k, v]) => {
+          if (k !== 'features') updates[k] = String(v);
+        });
+      }
+
+      await Promise.all(
+        Object.entries(updates).map(([key, value]) =>
+          prisma.systemSettings.upsert({
+            where: { key },
+            update: { value: String(value), updatedBy: session.userId },
+            create: { key, value: String(value), updatedBy: session.userId },
+          }),
+        ),
+      );
+
+      if (body.features) clearFeatureCache();
+
+      return json(success({ updated: Object.keys(updates).length }), 200);
+    } catch (err) {
+      console.error('更新配置失败:', err);
+      return json(error(ErrorCodes.INTERNAL_ERROR, '更新失败'), 500);
+    }
+
+  }
+
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -20,49 +66,6 @@ export async function GET(event: APIContext) {
   } catch (err) {
     console.error('获取配置失败:', err);
     return json(error(ErrorCodes.INTERNAL_ERROR, '获取失败'), 500);
-  }
-}
-
-export async function ALL(event: APIContext) {
-  try {
-    const session = await getSession(event);
-    if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
-    if (!can(session, 'user:ban')) return json(error(ErrorCodes.FORBIDDEN, '需要管理员权限'), 403);
-
-    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({})) as Record<string, any>;
-    if (!body || typeof body !== 'object') {
-      return json(error(ErrorCodes.BAD_REQUEST, '请求体格式错误'), 400);
-    }
-
-    // 功能开关批量更新：{ features: { key: boolean, ... } }
-    const updates: Record<string, string> = {};
-    if (body.features && typeof body.features === 'object') {
-      Object.entries(body.features).forEach(([k, v]) => {
-        updates[k] = String(v);
-      });
-    } else {
-      // 通用 key-value 更新
-      Object.entries(body).forEach(([k, v]) => {
-        if (k !== 'features') updates[k] = String(v);
-      });
-    }
-
-    await Promise.all(
-      Object.entries(updates).map(([key, value]) =>
-        prisma.systemSettings.upsert({
-          where: { key },
-          update: { value: String(value), updatedBy: session.userId },
-          create: { key, value: String(value), updatedBy: session.userId },
-        }),
-      ),
-    );
-
-    if (body.features) clearFeatureCache();
-
-    return json(success({ updated: Object.keys(updates).length }), 200);
-  } catch (err) {
-    console.error('更新配置失败:', err);
-    return json(error(ErrorCodes.INTERNAL_ERROR, '更新失败'), 500);
   }
 }
 

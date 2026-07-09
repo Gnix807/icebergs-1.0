@@ -5,6 +5,59 @@ import { getSession } from '../../../lib/auth/index';
 import { ideaId } from '../../../lib/shortId';
 
 export async function GET(event: APIContext) {
+  const dataParam = event.url.searchParams.get('data');
+  if (dataParam) {
+
+    const session = await getSession(event);
+    if (!session) {
+      return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
+        status: 401, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    let body: { title?: string; description?: string; topic?: string };
+    try { body = JSON.parse(dataParam || '{}') } catch {
+      return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '请求格式错误')), {
+        status: 400, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const title = (body.title || '').trim();
+    if (!title || title.length < 5 || title.length > 200) {
+      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '标题需 5-200 字')), {
+        status: 400, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    try {
+      const idea = await prisma.idea.create({
+        data: {
+          id: ideaId(),
+          title,
+          description: (body.description || '').trim() || null,
+          topic: body.topic || 'general',
+          creatorId: session.userId,
+        },
+        select: {
+          id: true, title: true, description: true, topic: true,
+          status: true, createdAt: true,
+          _count: { select: { votes: true } },
+          creator: { select: { id: true, username: true, nickname: true, avatar: true } },
+        },
+      });
+
+      return new Response(JSON.stringify(success({ idea })), {
+        status: 201, headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (err) {
+      console.error('创建创意失败:', err);
+      return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '创建失败')), {
+        status: 500, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+  }
+
   const status = event.url.searchParams.get('status') || 'OPEN';
   const topic = event.url.searchParams.get('topic') || undefined;
   const take = Math.min(parseInt(event.url.searchParams.get('limit') || '20', 10), 50);
@@ -48,52 +101,3 @@ export async function GET(event: APIContext) {
   }
 }
 
-export async function ALL(event: APIContext) {
-  const session = await getSession(event);
-  if (!session) {
-    return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
-      status: 401, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  let body: { title?: string; description?: string; topic?: string };
-  try { body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json(); } catch {
-    return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '请求格式错误')), {
-      status: 400, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const title = (body.title || '').trim();
-  if (!title || title.length < 5 || title.length > 200) {
-    return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '标题需 5-200 字')), {
-      status: 400, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  try {
-    const idea = await prisma.idea.create({
-      data: {
-        id: ideaId(),
-        title,
-        description: (body.description || '').trim() || null,
-        topic: body.topic || 'general',
-        creatorId: session.userId,
-      },
-      select: {
-        id: true, title: true, description: true, topic: true,
-        status: true, createdAt: true,
-        _count: { select: { votes: true } },
-        creator: { select: { id: true, username: true, nickname: true, avatar: true } },
-      },
-    });
-
-    return new Response(JSON.stringify(success({ idea })), {
-      status: 201, headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    console.error('创建创意失败:', err);
-    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '创建失败')), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-}

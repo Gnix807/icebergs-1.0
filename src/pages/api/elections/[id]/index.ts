@@ -33,6 +33,38 @@ async function maybeAdvance(election: { id: string; status: string; applyDeadlin
 }
 
 export async function GET(event: APIContext) {
+  const dataParam = event.url.searchParams.get('data');
+  if (dataParam) {
+
+    const session = await getSession(event);
+    if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
+    if (session.role !== 'ADMIN' && !session.isFounder) {
+      return json(error(ErrorCodes.FORBIDDEN, '需要管理员权限'), 403);
+    }
+
+    const { id } = event.params;
+    const election = await prisma.election.findUnique({ where: { id } });
+    if (!election) return json(error(ErrorCodes.NOT_FOUND, '选举不存在'), 404);
+
+    const body = JSON.parse(dataParam || '{}') as { action?: string };
+    const { action } = body;
+
+    let newStatus: string | null = null;
+    if (action === 'start_voting') {
+      if (election.status !== 'OPEN_APPLY') return json(error(ErrorCodes.BAD_REQUEST, '当前阶段无法开始投票'), 400);
+      newStatus = 'VOTING';
+    } else if (action === 'close') {
+      if (election.status !== 'VOTING') return json(error(ErrorCodes.BAD_REQUEST, '当前阶段无法关闭投票'), 400);
+      newStatus = 'CLOSED';
+    } else {
+      return json(error(ErrorCodes.BAD_REQUEST, '无效操作，可选：start_voting / close'), 400);
+    }
+
+    await prisma.election.update({ where: { id }, data: { status: newStatus } });
+    return json(success({ id, status: newStatus }));
+
+  }
+
   const { id } = event.params;
   const election = await prisma.election.findUnique({
     where: { id },
@@ -94,34 +126,5 @@ export async function GET(event: APIContext) {
     candidates,
     myVote,
   }));
-}
-
-export async function ALL(event: APIContext) {
-  const session = await getSession(event);
-  if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
-  if (session.role !== 'ADMIN' && !session.isFounder) {
-    return json(error(ErrorCodes.FORBIDDEN, '需要管理员权限'), 403);
-  }
-
-  const { id } = event.params;
-  const election = await prisma.election.findUnique({ where: { id } });
-  if (!election) return json(error(ErrorCodes.NOT_FOUND, '选举不存在'), 404);
-
-  const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({})) as { action?: string };
-  const { action } = body;
-
-  let newStatus: string | null = null;
-  if (action === 'start_voting') {
-    if (election.status !== 'OPEN_APPLY') return json(error(ErrorCodes.BAD_REQUEST, '当前阶段无法开始投票'), 400);
-    newStatus = 'VOTING';
-  } else if (action === 'close') {
-    if (election.status !== 'VOTING') return json(error(ErrorCodes.BAD_REQUEST, '当前阶段无法关闭投票'), 400);
-    newStatus = 'CLOSED';
-  } else {
-    return json(error(ErrorCodes.BAD_REQUEST, '无效操作，可选：start_voting / close'), 400);
-  }
-
-  await prisma.election.update({ where: { id }, data: { status: newStatus } });
-  return json(success({ id, status: newStatus }));
 }
 

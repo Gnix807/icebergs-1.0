@@ -83,6 +83,92 @@ function normalizeSeedTiers(raw: unknown): SeedTierCreate[] {
 // GET /api/icebergs - 获取冰山图列表
 // 支持参数：page, limit, status, q（关键词搜索）, sort（newest/oldest/popular）, topic
 export async function GET(event: APIContext) {
+  const dataParam = event.url.searchParams.get('data');
+  if (dataParam) {
+
+    try {
+      const session = await getSession(event);
+      if (!session) {
+        return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (!can(session, 'content:create')) {
+        return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '账户受限，无法创建冰山图')), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const body = JSON.parse(dataParam || '{}');
+
+      const title = body.title?.trim();
+      if (!title) {
+        return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '标题不能为空')), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const slug = (body.slug as string | undefined)?.trim();
+      if (!slug || !SLUG_RE.test(slug)) {
+        return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, 'ID 需为 2-60 位字母、数字、连字符或下划线')), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const existing = await prisma.iceberg.findFirst({ where: { OR: [{ id: slug }, { slug }] } });
+      if (existing) {
+        return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '该 ID 已被使用，请换一个')), {
+          status: 409,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const topic = normalizeIcebergTopic(body.topic);
+      const authorId = session.userId;
+
+      const descRaw = body.description || '';
+      const createData: any = {
+        id: slug,
+        slug,
+        title,
+        description: descRaw,
+        renderedDescription: descRaw ? renderMarkdownWithMath(descRaw) : null,
+        topic,
+        status: 'DRAFT',
+        authorId,
+        tiers: {
+          create: normalizeSeedTiers(body.tiers),
+        },
+      };
+
+      const iceberg = await prisma.iceberg.create({
+        data: createData,
+        include: {
+          tiers: {
+            orderBy: { order: 'asc' },
+            include: { items: true },
+          },
+        },
+      });
+
+      return new Response(JSON.stringify(success(iceberg)), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (err) {
+      console.error('创建冰山图失败:', err);
+      return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '创建失败')), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+  }
+
   try {
     const url = new URL(event.request.url);
     const page  = Math.max(1, parseInt(url.searchParams.get('page')  || '1'));
@@ -197,86 +283,3 @@ export async function GET(event: APIContext) {
 }
 
 // POST /api/icebergs - 创建冰山图
-export async function ALL(event: APIContext) {
-  try {
-    const session = await getSession(event);
-    if (!session) {
-      return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    if (!can(session, 'content:create')) {
-      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '账户受限，无法创建冰山图')), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
-
-    const title = body.title?.trim();
-    if (!title) {
-      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '标题不能为空')), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const slug = (body.slug as string | undefined)?.trim();
-    if (!slug || !SLUG_RE.test(slug)) {
-      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, 'ID 需为 2-60 位字母、数字、连字符或下划线')), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const existing = await prisma.iceberg.findFirst({ where: { OR: [{ id: slug }, { slug }] } });
-    if (existing) {
-      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '该 ID 已被使用，请换一个')), {
-        status: 409,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const topic = normalizeIcebergTopic(body.topic);
-    const authorId = session.userId;
-
-    const descRaw = body.description || '';
-    const createData: any = {
-      id: slug,
-      slug,
-      title,
-      description: descRaw,
-      renderedDescription: descRaw ? renderMarkdownWithMath(descRaw) : null,
-      topic,
-      status: 'DRAFT',
-      authorId,
-      tiers: {
-        create: normalizeSeedTiers(body.tiers),
-      },
-    };
-
-    const iceberg = await prisma.iceberg.create({
-      data: createData,
-      include: {
-        tiers: {
-          orderBy: { order: 'asc' },
-          include: { items: true },
-        },
-      },
-    });
-
-    return new Response(JSON.stringify(success(iceberg)), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    console.error('创建冰山图失败:', err);
-    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '创建失败')), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-}
-

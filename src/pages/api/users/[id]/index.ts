@@ -5,6 +5,58 @@ import { getSession } from '../../../../lib/auth/index';
 
 // GET /api/users/:id - 获取用户信息
 export async function GET(event: APIContext) {
+  const dataParam = event.url.searchParams.get('data');
+  if (dataParam) {
+
+    try {
+      const session = await getSession(event);
+      if (!session) {
+        return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { id } = event.params;
+      if (session.userId !== id) {
+        return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权修改')), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const body = JSON.parse(dataParam || '{}');
+
+      const data: Record<string, unknown> = {};
+      if (typeof body.bio === 'string') data.bio = body.bio.slice(0, 200);
+      if (typeof body.avatar === 'string') data.avatar = body.avatar.slice(0, 500);
+      if (typeof body.nickname === 'string') data.nickname = body.nickname.slice(0, 50);
+      if (typeof body.privacyShowStats === 'boolean') data.privacyShowStats = body.privacyShowStats;
+      if (typeof body.privacyShowWatchlist === 'boolean') data.privacyShowWatchlist = body.privacyShowWatchlist;
+
+      const updated = await prisma.user.update({
+        where: { id },
+        data,
+        select: {
+          id: true, username: true, nickname: true, bio: true,
+          avatar: true, privacyShowStats: true, privacyShowWatchlist: true,
+        },
+      });
+
+      return new Response(JSON.stringify(success(updated)), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (err) {
+      console.error('更新用户信息失败:', err);
+      return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '更新失败')), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+  }
+
   try {
     const { id } = event.params;
 
@@ -51,52 +103,3 @@ export async function GET(event: APIContext) {
 }
 
 // PUT /api/users/:id — 更新个人资料（仅本人）
-export async function ALL(event: APIContext) {
-  try {
-    const session = await getSession(event);
-    if (!session) {
-      return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const { id } = event.params;
-    if (session.userId !== id) {
-      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权修改')), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
-
-    const data: Record<string, unknown> = {};
-    if (typeof body.bio === 'string') data.bio = body.bio.slice(0, 200);
-    if (typeof body.avatar === 'string') data.avatar = body.avatar.slice(0, 500);
-    if (typeof body.nickname === 'string') data.nickname = body.nickname.slice(0, 50);
-    if (typeof body.privacyShowStats === 'boolean') data.privacyShowStats = body.privacyShowStats;
-    if (typeof body.privacyShowWatchlist === 'boolean') data.privacyShowWatchlist = body.privacyShowWatchlist;
-
-    const updated = await prisma.user.update({
-      where: { id },
-      data,
-      select: {
-        id: true, username: true, nickname: true, bio: true,
-        avatar: true, privacyShowStats: true, privacyShowWatchlist: true,
-      },
-    });
-
-    return new Response(JSON.stringify(success(updated)), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    console.error('更新用户信息失败:', err);
-    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '更新失败')), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-}
-
