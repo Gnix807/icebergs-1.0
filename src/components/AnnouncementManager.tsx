@@ -316,13 +316,8 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
     setSubmitting(true);
     setErr('');
     try {
-      const url = editingId ? `/api/announcements/${editingId}` : '/api/announcements';
-      const method = editingId ? 'PATCH' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
+      const url = editingId ? `/api/announcements/${editingId}?data=${encodeURIComponent(JSON.stringify(form))}` : `/api/announcements?data=${encodeURIComponent(JSON.stringify(form))}`;
+      const res = await fetch(url);
       const data = await res.json();
       if (!data.success) { setErr(data.error?.message ?? '操作失败'); return; }
 
@@ -345,7 +340,7 @@ export function AnnouncementManager({ isAdmin, initialList, mode = 'all' }: Prop
   }
 
   async function handleDelete(id: string) {
-    const res = await fetch(`/api/announcements/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/announcements/${id}?action=delete`);
     const data = await res.json();
     if (data.success) {
       setList(prev => prev.filter(a => a.id !== id));

@@ -23,7 +23,8 @@ async function requireAdmin(event: APIContext) {
   return { session, resp: null };
 }
 
-export async function PATCH(event: APIContext) {
+// ALL /api/announcements/[id] — 编辑或删除公告（GET 兼容 WAF）
+export async function ALL(event: APIContext) {
   const { session, resp } = await requireAdmin(event);
   if (resp) return resp;
 
@@ -31,7 +32,16 @@ export async function PATCH(event: APIContext) {
   const exists = await db.announcement.findUnique({ where: { id }, select: { id: true } });
   if (!exists) return json(error(ErrorCodes.NOT_FOUND, '公告不存在'), 404);
 
-  const body = await event.request.json().catch(() => ({}));
+  // 删除
+  if (event.url.searchParams.get('action') === 'delete') {
+    await db.announcement.delete({ where: { id } });
+    return json(success(null), 200);
+  }
+
+  // 编辑
+  const body = event.request.method === 'GET'
+    ? JSON.parse(event.url.searchParams.get('data') || '{}')
+    : await event.request.json().catch(() => ({}));
   const data: Record<string, unknown> = {};
 
   if (typeof body.title === 'string') {
@@ -76,17 +86,5 @@ export async function PATCH(event: APIContext) {
   });
 
   return json(success({ announcement }), 200);
-}
-
-export async function DELETE(event: APIContext) {
-  const { resp } = await requireAdmin(event);
-  if (resp) return resp;
-
-  const id = event.params.id!;
-  const exists = await db.announcement.findUnique({ where: { id }, select: { id: true } });
-  if (!exists) return json(error(ErrorCodes.NOT_FOUND, '公告不存在'), 404);
-
-  await db.announcement.delete({ where: { id } });
-  return json(success(null), 200);
 }
 
