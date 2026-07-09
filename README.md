@@ -106,6 +106,10 @@
 
 ## 技术栈
 
+<p align="center">
+  <img src="https://go-skill-icons.vercel.app/api/icons?i=astro,react,typescript,tailwindcss,postgresql,prisma,docker,nodejs&perline=8" alt="tech stack" />
+</p>
+
 | 类别 | 技术 |
 |---|---|
 | 框架 | Astro 5 (SSR) + React 19 (Islands 架构) |
