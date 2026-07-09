@@ -29,7 +29,11 @@
 - [技术栈](#技术栈)
 - [本地开发](#本地开发)
 - [部署](#部署)
+- [使用](#使用)
 - [贡献](#贡献)
+- [项目状态](#项目状态)
+- [支持](#支持)
+- [计划](#计划)
 - [作者与致谢](#作者与致谢)
 - [许可证](#许可证)
 
@@ -198,6 +202,16 @@ node dist/server/entry.mjs   # 用 PM2 或 systemd 托管
 
 ---
 
+## 使用
+
+在线访问：**[icebergs.gnix807.cn](https://icebergs.gnix807.cn)**
+
+网站提供了完整的使用指南，涵盖编辑器操作、社区机制、成就系统、协作功能等：
+
+→ **[使用指南](https://icebergs.gnix807.cn/guide)**
+
+---
+
 ## 贡献
 
 欢迎任何形式的参与——Bug 修复、新功能、文档改进、翻译。
@@ -213,6 +227,32 @@ npm run dev
 提交前请运行 `npm run check` 确保类型检查通过，并保持与现有代码风格一致。
 
 对于较大的改动，建议先开 Issue 讨论方向。
+
+---
+
+## 项目状态
+
+项目处于 **活跃开发中**。核心功能已稳定运行，持续添加新功能并修复 Bug。
+
+更新记录见 → **[Changelog](https://icebergs.gnix807.cn/changelog)**
+
+---
+
+## 支持
+
+- **使用问题** → [GitHub Issues](https://github.com/Gnix807/icebergs-1.0/issues)
+- **Bug 反馈** → [GitHub Issues](https://github.com/Gnix807/icebergs-1.0/issues)
+- **功能建议** → [GitHub Issues](https://github.com/Gnix807/icebergs-1.0/issues)
+
+---
+
+## 计划
+
+- [ ] i18n 国际化支持
+- [ ] 更丰富的导出格式
+- [ ] 第三方登录扩展
+- [ ] 数据统计仪表盘
+- [ ] API 开放接口
 
 ---
 
