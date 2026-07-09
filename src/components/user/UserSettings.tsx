@@ -98,7 +98,7 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
     setUploading(true);
     try {
       // 压缩图片到合理尺寸，防止 base64 URL 过长被服务器拒绝
-      const compressed = await compressImage(file, 256, 0.7);
+      const compressed = await compressImage(file, 128, 0.6);
       const payload = JSON.stringify({ file: { name: file.name, type: 'image/jpeg', data: compressed } });
       const res = await fetch(`/api/users/${userId}/avatar?data=${encodeURIComponent(payload)}`);
       const data = await res.json();
