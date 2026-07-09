@@ -26,6 +26,7 @@ services:
     ports:
       - "4321:4321"
     environment:
+      HOST: 0.0.0.0
       DATABASE_URL: postgresql://icebergs:${DB_PASSWORD:-icebergs_dev}@db:5432/icebergs
       NODE_ENV: production
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
