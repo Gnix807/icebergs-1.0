@@ -492,6 +492,15 @@ export async function GET(event: APIContext) {
     const linkedProviders = await getLinkedOAuthProviders(user.id);
     const unreadCount = await prisma.notification.count({ where: { userId: user.id, read: false } });
 
+    // 返回成就后自动清除，下次不会再弹
+    if (pending.length > 0) {
+      prisma.userStats.upsert({
+        where: { userId: user.id },
+        create: { userId: user.id, pendingAchievements: '[]' },
+        update: { pendingAchievements: '[]' },
+      }).catch(() => {});
+    }
+
     return new Response(JSON.stringify(success({
       ...userOut,
       authMethods: {
