@@ -325,7 +325,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
               <input
                 type="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setFieldError(null); setError(null); }}}
+                onChange={(e) => { setEmail(e.target.value); setFieldError(null); setError(null); }}
                 className={`w-full px-3 py-2.5 bg-surface-0 border text-sm font-mono focus:outline-none placeholder:text-text-lo transition-colors ${
                   fieldError === 'email' ? 'border-danger text-danger' : 'border-border-subtle focus:border-brand'
                 }`}
