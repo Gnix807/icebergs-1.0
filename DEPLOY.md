@@ -233,4 +233,4 @@ psql -U icebergs icebergs -c "DELETE FROM user_achievements;"
 psql -U icebergs icebergs -c "UPDATE users SET \"passwordHash\" = NULL WHERE \"isFounder\" = true;"
 ```
 
-测试账号（如 `test1@icebergs.local`）可直接在 1Panel 数据库界面删除。
+开发环境中的测试账号可直接在 1Panel 数据库界面删除。

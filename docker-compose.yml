@@ -6,7 +6,7 @@ services:
     environment:
       TZ: Asia/Shanghai
       POSTGRES_USER: icebergs
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-icebergs_dev}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change-me}
       POSTGRES_DB: icebergs
     volumes:
       - pgdata:/var/lib/postgresql
@@ -29,7 +29,7 @@ services:
     environment:
       TZ: Asia/Shanghai
       HOST: 0.0.0.0
-      DATABASE_URL: postgresql://icebergs:${DB_PASSWORD:-icebergs_dev}@db:5432/icebergs
+      DATABASE_URL: postgresql://icebergs:${DB_PASSWORD:-change-me}@db:5432/icebergs
       NODE_ENV: production
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}

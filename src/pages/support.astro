@@ -14,25 +14,22 @@ import Layout from '../layouts/Layout.astro';
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- 微信赞赏 -->
-      <div class="border border-border bg-surface-2 p-6 text-center reveal" style="animation-delay:50ms">
-        <div class="text-xl mb-3">💚</div>
-        <div class="text-sm font-mono font-bold text-success mb-2">微信赞赏</div>
-        <p class="text-[11px] text-text-mid font-mono mb-4">扫码赞赏任意金额</p>
-        <div class="inline-block bg-white p-2">
-          <img src="/wechat-qr.png" alt="微信赞赏码" class="w-40 h-40 object-contain" />
-        </div>
-        <p class="text-[10px] font-mono text-text-lo mt-2">保存图片 → 微信扫码</p>
-      </div>
-
-      <!-- 爱发电 -->
-      <a href="https://ifdian.net/a/Gnix807" target="_blank" rel="noopener"
-        class="border border-border bg-surface-2 p-6 text-center hover:border-warning transition-colors flex flex-col items-center justify-center reveal group" style="animation-delay:100ms">
-        <div class="text-xl mb-3">⚡</div>
-        <div class="text-sm font-mono font-bold text-warning mb-2">爱发电</div>
-        <p class="text-[11px] text-text-mid font-mono mb-4">支持大陆银行卡、微信、支付宝</p>
-        <span class="px-4 py-1.5 border border-warning/30 text-warning text-xs font-mono group-hover:bg-warning/10 transition-colors">前往赞助 →</span>
+      <!-- 代码贡献 -->
+      <a href="https://github.com/Gnix807/icebergs-1.0" target="_blank" rel="noopener"
+        class="border border-border bg-surface-2 p-6 text-center hover:border-success transition-colors flex flex-col items-center justify-center reveal group" style="animation-delay:50ms">
+        <div class="text-xl mb-3">💻</div>
+        <div class="text-sm font-mono font-bold text-success mb-2">贡献代码</div>
+        <p class="text-[11px] text-text-mid font-mono mb-4">项目完全开源，欢迎提交 PR</p>
+        <span class="px-4 py-1.5 border border-success/30 text-success text-xs font-mono group-hover:bg-success/10 transition-colors">GitHub →</span>
       </a>
+
+      <!-- 分享传播 -->
+      <div class="border border-border bg-surface-2 p-6 text-center flex flex-col items-center justify-center reveal" style="animation-delay:100ms">
+        <div class="text-xl mb-3">📢</div>
+        <div class="text-sm font-mono font-bold text-info mb-2">分享传播</div>
+        <p class="text-[11px] text-text-mid font-mono mb-4">把冰山图分享给更多人，就是最好的支持</p>
+        <span class="text-[10px] font-mono text-text-lo">让更多人发现水面之下的世界</span>
+      </div>
     </div>
 
   </main>

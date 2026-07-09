@@ -97,7 +97,8 @@ async function main() {
       where: { role: 'ADMIN' },
       select: { id: true },
     });
-    const authorId = admin?.id || 'Gnix807';
+    if (!admin) { console.error('  没有管理员账号，跳过演示数据'); return; }
+    const authorId = admin.id;
 
     await prisma.iceberg.create({
       data: {
