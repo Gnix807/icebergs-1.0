@@ -62,7 +62,7 @@ if (!session) return Astro.redirect('/login');
     if (nm.length < 2) { m.textContent = '名称至少2个字'; m.classList.remove('hidden'); return; }
     m.classList.add('hidden'); b.disabled = true; b.textContent = '创建中…';
     try {
-      var r = await fetch('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: nm, topic: t.value, description: d.value.trim() || undefined }) });
+      var r = await fetch('/api/projects?data='+encodeURIComponent(JSON.stringify({name:nm,topic:t.value,description:d.value.trim()||undefined})));
       var j = await r.json();
       if (j.success) { window.location.href = '/projects/' + j.data.project.slug; }
       else { m.textContent = j.error?.message || '创建失败'; m.classList.remove('hidden'); b.disabled = false; b.textContent = '创建'; }

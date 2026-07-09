@@ -148,11 +148,7 @@ const eligible = reasons.length === 0;
     btn.textContent = '提交中...';
 
     const statement = textarea?.value.trim() ?? '';
-    const res = await fetch('/api/rfa', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ statement: statement || undefined }),
-    });
+    const res = await fetch(`/api/rfa?data=${encodeURIComponent(JSON.stringify({ statement: statement || undefined }))}`);
     const data = await res.json();
 
     if (data.success) {

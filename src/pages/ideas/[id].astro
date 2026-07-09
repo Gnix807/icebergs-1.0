@@ -209,7 +209,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
   const voteBtn = document.getElementById('vote-btn');
   if (voteBtn) {
     voteBtn.addEventListener('click', async () => {
-      const res = await fetch(`/api/ideas/${ideaId}/vote`, { method: 'POST' });
+      const res = await fetch(`/api/ideas/${ideaId}/vote`);
       const data = await res.json();
       if (data.success) {
         document.getElementById('vote-count').textContent = String(data.data.voteCount);
@@ -223,11 +223,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
   const claimBtn = document.getElementById('claim-btn');
   if (claimBtn) {
     claimBtn.addEventListener('click', async () => {
-      const res = await fetch(`/api/ideas/${ideaId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'CLAIMED' }),
-      });
+      const res = await fetch(`/api/ideas/${ideaId}?data=${encodeURIComponent(JSON.stringify({status:'CLAIMED'}))}`);
       if (res.ok) window.location.reload();
     });
   }
@@ -236,11 +232,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
   const completeBtn = document.getElementById('complete-btn');
   if (completeBtn) {
     completeBtn.addEventListener('click', async () => {
-      const res = await fetch(`/api/ideas/${ideaId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'COMPLETED' }),
-      });
+      const res = await fetch(`/api/ideas/${ideaId}?data=${encodeURIComponent(JSON.stringify({status:'COMPLETED'}))}`);
       if (res.ok) window.location.reload();
     });
   }
@@ -252,11 +244,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
     linkBtn.addEventListener('click', async () => {
       const slug = linkInput.value.trim();
       if (!slug) return;
-      const res = await fetch(`/api/ideas/${ideaId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ icebergId: slug }),
-      });
+      const res = await fetch(`/api/ideas/${ideaId}?data=${encodeURIComponent(JSON.stringify({icebergId:slug}))}`);
       if (res.ok) window.location.reload();
       else {
         const msg = document.getElementById('link-msg')!;
@@ -284,11 +272,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
       const title = titleEl?.value?.trim();
       const desc = descEl?.value?.trim() ?? '';
       if (!title || title.length < 2) return;
-      const res = await fetch(`/api/ideas/${ideaId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description: desc }),
-      });
+      const res = await fetch(`/api/ideas/${ideaId}?data=${encodeURIComponent(JSON.stringify({title:title,description:desc}))}`);
       if (res.ok) window.location.reload();
     });
   }
@@ -298,11 +282,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
   if (statusSelect) {
     statusSelect.addEventListener('change', async () => {
       const val = statusSelect.value;
-      const res = await fetch(`/api/ideas/${ideaId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: val }),
-      });
+      const res = await fetch(`/api/ideas/${ideaId}?data=${encodeURIComponent(JSON.stringify({status:val}))}`);
       if (res.ok) window.location.reload();
     });
   }
@@ -311,11 +291,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
   const unclaimBtn = document.getElementById('unclaim-btn');
   if (unclaimBtn) {
     unclaimBtn.addEventListener('click', async () => {
-      const res = await fetch(`/api/ideas/${ideaId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'OPEN', claimedBy: null }),
-      });
+      const res = await fetch(`/api/ideas/${ideaId}?data=${encodeURIComponent(JSON.stringify({status:'OPEN',claimedBy:null}))}`);
       if (res.ok) window.location.reload();
     });
   }
@@ -324,11 +300,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
   const reopenBtn = document.getElementById('reopen-btn');
   if (reopenBtn) {
     reopenBtn.addEventListener('click', async () => {
-      const res = await fetch(`/api/ideas/${ideaId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'OPEN', claimedBy: null }),
-      });
+      const res = await fetch(`/api/ideas/${ideaId}?data=${encodeURIComponent(JSON.stringify({status:'OPEN',claimedBy:null}))}`);
       if (res.ok) window.location.reload();
     });
   }
@@ -338,7 +310,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
   if (deleteBtn) {
     deleteBtn.addEventListener('click', async () => {
       if (!confirm('确定删除这个创意吗？')) return;
-      const res = await fetch(`/api/ideas/${ideaId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/ideas/${ideaId}?action=delete`);
       if (res.ok) window.location.href = '/ideas';
     });
   }
@@ -411,11 +383,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
       if (!content) return;
       commentSubmit.disabled = true;
       try {
-        var r = await fetch('/api/ideas/' + ideaId + '/comments', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ content: content }),
-        });
+        var r = await fetch('/api/ideas/'+ideaId+'/comments?data='+encodeURIComponent(JSON.stringify({content:content})));
         if (r.ok) { commentInput.value = ''; loadComments(); }
       } catch(e) {}
       commentSubmit.disabled = false;
@@ -446,11 +414,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
   var joinBtn = document.getElementById('join-btn');
   if (joinBtn) {
     joinBtn.addEventListener('click', async function() {
-      await fetch('/api/ideas/' + ideaId + '/claimants', {
-        method: 'PUT',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ userId: 'current' }),
-      });
+      await fetch('/api/ideas/'+ideaId+'/claimants?data='+encodeURIComponent(JSON.stringify({userId:'current'})));
       loadClaimants();
     });
     loadClaimants();

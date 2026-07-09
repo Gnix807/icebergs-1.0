@@ -138,11 +138,7 @@ const targetDisplay = target.nickname ?? target.username;
     btn.disabled = true;
     btn.textContent = '提交中...';
 
-    const res = await fetch('/api/impeach', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ targetUserId: targetId, reason }),
-    });
+    const res = await fetch(`/api/impeach?data=${encodeURIComponent(JSON.stringify({ targetUserId: targetId, reason }))}`);
     const data = await res.json();
     if (data.success) {
       window.location.href = `/impeach/${data.data.request.id}`;

@@ -748,14 +748,14 @@ export function UserCenter({
   const markAllRead = async () => {
     setMarkingAll(true);
     try {
-      await fetch('/api/notifications/read-all', { method: 'GET' });
+      await fetch('/api/notifications/read-all');
       setNotifications(n => n.map(x => ({ ...x, read: true })));
       setUnreadCount(0);
     } finally { setMarkingAll(false); }
   };
 
   const markOneRead = async (id: string, link: string | null) => {
-    await fetch(`/api/notifications/${id}`, { method: 'GET' });
+    await fetch(`/api/notifications/${id}`);
     setNotifications(n => n.map(x => x.id === id ? { ...x, read: true } : x));
     setUnreadCount(c => Math.max(0, c - 1));
     if (link) window.location.href = link;

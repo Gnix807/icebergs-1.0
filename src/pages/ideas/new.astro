@@ -178,15 +178,11 @@ if (!session) {
     submitBtn.textContent = '提交中…';
 
     try {
-      var res = await fetch('/api/ideas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: title,
-          topic: topicEl.value,
-          description: descEl.value.trim() || undefined,
-        }),
-      });
+      var res = await fetch('/api/ideas?data=' + encodeURIComponent(JSON.stringify({
+        title: title,
+        topic: topicEl.value,
+        description: descEl.value.trim() || undefined,
+      })));
       var data = await res.json();
       if (data.success) {
         window.location.href = '/ideas/' + data.data.idea.id;

@@ -220,7 +220,7 @@ const canCancel = session && status === 'OPEN' &&
       btn.disabled = true;
       btn.textContent = '撤销中...';
       const impeachId = btn.dataset.impeachId;
-      const res = await fetch(`/api/impeach/${impeachId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/impeach/${impeachId}?action=delete`);
       const data = await res.json();
       if (data.success) {
         window.location.reload();

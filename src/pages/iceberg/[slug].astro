@@ -642,11 +642,7 @@ if (iceberg?.status === 'PUBLISHED') {
   // ── 探索成就上报 ──────────────────────────────────────────
   function reportRead(item) {
     if (!isLoggedIn || !item) return;
-    fetch('/api/items/read', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ itemId: item.id, icebergId: item.icebergId, isLastTier: item.isLastTier }),
-    })
+    fetch('/api/items/read?data='+encodeURIComponent(JSON.stringify({itemId:item.id,icebergId:item.icebergId,isLastTier:item.isLastTier})))
       .then(function (r) { return r.json(); })
       .then(function (d) {
         if (!d.newAchievements || d.newAchievements.length === 0) return;
@@ -1441,7 +1437,7 @@ if (iceberg?.status === 'PUBLISHED') {
     var ftRow=document.getElementById('ib-admin-row');
     if(ftBtn&&ftRow){ftRow.classList.remove('hidden');ftBtn.textContent=featured?'取消精选':'⭐ 设为精选';
     ftBtn.addEventListener('click',function(){
-      fetch('/api/icebergs/'+icebergId+'/featured',{method:'POST'}).then(function(r){return r.json()}).then(function(d){
+      fetch('/api/icebergs/'+icebergId+'/featured').then(function(r){return r.json()}).then(function(d){
         if(d.success){var f=d.data.featured;ftBtn.textContent=f?'取消精选':'⭐ 设为精选';if(f){document.getElementById('ib-featured-row').classList.remove('hidden')}else{document.getElementById('ib-featured-row').classList.add('hidden')}}
       });
     });}
@@ -1476,7 +1472,7 @@ if (iceberg?.status === 'PUBLISHED') {
     var uid=document.getElementById('transfer-uid').value.trim();
     if(!uid){tfError.textContent='请输入接收方用户名或 ID';tfError.classList.remove('hidden');return}
     tfConfirm.textContent='转让中...';tfConfirm.disabled=true;
-    fetch('/api/icebergs/'+icebergId+'/transfer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({newAuthorId:uid})})
+    fetch('/api/icebergs/'+icebergId+'/transfer?data='+encodeURIComponent(JSON.stringify({newAuthorId:uid})))
     .then(function(r){return r.json()})
     .then(function(d){
       if(d.success){location.reload()}

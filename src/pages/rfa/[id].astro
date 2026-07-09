@@ -218,7 +218,7 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
       btn.disabled = true;
       btn.textContent = '撤销中...';
       const rfaId = btn.dataset.rfaId;
-      const res = await fetch(`/api/rfa/${rfaId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/rfa/${rfaId}?action=delete`);
       const data = await res.json();
       if (data.success) {
         window.location.reload();

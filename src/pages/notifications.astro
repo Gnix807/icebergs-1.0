@@ -145,6 +145,6 @@ const typeLabel: Record<string, string> = {
 <script>
   var mb = document.getElementById('mark-all-btn');
   if (mb) mb.addEventListener('click', function() {
-    fetch('/api/notifications/read-all', { method: 'PUT' }).then(function() { location.reload(); });
+    fetch('/api/notifications/read-all').then(function() { location.reload(); });
   });
 </script>
