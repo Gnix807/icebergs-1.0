@@ -54,7 +54,7 @@
 
 👉 **[github.com/Gnix807/icebergs-1.0](https://github.com/Gnix807/icebergs-1.0)**
 
-整个项目是一个人借助 AI 编程工具完成的——主要用了 **Claude Code**（架构设计 + 功能开发 + 调试）和 **OpenCode**（代码审查 + 重构 + 部署）。从 Prisma 数据模型到 React 组件到 Docker 部署，几乎每个文件都有 AI 辅助的痕迹。
+整个项目是一个人借助 AI 工具完成的——主要用了 **Claude / Claude Code**（架构设计 + 功能开发 + 调试）、**OpenCode**（代码审查 + 重构 + 部署），以及 **DeepSeek** 和 **GPT** 辅助了部分模块的开发。从 Prisma 数据模型到 React 组件到 Docker 部署，几乎每个文件都有 AI 辅助的痕迹。
 
 这也是我想传达的一点：**AI 工具已经能帮个人完成过去需要一个团队才能做的事**。如果你有想法但不会写代码——现在可能是最好的时候。
 

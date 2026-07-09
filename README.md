@@ -144,10 +144,12 @@ frontend/
 
 ## 致谢
 
-本项目在开发过程中大量使用了 AI 辅助编程工具：
+本项目借助了以下 AI 模型和工具完成开发：
 
-- **[Claude Code](https://docs.anthropic.com/en/docs/claude-code)** — Anthropic 的 AI 编程助手，帮助完成了大部分功能的架构设计、代码实现和调试
-- **[OpenCode](https://opencode.ai)** — 终端 AI 编程工具，帮助处理了大量代码审查、重构和部署任务
+- **[Claude](https://claude.ai) / [Claude Code](https://docs.anthropic.com/en/docs/claude-code)** — Anthropic 的 AI 编程助手，承担了大部分功能的架构设计、代码实现和调试工作
+- **[OpenCode](https://opencode.ai)** — 终端 AI 编程工具，负责代码审查、重构和部署流程
+- **[DeepSeek](https://deepseek.com)** — 辅助部分后端逻辑和数据处理任务的实现
+- **[GPT / ChatGPT](https://chat.openai.com)** — 辅助部分前端组件和 UI 交互的设计与实现
 
 没有这些工具的辅助，一个人不可能在短时间内完成这个体量的全栈项目。
 
