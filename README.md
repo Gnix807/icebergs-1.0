@@ -16,121 +16,96 @@
 
 <br />
 
-<p align="center">
-  一个人人都可以浏览和创建的<strong>冰山图社区</strong>。<br />
-  把任意话题按深度分层拆解——从人尽皆知到细思极恐。<br />
-  完全免费，开源，由社区驱动。
-</p>
+> 你有没有过这种感觉——你以为自己很了解某件事，直到有一天发现，那只是冰山一角。
 
-<br />
+**冰山图宇宙**是一个社区驱动的知识平台。每个人都可以在这里把任意话题按「从浅到深」拆解成一座冰山，也可以浏览别人建好的冰山、投票、评论、解锁成就。完全免费，无需下载。
 
 ---
 
-## 什么是冰山图？
+## 为什么建这个？
 
-> 水面之上的只是冰山一角——而真正庞大的部分，藏在水下。
+互联网上有大量零散的「冷知识」「深层资料」——它们分散在 Reddit 帖子、YouTube 评论区、个人博客里。冰山图把这些碎片组织起来，变成一张可浏览、可协作、可沉淀的地图。
 
-冰山图是一种结构化知识形式。把一个主题按「大众认知 → 深层奥秘」分成多个层级，每层列出若干条目并附上解释。越往下越冷门、越硬核。
-
-从恐怖游戏到编程语言，从都市传说到互联网黑话——**任何话题都可以建一座冰山**。
+这里没有算法推荐，没有信息流。**你来决定看什么、建什么。**
 
 ---
 
-## 功能
+## 逛一逛
 
+站上已经有各种话题的冰山，举几个例子：
 
-| 模块 | 说明 |
-|---|---|
-| :ice_cube: **冰山图编辑器** | 可视化拖拽编辑，Markdown + KaTeX，撤销/重做，自动保存 |
-| :mag: **全文搜索** | 中英文混合搜索，Ctrl+K 全局呼出 |
-| :bar_chart: **排行榜** | 热门/高赞双榜，前三名金银铜专属边框 |
-| :trophy: **品质分 & 成就** | 34+ 种成就徽章（传说/史诗/稀有/普通），活跃即解锁 |
-| :speech_balloon: **投票 & 评论** | 每个冰山都可互动，每次操作累积品质分 |
-| :busts_in_silhouette: **协作编辑** | WikiProject 看板、成员邀请、多人编修 |
-| :bulb: **创意板** | 35 种话题分类，看板+列表双视图，多人认领 |
-| :shield: **RBAC 权限** | 六层角色体系 + RfA 选举 + 弹劾机制 |
-| :art: **双色主题** | 暗色终端绿 + 浅色模式，CRT 复古扫描线 |
-| :wrench: **管理面板** | 用户管理、审核队列、系统配置、SEO 管理 |
-| :camera: **一键导出** | 将冰山图导出为 PNG 信息图 |
+- :video_game: **恐怖游戏冰山** — 从《生化危机》到只有几百人玩过的 indie 恐怖游戏
+- :speech_balloon: **中国互联网黑话冰山** — 从「YYDS」「绝绝子」到特定圈子的暗语切口
+- :alien: **阴谋论冰山** — 从登月造假到全球蜥蜴人，信不信由你
+- :computer: **编程语言冰山** — 从 Python/JS 到 Brainfuck、Malbolge
+- :notes: **音乐流派冰山** — 从流行/摇滚到蒸汽波、低保真、数学摇滚
+
+你可以搜索、按分类筛选、点「随机」碰运气，或者直接看排行榜——**前三名有金银铜专属边框**。
 
 ---
 
-## 快速开始
+## 建一座冰山
 
-```bash
-git clone https://github.com/Gnix807/icebergs-1.0.git
-cd icebergs-1.0/frontend
+编辑器是可视化的：
 
-cp .env.example .env    # 填入数据库连接 + OAuth 凭据
+1. 取个标题，写段简介
+2. 添加层级（水面 → 浅水 → 深层 → 深渊……层数不限）
+3. 在每层添加条目，写解释、打标签、附来源链接
+4. 随时保存草稿，随时回来继续编辑
+5. 还可以邀请别人**协作编辑**
+6. 完成后提交审核——系统会自动检查标题长度、层级数量、条目密度是否达标
 
-npm install
-npx prisma db push && npx prisma generate
-node prisma/seed.mjs && node prisma/seed-achievements.mjs
-psql -d icebergs -f prisma/migrations/001_fulltext_search.sql
-
-npm run dev             # http://localhost:4321
-```
-
-### Docker
-
-```bash
-cp .env.docker .env
-docker compose up -d
-```
+审核通过后，你的冰山就会出现在站上，供所有人浏览、投票、评论。
 
 ---
 
-## 技术栈
+## 社区
 
-| 层 | 技术 |
-|---|---|
-| 框架 | [Astro](https://astro.build) 5 + [React](https://react.dev) 19 |
-| 样式 | [Tailwind CSS](https://tailwindcss.com) + 自定义 CSS 变量 |
-| 数据库 | [PostgreSQL](https://postgresql.org) + [Prisma](https://prisma.io) |
-| 搜索 | PostgreSQL Full-Text Search (tsvector + GIN) |
-| 状态管理 | [Zustand](https://github.com/pmndrs/zustand) |
-| 拖拽 | [@dnd-kit](https://dndkit.com) |
-| 认证 | GitHub OAuth + Google OAuth + 邮箱密码 |
-| 部署 | Node.js standalone + Docker Compose |
+每个冰山都可以**投票和评论**。高质量的内容会自然浮上排行榜。
+
+每次互动（浏览、投票、评论、创建冰山）都会累积**品质分**。分数达到阈值会解锁**成就徽章**——
+
+- :beginner: 访客 → :microscope: 研究员 → :chart_with_upwards_trend: 分析师 → :crown: 督导者
+
+徽章显示在头像旁边，代表你在社区里的信誉值。一共有 34+ 种成就，包括「深夜访问」「连续打卡」「协作达人」等等。**半夜逛冰山真的会被发现。**
 
 ---
 
-## 项目结构
+## 不只是冰山
 
-```
-frontend/
-├── prisma/                   # Schema + 迁移 + 种子
-├── src/
-│   ├── components/
-│   │   ├── admin/            # 管理面板
-│   │   ├── iceberg/          # 冰山编辑器、列表、评论
-│   │   ├── user/             # 用户中心、设置、成就
-│   │   └── ui/               # Toast、骨架屏、成就弹窗
-│   ├── layouts/Layout.astro  # 全局布局 + SEO + 分析
-│   ├── lib/                  # 认证、权限、成就、通知
-│   ├── middleware.ts         # 速率限制
-│   ├── pages/
-│   │   ├── api/              # REST API 路由
-│   │   ├── iceberg/          # 冰山图浏览/编辑
-│   │   ├── projects/         # 专题协作
-│   │   └── ideas/            # 创意板
-│   ├── stores/               # Zustand 状态
-│   └── styles/global.css     # 全局样式
-├── docker-compose.yml
-└── package.json
-```
+除了核心的冰山图，站上还有：
+
+- **创意板** — 35 个话题分类，如果你想看某个话题但还没人建冰山，可以先提个创意，别人来认领实现
+- **专题协作** — 开一个 WikiProject，拉人组队，用看板管任务，一起建冰山
+- **社区治理** — 编辑资格由 RfA 公开选举产生，管理员可以被弹劾。不是一个人说了算
+
+---
+
+## 设计
+
+暗色主题，品牌色 `#00FF41`（终端绿）。老式 CRT 监视器质感——扫描线、噪点、亮度波动（可以在设置里开关）。
+
+也有浅色模式，在设置里一键切。
 
 ---
 
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request。
+欢迎任何形式的贡献——修 bug、提功能、写文档、做翻译。
+
+```bash
+git clone https://github.com/Gnix807/icebergs-1.0.git
+cd icebergs-1.0/frontend
+cp .env.example .env
+npm install
+npm run dev
+```
 
 ---
 
 ## 致谢
 
-本项目借助以下 AI 模型和工具完成开发——一个人 + AI，做出了以往需要一个团队才能完成的全栈项目。
+这个项目由一个人借助 AI 工具完成——从想法到上线、从数据模型到前端动画。
 
 | 工具 / 模型 | 主要贡献 |
 |---|---|
@@ -139,7 +114,7 @@ frontend/
 | **[DeepSeek](https://deepseek.com)** | 后端逻辑、数据处理 |
 | **[GPT / ChatGPT](https://chat.openai.com)** | 前端组件、UI 交互 |
 
-同时感谢 **Astro**、**React**、**Prisma**、**PostgreSQL** 等开源基础设施。
+也感谢 **Astro**、**React**、**Prisma**、**PostgreSQL** 等基础设施。
 
 ---
 
