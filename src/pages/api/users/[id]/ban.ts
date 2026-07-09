@@ -14,7 +14,7 @@ import { getSession } from '../../../../lib/auth';
 import { can } from '../../../../lib/permissions';
 import { notify } from '../../../../lib/notify';
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -29,7 +29,7 @@ export async function POST(event: APIContext) {
     const targetCheck = await prisma.user.findUnique({ where: { id }, select: { isFounder: true } });
     if (targetCheck?.isFounder) return json(error(ErrorCodes.FORBIDDEN, '无法对创始人执行此操作'), 403);
 
-    const body = await event.request.json() as { type?: string; days?: number; reason?: string };
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json() as { type?: string; days?: number; reason?: string };
     const { type, days, reason } = body;
 
     if (type !== 'TEMP' && type !== 'PERM') {

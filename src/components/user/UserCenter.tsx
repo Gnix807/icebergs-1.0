@@ -604,7 +604,7 @@ export function UserCenter({
   // 关注状态
   useEffect(() => {
     if (isOwner) return;
-    fetch(`/api/users/${user.id}/follow`, { method: 'POST' }).then(r => r.json()).then(d => {
+    fetch(`/api/users/${user.id}/follow`).then(r => r.json()).then(d => {
       if (d.success) { setFollowing(d.data.following); setFollowerCount(d.data.followerCount); }
     }).catch(() => {});
   }, [user.id, isOwner]);
@@ -612,7 +612,7 @@ export function UserCenter({
   const toggleFollow = async () => {
     setFollowBusy(true);
     try {
-      const res = await fetch(`/api/users/${user.id}/follow`, { method: 'POST' });
+      const res = await fetch(`/api/users/${user.id}/follow`);
       const data = await res.json();
       if (data.success) { setFollowing(data.data.following); setFollowerCount(data.data.followerCount); }
     } finally { setFollowBusy(false); }
@@ -765,10 +765,7 @@ export function UserCenter({
     if (appealStatement.trim().length < 20) return;
     setAppealBusy(true);
     try {
-      const res  = await fetch(`/api/users/${user.id}/appeal`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ statement: appealStatement }),
-      });
+      const res  = await fetch(`/api/users/${user.id}/appeal?data=${encodeURIComponent(JSON.stringify({ statement: appealStatement }))}`);
       const data = await res.json();
       if (data.success) { toast('申诉已提交，等待管理员审核'); setShowAppeal(false); setAppealStatement(''); }
       else toast(data.error?.message ?? '提交失败', 'error');
@@ -778,10 +775,7 @@ export function UserCenter({
   const submitPromotion = async () => {
     setPromotionBusy(true);
     try {
-      const res  = await fetch('/api/promotion/request', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ statement: promotionStatement }),
-      });
+      const res  = await fetch(`/api/promotion/request?data=${encodeURIComponent(JSON.stringify({ statement: promotionStatement }))}`);
       const data = await res.json();
       if (data.success) { toast('晋升申请已提交，等待编辑审批'); setShowPromotion(false); setPromotionStatement(''); setPromotionSent(true); }
       else toast(data.error?.message ?? '提交失败', 'error');
@@ -796,7 +790,7 @@ export function UserCenter({
       if (actionModal === 'warn')     { url = `/api/users/${user.id}/warn`;     body = { level: Number(actionForm.level ?? 1), reason: actionForm.reason }; }
       else if (actionModal === 'restrict') { url = `/api/users/${user.id}/restrict`; body = { reason: actionForm.reason }; }
       else if (actionModal === 'ban') { url = `/api/users/${user.id}/ban`;      body = { type: actionForm.banType ?? 'TEMP', days: Number(actionForm.days ?? 7), reason: actionForm.reason }; }
-      const res  = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const res  = await fetch(`${url}?data=${encodeURIComponent(JSON.stringify(body))}`);
       const data = await res.json();
       if (data.success) { toast('操作已执行'); setActionModal(null); setActionForm({}); window.location.reload(); }
       else toast(data.error?.message ?? '操作失败', 'error');
@@ -1026,7 +1020,7 @@ export function UserCenter({
             {isOwner && (
               <button onClick={async () => {
                 try {
-                  const res = await fetch('/api/achievements/recheck', { method: 'POST' });
+                  const res = await fetch('/api/achievements/recheck');
                   const data = await res.json();
                   toast(data.data?.message || '复核完成');
                   window.location.reload();
@@ -1312,11 +1306,7 @@ function AwardModal({ userId, isLeaving, onClose, existingAwards, isLight }: {
     if (!selectedType) return;
     setBusy(true); setError(null);
     try {
-      const res  = await fetch(`/api/users/${userId}/awards`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: selectedType, message: message.trim() || undefined }),
-      });
+      const res  = await fetch(`/api/users/${userId}/awards?data=${encodeURIComponent(JSON.stringify({ type: selectedType, message: message.trim() || undefined }))}`);
       const data = await res.json();
       if (data.success) {
         const awardId = data.data?.id as string | undefined;
@@ -1334,9 +1324,7 @@ function AwardModal({ userId, isLeaving, onClose, existingAwards, isLight }: {
     setRevokingType(type);
     setError(null);
     try {
-      const res = await fetch(`/api/users/${userId}/awards?awardId=${encodeURIComponent(awardId)}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(`/api/users/${userId}/awards?awardId=${encodeURIComponent(awardId)}&action=delete`);
       const data = await res.json();
       if (!data.success) {
         setError(data.error?.message ?? '撤回失败');

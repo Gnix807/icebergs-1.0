@@ -27,7 +27,7 @@ const STATUS_TO_APPEAL_TYPE: Record<string, string> = {
   PERM_BANNED: 'PERM_BAN',
 };
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -40,7 +40,7 @@ export async function POST(event: APIContext) {
       return json(error(ErrorCodes.FORBIDDEN, '只能为自己提交申诉'), 403);
     }
 
-    const body = await event.request.json() as { statement?: string };
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json() as { statement?: string };
     const { statement } = body;
 
     if (!statement || statement.trim().length < 20) {

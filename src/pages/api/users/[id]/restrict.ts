@@ -10,7 +10,7 @@ import { getSession } from '../../../../lib/auth';
 import { can } from '../../../../lib/permissions';
 import { notify } from '../../../../lib/notify';
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -22,7 +22,7 @@ export async function POST(event: APIContext) {
     if (!id) return json(error(ErrorCodes.BAD_REQUEST, '缺少用户 ID'), 400);
     if (id === session.userId) return json(error(ErrorCodes.FORBIDDEN, '不能限制自己'), 403);
 
-    const body = await event.request.json() as { reason?: string };
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json() as { reason?: string };
     const { reason } = body;
     if (!reason || reason.trim().length < 5) {
       return json(error(ErrorCodes.BAD_REQUEST, '理由不能为空（至少 5 字）'), 400);

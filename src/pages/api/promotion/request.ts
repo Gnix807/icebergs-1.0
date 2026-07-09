@@ -30,12 +30,12 @@ async function getThresholds() {
   };
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
-    const body = await event.request.json() as { statement?: string };
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json() as { statement?: string };
     const statement = (body.statement ?? '').trim().slice(0, 200);
 
     const [user, thresholds] = await Promise.all([

@@ -9,7 +9,7 @@ import { getSession } from '../../../lib/auth/index';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { recheckAllAchievements } from '../../../lib/achievementService';
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) {
     return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
