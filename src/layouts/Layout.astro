@@ -327,13 +327,16 @@ const seoSettings = await prisma.systemSettings.findMany({
 
       // ── CRT 动态效果 ────────────────────────────────────
       let _crtTimer = 0;
-      let _crtObserver: MutationObserver | null = null;
-      function initCrtFx() {
-        const el = document.getElementById('crt-scanlines');
-        if (!el) return;
-        if (_crtObserver) _crtObserver.disconnect();
+      function stopCrt(el: HTMLElement) {
         clearTimeout(_crtTimer);
         _crtTimer = 0;
+        el.style.display = 'none';
+        el.style.transform = '';
+        el.style.textShadow = '';
+      }
+      function startCrt(el: HTMLElement) {
+        if (el.style.display !== 'none' && _crtTimer) return; // 已经在运行
+        el.style.display = '';
 
         function glitch() {
           if (el.style.display === 'none') return;
@@ -356,30 +359,33 @@ const seoSettings = await prisma.systemSettings.findMany({
           _crtTimer = window.setTimeout(glitch, 1000 + Math.random() * 7000);
         }
 
-        const stored = localStorage.getItem('crt-scanlines');
-        if (stored !== 'on') {
-          el.style.display = 'none';
-          el.style.transform = '';
-          el.style.textShadow = '';
-        } else {
-          el.style.display = '';
-          scheduleNext();
-        }
-
-        // 始终注册 observer，这样 NavBar toggle 后才能立即启动效果
-        _crtObserver = new MutationObserver(() => {
-          if (el.style.display === 'none') {
-            clearTimeout(_crtTimer);
-            _crtTimer = 0;
-            el.style.transform = '';
-            el.style.textShadow = '';
-          } else if (!_crtTimer) {
-            scheduleNext();
-          }
-        });
-        _crtObserver.observe(el, { attributes: true, attributeFilter: ['style'] });
+        scheduleNext();
       }
+
+      function initCrtFx() {
+        const el = document.getElementById('crt-scanlines');
+        if (!el) return;
+        if (localStorage.getItem('crt-scanlines') === 'on') {
+          startCrt(el);
+        } else {
+          stopCrt(el);
+        }
+      }
+
       initCrtFx();
+
+      // 监听 NavBar 或其他组件发出的 crt toggle 事件
+      document.addEventListener('crt:toggle', () => {
+        const el = document.getElementById('crt-scanlines');
+        if (!el) return;
+        if (localStorage.getItem('crt-scanlines') === 'on') {
+          startCrt(el);
+        } else {
+          stopCrt(el);
+        }
+      });
+
+      // 页面切换时重新同步状态
       document.addEventListener('astro:page-load', initCrtFx);
 
       // ── ViewTransitions 页面导航进度条 ───────────────────

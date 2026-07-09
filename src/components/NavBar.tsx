@@ -257,8 +257,8 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
     const next = !crtOn;
     setCrtOn(next);
     localStorage.setItem('crt-scanlines', next ? 'on' : 'off');
-    const el = document.getElementById('crt-scanlines');
-    if (el) el.style.display = next ? '' : 'none';
+    // 通知 Layout 脚本切换 CRT 效果，避免 DOM 竞争
+    document.dispatchEvent(new CustomEvent('crt:toggle'));
   };
 
   // ── 搜索 ──────────────────────────────────────
