@@ -7,7 +7,7 @@ until pg_isready -h db -U icebergs 2>/dev/null; do
 done
 
 echo "[icebergs] 数据库迁移..."
-npx prisma db push --skip-generate
+npx prisma db push --accept-data-loss --skip-generate
 
 echo "[icebergs] 种子数据..."
 node prisma/seed.mjs 2>/dev/null || true
