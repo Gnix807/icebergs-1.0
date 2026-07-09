@@ -14,7 +14,7 @@ function json(body: unknown, status: number) {
   });
 }
 
-export async function GET({
+export async function GET(event: APIContext) {
   const dataParam = event.url.searchParams.get('data');
   if (dataParam) {
 
