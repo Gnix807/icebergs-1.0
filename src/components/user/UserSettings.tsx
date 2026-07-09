@@ -1,6 +1,29 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 import { toast } from '../ui/Toast';
 
+/** 压缩图片到指定最大尺寸，返回 JPEG base64（去掉 data: 前缀） */
+function compressImage(file: File, maxSize: number, quality: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxSize || height > maxSize) {
+        const ratio = Math.min(maxSize / width, maxSize / height);
+        width  = Math.round(width  * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width  = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality).split(',')[1]);
+    };
+    img.onerror = () => reject(new Error('图片加载失败'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 interface Props {
   userId: string;
   initial: {
@@ -74,14 +97,9 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
 
     setUploading(true);
     try {
-      // base64 编码后通过 GET 发送（兼容 WAF）
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      const payload = JSON.stringify({ file: { name: file.name, type: file.type, data: base64 } });
+      // 压缩图片到合理尺寸，防止 base64 URL 过长被服务器拒绝
+      const compressed = await compressImage(file, 256, 0.7);
+      const payload = JSON.stringify({ file: { name: file.name, type: 'image/jpeg', data: compressed } });
       const res = await fetch(`/api/users/${userId}/avatar?data=${encodeURIComponent(payload)}`);
       const data = await res.json();
       if (data.success) {
