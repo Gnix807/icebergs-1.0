@@ -101,11 +101,7 @@ export function AdminUsers() {
         body = {};
       }
 
-      const res = await fetch(url, {
-        method: modal.type === 'role' ? 'PATCH' : modal.type === 'delete' ? 'GET' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch(`${url}?data=${encodeURIComponent(JSON.stringify(body))}`);
       const data = await res.json();
       if (data.success) {
         toast('操作成功');
