@@ -89,15 +89,77 @@
 
 ## 贡献
 
-欢迎任何形式的贡献——修 bug、提功能、写文档、做翻译。
+欢迎任何形式的参与——不管你是写代码、做设计、写文档、报 bug、还是单纯来提想法。
+
+### 本地开发
 
 ```bash
 git clone https://github.com/Gnix807/icebergs-1.0.git
 cd icebergs-1.0/frontend
 cp .env.example .env
 npm install
-npm run dev
+npm run dev                 # http://localhost:4321
 ```
+
+### 在哪里帮忙
+
+| 方向 | 说明 |
+|---|---|
+| 🐛 **Bug 修复** | Issue 区挑一个，或者自己发现了直接提 PR |
+| ✨ **新功能** | 先开 Issue 讨论，避免方向跑偏 |
+| 📝 **文档 & 翻译** | README、使用指南、i18n 翻译 |
+| 🧊 **建冰山** | 直接在站上创建冰山图，就是最好的贡献 |
+| 🔍 **审核** | 审核队列里还有未处理的冰山图和举报 |
+| 🎨 **视觉** | 主题优化、动画调整、移动端适配 |
+
+### 提交前
+
+- TypeScript 类型检查：`npm run check`
+- 生产构建验证：`npm run build`
+- 保持跟现有代码风格一致（Space Mono 等宽字体，终端绿主题）
+
+---
+
+## 部署
+
+### Docker Compose（推荐）
+
+```bash
+git clone https://github.com/Gnix807/icebergs-1.0.git /opt/icebergs
+cd /opt/icebergs
+cp .env.docker .env          # 编辑填入 OAuth 密钥
+docker compose up -d          # 自动建库、迁移、种子、启动
+```
+
+之后用 nginx 反代到 `127.0.0.1:4321`，配好 SSL 证书即可。
+
+**更新**：`git pull && docker compose up -d --build`
+
+**备份**：`docker compose exec db pg_dump -U icebergs icebergs > backup.sql`
+
+### 手动部署
+
+环境要求：Node.js 22+，PostgreSQL 18，然后：
+
+```bash
+cp .env.example .env          # 填入数据库 + OAuth 配置
+npm install
+npx prisma generate && npx prisma db push
+node prisma/seed.mjs && node prisma/seed-achievements.mjs
+psql -d icebergs -f prisma/migrations/001_fulltext_search.sql
+npm run build
+node dist/server/entry.mjs    # 用 PM2 或进程守护托管
+```
+
+### 部署检查清单
+
+- [ ] PostgreSQL 数据库已创建
+- [ ] `.env` 中 `DATABASE_URL`、OAuth 密钥、`REDIRECT_URI` 已配置
+- [ ] 全文搜索索引已初始化
+- [ ] 反向代理 + SSL 证书已配置
+- [ ] 浏览器打开域名确认可访问
+- [ ] GitHub / Google OAuth 回调地址已更新为生产域名
+- [ ] （可选）配置搜索引擎验证码 + 提交 sitemap
 
 ---
 
