@@ -50,7 +50,7 @@ export async function createSession(userId: string, event: APIContext): Promise<
 
   event.cookies.set('session', sessionId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,  // nginx 已处理 SSL 终止
     sameSite: 'lax',
     maxAge: SESSION_TTL_MS / 1000,
     path: '/',
