@@ -4,6 +4,42 @@ const prisma = new PrismaClient();
 
 const announcements = [
   {
+    title: '🐛 注册登录修复 + 注册错误提示优化',
+    content: `## 修复
+
+- **修复注册/登录/重置密码失败**：部分用户反馈提交表单后无反应或报网络错误。排查后发现是服务器 WAF 拦截了 POST 请求，已将相关接口改为兼容 GET 请求。现在注册、登录、重置密码均可正常使用。
+
+## 优化
+
+- **注册错误提示升级**：哪个字段填错了，输入框边框会变红，框下面直接显示具体原因（如"邮箱已被注册""用户名已被占用"），修改后提示自动消失，不用再盯着顶部一行通用报错瞎猜了。`,
+    type: 'update',
+    pinned: false,
+  },
+  {
+    title: '🖥️ CRT 扫描线开关修复',
+    content: `CRT 复古扫描线效果之前有 bug——在设置里开启后需要刷新页面才生效，而且偶尔会自己关掉。
+
+问题出在底层用了复杂的 JS 计时器和 DOM 观察器，跟页面导航互相干扰。现已改为纯 CSS class 控制（\`html.crt-on\`），开关节奏丝滑，不再需要刷新。`,
+    type: 'maintenance',
+    pinned: false,
+  },
+  {
+    title: '🗑️ 管理员新增删除用户功能',
+    content: `管理后台 → 用户管理，每个用户行末尾新增了「删除」按钮。点击后弹出确认框，显示该用户的冰山图数量、积分、角色等信息，确认后删除用户及其所有冰山图。
+
+注意：不可删除创始人账号，不可删除自己。操作不可撤销。`,
+    type: 'update',
+    pinned: false,
+  },
+  {
+    title: '📖 文档与仓库全面翻新',
+    content: `- **README 重写**：按开源项目标准重构，含项目简介、功能表、技术栈、部署指南、贡献指南、致谢等完整章节。新增了网站截图、skill-icons 技术栈图标、定制头图。
+- **仓库开源源码优化**：清理私人信息、移除未使用的依赖、补充 .gitignore 规则。
+- **B站专栏文章**：已发布介绍文章，欢迎围观转发。`,
+    type: 'info',
+    pinned: false,
+  },
+  {
     title: '🎨 视觉系统全面升级',
     content: `## 概览
 
@@ -131,6 +167,8 @@ async function main() {
 
   let n = 0;
   for (const ann of announcements) {
+    const exists = await prisma.announcement.findFirst({ where: { title: ann.title } });
+    if (exists) { console.log('Skip existing:', ann.title); continue; }
     await prisma.announcement.create({
       data: {
         title: ann.title,
