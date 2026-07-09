@@ -70,14 +70,19 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // reset so the same file can be re-selected if needed
     e.target.value = '';
 
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res  = await fetch(`/api/users/${userId}/avatar`, { method: 'POST', body: fd });
+      // base64 编码后通过 GET 发送（兼容 WAF）
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const payload = JSON.stringify({ file: { name: file.name, type: file.type, data: base64 } });
+      const res = await fetch(`/api/users/${userId}/avatar?data=${encodeURIComponent(payload)}`);
       const data = await res.json();
       if (data.success) {
         setAvatar(data.data.url);
