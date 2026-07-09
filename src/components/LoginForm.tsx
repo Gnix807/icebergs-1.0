@@ -16,6 +16,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
   const [cooldown, setCooldown] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [fieldError, setFieldError] = useState<string | null>(null); // 高亮哪个字段: email/password/username/nickname
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -83,6 +84,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
   useEffect(() => {
     setError(null);
     setInfo(null);
+    setFieldError(null);
     setCapsLockOn(false);
   }, [mode]);
 
@@ -97,11 +99,21 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
   const normalizeSubmitError = (raw: string | undefined) => {
     const msg = (raw || '').trim();
     if (!msg) {
+    setFieldError(null);
+    if (error) setError(null);
       return mode === 'login' ? '登录失败，请稍后重试' : mode === 'register' ? '注册失败，请稍后重试' : '重置密码失败，请稍后重试';
     }
     if (mode === 'login' && msg.includes('邮箱或密码错误')) return '邮箱或密码错误，请检查后重试';
-     if (mode === 'login' && msg.includes('第三方登录')) return '该邮箱仅支持第三方登录，请改用 GitHub 登录';
+    if (mode === 'login' && msg.includes('第三方登录')) return '该邮箱仅支持第三方登录，请改用 GitHub 登录';
     if (mode === 'register' && msg.includes('验证码')) return msg;
+
+    // 字段级错误高亮
+    if (msg.includes('邮箱')) setFieldError('email');
+    else if (msg.includes('密码')) setFieldError('password');
+    else if (msg.includes('用户名')) setFieldError('username');
+    else if (msg.includes('昵称')) setFieldError('nickname');
+    else setFieldError(null);
+
     return msg;
   };
 
@@ -310,12 +322,15 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder:text-text-lo transition-colors"
+                onChange={(e) => { setEmail(e.target.value); setFieldError(null); }}
+                className={`w-full px-3 py-2.5 bg-surface-0 border text-sm font-mono focus:outline-none placeholder:text-text-lo transition-colors ${
+                  fieldError === 'email' ? 'border-danger text-danger' : 'border-border-subtle focus:border-brand'
+                }`}
                 placeholder="邮箱"
                 required
                 aria-label="邮箱地址"
               />
+              {fieldError === 'email' && <p className="text-[10px] font-mono text-danger mt-0.5 pl-1">{error}</p>}
             </div>
 
             <div>
@@ -323,10 +338,12 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); setFieldError(null); }}
                   onKeyUp={handlePasswordKeyState}
                   onKeyDown={handlePasswordKeyState}
-                  className="w-full px-3 py-2.5 pr-16 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder:text-text-lo transition-colors"
+                  className={`w-full px-3 py-2.5 pr-16 bg-surface-0 border text-sm font-mono focus:outline-none placeholder:text-text-lo transition-colors ${
+                    fieldError === 'password' ? 'border-danger text-danger' : 'border-border-subtle focus:border-brand'
+                  }`}
                   placeholder={mode === 'reset' ? '新密码' : '密码'}
                   required
                   minLength={6}
@@ -340,6 +357,10 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                   {showPassword ? '隐藏' : '显示'}
                 </button>
               </div>
+              {fieldError === 'password' && <p className="text-[10px] font-mono text-danger mt-0.5 pl-1">{error}</p>}
+              {(mode === 'register' || mode === 'reset') && !fieldError && (
+                <p className="text-[10px] font-mono text-text-lo mt-0.5 pl-1">至少6位</p>
+              )}
             </div>
 
             {capsLockOn && (
@@ -404,23 +425,30 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                   <input
                     type="text"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder:text-text-lo transition-colors"
+                    onChange={(e) => { setUsername(e.target.value); setFieldError(null); }}
+                    className={`w-full px-3 py-2.5 bg-surface-0 border text-sm font-mono focus:outline-none placeholder:text-text-lo transition-colors ${
+                      fieldError === 'username' ? 'border-danger text-danger' : 'border-border-subtle focus:border-brand'
+                    }`}
                     placeholder="用户名"
                     required
                     pattern="^[a-zA-Z0-9_]{3,20}$"
                     aria-label="用户名"
                   />
+                  <p className="text-[10px] font-mono text-text-lo mt-0.5 pl-1">3-20位字母、数字或下划线</p>
+                  {fieldError === 'username' && <p className="text-[10px] font-mono text-danger mt-0.5 pl-1">{error}</p>}
                 </div>
                 <div>
                   <input
                     type="text"
                     value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-surface-0 border border-border-subtle text-sm font-mono focus:border-brand focus:outline-none placeholder:text-text-lo transition-colors"
+                    onChange={(e) => { setNickname(e.target.value); setFieldError(null); }}
+                    className={`w-full px-3 py-2.5 bg-surface-0 border text-sm font-mono focus:outline-none placeholder:text-text-lo transition-colors ${
+                      fieldError === 'nickname' ? 'border-danger text-danger' : 'border-border-subtle focus:border-brand'
+                    }`}
                     placeholder="昵称 (选填)"
                     aria-label="昵称"
                   />
+                  {fieldError === 'nickname' && <p className="text-[10px] font-mono text-danger mt-0.5 pl-1">{error}</p>}
                 </div>
               </>
             )}
