@@ -755,7 +755,7 @@ export function UserCenter({
   };
 
   const markOneRead = async (id: string, link: string | null) => {
-    await fetch(`/api/notifications/${id}`, { method: 'PUT' });
+    await fetch(`/api/notifications/${id}`, { method: 'GET' });
     setNotifications(n => n.map(x => x.id === id ? { ...x, read: true } : x));
     setUnreadCount(c => Math.max(0, c - 1));
     if (link) window.location.href = link;
