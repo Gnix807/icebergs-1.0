@@ -2,12 +2,12 @@ FROM node:22-slim
 
 WORKDIR /app
 
-# 安装系统依赖（Prisma + bcrypt）
+# PostgreSQL 客户端（启动脚本需要 pg_isready / psql）
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    openssl ca-certificates \
+    postgresql-client ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制依赖文件
+# 依赖
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev && npm install prisma --no-save
 
