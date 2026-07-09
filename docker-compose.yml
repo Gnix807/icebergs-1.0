@@ -4,6 +4,7 @@ services:
     container_name: icebergs-db
     restart: unless-stopped
     environment:
+      TZ: Asia/Shanghai
       POSTGRES_USER: icebergs
       POSTGRES_PASSWORD: ${DB_PASSWORD:-icebergs_dev}
       POSTGRES_DB: icebergs
@@ -26,6 +27,7 @@ services:
     ports:
       - "4321:4321"
     environment:
+      TZ: Asia/Shanghai
       HOST: 0.0.0.0
       DATABASE_URL: postgresql://icebergs:${DB_PASSWORD:-icebergs_dev}@db:5432/icebergs
       NODE_ENV: production
