@@ -8,8 +8,9 @@ export async function ALL(event: APIContext) {
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
   const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await (async () => { try { return await event.request.json(); } catch { return {}; } })();
+  const action = event.url.searchParams.get('action');
 
-  if (event.request.method === 'DELETE') {
+  if (event.request.method === 'DELETE' || action === 'delete') {
     try {
       const project = await prisma.project.findUnique({ where: { slug: body.slug }, select: { id: true, creatorId: true } });
       if (!project) return json(error(ErrorCodes.NOT_FOUND, '专题不存在'), 404);
@@ -19,7 +20,7 @@ export async function ALL(event: APIContext) {
     } catch (err) { return json(error(ErrorCodes.INTERNAL_ERROR, '删除失败'), 500); }
   }
 
-  if (event.request.method === 'PATCH') {
+  if (event.request.method === 'PATCH' || (action !== 'delete' && body.slug)) {
     try {
       const project = await prisma.project.findUnique({ where: { slug: body.slug }, select: { id: true, creatorId: true } });
       if (!project) return json(error(ErrorCodes.NOT_FOUND, '专题不存在'), 404);
