@@ -1,4 +1,11 @@
 import { defineMiddleware } from 'astro:middleware';
+import { readFile } from 'fs/promises';
+import { join, extname } from 'path';
+
+const MIME: Record<string, string> = {
+  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+  '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml',
+};
 
 const rateMap = new Map<string, number[]>();
 const CLEAN_INTERVAL = 60_000;
@@ -27,6 +34,20 @@ function getClientIP(context: any): string {
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  // Serve runtime-uploaded files from public/uploads/（Astro prod 不自动 serve）
+  const { pathname } = new URL(context.request.url);
+  if (pathname.startsWith('/uploads/')) {
+    try {
+      const filePath = join(process.cwd(), 'public', pathname);
+      const ext = extname(filePath).toLowerCase();
+      const contentType = MIME[ext] || 'application/octet-stream';
+      const data = await readFile(filePath);
+      return new Response(data, { status: 200, headers: { 'Content-Type': contentType, 'Cache-Control': 'public, max-age=604800' } });
+    } catch {
+      return new Response('Not Found', { status: 404 });
+    }
+  }
+
   // 静态资源和健康检查跳过限流
   if (STATIC_EXT.test(context.url.pathname) || context.url.pathname === '/api/health') return next();
 
