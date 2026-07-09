@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="public/favicon.svg" width="80" />
+  <img src="public/readme-banner.svg" alt="Iceberg Universe" />
 </p>
-
-<h1 align="center">冰山图宇宙 · Iceberg Universe</h1>
 
 <p align="center">
   <a href="https://icebergs.gnix807.cn">

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320">
+  <defs>
+    <pattern id="scanlines" patternUnits="userSpaceOnUse" width="4" height="4">
+      <rect width="4" height="2" fill="rgba(0,0,0,0.08)"/>
+    </pattern>
+    <pattern id="grid" patternUnits="userSpaceOnUse" width="40" height="40">
+      <circle cx="40" cy="40" r="1" fill="rgba(0,255,65,0.06)"/>
+    </pattern>
+    <linearGradient id="fadeBottom" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0A0A0A"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </linearGradient>
+    <filter id="crtBlur">
+      <feGaussianBlur stdDeviation="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="1200" height="320" rx="8" fill="url(#fadeBottom)"/>
+  <rect width="1200" height="320" rx="8" fill="url(#grid)"/>
+  <rect width="1200" height="320" rx="8" fill="url(#scanlines)"/>
+  <!-- 暗角 -->
+  <radialGradient id="vignette" cx="50%" cy="50%" r="70%">
+    <stop offset="60%" stop-color="transparent"/>
+    <stop offset="100%" stop-color="rgba(0,0,0,0.4)"/>
+  </radialGradient>
+  <rect width="1200" height="320" rx="8" fill="url(#vignette)"/>
+
+  <!-- 左侧装饰线 -->
+  <line x1="80" y1="120" x2="80" y2="200" stroke="#00FF41" stroke-width="2" opacity="0.3"/>
+  <circle cx="80" cy="120" r="3" fill="#00FF41" opacity="0.5"/>
+  <circle cx="80" cy="200" r="3" fill="#00FF41" opacity="0.5"/>
+
+  <!-- 标题 -->
+  <text x="130" y="155" font-family="'Space Mono','MiSans',monospace" font-size="52" font-weight="700" fill="#00FF41" filter="url(#crtBlur)">
+    冰 山 图 宇 宙
+  </text>
+
+  <!-- 副标题 -->
+  <text x="130" y="205" font-family="'Space Mono','MiSans',monospace" font-size="20" fill="rgba(255,255,255,0.35)">
+    Iceberg Universe — 把每个话题的未知领域挖出来
+  </text>
+
+  <!-- 终端提示符装饰 -->
+  <text x="130" y="260" font-family="'Space Mono',monospace" font-size="14" fill="rgba(0,255,65,0.2)">
+    $ ssh icebergs.gnix807.cn █
+  </text>
+
+  <!-- 右侧小冰山装饰 -->
+  <g opacity="0.08" transform="translate(1050, 180)">
+    <polygon points="0,100 55,100 50,55 40,55 35,30 28,30 25,10 18,10 15,0 12,10 5,10 2,30 -5,30 -10,55 -20,55 -25,100" fill="#00FF41"/>
+    <rect x="-40" y="100" width="95" height="20" rx="2" fill="#00FF41"/>
+  </g>
+</svg>
