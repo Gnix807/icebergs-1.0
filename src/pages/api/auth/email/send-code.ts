@@ -24,9 +24,9 @@ function maskEmail(email: string): string {
 }
 
 // POST /api/auth/email/send-code
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
-    const body = await event.request.json().catch(() => ({}));
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
     const email = normalizeEmail(body.email);
     const purpose: EmailVerificationPurpose = body.purpose === 'password_reset' ? 'password_reset' : 'register';
     const sendIp = getClientIp(event) || 'unknown';

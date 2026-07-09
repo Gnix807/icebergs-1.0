@@ -10,7 +10,7 @@ import { success, error } from '../../../../lib/api';
 import { evaluateImpeach, demotedRole, getImpeachSettings } from '../../../../lib/impeach';
 import { notify } from '../../../../lib/notify';
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const secret = process.env.CRON_SECRET;
   const auth   = event.request.headers.get('Authorization') ?? '';
   if (!secret || auth !== `Bearer ${secret}`) {

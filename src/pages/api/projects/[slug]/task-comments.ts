@@ -13,11 +13,11 @@ export async function GET(event: APIContext) {
   return json(success({ comments }), 200);
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '璇峰厛鐧诲綍'), 401);
   let body: any;
-  try { body = await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '璇锋眰鏍煎紡閿欒'), 400); }
+  try { body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '璇锋眰鏍煎紡閿欒'), 400); }
   const taskId = body.taskId;
   const content = (body.content || '').trim();
   if (!taskId || !content || content.length > 2000) return json(error(ErrorCodes.BAD_REQUEST, '鍙傛暟閿欒'), 400);

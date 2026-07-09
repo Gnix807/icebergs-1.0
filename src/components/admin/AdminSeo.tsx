@@ -96,11 +96,7 @@ export function AdminSeo() {
   const save = async () => {
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fields),
-      });
+      const res = await fetch(`/api/admin/settings?data=${encodeURIComponent(JSON.stringify(fields))}`);
       const d = await res.json();
       if (d.success) {
         toast('SEO 配置已保存');

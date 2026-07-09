@@ -25,7 +25,7 @@ async function isProjectMember(userId: string, projectId: string | null): Promis
   } catch { return false; }
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -41,7 +41,7 @@ export async function POST(event: APIContext) {
     // Parse body — nsfwConfirmed is optional
     let nsfwConfirmed = false;
     try {
-      const body = await event.request.json();
+      const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json();
       nsfwConfirmed = Boolean(body?.nsfwConfirmed);
     } catch { /* body is optional */ }
 

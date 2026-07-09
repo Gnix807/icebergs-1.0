@@ -3,7 +3,7 @@ import { prisma } from '../../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { getSession } from '../../../../lib/auth/index';
 
-export async function PUT(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) {
     return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
@@ -26,8 +26,15 @@ export async function PUT(event: APIContext) {
       });
     }
 
+    if (event.request.method === 'DELETE') {
+      await prisma.collection.delete({ where: { id: id! } });
+      return new Response(JSON.stringify(success({ deleted: true })), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     let body: any;
-    try { body = await event.request.json(); } catch {
+    try { body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json(); } catch {
       return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '请求格式错误')), {
         status: 400, headers: { 'Content-Type': 'application/json' },
       });
@@ -45,34 +52,6 @@ export async function PUT(event: APIContext) {
   } catch (err) {
     console.error('更新收藏集失败:', err);
     return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '更新失败')), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-}
-
-export async function DELETE(event: APIContext) {
-  const session = await getSession(event);
-  if (!session) {
-    return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
-      status: 401, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const { id } = event.params;
-  try {
-    const col = await prisma.collection.findUnique({ where: { id: id! } });
-    if (!col || col.userId !== session.userId) {
-      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权限')), {
-        status: 403, headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    await prisma.collection.delete({ where: { id: id! } });
-    return new Response(JSON.stringify(success({ deleted: true })), {
-      status: 200, headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    console.error('删除收藏集失败:', err);
-    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '删除失败')), {
       status: 500, headers: { 'Content-Type': 'application/json' },
     });
   }

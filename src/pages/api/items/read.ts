@@ -4,7 +4,7 @@ import { prisma } from '../../../lib/prisma';
 import { checkAchievements, updateDailyStreak } from '../../../lib/achievementService';
 import { isRateLimited } from '../../../lib/rateLimit';
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) {
     return new Response(JSON.stringify({ success: true }), {
@@ -21,7 +21,7 @@ export async function POST(event: APIContext) {
   let body: {
     itemId?: string; icebergId?: string; isLastTier?: boolean; sessionMinutes?: number;
   };
-  try { body = await event.request.json(); }
+  try { body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json(); }
   catch {
     return new Response(JSON.stringify({ success: false, error: { message: '请求格式错误' } }), {
       status: 400, headers: { 'Content-Type': 'application/json' },

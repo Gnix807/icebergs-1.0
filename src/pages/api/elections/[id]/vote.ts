@@ -20,7 +20,7 @@ const VOTE_WEIGHTS: Record<string, number> = {
   USER: 1, CONTRIBUTOR: 2, EDITOR: 3, MODERATOR: 5, ADMIN: 7,
 };
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -52,7 +52,7 @@ export async function POST(event: APIContext) {
     return json(error(ErrorCodes.FORBIDDEN, `账号注册不足 ${minDays} 天，暂无投票资格`), 403);
   }
 
-  const body = await event.request.json() as { candidateId?: string };
+  const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({})) as { candidateId?: string };
   const { candidateId } = body;
   if (!candidateId) return json(error(ErrorCodes.BAD_REQUEST, '缺少 candidateId'), 400);
 

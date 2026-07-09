@@ -44,7 +44,7 @@ export async function GET(event: APIContext) {
   }
 }
 
-export async function PUT(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -54,7 +54,7 @@ export async function PUT(event: APIContext) {
     const id = url.pathname.split('/').pop();
     if (!id || id === 'requests') return json(error(ErrorCodes.BAD_REQUEST, '缺少申请 ID'), 400);
 
-    const body = await event.request.json() as { action?: string; note?: string };
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({})) as { action?: string; note?: string };
     const { action, note } = body;
     if (action !== 'approve' && action !== 'reject') {
       return json(error(ErrorCodes.BAD_REQUEST, 'action 必须为 approve 或 reject'), 400);

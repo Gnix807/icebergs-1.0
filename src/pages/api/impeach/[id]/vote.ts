@@ -16,14 +16,14 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
   const { id } = event.params;
   if (!id) return json(error(ErrorCodes.BAD_REQUEST, '缺少弹劾案 ID'), 400);
   const requestId = id;
-  const body = await event.request.json().catch(() => ({}));
+  const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
   const vote: string    = body.vote ?? '';
   const comment: string = (typeof body.comment === 'string' ? body.comment.trim() : '').slice(0, 300);
 

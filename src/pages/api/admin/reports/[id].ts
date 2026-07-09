@@ -16,7 +16,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function PUT(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -25,7 +25,7 @@ export async function PUT(event: APIContext) {
     const { id } = event.params;
     if (!id) return json(error(ErrorCodes.BAD_REQUEST, '缺少举报 ID'), 400);
 
-    const body = await event.request.json() as { action?: string; resolution?: string };
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({})) as { action?: string; resolution?: string };
     const { action, resolution } = body;
 
     if (action !== 'RESOLVED_ACTION' && action !== 'RESOLVED_DISMISSED') {

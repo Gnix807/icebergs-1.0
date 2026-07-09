@@ -3,7 +3,7 @@ import { prisma } from '../../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { getSession } from '../../../../lib/auth/index';
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const { id } = event.params;
   const session = await getSession(event);
   if (!session) {

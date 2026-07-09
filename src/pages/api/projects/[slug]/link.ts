@@ -10,7 +10,7 @@ async function isProjectMember(userId: string, projectId: string): Promise<boole
   } catch { return false; }
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -23,7 +23,7 @@ export async function POST(event: APIContext) {
   if (!inProject && !isAdmin) return json(error(ErrorCodes.FORBIDDEN, '你不是该项目成员'), 403);
 
   let body: { type?: string; id?: string };
-  try { body = await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '请求格式错误'), 400); }
+  try { body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '请求格式错误'), 400); }
   if (!body.type || !body.id) return json(error(ErrorCodes.BAD_REQUEST, '缺少参数'), 400);
 
   if (body.type === 'iceberg') {

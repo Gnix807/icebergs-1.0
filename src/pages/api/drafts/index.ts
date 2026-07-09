@@ -30,7 +30,7 @@ export async function GET(event: APIContext) {
   }
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) {
     return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
@@ -38,8 +38,27 @@ export async function POST(event: APIContext) {
     });
   }
 
+  if (event.request.method === 'DELETE') {
+    const icebergId = event.url.searchParams.get('icebergId');
+    const resolvedIcebergId = icebergId === 'null' || icebergId === '' ? null : icebergId;
+
+    try {
+      await prisma.draft.deleteMany({
+        where: { userId: session.userId, icebergId: resolvedIcebergId! },
+      });
+      return new Response(JSON.stringify(success({ deleted: true })), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (err) {
+      console.error('删除草稿失败:', err);
+      return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '删除失败')), {
+        status: 500, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   let body: { icebergId?: string | null; data?: string };
-  try { body = await event.request.json(); } catch {
+  try { body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json(); } catch {
     return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '请求格式错误')), {
       status: 400, headers: { 'Content-Type': 'application/json' },
     });
@@ -66,32 +85,6 @@ export async function POST(event: APIContext) {
   } catch (err) {
     console.error('保存草稿失败:', err);
     return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '保存失败')), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-}
-
-export async function DELETE(event: APIContext) {
-  const session = await getSession(event);
-  if (!session) {
-    return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
-      status: 401, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  const icebergId = event.url.searchParams.get('icebergId');
-  const resolvedIcebergId = icebergId === 'null' || icebergId === '' ? null : icebergId;
-
-  try {
-    await prisma.draft.deleteMany({
-      where: { userId: session.userId, icebergId: resolvedIcebergId! },
-    });
-    return new Response(JSON.stringify(success({ deleted: true })), {
-      status: 200, headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    console.error('删除草稿失败:', err);
-    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '删除失败')), {
       status: 500, headers: { 'Content-Type': 'application/json' },
     });
   }

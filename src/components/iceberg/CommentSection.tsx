@@ -163,11 +163,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
       const body: Record<string, string> = { content };
       if (!currentUserId) body.guestName = guestName.trim();
 
-      const res = await fetch(`/api/icebergs/${icebergId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch(`/api/icebergs/${icebergId}/comments?data=${encodeURIComponent(JSON.stringify(body))}`);
       const data = await res.json();
       if (data.success) {
         const newComment = data.data.comment;
@@ -188,11 +184,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
     if (!content || replySubmitting) return;
     setReplySubmitting(true);
     try {
-      const res = await fetch(`/api/icebergs/${icebergId}/comments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, parentId }),
-      });
+      const res = await fetch(`/api/icebergs/${icebergId}/comments?data=${encodeURIComponent(JSON.stringify({ content, parentId }))}`);
       const data = await res.json();
       if (data.success) {
         const newReply = data.data.comment;
@@ -222,7 +214,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
     if (likingId) return;
     setLikingId(commentId);
     try {
-      const res = await fetch(`/api/comments/${commentId}/like`, { method: 'POST' });
+      const res = await fetch(`/api/comments/${commentId}/like`);
       const data = await res.json();
       if (data.success) {
         const liked: boolean = data.data.liked;
@@ -247,7 +239,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
     if (deletingId) return;
     setDeletingId(commentId);
     try {
-      const res = await fetch(`/api/comments/${commentId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/comments/${commentId}?action=delete`);
       const data = await res.json();
       if (data.success) {
         setComments(prev => {

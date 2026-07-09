@@ -30,11 +30,11 @@ export async function GET() {
   return json(success({ requests }));
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
-  const body = await event.request.json().catch(() => ({}));
+  const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
   const targetUserId: string = body.targetUserId?.trim() ?? '';
   const reason: string       = (typeof body.reason === 'string' ? body.reason.trim() : '').slice(0, 1000);
 

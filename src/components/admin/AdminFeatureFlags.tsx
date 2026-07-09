@@ -31,11 +31,7 @@ export function AdminFeatureFlags() {
   const save = async () => {
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ features: flags }),
-      });
+      const res = await fetch(`/api/admin/settings?data=${encodeURIComponent(JSON.stringify({ features: flags }))}`);
       const data = await res.json();
       if (data.success) {
         toast('功能开关已保存，刷新页面后生效');

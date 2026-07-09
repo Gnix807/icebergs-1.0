@@ -294,11 +294,12 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     const target = syncFailures.find((item) => item.key === key);
     if (!target) return;
     try {
-      const res = await fetch(target.url, {
-        method: target.method,
-        headers: target.body ? { 'Content-Type': 'application/json' } : undefined,
-        body: target.body ? JSON.stringify(target.body) : undefined,
-      });
+      const getUrl = target.body
+        ? `${target.url}?data=${encodeURIComponent(JSON.stringify(target.body))}`
+        : target.method === 'DELETE'
+          ? `${target.url}?action=delete`
+          : target.url;
+      const res = await fetch(getUrl);
       if (res.ok || res.status === 404) {
         clearSyncFailure(key);
         toast('已完成一次失败同步重试');
@@ -470,11 +471,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
             status: iceberg.status,
             updatedAt: iceberg.updatedAt,
           };
-          const res = await fetch(`/api/icebergs/${iceberg.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
+          const res = await fetch(`/api/icebergs/${iceberg.id}?data=${encodeURIComponent(JSON.stringify(payload))}`);
           const data = await res.json().catch(() => null);
           if (res.ok && data?.success) {
             setIceberg({ ...data.data, tiers: data.data.tiers.map((t: any) => ({ ...t, items: t.items.map((i: any) => ({ ...i, labels: typeof i.labels === 'string' ? (() => { try { return JSON.parse(i.labels); } catch { return []; } })() : (i.labels || []) })) })) });
@@ -538,11 +535,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     const payload = buildCreatePayload(current, customSlug);
     const creatingTask = (async (): Promise<Iceberg | null> => {
       try {
-        const res = await fetch('/api/icebergs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+        const res = await fetch(`/api/icebergs?data=${encodeURIComponent(JSON.stringify(payload))}`);
         const data = await res.json().catch(() => null);
         if (res.ok && data?.success) {
           const created = withTopic(data.data);
@@ -595,11 +588,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       const icebergId = await getRealIcebergId('sync');
       if (!icebergId) return null;
 
-      const res = await fetch(`/api/icebergs/${icebergId}/tiers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: tier.name, desc: tier.desc ?? '', order: tier.order }),
-      });
+      const res = await fetch(`/api/icebergs/${icebergId}/tiers?data=${encodeURIComponent(JSON.stringify({ name: tier.name, desc: tier.desc ?? '', order: tier.order }))}`);
       const data = await res.json().catch(() => null);
       if (res.ok && data?.success) {
         clearSyncFailure(`tier:create:${tier.id}`);
@@ -642,11 +631,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     }
 
     try {
-      const res = await fetch(`/api/icebergs/${iceberg.id}/tiers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newTier.name, desc: newTier.desc ?? '', order: newTier.order }),
-      });
+      const res = await fetch(`/api/icebergs/${iceberg.id}/tiers?data=${encodeURIComponent(JSON.stringify({ name: newTier.name, desc: newTier.desc ?? '', order: newTier.order }))}`);
       const data = await res.json().catch(() => null);
       if (res.ok && data?.success) {
         // 更新本地 id 为服务器返回的 id
@@ -691,11 +676,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       if (updates.desc !== undefined) payload.desc = updates.desc;
       if (updates.order !== undefined) payload.order = updates.order;
       try {
-        const res = await fetch(`/api/tiers/${tierId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+        const res = await fetch(`/api/tiers/${tierId}?data=${encodeURIComponent(JSON.stringify(payload))}`);
         const data = await res.json().catch(() => null);
         if (!(res.ok && data?.success)) {
           queueSyncFailure({
@@ -728,9 +709,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
     if (!tierId.startsWith('tier_')) {
       try {
-        const res = await fetch(`/api/tiers/${tierId}`, {
-          method: 'DELETE',
-        });
+        const res = await fetch(`/api/tiers/${tierId}?action=delete`);
         if (!res.ok && res.status !== 404) {
           queueSyncFailure({
             key: `tier:delete:${tierId}`,
@@ -776,11 +755,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
     const payload = { title: item.title, desc: item.desc, order: item.order, labels: item.labels ?? [] };
     try {
-      const res = await fetch(`/api/tiers/${realTierId}/items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(`/api/tiers/${realTierId}/items?data=${encodeURIComponent(JSON.stringify(payload))}`);
       const data = await res.json().catch(() => null);
       if (res.ok && data?.success) {
         // 更新本地 id
@@ -832,11 +807,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
         labels: updates.labels,
       };
       try {
-        const res = await fetch(`/api/items/${itemId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+        const res = await fetch(`/api/items/${itemId}?data=${encodeURIComponent(JSON.stringify(payload))}`);
         const data = await res.json().catch(() => null);
         if (!(res.ok && data?.success)) {
           queueSyncFailure({
@@ -869,9 +840,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
     if (!itemId.startsWith('item_')) {
       try {
-        const res = await fetch(`/api/items/${itemId}`, {
-          method: 'DELETE',
-        });
+        const res = await fetch(`/api/items/${itemId}?action=delete`);
         if (!res.ok && res.status !== 404) {
           queueSyncFailure({
             key: `item:delete:${itemId}`,
@@ -951,11 +920,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       if (tier.id.startsWith('tier_')) continue;
       const payload = { order: i };
       try {
-        const res = await fetch(`/api/tiers/${tier.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+        const res = await fetch(`/api/tiers/${tier.id}?data=${encodeURIComponent(JSON.stringify(payload))}`);
         const data = await res.json().catch(() => null);
         if (res.ok && data?.success) {
           clearSyncFailure(`tier:order:${tier.id}`);
@@ -986,11 +951,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     if (itemId.startsWith('item_')) return;
     const payload = { order, tierId };
     try {
-      const res = await fetch(`/api/items/${itemId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const res = await fetch(`/api/items/${itemId}?data=${encodeURIComponent(JSON.stringify(payload))}`);
       const data = await res.json().catch(() => null);
       if (res.ok && data?.success) {
         clearSyncFailure(`item:order:${itemId}`);
@@ -1131,11 +1092,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
             status: iceberg.status,
             updatedAt: iceberg.updatedAt,
         };
-        const res = await fetch(`/api/icebergs/${iceberg.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+        const res = await fetch(`/api/icebergs/${iceberg.id}?data=${encodeURIComponent(JSON.stringify(payload))}`);
         const data = await res.json().catch(() => null);
         if (res.ok && data?.success) {
           setIceberg({ ...data.data, tiers: data.data.tiers.map((t: any) => ({ ...t, items: t.items.map((i: any) => ({ ...i, labels: typeof i.labels === 'string' ? (() => { try { return JSON.parse(i.labels); } catch { return []; } })() : (i.labels || []) })) })) });
@@ -1195,11 +1152,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       if (icebergId.startsWith('temp_')) {
         const slugErr = validateSlug(customSlug);
         if (slugErr) { setSlugError(slugErr); toast(slugErr, 'error'); return; }
-        const res = await fetch('/api/icebergs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(buildCreatePayload(iceberg, customSlug)),
-        });
+        const res = await fetch(`/api/icebergs?data=${encodeURIComponent(JSON.stringify(buildCreatePayload(iceberg, customSlug)))}`);
         const data = await res.json();
         if (!data.success) {
           toast(data.error?.message || '创建草稿失败', 'error');
@@ -1213,11 +1166,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
         submitSnapshot = persisted;
       }
 
-      const res = await fetch(`/api/icebergs/${icebergId}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nsfwConfirmed: confirmedNsfw }),
-      });
+      const res = await fetch(`/api/icebergs/${icebergId}/submit?data=${encodeURIComponent(JSON.stringify({ nsfwConfirmed: confirmedNsfw }))}`);
       const data = await res.json();
 
       if (res.status === 422) {
@@ -1267,7 +1216,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     if (!iceberg || iceberg.id.startsWith('temp_')) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/icebergs/${iceberg.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/icebergs/${iceberg.id}?action=delete`);
       const data = await res.json();
       if (data.success) {
         clearDraft(iceberg.id);

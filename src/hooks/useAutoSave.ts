@@ -32,10 +32,8 @@ export function useAutoSave(icebergId: string | null) {
     if (!iceberg || !icebergId) return;
 
     try {
-      const response = await fetch(`/api/icebergs/${icebergId}/draft`, {
-        method: 'PUT',
+      const response = await fetch(`/api/icebergs/${icebergId}/draft?data=${encodeURIComponent(JSON.stringify(iceberg))}`, {
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(iceberg),
       });
 
       if (response.ok) {

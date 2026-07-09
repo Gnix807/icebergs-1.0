@@ -22,12 +22,12 @@ export async function GET(event: APIContext) {
   } catch (err) { return json(error(ErrorCodes.INTERNAL_ERROR, '加载失败'), 500); }
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   try {
     let body: { content?: string };
-    try { body = await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '请求格式错误'), 400); }
+    try { body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '请求格式错误'), 400); }
     const content = (body.content ?? '').trim();
     if (!content || content.length > 2000) return json(error(ErrorCodes.BAD_REQUEST, '1-2000 字'), 400);
     const comment = await prisma.taskComment.create({

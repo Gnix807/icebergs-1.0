@@ -16,7 +16,7 @@ import { success, error } from '../../../../lib/api';
 import { notify } from '../../../../lib/notify';
 import { logScore } from '../../../../lib/scoreLog';
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const secret = process.env.CRON_SECRET;
   const auth = event.request.headers.get('Authorization') ?? '';
   if (!secret || auth !== `Bearer ${secret}`) {

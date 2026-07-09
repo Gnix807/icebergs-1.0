@@ -197,7 +197,7 @@ export async function GET(event: APIContext) {
 }
 
 // POST /api/icebergs - 创建冰山图
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -213,7 +213,7 @@ export async function POST(event: APIContext) {
       });
     }
 
-    const body = await event.request.json();
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
 
     const title = body.title?.trim();
     if (!title) {

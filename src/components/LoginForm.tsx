@@ -132,14 +132,12 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
     setInfo(null);
 
     try {
-      const res = await fetch('/api/auth/email/send-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: normalizedEmail,
-          purpose: mode === 'reset' ? 'password_reset' : 'register',
-        }),
-      });
+      const url = '/api/auth/email/send-code';
+      const body = {
+        email: normalizedEmail,
+        purpose: mode === 'reset' ? 'password_reset' : 'register',
+      };
+      const res = await fetch(`${url}?data=${encodeURIComponent(JSON.stringify(body))}`);
       const data = await res.json();
       if (data.success) {
         setInfo(`验证码已发送到 ${data.data?.emailHint || normalizedEmail}`);

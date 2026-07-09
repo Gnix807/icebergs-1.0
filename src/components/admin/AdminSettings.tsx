@@ -73,11 +73,7 @@ export function AdminSettings() {
   const save = async () => {
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(edits),
-      });
+      const res = await fetch(`/api/admin/settings?data=${encodeURIComponent(JSON.stringify(edits))}`);
       const data = await res.json();
       if (data.success) {
         toast('配置已保存');

@@ -17,7 +17,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   if (session.role !== 'ADMIN' && !session.isFounder) {
@@ -40,14 +40,13 @@ export async function POST(event: APIContext) {
     return json(error(ErrorCodes.BAD_REQUEST, '没有有效候选人'), 400);
   }
 
-  // 计算票数
   const voteSums: Record<string, number> = {};
   for (const v of election.votes) {
     voteSums[v.candidateId] = (voteSums[v.candidateId] ?? 0) + v.weight;
   }
 
   let winnerCandidateId: string;
-  const body = await event.request.json().catch(() => ({})) as { winnerId?: string };
+  const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({})) as { winnerId?: string };
 
   if (body.winnerId) {
     // 手动指定：验证该用户是 RUNNING 候选人

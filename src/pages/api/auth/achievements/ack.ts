@@ -10,7 +10,7 @@ function json(body: unknown, status = 200) {
 }
 
 // POST /api/auth/achievements/ack — 清空当前用户的 pendingAchievements
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 

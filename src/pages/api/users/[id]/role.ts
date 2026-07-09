@@ -26,7 +26,7 @@ const ROLE_LABELS: Record<AllowedRole, string> = {
   ADMIN:       '管理员',
 };
 
-export async function PATCH(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -37,7 +37,7 @@ export async function PATCH(event: APIContext) {
     const { id } = event.params;
     if (!id) return json(error(ErrorCodes.BAD_REQUEST, '缺少用户 ID'), 400);
 
-    const body = await event.request.json() as { role?: string; reason?: string };
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({})) as { role?: string; reason?: string };
     const { role, reason } = body;
 
     const effectiveAllowed = session.isFounder ? FOUNDER_ALLOWED_ROLES : ALLOWED_ROLES;

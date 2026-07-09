@@ -30,7 +30,7 @@ export async function GET() {
   return json(success({ requests }));
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   if (session.role !== 'CONTRIBUTOR') {
@@ -81,7 +81,7 @@ export async function POST(event: APIContext) {
     return json(error(ErrorCodes.FORBIDDEN, `冷却期内，还需等待 ${daysLeft} 天`), 403);
   }
 
-  const body = await event.request.json().catch(() => ({}));
+  const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
   const statement = (typeof body.statement === 'string' ? body.statement.trim() : '').slice(0, 500);
 
   const closesAt = new Date(Date.now() + settings.voteDays * 86400_000);

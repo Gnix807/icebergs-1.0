@@ -18,13 +18,13 @@ function json(body: unknown, status: number) {
   });
 }
 
-export async function PUT(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   if (session.userId !== event.params.id) return json(error(ErrorCodes.FORBIDDEN, '无权限'), 403);
 
   let body: { ids?: unknown };
-  try { body = await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '请求格式错误'), 400); }
+  try { body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '请求格式错误'), 400); }
 
   if (!Array.isArray(body.ids)) return json(error(ErrorCodes.BAD_REQUEST, 'ids 必须是数组'), 400);
 

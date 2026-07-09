@@ -27,14 +27,14 @@ export async function GET() {
   return json(success({ elections }));
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   if (session.role !== 'ADMIN' && !session.isFounder) {
     return json(error(ErrorCodes.FORBIDDEN, '需要管理员权限'), 403);
   }
 
-  const body = await event.request.json() as {
+  const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({})) as {
     title?: string;
     description?: string;
     applyDays?: number;

@@ -36,18 +36,16 @@ export async function saveDraft(icebergId: string | null, data: any): Promise<vo
   } catch {}
 
   // save to server (fire-and-forget)
-  fetch(API_BASE, {
-    method: 'POST',
+  fetch(`${API_BASE}?data=${encodeURIComponent(JSON.stringify({
+    icebergId: icebergId || null,
+    data: JSON.stringify(data),
+  }))}`, {
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      icebergId: icebergId || null,
-      data: JSON.stringify(data),
-    }),
   }).catch(() => {});
 }
 
 export async function clearDraft(icebergId: string | null): Promise<void> {
   try { localStorage.removeItem(lsKey(icebergId)); } catch {}
   const params = icebergId ? `?icebergId=${encodeURIComponent(icebergId)}` : '?icebergId=null';
-  fetch(`${API_BASE}${params}`, { method: 'DELETE' }).catch(() => {});
+  fetch(`${API_BASE}${params}${params.includes('?') ? '&' : '?'}action=delete`, { headers: { 'Content-Type': 'application/json' } }).catch(() => {});
 }

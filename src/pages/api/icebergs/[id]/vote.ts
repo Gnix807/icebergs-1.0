@@ -10,7 +10,7 @@ import { isRateLimited } from '../../../../lib/rateLimit';
 
 // POST /api/icebergs/:id/vote  body: { value: 1 | -1 }
 // Toggle: if same value exists → delete (un-vote); else upsert
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -35,7 +35,7 @@ export async function POST(event: APIContext) {
       });
     }
 
-    const body = await event.request.json().catch(() => ({}));
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
     const value = body.value;
     if (value !== 1 && value !== -1) {
       return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, 'value 必须为 1 或 -1')), {

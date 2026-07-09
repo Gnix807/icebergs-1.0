@@ -138,11 +138,8 @@ export function AdminReports() {
     }
     setActing(true);
     try {
-      const res = await fetch(`/api/admin/reports/${modal.report.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: modal.action, resolution }),
-      });
+      const body = { action: modal.action, resolution };
+      const res = await fetch(`/api/admin/reports/${modal.report.id}?data=${encodeURIComponent(JSON.stringify(body))}`);
       const data = await res.json();
       if (data.success) {
         toast(modal.action === 'RESOLVED_ACTION' ? '已标记为已处理' : '已驳回举报');
@@ -171,15 +168,12 @@ export function AdminReports() {
     }
     setBatchActing(true);
     try {
-      const res = await fetch('/api/admin/reports/batch', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ids: selectedIds,
-          action: batchModal.action,
-          resolution: batchResolution,
-        }),
-      });
+      const body = {
+        ids: selectedIds,
+        action: batchModal.action,
+        resolution: batchResolution,
+      };
+      const res = await fetch(`/api/admin/reports/batch?data=${encodeURIComponent(JSON.stringify(body))}`);
       const data = await res.json();
       if (data.success) {
         const selectedSet = new Set(selectedIds);

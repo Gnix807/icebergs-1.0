@@ -46,6 +46,13 @@ export async function ALL(event: APIContext) {
     });
   }
 
+  async function verifyPassword(password: string, stored: string): Promise<boolean> {
+    const [salt, hash] = stored.split(':');
+    if (!salt || !hash) return false;
+    const derived = await pbkdf2Async(password, salt, 100_000, 32, 'sha256');
+    return derived.toString('hex') === hash;
+  }
+
   // 邮箱登录
   try {
     const body = event.request.method === 'GET'

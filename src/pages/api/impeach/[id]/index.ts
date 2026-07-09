@@ -52,7 +52,7 @@ export async function GET(event: APIContext) {
   return json(success({ request: req, summary }));
 }
 
-export async function DELETE(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 

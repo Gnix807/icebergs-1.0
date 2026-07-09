@@ -26,11 +26,7 @@ export function SocialBar({ icebergId }: Props) {
   }, [icebergId]);
 
   const handleVote = async (value: 1 | -1) => {
-    const res = await fetch(`/api/icebergs/${icebergId}/vote`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ value }),
-    });
+    const res = await fetch(`/api/icebergs/${icebergId}/vote?data=${encodeURIComponent(JSON.stringify({ value }))}`);
     const data = await res.json();
     if (res.status === 401) {
       toast('请先登录', 'error');
@@ -43,9 +39,7 @@ export function SocialBar({ icebergId }: Props) {
   };
 
   const handleWatchlist = async () => {
-    const res = await fetch(`/api/icebergs/${icebergId}/watchlist`, {
-      method: 'POST',
-    });
+    const res = await fetch(`/api/icebergs/${icebergId}/watchlist`);
     const data = await res.json();
     if (res.status === 401) {
       toast('请先登录', 'error');

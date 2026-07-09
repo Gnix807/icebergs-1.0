@@ -69,11 +69,8 @@ export function ElectionVotePanel({
   const applyCandidate = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/elections/${electionId}/candidates`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ statement: statement.trim() || undefined }),
-      });
+      const body = JSON.stringify({ statement: statement.trim() || undefined });
+      const res = await fetch(`/api/elections/${electionId}/candidates?data=${encodeURIComponent(body)}`);
       const data = await res.json();
       if (data.success) {
         toast('报名成功！');
@@ -94,11 +91,7 @@ export function ElectionVotePanel({
   const withdrawCandidate = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/elections/${electionId}/candidates`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
+      const res = await fetch(`/api/elections/${electionId}/candidates?action=delete`);
       const data = await res.json();
       if (data.success) {
         toast('已撤回参选');
@@ -118,11 +111,8 @@ export function ElectionVotePanel({
     if (!canVote) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/elections/${electionId}/vote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ candidateId }),
-      });
+      const body = JSON.stringify({ candidateId });
+      const res = await fetch(`/api/elections/${electionId}/vote?data=${encodeURIComponent(body)}`);
       const data = await res.json();
       if (data.success) {
         toast(`已投票（权重 ${data.data.weight}）`);

@@ -6,7 +6,7 @@ import { awardCommentLikeScore } from '../../../../lib/activityScore';
 import { notifyAggregated } from '../../../../lib/notify';
 
 // POST /api/comments/[id]/like — 点赞/取消点赞
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) {
     return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {

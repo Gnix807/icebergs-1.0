@@ -21,7 +21,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -44,7 +44,7 @@ export async function POST(event: APIContext) {
   if (rfa.userId === session.userId)
     return json(error(ErrorCodes.FORBIDDEN, '不能给自己的申请投票'), 403);
 
-  const body = await event.request.json().catch(() => ({}));
+  const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
   const vote    = typeof body.vote    === 'string' ? body.vote.trim().toUpperCase()   : '';
   const comment = typeof body.comment === 'string' ? body.comment.trim().slice(0, 300) : undefined;
 

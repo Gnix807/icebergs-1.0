@@ -60,12 +60,12 @@ export async function GET(event: APIContext) {
   });
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   if (!can(session, 'user:ban')) return json(error(ErrorCodes.FORBIDDEN, '需要管理员权限'), 403);
 
-  const body = await event.request.json().catch(() => ({}));
+  const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
   const title: string = typeof body.title === 'string' ? body.title.trim() : '';
   const content: string = typeof body.content === 'string' ? body.content.trim() : '';
   const type: string = ['info', 'warning', 'maintenance', 'update'].includes(body.type)

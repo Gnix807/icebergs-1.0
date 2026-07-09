@@ -14,7 +14,7 @@ function isOAuthProvider(value: string): value is OAuthProvider {
 
 // POST /api/auth/unlink-provider
 // body: { provider: 'github' | 'google' }
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -24,7 +24,7 @@ export async function POST(event: APIContext) {
       });
     }
 
-    const body = await event.request.json().catch(() => ({}));
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
     const provider = typeof body.provider === 'string' ? body.provider : '';
     if (!isOAuthProvider(provider)) {
       return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, 'provider 仅支持 github 或 google')), {

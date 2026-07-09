@@ -16,7 +16,7 @@ import { prisma } from '../../../../lib/prisma';
 import { success, error } from '../../../../lib/api';
 import { notify } from '../../../../lib/notify';
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   // 鉴权
   const secret = process.env.CRON_SECRET;
   const auth = event.request.headers.get('Authorization') ?? '';

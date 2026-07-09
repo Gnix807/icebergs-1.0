@@ -22,7 +22,7 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
 }
 
 // POST /api/auth/change-password
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -32,7 +32,7 @@ export async function POST(event: APIContext) {
       });
     }
 
-    const body = await event.request.json().catch(() => ({}));
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
     const oldPassword = typeof body.oldPassword === 'string' ? body.oldPassword : '';
     const newPassword = typeof body.newPassword === 'string' ? body.newPassword : '';
     const currentSessionId = event.cookies.get('session')?.value || null;

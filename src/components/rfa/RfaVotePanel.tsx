@@ -83,11 +83,8 @@ export function RfaVotePanel({
     if (!canVote) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/rfa/${rfaId}/vote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vote, comment: comment.trim() || undefined }),
-      });
+      const body = JSON.stringify({ vote, comment: comment.trim() || undefined });
+      const res = await fetch(`/api/rfa/${rfaId}/vote?data=${encodeURIComponent(body)}`);
       const data = await res.json();
       if (data.success) {
         toast(`已投 ${VOTE_LABEL[vote]}（权重 ${data.data.weight}）`);

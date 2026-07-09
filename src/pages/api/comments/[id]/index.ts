@@ -5,7 +5,7 @@ import { success, error, ErrorCodes } from '../../../../lib/api';
 import { hasRole } from '../../../../lib/permissions';
 
 // DELETE /api/comments/[id] — 删除自己的评论，或 EDITOR+ 删除任意评论
-export async function DELETE(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) {
     return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {

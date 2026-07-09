@@ -96,7 +96,7 @@ export async function GET(event: APIContext) {
   }));
 }
 
-export async function PATCH(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
   if (session.role !== 'ADMIN' && !session.isFounder) {
@@ -107,7 +107,7 @@ export async function PATCH(event: APIContext) {
   const election = await prisma.election.findUnique({ where: { id } });
   if (!election) return json(error(ErrorCodes.NOT_FOUND, '选举不存在'), 404);
 
-  const body = await event.request.json() as { action?: string };
+  const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({})) as { action?: string };
   const { action } = body;
 
   let newStatus: string | null = null;

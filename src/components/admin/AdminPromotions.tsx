@@ -51,11 +51,8 @@ export function AdminPromotions() {
     }
     setActing(true);
     try {
-      const res = await fetch(`/api/promotion/${modal.req.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: modal.action, note }),
-      });
+      const body = { action: modal.action, note };
+      const res = await fetch(`/api/promotion/${modal.req.id}?data=${encodeURIComponent(JSON.stringify(body))}`);
       const data = await res.json();
       if (data.success) {
         toast(modal.action === 'approve' ? '已批准，用户角色已提升为 CONTRIBUTOR' : '已拒绝');

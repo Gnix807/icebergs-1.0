@@ -105,7 +105,7 @@ export async function GET(event: APIContext) {
 }
 
 // POST /api/icebergs/[id]/comments
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
 
   // 已登录用户：检查封禁状态
@@ -116,7 +116,7 @@ export async function POST(event: APIContext) {
   }
 
   const id = event.params.id!;
-  const body = await event.request.json().catch(() => ({}));
+  const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
   const content: string = typeof body.content === 'string' ? body.content.trim() : '';
   const parentId: string | null = typeof body.parentId === 'string' ? body.parentId : null;
 

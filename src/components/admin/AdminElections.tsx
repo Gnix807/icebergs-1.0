@@ -87,16 +87,13 @@ export function AdminElections() {
   const createElection = async () => {
     setActing(true);
     try {
-      const res = await fetch('/api/elections', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title:       form.title.trim() || undefined,
-          description: form.description.trim() || undefined,
-          applyDays:   parseInt(form.applyDays, 10),
-          voteDays:    parseInt(form.voteDays, 10),
-        }),
-      });
+      const body = {
+        title:       form.title.trim() || undefined,
+        description: form.description.trim() || undefined,
+        applyDays:   parseInt(form.applyDays, 10),
+        voteDays:    parseInt(form.voteDays, 10),
+      };
+      const res = await fetch(`/api/elections?data=${encodeURIComponent(JSON.stringify(body))}`);
       const data = await res.json();
       if (data.success) {
         toast('选举已发起');
@@ -114,11 +111,7 @@ export function AdminElections() {
   const advanceStatus = async (election: ElectionRow, action: 'start_voting' | 'close') => {
     setActing(true);
     try {
-      const res = await fetch(`/api/elections/${election.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
-      });
+      const res = await fetch(`/api/elections/${election.id}?data=${encodeURIComponent(JSON.stringify({ action }))}`);
       const data = await res.json();
       if (data.success) {
         toast('状态已更新');
@@ -143,11 +136,8 @@ export function AdminElections() {
     if (!confirmModal) return;
     setActing(true);
     try {
-      const res = await fetch(`/api/elections/${confirmModal.election.id}/confirm`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(selectedWinner ? { winnerId: selectedWinner } : {}),
-      });
+      const body = selectedWinner ? { winnerId: selectedWinner } : {};
+      const res = await fetch(`/api/elections/${confirmModal.election.id}/confirm?data=${encodeURIComponent(JSON.stringify(body))}`);
       const data = await res.json();
       if (data.success) {
         toast('已确认结果并晋升管理员');

@@ -5,7 +5,7 @@ import { getSession } from '../../../../lib/auth/index';
 import { notify } from '../../../../lib/notify';
 
 // POST /api/icebergs/:id/watchlist — toggle (add if absent, remove if present)
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {

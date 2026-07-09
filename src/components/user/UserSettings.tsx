@@ -95,17 +95,14 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/users/${userId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nickname: nickname.trim() || null,
-          bio: bio.trim() || null,
-          avatar: avatar.trim() || null,
-          privacyShowStats: showStats,
-          privacyShowWatchlist: showWatchlist,
-        }),
+      const body = JSON.stringify({
+        nickname: nickname.trim() || null,
+        bio: bio.trim() || null,
+        avatar: avatar.trim() || null,
+        privacyShowStats: showStats,
+        privacyShowWatchlist: showWatchlist,
       });
+      const res = await fetch(`/api/users/${userId}?data=${encodeURIComponent(body)}`);
       const data = await res.json();
       if (data.success) {
         toast('设置已保存');
@@ -139,14 +136,11 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
 
     setChangingPassword(true);
     try {
-      const res = await fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          oldPassword: oldPassword || undefined,
-          newPassword,
-        }),
+      const body = JSON.stringify({
+        oldPassword: oldPassword || undefined,
+        newPassword,
       });
+      const res = await fetch(`/api/auth/change-password?data=${encodeURIComponent(body)}`);
       const data = await res.json();
       if (data.success) {
         setOldPassword('');
@@ -168,11 +162,8 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
   const handleUnlinkProvider = async (provider: 'github' | 'google') => {
     setUnlinkingProvider(provider);
     try {
-      const res = await fetch('/api/auth/unlink-provider', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider }),
-      });
+      const body = JSON.stringify({ provider });
+      const res = await fetch(`/api/auth/unlink-provider?data=${encodeURIComponent(body)}`);
       const data = await res.json();
       if (data.success) {
         setHasPassword(Boolean(data.data.authMethods?.email));
@@ -195,11 +186,8 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
   const handleLogoutOthers = async () => {
     setSessionBusy(true);
     try {
-      const res = await fetch('/api/auth/sessions', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scope: 'others' }),
-      });
+      const body = JSON.stringify({ scope: 'others' });
+      const res = await fetch(`/api/auth/sessions?action=delete&data=${encodeURIComponent(body)}`);
       const data = await res.json();
       if (data.success) {
         toast(`已下线 ${data.data?.deleted ?? 0} 个其他设备会话`);
@@ -217,11 +205,8 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
   const handleLogoutSession = async (sessionId: string) => {
     setSessionBusy(true);
     try {
-      const res = await fetch('/api/auth/sessions', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ scope: 'single', sessionId }),
-      });
+      const body = JSON.stringify({ scope: 'single', sessionId });
+      const res = await fetch(`/api/auth/sessions?action=delete&data=${encodeURIComponent(body)}`);
       const data = await res.json();
       if (data.success) {
         if (data.data?.currentDeleted) {

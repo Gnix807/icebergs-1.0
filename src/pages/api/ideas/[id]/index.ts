@@ -39,7 +39,7 @@ export async function GET(event: APIContext) {
   }
 }
 
-export async function PUT(event: APIContext) {
+export async function ALL(event: APIContext) {
   const { id } = event.params;
   const session = await getSession(event);
   if (!session) {
@@ -56,8 +56,20 @@ export async function PUT(event: APIContext) {
       });
     }
 
+    if (event.request.method === 'DELETE') {
+      if (idea.creatorId !== session.userId && !session.isFounder) {
+        return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权限')), {
+          status: 403, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      await prisma.idea.delete({ where: { id } });
+      return new Response(JSON.stringify(success({ deleted: true })), {
+        status: 200, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     let body: { status?: string; claimedBy?: string; icebergId?: string; title?: string; description?: string };
-    try { body = await event.request.json(); } catch {
+    try { body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json(); } catch {
       return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '请求格式错误')), {
         status: 400, headers: { 'Content-Type': 'application/json' },
       });
@@ -117,39 +129,6 @@ export async function PUT(event: APIContext) {
   } catch (err) {
     console.error('更新创意失败:', err);
     return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '更新失败')), {
-      status: 500, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-}
-
-export async function DELETE(event: APIContext) {
-  const { id } = event.params;
-  const session = await getSession(event);
-  if (!session) {
-    return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
-      status: 401, headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  try {
-    const idea = await prisma.idea.findUnique({ where: { id } });
-    if (!idea) {
-      return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '创意不存在')), {
-        status: 404, headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    if (idea.creatorId !== session.userId && !session.isFounder) {
-      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权限')), {
-        status: 403, headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    await prisma.idea.delete({ where: { id } });
-    return new Response(JSON.stringify(success({ deleted: true })), {
-      status: 200, headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    console.error('删除创意失败:', err);
-    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '删除失败')), {
       status: 500, headers: { 'Content-Type': 'application/json' },
     });
   }

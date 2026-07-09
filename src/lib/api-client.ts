@@ -59,23 +59,15 @@ export async function getIceberg(id: string) {
 }
 
 export async function createIceberg(data: { title: string; description?: string; topic?: string }) {
-  return request<Iceberg>('/icebergs', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+  return request<Iceberg>(`/icebergs?data=${encodeURIComponent(JSON.stringify(data))}`);
 }
 
 export async function updateIceberg(id: string, data: { title?: string; description?: string; topic?: string; status?: string }) {
-  return request<Iceberg>(`/icebergs/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
+  return request<Iceberg>(`/icebergs/${id}?data=${encodeURIComponent(JSON.stringify(data))}`);
 }
 
 export async function deleteIceberg(id: string) {
-  return request<{ deleted: boolean }>(`/icebergs/${id}`, {
-    method: 'DELETE',
-  });
+  return request<{ deleted: boolean }>(`/icebergs/${id}?action=delete`);
 }
 
 // ==================== Tier ====================
@@ -85,43 +77,27 @@ export async function getTiers(icebergId: string) {
 }
 
 export async function createTier(icebergId: string, data: { name: string; order?: number }) {
-  return request<Tier>(`/icebergs/${icebergId}/tiers`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+  return request<Tier>(`/icebergs/${icebergId}/tiers?data=${encodeURIComponent(JSON.stringify(data))}`);
 }
 
 export async function updateTier(id: string, data: { name?: string; order?: number }) {
-  return request<Tier>(`/tiers/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
+  return request<Tier>(`/tiers/${id}?data=${encodeURIComponent(JSON.stringify(data))}`);
 }
 
 export async function deleteTier(id: string) {
-  return request<{ deleted: boolean }>(`/tiers/${id}`, {
-    method: 'DELETE',
-  });
+  return request<{ deleted: boolean }>(`/tiers/${id}?action=delete`);
 }
 
 // ==================== Item ====================
 
 export async function createItem(tierId: string, data: { title: string; desc?: string }) {
-  return request<Item>(`/tiers/${tierId}/items`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
+  return request<Item>(`/tiers/${tierId}/items?data=${encodeURIComponent(JSON.stringify(data))}`);
 }
 
 export async function updateItem(id: string, data: { title?: string; desc?: string }) {
-  return request<Item>(`/items/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data),
-  });
+  return request<Item>(`/items/${id}?data=${encodeURIComponent(JSON.stringify(data))}`);
 }
 
 export async function deleteItem(id: string) {
-  return request<{ deleted: boolean }>(`/items/${id}`, {
-    method: 'DELETE',
-  });
+  return request<{ deleted: boolean }>(`/items/${id}?action=delete`);
 }

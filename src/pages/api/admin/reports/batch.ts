@@ -21,13 +21,13 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function PUT(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
     if (!can(session, 'report:handle')) return json(error(ErrorCodes.FORBIDDEN, '需要编辑权限'), 403);
 
-    const body = await event.request.json() as {
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({})) as {
       ids?: string[];
       action?: string;
       resolution?: string;
@@ -36,7 +36,7 @@ export async function PUT(event: APIContext) {
     const action = body.action;
     const resolution = (body.resolution ?? '').trim();
     const ids = Array.isArray(body.ids)
-      ? [...new Set(body.ids.filter((id) => typeof id === 'string' && id.trim().length > 0))]
+      ? [...new Set(body.ids.filter((id: string) => typeof id === 'string' && id.trim().length > 0))]
       : [];
 
     if (ids.length === 0) {
@@ -53,7 +53,7 @@ export async function PUT(event: APIContext) {
     }
 
     const pendingReports = await prisma.report.findMany({
-      where: { id: { in: ids }, status: 'PENDING' },
+      where: { id: { in: ids as string[] }, status: 'PENDING' },
       select: { id: true, filerId: true },
     });
 

@@ -50,11 +50,7 @@ export function AdminReviews() {
   const approve = async (reviewId: string) => {
     setActing(reviewId);
     try {
-      const res = await fetch(`/api/reviews/${reviewId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'approve' }),
-      });
+      const res = await fetch(`/api/reviews/${reviewId}?data=${encodeURIComponent(JSON.stringify({ action: 'approve' }))}`);
       const data = await res.json();
       if (data.success) {
         toast('已通过审核，冰山图已发布');
@@ -71,11 +67,8 @@ export function AdminReviews() {
     if (!rejectModal || !rejectReason.trim()) return;
     setActing(rejectModal.id);
     try {
-      const res = await fetch(`/api/reviews/${rejectModal.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reject', reason: rejectReason }),
-      });
+      const body = { action: 'reject', reason: rejectReason };
+      const res = await fetch(`/api/reviews/${rejectModal.id}?data=${encodeURIComponent(JSON.stringify(body))}`);
       const data = await res.json();
       if (data.success) {
         toast('已退回，冰山图返回草稿状态');
@@ -94,11 +87,7 @@ export function AdminReviews() {
     if (!overrideModal || overrideReason.trim().length < 5) return;
     setActing(overrideModal.id);
     try {
-      const res = await fetch(`/api/reviews/${overrideModal.id}/override`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: overrideReason }),
-      });
+      const res = await fetch(`/api/reviews/${overrideModal.id}/override?data=${encodeURIComponent(JSON.stringify({ reason: overrideReason }))}`);
       const data = await res.json();
       if (data.success) {
         toast('已 Override，冰山图直接发布');

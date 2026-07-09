@@ -146,7 +146,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
         if (typeof d.data.unreadCount === 'number') setUnreadCount(d.data.unreadCount);
         if (d.data.pendingAchievements?.length > 0) {
           enqueueAchievements(d.data.pendingAchievements);
-          fetch('/api/auth/achievements/ack', { method: 'POST' }).catch(() => {});
+          fetch('/api/auth/achievements/ack').catch(() => {});
         }
       } else {
         setUser(null);

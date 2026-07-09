@@ -78,11 +78,8 @@ export function AdminAppeals() {
     }
     setActing(true);
     try {
-      const res = await fetch(`/api/admin/appeals/${modal.appeal.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: modal.action, note: note.trim() }),
-      });
+      const body = { action: modal.action, note: note.trim() };
+      const res = await fetch(`/api/admin/appeals/${modal.appeal.id}?data=${encodeURIComponent(JSON.stringify(body))}`);
       const data = await res.json();
       if (data.success) {
         toast(modal.action === 'approve' ? '申诉已批准' : '申诉已驳回');

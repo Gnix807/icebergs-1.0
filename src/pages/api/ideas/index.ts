@@ -48,7 +48,7 @@ export async function GET(event: APIContext) {
   }
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) {
     return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
@@ -57,7 +57,7 @@ export async function POST(event: APIContext) {
   }
 
   let body: { title?: string; description?: string; topic?: string };
-  try { body = await event.request.json(); } catch {
+  try { body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json(); } catch {
     return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '请求格式错误')), {
       status: 400, headers: { 'Content-Type': 'application/json' },
     });

@@ -79,11 +79,8 @@ export function AdminFeedback() {
   async function updateStatus(id: string, status: 'pending' | 'resolved' | 'wontfix') {
     setSaving(id);
     try {
-      const res = await fetch(`/api/admin/feedback/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, resolvedNote: noteMap[id] ?? '' }),
-      });
+      const body = { status, resolvedNote: noteMap[id] ?? '' };
+      const res = await fetch(`/api/admin/feedback/${id}?data=${encodeURIComponent(JSON.stringify(body))}`);
       const d = await res.json();
       if (d.success) {
         setList(prev => prev.map(f => f.id === id ? { ...f, ...d.data } : f));
@@ -98,7 +95,7 @@ export function AdminFeedback() {
     setDeleting(id);
     setDeleteConfirming(null);
     try {
-      const res = await fetch(`/api/admin/feedback/${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/admin/feedback/${id}?action=delete`);
       const d = await res.json();
       if (!d.success) {
         toast(d.error?.message || '删除失败', 'error');

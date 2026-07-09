@@ -51,7 +51,7 @@ export async function GET(event: APIContext) {
 }
 
 // PUT /api/users/:id — 更新个人资料（仅本人）
-export async function PUT(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -69,7 +69,7 @@ export async function PUT(event: APIContext) {
       });
     }
 
-    const body = await event.request.json().catch(() => ({}));
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
 
     const data: Record<string, unknown> = {};
     if (typeof body.bio === 'string') data.bio = body.bio.slice(0, 200);

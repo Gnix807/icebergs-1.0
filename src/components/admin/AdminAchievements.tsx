@@ -366,9 +366,8 @@ function InlineForm({ editId, initialForm, initialConditions, onSave, onCancel }
     setBusy(true);
     try {
       const url    = editId ? `/api/admin/achievements/${editId}` : '/api/admin/achievements';
-      const method = editId ? 'PUT' : 'POST';
       const payload = { ...form, label: form.label || form.labelZh, conditions: JSON.stringify(conditions) };
-      const res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res  = await fetch(`${url}?data=${encodeURIComponent(JSON.stringify(payload))}`);
       const data = await res.json();
       if (data.success) { toast(editId ? '成就已更新' : '成就已创建'); onSave(); }
       else toast(data.error?.message ?? '操作失败', 'error');
@@ -502,7 +501,7 @@ export function AdminAchievements({ isFounder }: { isFounder?: boolean }) {
     setDeleting(ach.id);
     setDeleteConfirming(null);
     try {
-      const res  = await fetch(`/api/admin/achievements/${ach.id}`, { method: 'DELETE' });
+      const res  = await fetch(`/api/admin/achievements/${ach.id}?action=delete`);
       const data = await res.json();
       if (data.success) { toast('已删除'); if (expandedId === ach.id) setExpandedId(null); load(); }
       else toast(data.error?.message ?? '删除失败', 'error');

@@ -17,7 +17,7 @@ import { notify } from '../../../../lib/notify';
 
 const db = prisma;
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const secret = process.env.CRON_SECRET;
   const auth = event.request.headers.get('Authorization') ?? '';
   if (!secret || auth !== `Bearer ${secret}`) {

@@ -95,11 +95,8 @@ export function ImpeachVotePanel({
     if (!eligible) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/impeach/${impeachId}/vote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vote: v, comment: comment.trim() || undefined }),
-      });
+      const body = JSON.stringify({ vote: v, comment: comment.trim() || undefined });
+      const res = await fetch(`/api/impeach/${impeachId}/vote?data=${encodeURIComponent(body)}`);
       const data = await res.json();
       if (data.success) {
         toast(`已投「${VOTE_LABEL[v]}」（权重 ${data.data.weight}）`);

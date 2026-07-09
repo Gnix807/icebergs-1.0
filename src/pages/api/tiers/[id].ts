@@ -49,7 +49,7 @@ export async function GET(event: APIContext) {
   }
 }
 
-export async function PUT(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -68,9 +68,6 @@ export async function PUT(event: APIContext) {
       });
     }
 
-    const body = await event.request.json();
-    const { name, desc, order } = body;
-
     const existing = await prisma.tier.findUnique({ where: { id }, include: { iceberg: true } });
     if (!existing) {
       return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '层级不存在')), {
@@ -80,6 +77,26 @@ export async function PUT(event: APIContext) {
     }
 
     const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
+
+    if (event.request.method === 'DELETE') {
+      if (existing.iceberg.authorId !== session.userId && !canManageAny) {
+        return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      await prisma.tier.delete({ where: { id } });
+
+      return new Response(JSON.stringify(success({ deleted: true })), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
+    const { name, desc, order } = body;
+
     const inProject = await isProjectMember(session.userId, existing.iceberg.projectId);
     if (existing.iceberg.authorId !== session.userId && !canManageAny && !inProject) {
       return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
@@ -105,56 +122,6 @@ export async function PUT(event: APIContext) {
   } catch (err) {
     console.error('更新层级失败:', err);
     return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '更新失败')), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-}
-
-export async function DELETE(event: APIContext) {
-  try {
-    const session = await getSession(event);
-    if (!session) {
-      return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const { id } = event.params;
-
-    if (!id) {
-      return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '缺少 ID')), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const existing = await prisma.tier.findUnique({ where: { id }, include: { iceberg: true } });
-    if (!existing) {
-      return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '层级不存在')), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
-    if (existing.iceberg.authorId !== session.userId && !canManageAny) {
-      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    await prisma.tier.delete({ where: { id } });
-
-    return new Response(JSON.stringify(success({ deleted: true })), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    console.error('删除层级失败:', err);
-    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '删除失败')), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

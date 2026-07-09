@@ -15,13 +15,46 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function POST(event: APIContext) {
+export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
   const { id: electionId } = event.params;
   const election = await prisma.election.findUnique({ where: { id: electionId } });
   if (!election) return json(error(ErrorCodes.NOT_FOUND, '选举不存在'), 404);
+
+  if (event.request.method === 'DELETE') {
+    if (election.status !== 'OPEN_APPLY') {
+      return json(error(ErrorCodes.BAD_REQUEST, '申请期已结束，无法撤回'), 400);
+    }
+
+    const body = await event.request.json().catch(() => ({})) as { userId?: string };
+    // 管理员可以撤销任意候选人；普通用户只能撤自己
+    const targetUserId = (session.role === 'ADMIN' || session.isFounder)
+      ? (body.userId ?? session.userId)
+      : session.userId;
+
+    const candidate = await prisma.electionCandidate.findUnique({
+      where: { electionId_userId: { electionId: electionId!, userId: targetUserId } },
+    });
+    if (!candidate) return json(error(ErrorCodes.NOT_FOUND, '未找到该候选人'), 404);
+
+    await prisma.electionCandidate.update({
+      where: { id: candidate.id },
+      data: { status: 'WITHDRAWN' },
+    });
+
+    notify(
+      targetUserId,
+      'election_candidate_withdrawn',
+      '参选已撤回',
+      '你已撤回本次选举的参选资格。',
+      `/elections/${electionId}`,
+    );
+
+    return json(success({ message: '已撤回参选' }));
+  }
+
   if (election.status !== 'OPEN_APPLY') {
     return json(error(ErrorCodes.BAD_REQUEST, '申请期已结束'), 400);
   }
@@ -63,7 +96,7 @@ export async function POST(event: APIContext) {
     return json(error(ErrorCodes.BAD_REQUEST, '你已经报名了'), 400);
   }
 
-  const body = await event.request.json().catch(() => ({})) as { statement?: string };
+  const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({})) as { statement?: string };
   const statement = body.statement?.trim().slice(0, 500) || null;
 
   const candidate = await prisma.electionCandidate.create({
@@ -79,43 +112,5 @@ export async function POST(event: APIContext) {
   );
 
   return json(success({ candidate }), 201);
-}
-
-export async function DELETE(event: APIContext) {
-  const session = await getSession(event);
-  if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
-
-  const { id: electionId } = event.params;
-  const election = await prisma.election.findUnique({ where: { id: electionId } });
-  if (!election) return json(error(ErrorCodes.NOT_FOUND, '选举不存在'), 404);
-  if (election.status !== 'OPEN_APPLY') {
-    return json(error(ErrorCodes.BAD_REQUEST, '申请期已结束，无法撤回'), 400);
-  }
-
-  const body = await event.request.json().catch(() => ({})) as { userId?: string };
-  // 管理员可以撤销任意候选人；普通用户只能撤自己
-  const targetUserId = (session.role === 'ADMIN' || session.isFounder)
-    ? (body.userId ?? session.userId)
-    : session.userId;
-
-  const candidate = await prisma.electionCandidate.findUnique({
-    where: { electionId_userId: { electionId: electionId!, userId: targetUserId } },
-  });
-  if (!candidate) return json(error(ErrorCodes.NOT_FOUND, '未找到该候选人'), 404);
-
-  await prisma.electionCandidate.update({
-    where: { id: candidate.id },
-    data: { status: 'WITHDRAWN' },
-  });
-
-  notify(
-    targetUserId,
-    'election_candidate_withdrawn',
-    '参选已撤回',
-    '你已撤回本次选举的参选资格。',
-    `/elections/${electionId}`,
-  );
-
-  return json(success({ message: '已撤回参选' }));
 }
 

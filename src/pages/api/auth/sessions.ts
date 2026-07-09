@@ -63,7 +63,7 @@ export async function GET(event: APIContext) {
 
 // DELETE /api/auth/sessions
 // body: { scope?: 'others' | 'all' | 'single'; sessionId?: string }
-export async function DELETE(event: APIContext) {
+export async function ALL(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) {
@@ -73,7 +73,7 @@ export async function DELETE(event: APIContext) {
       });
     }
 
-    const body = await event.request.json().catch(() => ({}));
+    const body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json().catch(() => ({}));
     const scope: SessionScope = body.scope === 'all' || body.scope === 'single' ? body.scope : 'others';
     const targetSessionId = typeof body.sessionId === 'string' ? body.sessionId : '';
     const currentSessionId = event.cookies.get('session')?.value || null;

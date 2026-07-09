@@ -43,11 +43,8 @@ export function UserboxPicker({
   const save = async () => {
     setSaving(true);
     try {
-      const res  = await fetch(`/api/users/${userId}/userboxes`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: [...selected] }),
-      });
+      const body = JSON.stringify({ ids: [...selected] });
+      const res  = await fetch(`/api/users/${userId}/userboxes?data=${encodeURIComponent(body)}`);
       const data = await res.json();
       if (data.success) setSaved(true);
     } finally { setSaving(false); }
