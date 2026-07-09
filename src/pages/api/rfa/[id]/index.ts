@@ -17,6 +17,30 @@ function json(body: unknown, status = 200) {
 
 export async function GET(event: APIContext) {
   const id = event.params.id!;
+
+  // 撤销 RfA（GET 兼容，action=delete）
+  if (event.url.searchParams.get('action') === 'delete') {
+    const session = await getSession(event);
+    if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
+
+    const rfa = await db.rfaRequest.findUnique({
+      where: { id },
+      select: { id: true, userId: true, status: true },
+    });
+    if (!rfa) return json(error(ErrorCodes.NOT_FOUND, 'RfA 不存在'), 404);
+    if (rfa.userId !== session.userId)
+      return json(error(ErrorCodes.FORBIDDEN, '只能撤销自己的申请'), 403);
+    if (rfa.status !== 'OPEN')
+      return json(error(ErrorCodes.CONFLICT, '只能撤销进行中的申请'), 409);
+
+    await db.rfaRequest.update({
+      where: { id },
+      data: { status: 'CANCELLED', resolvedAt: new Date() },
+    });
+
+    return json(success(null));
+  }
+
   const rfa = await db.rfaRequest.findUnique({
     where: { id },
     select: {
@@ -57,27 +81,4 @@ export async function GET(event: APIContext) {
   }));
 }
 
-export async function ALL(event: APIContext) {
-  const session = await getSession(event);
-  if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
-
-  const id = event.params.id!;
-  const rfa = await db.rfaRequest.findUnique({
-    where: { id },
-    select: { id: true, userId: true, status: true },
-  });
-
-  if (!rfa) return json(error(ErrorCodes.NOT_FOUND, 'RfA 不存在'), 404);
-  if (rfa.userId !== session.userId)
-    return json(error(ErrorCodes.FORBIDDEN, '只能撤销自己的申请'), 403);
-  if (rfa.status !== 'OPEN')
-    return json(error(ErrorCodes.CONFLICT, '只能撤销进行中的申请'), 409);
-
-  await db.rfaRequest.update({
-    where: { id },
-    data: { status: 'CANCELLED', resolvedAt: new Date() },
-  });
-
-  return json(success(null));
-}
 

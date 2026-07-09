@@ -26,7 +26,7 @@ export async function ALL(event: APIContext) {
       });
     }
 
-    if (event.request.method === 'DELETE') {
+    if (event.request.method === 'DELETE' || event.url.searchParams.get('action') === 'delete') {
       await prisma.collection.delete({ where: { id: id! } });
       return new Response(JSON.stringify(success({ deleted: true })), {
         status: 200, headers: { 'Content-Type': 'application/json' },

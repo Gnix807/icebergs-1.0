@@ -61,7 +61,7 @@ export async function ALL(event: APIContext) {
     });
   }
 
-  if (event.request.method === 'DELETE') {
+  if (event.request.method === 'DELETE' || event.url.searchParams.get('action') === 'delete') {
     await prisma.item.delete({ where: { id } });
 
     return new Response(JSON.stringify(success({ deleted: true })), {

@@ -23,7 +23,7 @@ export async function ALL(event: APIContext) {
   const election = await prisma.election.findUnique({ where: { id: electionId } });
   if (!election) return json(error(ErrorCodes.NOT_FOUND, '选举不存在'), 404);
 
-  if (event.request.method === 'DELETE') {
+  if (event.request.method === 'DELETE' || event.url.searchParams.get('action') === 'delete') {
     if (election.status !== 'OPEN_APPLY') {
       return json(error(ErrorCodes.BAD_REQUEST, '申请期已结束，无法撤回'), 400);
     }

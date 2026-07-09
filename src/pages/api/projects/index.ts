@@ -20,7 +20,7 @@ export async function ALL(event: APIContext) {
     } catch (err) { return json(error(ErrorCodes.INTERNAL_ERROR, '删除失败'), 500); }
   }
 
-  if (event.request.method === 'PATCH' || (action !== 'delete' && body.slug)) {
+  if (event.request.method === 'PATCH' || event.url.searchParams.get('action') === 'update') {
     try {
       const project = await prisma.project.findUnique({ where: { slug: body.slug }, select: { id: true, creatorId: true } });
       if (!project) return json(error(ErrorCodes.NOT_FOUND, '专题不存在'), 404);

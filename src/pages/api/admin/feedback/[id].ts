@@ -16,7 +16,7 @@ export async function ALL(event: APIContext) {
 
   const { id } = event.params as { id: string };
 
-  if (event.request.method === 'DELETE') {
+  if (event.request.method === 'DELETE' || event.url.searchParams.get('action') === 'delete') {
     if (!id) {
       return new Response(
         JSON.stringify({ success: false, error: { message: '缺少反馈 ID' } }),

@@ -25,7 +25,7 @@ export async function ALL(event: APIContext) {
     const existing = await prisma.achievement.findUnique({ where: { id } });
     if (!existing) return json(error(ErrorCodes.NOT_FOUND, '成就不存在'), 404);
 
-    if (event.request.method === 'DELETE') {
+    if (event.request.method === 'DELETE' || event.url.searchParams.get('action') === 'delete') {
       await prisma.achievement.delete({ where: { id } });
       return json(success({ deleted: true }), 200);
     }

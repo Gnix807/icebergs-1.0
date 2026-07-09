@@ -15,6 +15,30 @@ function json(body: unknown, status = 200) {
 
 export async function GET(event: APIContext) {
   const { id } = event.params;
+
+  // 撤销弹劾（GET 兼容，action=delete）
+  if (event.url.searchParams.get('action') === 'delete') {
+    const session = await getSession(event);
+    if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
+
+    const req = await prisma.impeachRequest.findUnique({
+      where: { id },
+      select: { id: true, status: true, initiatedBy: true },
+    });
+    if (!req) return json(error(ErrorCodes.NOT_FOUND, '弹劾案不存在'), 404);
+    if (req.status !== 'OPEN') return json(error(ErrorCodes.FORBIDDEN, '只能撤销 OPEN 状态的弹劾案'), 403);
+    if (req.initiatedBy !== session.userId && !session.isFounder) {
+      return json(error(ErrorCodes.FORBIDDEN, '无权撤销'), 403);
+    }
+
+    await prisma.impeachRequest.update({
+      where: { id },
+      data: { status: 'CANCELLED', resolvedAt: new Date() },
+    });
+
+    return json(success({ cancelled: true }));
+  }
+
   const req = await prisma.impeachRequest.findUnique({
     where: { id },
     select: {
@@ -52,26 +76,4 @@ export async function GET(event: APIContext) {
   return json(success({ request: req, summary }));
 }
 
-export async function ALL(event: APIContext) {
-  const session = await getSession(event);
-  if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
-
-  const { id } = event.params;
-  const req = await prisma.impeachRequest.findUnique({
-    where: { id },
-    select: { id: true, status: true, initiatedBy: true },
-  });
-  if (!req) return json(error(ErrorCodes.NOT_FOUND, '弹劾案不存在'), 404);
-  if (req.status !== 'OPEN') return json(error(ErrorCodes.FORBIDDEN, '只能撤销 OPEN 状态的弹劾案'), 403);
-  if (req.initiatedBy !== session.userId && !session.isFounder) {
-    return json(error(ErrorCodes.FORBIDDEN, '无权撤销'), 403);
-  }
-
-  await prisma.impeachRequest.update({
-    where: { id },
-    data: { status: 'CANCELLED', resolvedAt: new Date() },
-  });
-
-  return json(success({ cancelled: true }));
-}
 

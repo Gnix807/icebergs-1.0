@@ -13,7 +13,7 @@ export async function ALL(event: APIContext) {
 
   const { id } = event.params;
 
-  if (event.request.method === 'DELETE') {
+  if (event.request.method === 'DELETE' || event.url.searchParams.get('action') === 'delete') {
     let body: { icebergId?: string };
     try { body = await event.request.json(); } catch {
       return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '请求格式错误')), {
