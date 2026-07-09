@@ -159,18 +159,21 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
     setLoading(true);
     setError(null);
     setInfo(null);
+    setFieldError(null);
 
     try {
       const normalizedEmail = email.trim().toLowerCase();
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(normalizedEmail)) {
         setError('请输入正确的邮箱地址');
+        setFieldError('email');
         setLoading(false);
         return;
       }
 
       if (mode === 'reset' && password !== confirmPassword) {
         setError('两次输入的新密码不一致');
+        setFieldError('password');
         setLoading(false);
         return;
       }
@@ -322,7 +325,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
               <input
                 type="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setFieldError(null); }}
+                onChange={(e) => { setEmail(e.target.value); setFieldError(null); setError(null); }}}
                 className={`w-full px-3 py-2.5 bg-surface-0 border text-sm font-mono focus:outline-none placeholder:text-text-lo transition-colors ${
                   fieldError === 'email' ? 'border-danger text-danger' : 'border-border-subtle focus:border-brand'
                 }`}
@@ -338,7 +341,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => { setPassword(e.target.value); setFieldError(null); }}
+                  onChange={(e) => { setPassword(e.target.value); setFieldError(null); setError(null); }}
                   onKeyUp={handlePasswordKeyState}
                   onKeyDown={handlePasswordKeyState}
                   className={`w-full px-3 py-2.5 pr-16 bg-surface-0 border text-sm font-mono focus:outline-none placeholder:text-text-lo transition-colors ${
@@ -425,7 +428,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                   <input
                     type="text"
                     value={username}
-                    onChange={(e) => { setUsername(e.target.value); setFieldError(null); }}
+                    onChange={(e) => { setUsername(e.target.value); setFieldError(null); setError(null); }}
                     className={`w-full px-3 py-2.5 bg-surface-0 border text-sm font-mono focus:outline-none placeholder:text-text-lo transition-colors ${
                       fieldError === 'username' ? 'border-danger text-danger' : 'border-border-subtle focus:border-brand'
                     }`}
@@ -441,7 +444,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
                   <input
                     type="text"
                     value={nickname}
-                    onChange={(e) => { setNickname(e.target.value); setFieldError(null); }}
+                    onChange={(e) => { setNickname(e.target.value); setFieldError(null); setError(null); }}
                     className={`w-full px-3 py-2.5 bg-surface-0 border text-sm font-mono focus:outline-none placeholder:text-text-lo transition-colors ${
                       fieldError === 'nickname' ? 'border-danger text-danger' : 'border-border-subtle focus:border-brand'
                     }`}
