@@ -14,7 +14,7 @@ node prisma/seed.mjs 2>/dev/null || true
 node prisma/seed-achievements.mjs 2>/dev/null || true
 
 echo "[icebergs] 全文搜索..."
-PGPASSWORD=icebergs_dev psql -h db -U icebergs -d icebergs -f prisma/migrations/001_fulltext_search.sql 2>/dev/null || true
+PGPASSWORD="${DB_PASSWORD:-icebergs_dev}" psql -h db -U icebergs -d icebergs -f prisma/migrations/001_fulltext_search.sql 2>/dev/null || true
 
 echo "[icebergs] 启动..."
 exec node dist/server/entry.mjs
