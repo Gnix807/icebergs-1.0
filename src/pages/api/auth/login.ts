@@ -15,54 +15,42 @@ function normalizeEmail(raw: unknown): string {
   return raw.trim().toLowerCase();
 }
 
-// GET /api/auth/login?provider=github|google - OAuth 登录入口
-export async function GET(event: APIContext) {
+// ALL /api/auth/login — OAuth 入口 + 邮箱登录（支持 GET，兼容 OpenResty WAF）
+export async function ALL(event: APIContext) {
+  // OAuth 入口
   const rawProvider = event.url.searchParams.get('provider');
-  const rawIntent = event.url.searchParams.get('intent');
-  if (!rawProvider) {
-    return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '缺少 provider 参数')), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  if (!isOAuthProvider(rawProvider)) {
-    return new Response(null, {
-      status: 302,
-      headers: { Location: '/?error=unsupported_oauth_provider' },
-    });
-  }
-  const intent: OAuthIntent = rawIntent === 'link' ? 'link' : 'login';
-  let linkUserId: string | null = null;
-  if (intent === 'link') {
-    const session = await getSession(event);
-    if (!session) {
+  if (rawProvider) {
+    const rawIntent = event.url.searchParams.get('intent');
+    if (!isOAuthProvider(rawProvider)) {
       return new Response(null, {
         status: 302,
-        headers: { Location: '/?error=link_requires_login' },
+        headers: { Location: '/?error=unsupported_oauth_provider' },
       });
     }
-    linkUserId = session.userId;
+    const intent: OAuthIntent = rawIntent === 'link' ? 'link' : 'login';
+    let linkUserId: string | null = null;
+    if (intent === 'link') {
+      const session = await getSession(event);
+      if (!session) {
+        return new Response(null, {
+          status: 302,
+          headers: { Location: '/?error=link_requires_login' },
+        });
+      }
+      linkUserId = session.userId;
+    }
+    return await startOAuthLogin(event, {
+      provider: rawProvider,
+      intent,
+      linkUserId,
+    });
   }
 
-  return await startOAuthLogin(event, {
-    provider: rawProvider,
-    intent,
-    linkUserId,
-  });
-}
-
-async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const [salt, hash] = stored.split(':');
-  if (!salt || !hash) return false;
-  const derived = await pbkdf2Async(password, salt, 100_000, 32, 'sha256');
-  return derived.toString('hex') === hash;
-}
-
-// POST /api/auth/login - 邮箱密码登录
-export async function POST(event: APIContext) {
+  // 邮箱登录
   try {
-    const body = await event.request.json();
+    const body = event.request.method === 'GET'
+      ? Object.fromEntries(event.url.searchParams)
+      : await event.request.json();
     const email = normalizeEmail(body.email);
     const password = typeof body.password === 'string' ? body.password : '';
 

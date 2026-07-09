@@ -18,10 +18,12 @@ function normalizeEmail(raw: unknown): string {
   return raw.trim().toLowerCase();
 }
 
-// POST /api/auth/reset-password
-export async function POST(event: APIContext) {
+// ALL /api/auth/reset-password
+export async function ALL(event: APIContext) {
   try {
-    const body = await event.request.json().catch(() => ({}));
+    const body = event.request.method === 'GET'
+      ? Object.fromEntries(event.url.searchParams)
+      : await event.request.json().catch(() => ({}));
     const email = normalizeEmail(body.email);
     const newPassword = typeof body.newPassword === 'string' ? body.newPassword : '';
 

@@ -168,17 +168,21 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
         : mode === 'register'
           ? '/api/auth/register'
           : '/api/auth/reset-password';
-      const body = mode === 'login'
-        ? { email: normalizedEmail, password }
-        : mode === 'register'
-          ? { email: normalizedEmail, password, username: username.trim(), nickname }
-          : { email: normalizedEmail, newPassword: password };
+      const params = new URLSearchParams();
+      if (mode === 'login') {
+        params.set('email', normalizedEmail);
+        params.set('password', password);
+      } else if (mode === 'register') {
+        params.set('email', normalizedEmail);
+        params.set('password', password);
+        params.set('username', username.trim());
+        if (nickname) params.set('nickname', nickname);
+      } else {
+        params.set('email', normalizedEmail);
+        params.set('newPassword', password);
+      }
 
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      const res = await fetch(`${endpoint}?${params}`, { method: 'GET' });
 
       const data = await res.json();
 

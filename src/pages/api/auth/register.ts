@@ -25,10 +25,12 @@ function normalizeUsername(raw: unknown): string {
   return raw.trim();
 }
 
-// POST /api/auth/register - 邮箱注册
-export async function POST(event: APIContext) {
+// ALL /api/auth/register - 邮箱注册
+export async function ALL(event: APIContext) {
   try {
-    const body = await event.request.json();
+    const body = event.request.method === 'GET'
+      ? Object.fromEntries(event.url.searchParams)
+      : await event.request.json();
     const email = normalizeEmail(body.email);
     const password = typeof body.password === 'string' ? body.password : '';
     const username = normalizeUsername(body.username);
