@@ -35,7 +35,7 @@ const ROLE_COLOR: Record<string, string> = {
 
 interface ActionModal {
   user: UserRow;
-  type: 'warn' | 'restrict' | 'ban' | 'unban' | 'role';
+  type: 'warn' | 'restrict' | 'ban' | 'unban' | 'role' | 'delete';
 }
 
 const APPOINT_ROLES = ['USER', 'CONTRIBUTOR', 'EDITOR', 'MODERATOR'] as const;
@@ -96,8 +96,13 @@ export function AdminUsers() {
         body = { role: formData.role, reason: formData.reason };
       }
 
+      if (modal.type === 'delete') {
+        url = `/api/users/${modal.user.id}/delete`;
+        body = {};
+      }
+
       const res = await fetch(url, {
-        method: modal.type === 'role' ? 'PATCH' : 'POST',
+        method: modal.type === 'role' ? 'PATCH' : modal.type === 'delete' ? 'GET' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
@@ -234,8 +239,16 @@ export function AdminUsers() {
                     >
                       解除
                     </button>
-                  )}
-                </div>
+                   )}
+                   {!u.isFounder && (
+                     <button
+                       onClick={() => { setModal({ user: u, type: 'delete' }); setFormData({}); }}
+                       className="px-2 py-1 text-[10px] font-mono border border-[#ef444430] text-[#7f1d1d] hover:bg-danger/10 transition-colors"
+                     >
+                       删除
+                     </button>
+                   )}
+                 </div>
               </div>
             ))}
           </div>
@@ -272,7 +285,20 @@ export function AdminUsers() {
               {modal.type === 'ban' && '封禁用户'}
               {modal.type === 'unban' && '解除限制'}
               {modal.type === 'role' && '直接任命角色'}
+              {modal.type === 'delete' && '⚠ 删除用户'}
             </div>
+
+            {modal.type === 'delete' && (
+              <div className="mb-4 p-3 border border-danger/30 bg-[#7f1d1d10]">
+                <div className="text-xs text-danger mb-2 font-mono">
+                  此操作将永久删除 <strong>@{modal.user.nickname ?? modal.user.username}</strong> 及其所有冰山图。
+                </div>
+                <div className="text-[10px] text-text-lo font-mono">
+                  冰山图：{modal.user._count.icebergs} 个 · 积分：{modal.user.qualityScore} · 角色：{modal.user.role}
+                </div>
+                <div className="text-[10px] text-warning mt-2">此操作不可撤销。</div>
+              </div>
+            )}
 
             {modal.type === 'role' && (
               <div className="mb-3">
@@ -348,7 +374,7 @@ export function AdminUsers() {
               </div>
             )}
 
-            {(modal.type !== 'unban') && (
+            {(modal.type !== 'unban' && modal.type !== 'delete') && (
               <div className="mb-4">
                 <div className="text-[10px] text-text-lo mb-1">
                   {modal.type === 'role' ? '备注（可选）' : '理由'}
@@ -374,11 +400,14 @@ export function AdminUsers() {
                 onClick={doAction}
                 disabled={
                   acting ||
-                  (modal.type !== 'unban' && modal.type !== 'role' && (formData.reason ?? '').trim().length < 5) ||
+                  (modal.type === 'delete' ? false :
+                   modal.type !== 'unban' && modal.type !== 'role' && (formData.reason ?? '').trim().length < 5) ||
                   (modal.type === 'role' && (!formData.role || formData.role === modal.user.role))
                 }
                 className={`flex-1 py-2 text-xs transition-colors disabled:opacity-50 ${
-                  modal.type === 'role'
+                  modal.type === 'delete'
+                    ? 'btn-danger bg-[#7f1d1d] border border-danger text-danger hover:bg-[#7f1d1d80]'
+                    : modal.type === 'role'
                     ? 'btn-purple bg-purple/20 border border-[#8b5cf650] text-purple hover:bg-purple/20'
                     : 'btn-danger bg-danger/20 border border-[#ef444450] text-danger hover:bg-danger/20'
                 }`}
