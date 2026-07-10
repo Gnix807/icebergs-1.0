@@ -625,7 +625,7 @@ if (iceberg?.status === 'PUBLISHED') {
 </Layout>
 
 {/* ── Inline script: drawer logic ─────────────────────────── */}
-<script is:inline define:vars={{ allItemsFlat, allLabels, isLoggedIn, icebergId: iceberg?.id, icebergTitle: iceberg?.title }}>
+<script define:vars={{ allItemsFlat, allLabels, isLoggedIn, icebergId: iceberg?.id, icebergTitle: iceberg?.title }}>
   const ITEMS = allItemsFlat;
   let currentIndex = -1;
   let activeTier   = null;   // null = all; or tier index as number
