@@ -34,7 +34,6 @@ export async function GET(event: APIContext) {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=3600',
       },
     });
   } catch (err) {
