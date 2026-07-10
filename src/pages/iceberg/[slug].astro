@@ -1042,31 +1042,31 @@ if (iceberg?.status === 'PUBLISHED') {
     updateURL({ tier: urlTier, labels: urlLabels });
   }
 
-  // Bind tier filter buttons
-  document.querySelectorAll('[data-tier-filter]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var val = btn.dataset.tierFilter;
-      if (val === 'all') {
-        activeTier = null;
-      } else {
-        var ti = parseInt(val, 10);
-        activeTier = activeTier === ti ? null : ti;
-      }
-      applyFilters();
-    });
+  // Bind tier filter buttons — delegated to survive ViewTransitions
+  document.body.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-tier-filter]');
+    if (!btn) return;
+    var val = btn.dataset.tierFilter;
+    if (val === 'all') {
+      activeTier = null;
+    } else {
+      var ti = parseInt(val, 10);
+      activeTier = activeTier === ti ? null : ti;
+    }
+    applyFilters();
   });
 
-  // Bind label filter buttons
-  document.querySelectorAll('[data-label-filter]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var label = btn.dataset.labelFilter;
-      if (activeLabels.has(label)) {
-        activeLabels.delete(label);
-      } else {
-        activeLabels.add(label);
-      }
-      applyFilters();
-    });
+  // Bind label filter buttons — delegated to survive ViewTransitions
+  document.body.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-label-filter]');
+    if (!btn) return;
+    var label = btn.dataset.labelFilter;
+    if (activeLabels.has(label)) {
+      activeLabels.delete(label);
+    } else {
+      activeLabels.add(label);
+    }
+    applyFilters();
   });
 
   // Reset filter
