@@ -78,8 +78,8 @@ const seoSettings = await prisma.systemSettings.findMany({
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=PingFang+SC:wght@400;500;600&display=swap" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/misans@4.0.0/lib/Normal/MiSans-Normal.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" />
+    <link href="https://cdn.jsdelivr.net/npm/misans@4.0.0/lib/Normal/MiSans-Normal.min.css" rel="stylesheet" media="print" onload="this.media='all'" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" media="print" onload="this.media='all'" />
     <ViewTransitions />
   </head>
   <body class="bg-surface-1 text-[var(--text-primary)] antialiased">
@@ -363,9 +363,11 @@ const seoSettings = await prisma.systemSettings.findMany({
         document.addEventListener('astro:before-preparation', () => {
           bar.classList.remove('done');
           bar.style.width = '0%';
-          void bar.offsetWidth; // force reflow
-          bar.classList.add('active');
-          bar.style.width = '70%';
+          bar.classList.remove('active');
+          requestAnimationFrame(() => {
+            bar.classList.add('active');
+            bar.style.width = '70%';
+          });
         });
 
         document.addEventListener('astro:before-swap', () => {

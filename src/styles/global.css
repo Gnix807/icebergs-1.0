@@ -752,8 +752,10 @@ html.light {
   --color-border:    #c8cdd4;
   --color-border-2:  #dde0e4;
   --color-border-3:  #e5e8ec;
-  --color-brand:     #3ecf8e;
-  --color-brand-2:   #24b47e;
+  --color-brand:     #16a34a;
+  --color-brand-2:   #15803d;
+  --color-success:   #16a34a;
+  --color-info:      #16a34a;
 }
 html.light body {
   background-color: #f1f3f5;
