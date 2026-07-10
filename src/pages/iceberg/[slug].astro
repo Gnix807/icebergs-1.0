@@ -826,8 +826,9 @@ if (iceberg?.status === 'PUBLISHED') {
     modalContent.style.opacity = '1';
 
     var itemId = item.id;
-    if (descCache[itemId]) {
-      modalContent.innerHTML = descCache[itemId] || '<p class="text-text-lo">暂无描述</p>';
+    var ck = icebergId + ':' + itemId;
+    if (descCache[ck]) {
+      modalContent.innerHTML = descCache[ck] || '<p class="text-text-lo">暂无描述</p>';
       if (modalBody) modalBody.scrollTop = scrollPositions[itemId] || 0;
     } else if (loadingDescs[itemId]) {
       // 已在加载中，等待
@@ -836,15 +837,14 @@ if (iceberg?.status === 'PUBLISHED') {
       fetch('/api/items/' + itemId + '/desc')
         .then(function (r) { return r.json(); })
         .then(function (d) {
-          descCache[itemId] = d.data?.descHtml || '';
-          // 确保加载完成后 modal 仍在显示同一个词条
+          descCache[ck] = d.data?.descHtml || '';
           if (currentIndex === idx) {
-            modalContent.innerHTML = descCache[itemId] || '<p class="text-text-lo">暂无描述</p>';
+            modalContent.innerHTML = descCache[ck] || '<p class="text-text-lo">暂无描述</p>';
             if (modalBody) modalBody.scrollTop = scrollPositions[itemId] || 0;
           }
         })
         .catch(function () {
-          descCache[itemId] = '';
+          descCache[ck] = '';
           if (currentIndex === idx) {
             modalContent.innerHTML = '<p class="text-text-lo">加载失败</p>';
           }
