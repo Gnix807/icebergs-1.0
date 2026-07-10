@@ -195,6 +195,7 @@ model Iceberg {
   title       String
   description         String?
   renderedDescription String?
+  searchVector         String?   @map("search_vector")  // full-text search tsvector, auto-populated by PG trigger
   topic       String   @default("general") // 主题分类：game / urban_legend / conspiracy ...
   authorId    String
   author      User     @relation(fields: [authorId], references: [id])
