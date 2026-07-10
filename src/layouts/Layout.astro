@@ -17,10 +17,10 @@ interface Props {
   canonicalURL?: string;
 }
 
-const { title, description = '冰山图宇宙 - 探索知识的深层', ogImage, canonicalURL } = Astro.props;
+const { title, description = '冰山图宇宙 — 一个以冰山图为核心的知识探索与分享社区。浏览、创建、协作编辑冰山图，发现每个话题水面之下的世界。', ogImage, canonicalURL } = Astro.props;
 const SITE = Astro.site?.origin || 'https://icebergs.fun';
 const pageUrl = canonicalURL || Astro.url.href;
-const ogImageUrl = ogImage || '';
+const ogImageUrl = ogImage || `${SITE}/og-image.svg`;
 
 // 全站横幅：取最新一条 banner=true 的公告
 const bannerAnn = await prisma.announcement.findFirst({

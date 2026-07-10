@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <pattern id="dots" patternUnits="userSpaceOnUse" width="40" height="40">
+      <circle cx="40" cy="40" r="1.5" fill="rgba(0,255,65,0.05)"/>
+    </pattern>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0A0A0A"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#dots)"/>
+
+  <!-- 大冰山装饰 -->
+  <g opacity="0.06" transform="translate(900, 430) scale(2.5)">
+    <polygon points="0,100 60,100 54,55 44,55 38,30 30,30 26,10 18,10 15,0 12,10 4,10 0,30 -6,30 -10,55 -20,55 -24,100" fill="#00FF41"/>
+    <rect x="-40" y="100" width="104" height="20" rx="2" fill="#00FF41"/>
+  </g>
+
+  <!-- 标题 -->
+  <text x="80" y="220" font-family="'Space Mono','PingFang SC',monospace" font-size="72" font-weight="700" fill="#00FF41" filter="url(#glow)">冰山图宇宙</text>
+  <text x="80" y="300" font-family="'Space Mono','PingFang SC',monospace" font-size="28" fill="rgba(255,255,255,0.5)">Iceberg Universe</text>
+
+  <!-- 副标题 -->
+  <text x="80" y="380" font-family="'PingFang SC','MiSans',sans-serif" font-size="24" fill="rgba(255,255,255,0.35)">
+    把每个话题的未知领域挖出来
+  </text>
+
+  <!-- 特性关键字 -->
+  <text x="80" y="460" font-family="'Space Mono',monospace" font-size="16" fill="rgba(0,255,65,0.2)">
+    · 冰山图浏览 · 可视化编辑器 · 协作编辑 · 排行榜 · 成就系统 · 开源社区 ·
+  </text>
+
+  <!-- 网址 -->
+  <text x="80" y="530" font-family="'Space Mono',monospace" font-size="18" fill="rgba(0,255,65,0.4)">
+    icebergs.gnix807.cn
+  </text>
+
+  <!-- 底部线 -->
+  <line x1="80" y1="560" x2="350" y2="560" stroke="#00FF41" stroke-width="2" opacity="0.2"/>
+</svg>
