@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { prisma } from '../lib/prisma';
 
 export const GET: APIRoute = async () => {
-  const SITE = 'https://icebergs.fun';
+  const SITE = 'https://icebergs.gnix807.cn';
 
   const icebergs = await prisma.iceberg.findMany({
     where: { status: 'PUBLISHED' },

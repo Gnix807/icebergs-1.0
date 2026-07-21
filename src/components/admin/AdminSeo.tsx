@@ -178,7 +178,7 @@ export function AdminSeo() {
           <span className="text-[10px] font-mono text-text-lo">Sitemap 提交入口</span>
         </div>
         <div className="text-[10px] font-mono text-text-mid mb-2">
-          配置验证码后，进入对应平台提交 Sitemap：<code className="text-brand bg-brand/5 px-1">https://icebergs.fun/sitemap.xml</code>
+          配置验证码后，进入对应平台提交 Sitemap：<code className="text-brand bg-brand/5 px-1">https://icebergs.gnix807.cn/sitemap.xml</code>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {SUBMIT_LINKS.map(link => (

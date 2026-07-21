@@ -18,7 +18,7 @@ interface Props {
 }
 
 const { title, description = '冰山图宇宙 — 一个以冰山图为核心的知识探索与分享社区。浏览、创建、协作编辑冰山图，发现每个话题水面之下的世界。', ogImage, canonicalURL } = Astro.props;
-const SITE = Astro.site?.origin || 'https://icebergs.fun';
+const SITE = Astro.site?.origin || 'https://icebergs.gnix807.cn';
 const pageUrl = canonicalURL || Astro.url.href;
 const ogImageUrl = ogImage || `${SITE}/og-image.svg`;
 

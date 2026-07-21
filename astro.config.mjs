@@ -4,7 +4,7 @@ import tailwind from '@astrojs/tailwind';
 import node from '@astrojs/node';
 
 export default defineConfig({
-  site: 'https://icebergs.fun',
+  site: 'https://icebergs.gnix807.cn',
   integrations: [
     react(),
     tailwind(),
