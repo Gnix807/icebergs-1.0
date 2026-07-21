@@ -17,7 +17,7 @@ interface Props {
   canonicalURL?: string;
 }
 
-const { title, description = '冰山图宇宙 — 一个以冰山图为核心的知识探索与分享社区。浏览、创建、协作编辑冰山图，发现每个话题水面之下的世界。', ogImage, canonicalURL } = Astro.props;
+const { title, description = '水面之上的只是冰山一角。社区共建的开放式知识图谱，追溯每个话题不为人知的秘密与真相。', ogImage, canonicalURL } = Astro.props;
 const SITE = Astro.site?.origin || 'https://icebergs.gnix807.cn';
 const pageUrl = canonicalURL || Astro.url.href;
 const ogImageUrl = ogImage || `${SITE}/og-image.svg`;
@@ -390,7 +390,7 @@ const seoSettings = await prisma.systemSettings.findMany({
         "@type": "WebSite",
         "name": "冰山图宇宙",
         "url": "{SITE}",
-        "description": "探索知识的深层 — 开放式冰山图百科全书",
+        "description": "水面之下的知识宇宙",
         "inLanguage": "zh-CN"
       }
     </script>
