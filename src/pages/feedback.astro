@@ -1,49 +1,5 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { prisma } from '../lib/prisma';
-
-let submitted = false;
-let submitError: string | null = null;
-
-let draftType = '';
-let draftContent = '';
-let draftContact = '';
-
-if (Astro.request.method === 'POST') {
-  try {
-    const formData = await Astro.request.formData();
-    const type = formData.get('type')?.toString() || 'bug';
-    const content = formData.get('content')?.toString() || '';
-    const contact = formData.get('contact')?.toString() || '';
-    const icebergId = formData.get('icebergId')?.toString() || '';
-    const itemName = formData.get('itemName')?.toString() || '';
-
-    draftType = type;
-    draftContent = content;
-    draftContact = contact;
-
-    const cleanContent = content.trim();
-    if (!cleanContent) {
-      submitError = '请填写反馈内容';
-    } else if (cleanContent.length > 2000) {
-      submitError = '反馈内容不能超过 2000 字';
-    } else {
-      await prisma.feedback.create({
-        data: {
-          type,
-          content: cleanContent,
-          contact: contact.trim() || null,
-          icebergId: icebergId || null,
-          itemName: itemName || null,
-        },
-      });
-      submitted = true;
-    }
-  } catch (err) {
-    console.error('反馈提交失败:', err);
-    submitError = '提交失败，请稍后重试';
-  }
-}
 
 const icebergId = Astro.url.searchParams.get('id') || '';
 const icebergTitle = Astro.url.searchParams.get('title') || '';
@@ -51,7 +7,6 @@ const itemName = Astro.url.searchParams.get('item') || '';
 
 const hasContext = !!(icebergId || itemName);
 const defaultType = itemName ? 'error' : 'bug';
-const selectedType = ['error', 'bug', 'feature', 'other'].includes(draftType) ? draftType : defaultType;
 const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
 ---
 
@@ -65,8 +20,7 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
       </p>
     </header>
 
-    {submitted ? (
-      <section class="feedback-success reveal">
+    <section id="feedback-success" class="feedback-success reveal" style="display:none">
         <div class="feedback-success-mark">✓</div>
         <h2>反馈已提交</h2>
         <p>感谢你的建议，我们会尽快评估并处理。</p>
@@ -77,15 +31,15 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
           <a href={returnHref}>返回上一页</a>
         </div>
       </section>
-    ) : (
-      <div class="feedback-layout reveal">
+
+      <div id="feedback-form-section" class="feedback-layout reveal">
         <section class="feedback-form-panel">
           <div class="feedback-panel-head">
             <h2>发送反馈</h2>
             <p>内容越具体，越容易快速定位问题。</p>
           </div>
 
-          <form method="POST" class="feedback-form" data-astro-reload>
+          <form id="feedback-form" class="feedback-form">
             <input type="hidden" name="icebergId" value={icebergId} />
             <input type="hidden" name="itemName" value={itemName} />
 
@@ -121,7 +75,7 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
                       type="radio"
                       name="type"
                       value={value}
-                      checked={value === selectedType}
+                      checked={value === defaultType}
                       class="sr-only"
                       data-type-radio
                     />
@@ -144,7 +98,7 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
                 placeholder={itemName
                   ? `请描述「${itemName}」的具体问题，例如错误位置、预期内容、实际显示等。`
                   : '请描述你遇到的问题或建议，建议包含：发生位置、复现步骤、设备/浏览器信息。'}
-              >{draftContent}</textarea>
+              ></textarea>
               <div class="feedback-meta">
                 <span>建议填写可复现步骤或样例链接</span>
                 <span id="content-count">0/2000</span>
@@ -157,16 +111,15 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
                 id="contact"
                 name="contact"
                 type="text"
-                value={draftContact}
                 placeholder="邮箱 / GitHub / QQ（仅用于处理反馈，不公开展示）"
               />
             </div>
 
-            {submitError && <div class="feedback-error">{submitError}</div>}
+            <div id="feedback-error" class="feedback-error" style="display:none"></div>
 
             <div class="feedback-actions">
               <a href={returnHref} class="feedback-back-link">返回上一页</a>
-              <button type="submit">提交反馈</button>
+              <button type="submit" id="feedback-submit-btn">提交反馈</button>
             </div>
           </form>
         </section>
@@ -204,11 +157,10 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
           </section>
         </aside>
       </div>
-    )}
   </main>
 </Layout>
 
-<script is:inline>
+<script>
   (function () {
     var ACTIVE_BORDER = 'var(--terminal-green)';
     var ACTIVE_TEXT = 'var(--text-primary)';
@@ -236,8 +188,7 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
       var textarea = document.getElementById('content');
       var counter = document.getElementById('content-count');
       if (!textarea || !counter) return;
-      var current = textarea.value.length;
-      counter.textContent = current + '/2000';
+      counter.textContent = textarea.value.length + '/2000';
     }
 
     function init() {
@@ -259,6 +210,61 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
 
       syncTypeChips();
       syncCount();
+
+      // Form submit via fetch
+      var form = document.getElementById('feedback-form');
+      var submitBtn = document.getElementById('feedback-submit-btn');
+      var errorEl = document.getElementById('feedback-error');
+      var successEl = document.getElementById('feedback-success');
+      var formSection = document.getElementById('feedback-form-section');
+
+      if (!form || !submitBtn) return;
+
+      form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        var typeRadio = document.querySelector('[name="type"]:checked') as HTMLInputElement;
+        var type = typeRadio ? typeRadio.value : 'bug';
+        var content = textarea ? textarea.value.trim() : '';
+        var contact = (document.getElementById('contact') as HTMLInputElement)?.value.trim() || '';
+
+        if (!content) {
+          if (errorEl) { errorEl.textContent = '请填写反馈内容'; errorEl.style.display = ''; }
+          return;
+        }
+        if (content.length > 2000) {
+          if (errorEl) { errorEl.textContent = '反馈内容不能超过 2000 字'; errorEl.style.display = ''; }
+          return;
+        }
+
+        if (errorEl) errorEl.style.display = 'none';
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '提交中…'; }
+
+        try {
+          var res = await fetch('/api/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: type,
+              content: content,
+              contact: contact || undefined,
+              icebergId: document.querySelector('[name="icebergId"]')?.getAttribute('value') || undefined,
+              itemName: document.querySelector('[name="itemName"]')?.getAttribute('value') || undefined,
+            }),
+          });
+          var data = await res.json();
+          if (data.success) {
+            if (formSection) formSection.style.display = 'none';
+            if (successEl) successEl.style.display = '';
+          } else {
+            if (errorEl) { errorEl.textContent = data.error?.message || '提交失败'; errorEl.style.display = ''; }
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交反馈'; }
+          }
+        } catch (err) {
+          if (errorEl) { errorEl.textContent = '网络错误，请重试'; errorEl.style.display = ''; }
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交反馈'; }
+        }
+      });
     }
 
     if (document.readyState === 'loading') {
