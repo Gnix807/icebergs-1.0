@@ -143,60 +143,62 @@ if (!session) {
 
 <script>
   // @ts-nocheck
-  const form = document.getElementById('idea-form');
-  const titleEl = document.getElementById('idea-title');
-  const topicEl = document.getElementById('idea-topic');
-  const descEl = document.getElementById('idea-desc');
-  const msgEl = document.getElementById('submit-msg');
-  const countEl = document.getElementById('desc-count');
-  const submitBtn = document.getElementById('submit-btn');
-  if (!form || !titleEl || !descEl || !submitBtn) throw new Error('Missing elements');
+  (function() {
+    var form = document.getElementById('idea-form');
+    var titleEl = document.getElementById('idea-title');
+    var topicEl = document.getElementById('idea-topic');
+    var descEl = document.getElementById('idea-desc');
+    var msgEl = document.getElementById('submit-msg');
+    var countEl = document.getElementById('desc-count');
+    var submitBtn = document.getElementById('submit-btn');
+    var topicField = document.getElementById('topic-field');
 
-  const topicField = document.getElementById('topic-field');
+    if (!form || !titleEl || !descEl || !submitBtn) return;
 
-  document.querySelectorAll('[data-template]').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var t = btn.dataset;
-      if (t.title) titleEl.value = t.title;
-      if (t.desc) descEl.value = t.desc;
-      if (t.topic) topicEl.value = t.topic;
-      countEl.textContent = String(descEl.value.length);
-      // 非冰山图模板隐藏分类
-      if (topicField) topicField.style.display = t.hasTopic === 'true' ? '' : 'none';
+    document.querySelectorAll('[data-template]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var t = btn.dataset;
+        if (t.title) titleEl.value = t.title;
+        if (t.desc) descEl.value = t.desc;
+        if (topicEl && t.topic) topicEl.value = t.topic;
+        if (countEl) countEl.textContent = String(descEl.value.length);
+        if (topicField) topicField.style.display = t.hasTopic === 'true' ? '' : 'none';
+      });
     });
-  });
 
-  descEl.addEventListener('input', function() { countEl.textContent = String(descEl.value.length); });
-
-  form.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    var title = titleEl.value.trim();
-    if (title.length < 5) { msgEl.textContent = '标题至少 5 个字'; msgEl.classList.remove('hidden'); return; }
-
-    msgEl.classList.add('hidden');
-    submitBtn.disabled = true;
-    submitBtn.textContent = '提交中…';
-
-    try {
-      var res = await fetch('/api/ideas?data=' + encodeURIComponent(JSON.stringify({
-        title: title,
-        topic: topicEl.value,
-        description: descEl.value.trim() || undefined,
-      })));
-      var data = await res.json();
-      if (data.success) {
-        window.location.href = '/ideas/' + data.data.idea.id;
-      } else {
-        msgEl.textContent = data.error?.message || '提交失败';
-        msgEl.classList.remove('hidden');
-        submitBtn.disabled = false;
-        submitBtn.textContent = '提交';
-      }
-    } catch (e) {
-      msgEl.textContent = '网络错误，请重试';
-      msgEl.classList.remove('hidden');
-      submitBtn.disabled = false;
-      submitBtn.textContent = '提交';
+    if (descEl && countEl) {
+      descEl.addEventListener('input', function() { countEl.textContent = String(descEl.value.length); });
     }
-  });
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      var title = titleEl.value.trim();
+      if (title.length < 5) {
+        if (msgEl) { msgEl.textContent = '标题至少 5 个字'; msgEl.classList.remove('hidden'); }
+        return;
+      }
+
+      if (msgEl) msgEl.classList.add('hidden');
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '提交中…'; }
+
+      try {
+        var res = await fetch('/api/ideas?data=' + encodeURIComponent(JSON.stringify({
+          title: title,
+          topic: topicEl ? topicEl.value : 'general',
+          description: descEl ? descEl.value.trim() || undefined : undefined,
+        })));
+        var data = await res.json();
+        if (data.success) {
+          window.location.href = '/ideas/' + data.data.idea.id;
+        } else {
+          if (msgEl) { msgEl.textContent = data.error?.message || '提交失败'; msgEl.classList.remove('hidden'); }
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交'; }
+        }
+      } catch (err) {
+        if (msgEl) { msgEl.textContent = '网络错误，请重试'; msgEl.classList.remove('hidden'); }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '提交'; }
+      }
+    });
+  })();
 </script>

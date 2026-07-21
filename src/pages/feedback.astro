@@ -85,7 +85,7 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
             <p>内容越具体，越容易快速定位问题。</p>
           </div>
 
-          <form method="POST" class="feedback-form">
+          <form method="POST" class="feedback-form" data-astro-reload>
             <input type="hidden" name="icebergId" value={icebergId} />
             <input type="hidden" name="itemName" value={itemName} />
 
