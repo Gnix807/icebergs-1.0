@@ -376,47 +376,51 @@ if (iceberg?.status === 'PUBLISHED') {
         {(iceberg.tiers.length > 1 || allLabels.length > 0) && (
           <div id="filter-bar" class="mb-6 border border-border-subtle bg-surface-1 px-4 py-3 space-y-2.5">
             {iceberg.tiers.length > 1 && (
-              <div class="mobile-filter-rail flex items-center gap-2">
-                <span class="text-[10px] font-mono text-text-mid tracking-widest w-8 shrink-0">层级</span>
-                <button
-                  data-tier-filter="all"
-                  class="mobile-touch-target filter-btn shrink-0 text-[10px] font-mono px-2 py-1 border transition-colors"
-                  style="--filter-color: #00FF41"
-                >全部</button>
-                {iceberg.tiers.map((tier: any, ti: number) => (
+              <div class="iceberg-filter-row flex min-w-0 items-start gap-2">
+                <span class="w-8 shrink-0 py-1 text-[10px] font-mono text-text-mid tracking-widest">层级</span>
+                <div class="iceberg-filter-options flex min-w-0 flex-1 flex-wrap items-center gap-2">
                   <button
-                    data-tier-filter={String(ti)}
-                    class="mobile-touch-target filter-btn shrink-0 text-[10px] font-mono px-2 py-1 border transition-colors"
-                    style={`--filter-color: ${tierColors[ti % 6]}`}
-                  >
-                    {tier.name}
-                  </button>
-                ))}
+                    data-tier-filter="all"
+                    class="mobile-touch-target iceberg-filter-option filter-btn shrink-0 text-[10px] font-mono px-2 py-1 border transition-colors"
+                    style="--filter-color: #00FF41"
+                  >全部</button>
+                  {iceberg.tiers.map((tier: any, ti: number) => (
+                    <button
+                      data-tier-filter={String(ti)}
+                      class="mobile-touch-target iceberg-filter-option filter-btn shrink-0 text-[10px] font-mono px-2 py-1 border transition-colors"
+                      style={`--filter-color: ${tierColors[ti % 6]}`}
+                    >
+                      {tier.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             {allLabels.length > 0 && (
-              <div class="mobile-filter-rail flex items-center gap-2">
-                <span class="text-[10px] font-mono text-text-mid tracking-widest w-8 shrink-0">标签</span>
-                {allLabels.map((label: string) => (
-                  <button
-                    data-label-filter={label}
-                    class="mobile-touch-target label-filter-btn shrink-0 text-[10px] font-mono px-2 py-1 border transition-all"
-                    style={`--lc: ${labelColorMap[label]}`}
-                  >
-                    {labelEmoji(label) && <span class="mr-0.5">{labelEmoji(label)}</span>}{label}
-                  </button>
-                ))}
+              <div class="iceberg-filter-row flex min-w-0 items-start gap-2">
+                <span class="w-8 shrink-0 py-1 text-[10px] font-mono text-text-mid tracking-widest">标签</span>
+                <div class="iceberg-filter-options flex min-w-0 flex-1 flex-wrap items-center gap-2">
+                  {allLabels.map((label: string) => (
+                    <button
+                      data-label-filter={label}
+                      class="mobile-touch-target iceberg-filter-option label-filter-btn shrink-0 text-[10px] font-mono px-2 py-1 border transition-all"
+                      style={`--lc: ${labelColorMap[label]}`}
+                    >
+                      {labelEmoji(label) && <span class="mr-0.5">{labelEmoji(label)}</span>}{label}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             {/* Search within iceberg */}
             {allItemsFlat.length > 5 && (
-              <div class="flex items-center gap-2">
+              <div class="flex min-w-0 items-center gap-2">
                 <span class="text-[10px] font-mono text-text-mid tracking-widest w-8 shrink-0">搜索</span>
                 <input
                   id="item-search-input"
                   type="text"
                   placeholder="搜索词条标题或描述…"
-                  class="mobile-touch-target text-[10px] font-mono px-2.5 py-1.5 border border-border bg-surface-2 text-text-body
+                  class="mobile-touch-target min-w-0 text-[10px] font-mono px-2.5 py-1.5 border border-border bg-surface-2 text-text-body
                          placeholder:text-text-lo focus:border-brand focus:outline-none flex-1 max-w-xs
                          transition-colors"
                 />
@@ -1237,6 +1241,33 @@ if (iceberg?.status === 'PUBLISHED') {
   }
   html.light #item-search-input:focus {
     box-shadow: 0 0 10px rgba(37, 99, 235, 0.08);
+  }
+
+  /* Keep dynamic filter chips inside the card on tablet/desktop. On phones,
+     only the options scroll so the row label remains visible. */
+  .iceberg-filter-options {
+    max-width: 100%;
+  }
+  .iceberg-filter-option {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  @media (max-width: 767px) {
+    .iceberg-filter-options {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      overscroll-behavior-inline: contain;
+      padding-bottom: 0.25rem;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .iceberg-filter-options::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   /* ── Label filter buttons (per-label color via --lc var) ── */
