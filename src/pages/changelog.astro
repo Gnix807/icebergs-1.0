@@ -70,6 +70,43 @@ const STATIC_PHASE3_ENTRIES: Array<{
   author: { username: string; nickname: string };
 }> = [
   {
+    _staticKey: 'phase3-v40',
+    id: 'phase3-v40',
+    title: '手机更顺手，旧浏览器更稳了',
+    type: 'update',
+    pinned: false,
+    createdAt: new Date('2026-07-22T09:00:00.000Z'),
+    updatedAt: new Date('2026-07-22T09:00:00.000Z'),
+    author: { username: 'icebergs', nickname: 'Icebergs 团队' },
+    content: `## 手机更顺手，旧浏览器更稳了
+
+这次主要打磨了移动端布局、旧浏览器兼容性和删除操作，并修复了详情页筛选标签过多时的排版问题。
+
+### 📱 手机端体验优化
+
+- 首页、导航、冰山广场、创意板、排行榜、个人中心、反馈页和编辑器等主要页面重新适配了窄屏。按钮更容易点到，长标题、表单和操作区也不容易挤出屏幕。
+- 通知、搜索、登录和词条详情等弹窗会避开顶部导航、底部导航与手机安全区；横屏或键盘弹出时，仍能滚动到完整内容和操作按钮。
+- 冰山详情页的层级与标签筛选重新排版。桌面端会在卡片内自动换行，手机端可以横向滑动，较长标签不再伸出页面。
+
+### 🌐 旧浏览器兼容性提升
+
+- 为较旧的 Chromium、Edge、Firefox、Safari 和部分国产浏览器补充了布局与脚本回退，减少打开后白屏、排版错乱或按钮失效的情况。
+- 浏览器缺少页面动画、本地存储、观察器或剪贴板等能力时，会自动使用兼容方案；自动复制不可用时，也可以手动复制链接。
+- 外部字体不再阻塞页面正文。内核过旧或处于“兼容模式”时，网站会保留基础阅读，并提示切换“极速模式”或升级浏览器。
+
+### 🗑 删除操作更可靠
+
+- 修复了创意板中部分创意无法正常删除的问题。删除中、权限不足和网络错误等状态现在会给出明确提示。
+- 冰山图、层级和词条的删除统一增加了权限与状态检查，并同步清理关联记录，降低误删和残留数据的风险。
+- 普通作者仍只能删除自己的草稿或被退回内容；待审核、已发布和已归档内容会受到额外保护。
+
+### 🔧 其他稳定性调整
+
+- 修复了反馈提交在部分浏览器中意外刷新或被拦截的问题。
+- 修复了在不同冰山图之间切换时，词条详情偶尔显示成另一张图内容的问题。
+- 分享链接、站点地图和搜索引擎信息已统一到当前官方网站地址。`,
+  },
+  {
     _staticKey: 'phase3-v39',
     id: 'phase3-v39',
     title: '首页精选轮播 + 安全加固',
@@ -390,7 +427,7 @@ function isStatic(e: Entry): e is Entry & { _staticKey: string } {
         <a href="/announcements">先查看公告列表 →</a>
       </section>
     ) : (
-      <section class="changelog-timeline reveal">
+      <section class="changelog-timeline">
         {monthGroups.map((group) => (
           <div class="changelog-group">
             <h2>{group.label}</h2>
