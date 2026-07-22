@@ -29,6 +29,7 @@ services:
     environment:
       TZ: Asia/Shanghai
       HOST: 0.0.0.0
+      DB_PASSWORD: ${DB_PASSWORD:-change-me}
       DATABASE_URL: postgresql://icebergs:${DB_PASSWORD:-change-me}@db:5432/icebergs
       NODE_ENV: production
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}

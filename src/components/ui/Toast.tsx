@@ -50,7 +50,7 @@ export function Toast() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9998] flex flex-col-reverse gap-2 items-center pointer-events-none">
+    <div className="mobile-toast-stack fixed bottom-8 left-1/2 -translate-x-1/2 z-[9998] flex flex-col-reverse gap-2 items-center pointer-events-none" role="status" aria-live="polite">
       {toasts.map(t => (
         <div
           key={t.id}

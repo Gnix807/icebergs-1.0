@@ -113,31 +113,31 @@ export function TierCard({
       style={tierStyle}
     >
       {/* ── Tier 标题栏 ── */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle"
+      <div className="flex items-center justify-between gap-1 px-2 py-1 border-b border-border-subtle sm:gap-2 sm:px-3 sm:py-2"
            style={{ background: `linear-gradient(90deg, ${tierColor}0d 0%, transparent 60%)` }}>
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex flex-1 items-center gap-1 min-w-0 sm:gap-2">
           <button
             type="button"
             {...tierDragAttributes}
             {...tierDragListeners}
-            className="font-mono text-[10px] px-1 text-text-lo hover:text-text-body cursor-grab active:cursor-grabbing"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center font-mono text-[10px] text-text-lo hover:text-text-body cursor-grab active:cursor-grabbing sm:min-h-0 sm:min-w-0 sm:px-1"
             title="拖拽排序层级"
             aria-label="拖拽排序"
           >
             ⋮⋮
           </button>
           <button onClick={() => setIsCollapsed(!isCollapsed)}
-            className="font-mono text-xs transition-colors flex-shrink-0"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center font-mono text-xs transition-colors flex-shrink-0 sm:min-h-0 sm:min-w-0"
             style={{ color: tierColor }}
             aria-label={isCollapsed ? '展开层级' : '折叠层级'}>
             {isCollapsed ? '▶' : '▼'}
           </button>
 
-          <span className="text-[10px] font-mono flex-shrink-0" style={{ color: `${tierColor}99` }}>
+          <span className="hidden text-[10px] font-mono flex-shrink-0 sm:inline" style={{ color: `${tierColor}99` }}>
             TIER-{tierNum}
           </span>
 
-          <span className="text-[#21262d] flex-shrink-0 font-mono text-xs">//</span>
+          <span className="hidden text-[#21262d] flex-shrink-0 font-mono text-xs sm:inline">//</span>
 
           {isEditing ? (
             <input
@@ -163,7 +163,7 @@ export function TierCard({
         </div>
 
         <button onClick={() => onDeleteTier(tier.id)}
-          className="text-[10px] font-mono text-text-lo hover:text-danger transition-colors flex-shrink-0 ml-3 border border-transparent hover:border-danger/25 px-1.5 py-0.5">
+          className="inline-flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center border border-transparent px-1.5 py-0.5 font-mono text-[10px] text-text-lo hover:border-danger/25 hover:text-danger transition-colors sm:ml-3 sm:min-h-0 sm:min-w-0">
           DEL
         </button>
       </div>
@@ -184,7 +184,7 @@ export function TierCard({
           />
         ) : (
           <button onClick={() => setIsEditingDesc(true)}
-            className="text-xs font-mono text-left w-full transition-colors"
+            className="min-h-11 w-full text-left font-mono text-xs transition-colors sm:min-h-0"
             style={{ color: editDesc ? '#6b7280' : (isLight ? '#c9d1d9' : '#2d333b') }}>
             {editDesc ? `// ${editDesc}` : '// 点击添加层级描述…'}
           </button>
@@ -212,7 +212,7 @@ export function TierCard({
           </SortableContext>
 
           <button onClick={handleAddItem}
-            className="mt-3 w-full py-2 border border-dashed font-mono text-xs transition-colors"
+            className="mt-3 min-h-11 w-full py-2 border border-dashed font-mono text-xs transition-colors"
             style={{ borderColor: `${tierColor}40`, color: `${tierColor}80` }}
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = tierColor; (e.currentTarget as HTMLButtonElement).style.color = tierColor; }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = `${tierColor}40`; (e.currentTarget as HTMLButtonElement).style.color = `${tierColor}80`; }}>

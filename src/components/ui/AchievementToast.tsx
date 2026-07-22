@@ -83,7 +83,7 @@ export function AchievementToast() {
 
   return (
     <div
-      className="fixed top-6 right-6 z-[9999] transition-all duration-300 ease-out"
+      className="achievement-toast fixed top-6 right-6 z-[9999] transition-all duration-300 ease-out"
       style={{
         width: 'min(85vw, 24rem)',
         transform: visible ? 'translateX(0)' : 'translateX(110%)',

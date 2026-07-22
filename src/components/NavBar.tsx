@@ -56,6 +56,22 @@ const moreLinks = [
 
 const allLinks = [...navLinks, ...moreLinks];
 
+function safeStorageGet(key: string) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // 隐私模式或受限 WebView 禁用存储时，保留当前会话内状态。
+  }
+}
+
 export function NavBar({ features: featuresRaw }: { features?: string }) {
   const features = JSON.parse(featuresRaw || '{}') as Record<string, boolean>;
   const [user, setUser] = useState<User | null>(null);
@@ -68,7 +84,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [crtOn, setCrtOn] = useState(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('crt-scanlines') === 'on';
+    if (typeof window !== 'undefined') return safeStorageGet('crt-scanlines') === 'on';
     return false;
   });
   const [showNotif, setShowNotif] = useState(false);
@@ -177,7 +193,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
       .then(r => r.json())
       .then(d => {
         if (!d.success || !d.data.latestAt) return;
-        const seen = localStorage.getItem('ann_seen');
+        const seen = safeStorageGet('ann_seen');
         setHasNewAnnouncement(!seen || new Date(d.data.latestAt) > new Date(seen));
       })
       .catch(() => {});
@@ -191,7 +207,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
     setCurrentPath(window.location.pathname);
     fetchUser();
     checkNewAnnouncement();
-    const saved = localStorage.getItem('theme') as 'dark' | 'light' | null;
+    const saved = safeStorageGet('theme') as 'dark' | 'light' | null;
     if (saved === 'light') {
       setTheme('light');
       document.documentElement.classList.add('light');
@@ -201,7 +217,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
       setCurrentPath(window.location.pathname);
       // 进入公告页时标记已读
       if (window.location.pathname.startsWith('/announcements')) {
-        localStorage.setItem('ann_seen', new Date().toISOString());
+        safeStorageSet('ann_seen', new Date().toISOString());
         setHasNewAnnouncement(false);
       }
     };
@@ -242,21 +258,21 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
       if (notifRef.current && !notifRef.current.contains(e.target as Node))
         setShowNotif(false);
     };
-    document.addEventListener('mousedown', fn);
-    return () => document.removeEventListener('mousedown', fn);
+    document.addEventListener('pointerdown', fn);
+    return () => document.removeEventListener('pointerdown', fn);
   }, []);
 
   // ── 主题 ──────────────────────────────────────
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
-    localStorage.setItem('theme', next);
+    safeStorageSet('theme', next);
     document.documentElement.classList.toggle('light', next === 'light');
   };
   const toggleCrt = () => {
     const next = !crtOn;
     setCrtOn(next);
-    localStorage.setItem('crt-scanlines', next ? 'on' : 'off');
+    safeStorageSet('crt-scanlines', next ? 'on' : 'off');
     // 通知 Layout 脚本切换 CRT 效果，避免 DOM 竞争
     document.dispatchEvent(new CustomEvent('crt:toggle'));
   };
@@ -416,7 +432,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
 
               {/* 主题切换 */}
               <button onClick={toggleTheme}
-                className="w-9 h-9 flex items-center justify-center text-text-body hover:text-brand border border-border hover:border-brand transition-all"
+                className="hidden sm:flex w-11 h-11 lg:w-9 lg:h-9 items-center justify-center text-text-body hover:text-brand border border-border hover:border-brand transition-all"
                 title={theme === 'dark' ? '切换浅色' : '切换深色'}
                 aria-label={theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'}>
                 {theme === 'dark' ? (
@@ -436,9 +452,11 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                 <div className="relative" ref={notifRef}
                   onMouseEnter={openNotifHover} onMouseLeave={closeNotifHover}>
                   <button
-                    className="relative w-9 h-9 flex items-center justify-center text-text-body hover:text-brand border border-border hover:border-brand transition-all"
+                    onClick={() => showNotif ? setShowNotif(false) : openNotifHover()}
+                    className="relative w-11 h-11 lg:w-9 lg:h-9 flex items-center justify-center text-text-body hover:text-brand border border-border hover:border-brand transition-all"
                     title="通知"
                     aria-label="通知"
+                    aria-expanded={showNotif}
                   >
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -455,7 +473,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
 
                   {notifMounted && (
                     <div
-                      className={`absolute right-0 top-full mt-2 w-[min(384px,90vw)] bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden rounded-lg ${notifLeaving ? 'nav-dropout' : 'nav-dropin'}`}
+                      className={`mobile-notification-panel absolute right-0 top-full mt-2 w-[min(384px,90vw)] bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden rounded-lg ${notifLeaving ? 'nav-dropout' : 'nav-dropin'}`}
                       onMouseEnter={openNotifHover}
                     >
                       <div className="flex items-center justify-between px-5 py-3 border-b border-border-subtle">
@@ -551,7 +569,9 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                     <div className="relative" ref={dropdownRef}
                       onMouseEnter={openUser} onMouseLeave={closeUser}>
                       <button onClick={() => setShowDropdown(!showDropdown)}
-                        className="flex items-center gap-2 px-3 py-1.5 text-[15px] text-text-hi hover:text-brand border border-border hover:border-brand transition-all font-mono">
+                        className="flex min-h-11 min-w-11 items-center justify-center gap-2 px-2 sm:px-3 text-[15px] text-text-hi hover:text-brand border border-border hover:border-brand transition-all font-mono"
+                        aria-label="打开用户菜单"
+                        aria-expanded={showDropdown}>
                         {user.avatar ? (
                           <img src={user.avatar} alt="" className="h-5 w-5 rounded-full object-cover" />
                         ) : (
@@ -641,7 +661,8 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                     </div>
                   ) : (
                     <button onClick={() => setShowLogin(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-hi hover:text-brand border border-border hover:border-brand transition-all font-mono">
+                      className="flex min-h-11 min-w-11 items-center justify-center gap-2 px-2 sm:px-3 text-sm text-text-hi hover:text-brand border border-border hover:border-brand transition-all font-mono"
+                      aria-label="登录或注册">
                       <Lock size={14} strokeWidth={1.5} />
                       <span className="hidden sm:inline">登录/注册</span>
                     </button>
@@ -651,7 +672,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
 
               {/* 移动端搜索图标 */}
               <button onClick={() => setShowSearch(true)}
-                className="lg:hidden w-9 h-9 flex items-center justify-center text-text-body hover:text-brand transition-colors"
+                className="hidden sm:flex lg:hidden w-11 h-11 items-center justify-center text-text-body hover:text-brand transition-colors"
                 aria-label="搜索">
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                   <circle cx="9" cy="9" r="6"/><path d="M13 13l4 4"/>
@@ -660,8 +681,9 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
 
               {/* 移动端汉堡 */}
               <button onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="lg:hidden w-9 h-9 flex items-center justify-center text-text-body hover:text-brand transition-colors"
-                aria-label="菜单">
+                className="lg:hidden w-11 h-11 flex items-center justify-center text-text-body hover:text-brand transition-colors"
+                aria-label={showMobileMenu ? '关闭菜单' : '打开菜单'}
+                aria-expanded={showMobileMenu}>
                 {showMobileMenu ? (
                   <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M4 4l12 12M16 4L4 16"/>
@@ -678,7 +700,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
 
         {/* 移动端展开菜单 */}
         {showMobileMenu && (
-          <div className="lg:hidden border-t border-border-subtle bg-surface-1/98 mobile-menu-animate">
+          <div className="mobile-menu-panel lg:hidden border-t border-border-subtle bg-surface-1/98 mobile-menu-animate">
             {allLinks.map(({ href, label }) => {
               const active = isActive(href);
               const isAnn = href === '/announcements';
@@ -710,50 +732,50 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
       </nav>
 
       {/* ── 移动端底部导航栏 ── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-1/96 backdrop-blur-sm border-t border-border-subtle mobile-bottom-nav">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-1/96 backdrop-blur-sm border-t border-border-subtle mobile-bottom-nav" aria-label="移动端主导航">
         <div className="flex items-stretch min-h-[64px]">
           {/* 首页 */}
-          <a href="/" className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/') ? 'text-brand' : 'text-text-body'}`}>
+          <a href="/" aria-current={isActive('/') ? 'page' : undefined} className={`min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/') ? 'text-brand' : 'text-text-body'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
             首页
           </a>
           {/* 广场 */}
-          <a href="/iceberg/list" className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/iceberg/list') ? 'text-brand' : 'text-text-body'}`}>
+          <a href="/iceberg/list" aria-current={isActive('/iceberg/list') ? 'page' : undefined} className={`min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/iceberg/list') ? 'text-brand' : 'text-text-body'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
             </svg>
             广场
           </a>
           {/* 搜索 */}
-          <button onClick={() => setShowSearch(true)} className="flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-text-body transition-colors">
+          <button onClick={() => setShowSearch(true)} className="min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-text-body transition-colors" aria-label="搜索">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
             </svg>
             搜索
           </button>
-          {/* 机构 */}
-          <a href="/org" className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/org') ? 'text-brand' : 'text-text-body'}`}>
+          {/* 创意 */}
+          <a href="/ideas" aria-current={isActive('/ideas') ? 'page' : undefined} className={`min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/ideas') ? 'text-brand' : 'text-text-body'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><line x1="9" y1="22" x2="9" y2="12"/><line x1="15" y1="22" x2="15" y2="12"/><line x1="12" y1="2" x2="12" y2="12"/>
+              <path d="M9 18h6"/><path d="M10 22h4"/><path d="M8.2 14.7A7 7 0 1 1 15.8 14.7C14.7 15.5 14 16.6 14 18h-4c0-1.4-.7-2.5-1.8-3.3z"/>
             </svg>
-            机构
+            创意
           </a>
           {/* 我的 / 登录 */}
           {user ? (
-            <a href={`/user/${user.id}`} className={`flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${currentPath.startsWith('/user/') ? 'text-brand' : 'text-text-body'}`}>
+            <a href={`/user/${user.id}`} aria-current={currentPath.startsWith('/user/') ? 'page' : undefined} className={`min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${currentPath.startsWith('/user/') ? 'text-brand' : 'text-text-body'}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
               </svg>
               我的
             </a>
           ) : (
-            <button onClick={() => setShowLogin(true)} className="flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-text-body transition-colors">
+            <button onClick={() => setShowLogin(true)} className="min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-text-body transition-colors">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
-              登录/注册
+              登录
             </button>
           )}
         </div>
@@ -762,12 +784,15 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
       {/* ── 全局搜索覆盖层 ── */}
       {searchMounted && (
         <div
-          className={`${searchLeaving ? 'modal-overlay-out' : 'modal-overlay'} search-modal-overlay fixed inset-0 z-[60] flex items-start justify-center pt-20 px-4`}
+          className={`${searchLeaving ? 'modal-overlay-out' : 'modal-overlay'} search-modal-overlay mobile-search-overlay app-modal-viewport fixed inset-0 z-[60] flex items-start justify-center pt-20 px-4`}
           onClick={() => setShowSearch(false)}
         >
           <div
-            className={`${searchLeaving ? 'modal-content-out' : 'modal-content'} search-modal-panel w-full max-w-2xl shadow-2xl`}
+            className={`${searchLeaving ? 'modal-content-out' : 'modal-content'} search-modal-panel app-modal-panel flex w-full max-w-2xl flex-col overflow-hidden shadow-2xl`}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="全站搜索"
           >
             {/* 搜索输入框 */}
             <div className="search-modal-header flex items-center gap-3 px-4 py-3 border-b">
@@ -785,7 +810,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
               />
               <button
                 onClick={() => setShowSearch(false)}
-                className="search-modal-close text-lg transition-colors font-mono"
+                className="search-modal-close mobile-touch-target text-lg transition-colors font-mono"
                 aria-label="关闭搜索"
               >
                 ×
@@ -793,7 +818,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
             </div>
 
             {/* 搜索结果 */}
-            <div className="search-modal-results max-h-[60vh] overflow-y-auto">
+            <div className="search-modal-results min-h-0 flex-1 overflow-y-auto">
               {searchQuery.length < 2 && (
                 <SearchQuickLinks onNavigate={() => setShowSearch(false)} />
               )}

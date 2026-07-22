@@ -190,9 +190,10 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
               const expanded = expandedCats[cat.key];
               return (
                 <div key={cat.key}>
-                  <div
+                  <button
+                    type="button"
                     onClick={() => toggleCat(cat.key)}
-                    className="w-full flex items-center justify-between px-2 py-1.5 text-[10px] font-mono text-text-lo hover:text-text-body transition-colors cursor-pointer select-none">
+                    className="flex min-h-11 w-full items-center justify-between px-2 py-1.5 text-[10px] font-mono text-text-lo hover:text-text-body transition-colors cursor-pointer select-none sm:min-h-0">
                     <span>
                       <span className="inline-block w-3 text-center transition-transform duration-200 ease-out" style={{ transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>▸</span>
                       {' '}{cat.label}
@@ -200,14 +201,14 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                     {selectedInCat.length > 0 && (
                       <span className="text-[9px] text-text-mid">{selectedInCat.map(b => b.emoji).join('')}</span>
                     )}
-                  </div>
+                  </button>
                   {expanded && (
                     <div className="flex gap-1.5 flex-wrap px-1 pb-1.5" style={{ animation: 'slideDown 200ms ease-out' }}>
                       {boxes.map(d => {
                         const active = editLabels.includes(d.key);
                         return (
                           <button key={d.key} type="button" onClick={() => toggleLabel(d.key)}
-                            className="text-[11px] font-mono px-2 py-1 border transition-all"
+                            className="min-h-11 px-2 py-1 text-[11px] font-mono border transition-all sm:min-h-0"
                             style={{
                               color: active ? cat.color : '#6b7280',
                               borderColor: active ? cat.color : '#30363d',
@@ -231,7 +232,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                 <span key={label} className="flex items-center gap-1 text-xs font-mono px-2 py-1 border border-dashed border-border text-text-body">
                   {label}
                   <button type="button" onClick={() => setEditLabels(prev => prev.filter(l => l !== label))}
-                    className="text-text-lo hover:text-danger transition-colors leading-none text-sm">×</button>
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center text-text-lo hover:text-danger transition-colors leading-none text-sm sm:min-h-0 sm:min-w-0">×</button>
                 </span>
               ))}
             </div>
@@ -246,7 +247,7 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
                 className="flex-1 min-w-0 px-3 py-1.5 bg-surface-2 border border-border text-xs font-mono text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none"
                 aria-label="自定义标签" />
               <button type="button" onClick={addCustomLabel} disabled={!customInput.trim()}
-                className="px-3 py-1.5 text-xs font-mono border border-border text-text-body hover:border-brand hover:text-brand disabled:opacity-30 transition-colors">
+                className="min-h-11 px-3 py-1.5 text-xs font-mono border border-border text-text-body hover:border-brand hover:text-brand disabled:opacity-30 transition-colors sm:min-h-0">
                 添加
               </button>
             </div>
@@ -258,13 +259,13 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
         </div>
 
         {/* 操作按钮 */}
-        <div className="flex gap-2 pt-1 border-t border-border-subtle">
+        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border-subtle sm:flex">
           <button onClick={handleSave}
-            className="px-4 py-1.5 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors">
+            className="min-h-11 px-4 py-1.5 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors sm:min-h-0">
             保存
           </button>
           <button onClick={handleCancel}
-            className="px-4 py-1.5 border border-border text-xs font-mono text-text-body hover:border-[#8b949e] transition-colors">
+            className="min-h-11 px-4 py-1.5 border border-border text-xs font-mono text-text-body hover:border-[#8b949e] transition-colors sm:min-h-0">
             取消
           </button>
         </div>
@@ -297,11 +298,11 @@ export function ItemCard({ item, onUpdate, onDelete }: ItemCardProps) {
         {/* 桌面 hover 显示 / 移动端常显 */}
         <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
           <button onClick={e => { e.stopPropagation(); setIsEditing(true); }}
-            className="text-sm text-text-body hover:text-brand active:text-brand transition-colors px-1 py-0.5 touch-manipulation" title="编辑">
+            className="inline-flex min-h-11 min-w-11 items-center justify-center text-sm text-text-body hover:text-brand active:text-brand transition-colors touch-manipulation sm:min-h-0 sm:min-w-0 sm:px-1 sm:py-0.5" title="编辑">
             ✎
           </button>
           <button onClick={e => { e.stopPropagation(); onDelete(item.id); }}
-            className="text-sm text-text-body hover:text-danger active:text-danger transition-colors px-1 py-0.5 touch-manipulation" title="删除">
+            className="inline-flex min-h-11 min-w-11 items-center justify-center text-sm text-text-body hover:text-danger active:text-danger transition-colors touch-manipulation sm:min-h-0 sm:min-w-0 sm:px-1 sm:py-0.5" title="删除">
             ✕
           </button>
         </div>

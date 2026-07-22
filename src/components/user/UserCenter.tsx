@@ -619,9 +619,10 @@ export function UserCenter({
   };
 
   // 从 DB 数据构建成就映射（unlockedAt 用于 tooltip）
-  const achievementMap: Record<string, string> = Object.fromEntries(
-    achievements.map(a => [a.achievementId, a.unlockedAt])
-  );
+  const achievementMap: Record<string, string> = {};
+  achievements.forEach((achievement) => {
+    achievementMap[achievement.achievementId] = achievement.unlockedAt;
+  });
   // 站长虚拟注入 origin 成就（无需写库，由 isFounder 决定）
   if (user.isFounder && !('origin' in achievementMap)) {
     achievementMap['origin'] = user.createdAt;
@@ -1036,11 +1037,11 @@ export function UserCenter({
       {/* Actions Bar (owner only) */}
       {isOwner && (
         <div className="flex items-center gap-3 mb-5 flex-wrap boot-animate" style={{ animationDelay: '40ms' }}>
-          <a href="/iceberg/new" className="px-4 py-2 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors">+ 创建冰山图</a>
-          <a href={`/user/${user.id}?tab=settings`} className="px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">⚙ 设置</a>
-          <a href="/feedback" className="px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">反馈</a>
+          <a href="/iceberg/new" className="mobile-touch-target flex items-center px-4 py-2 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors">+ 创建冰山图</a>
+          <a href={`/user/${user.id}?tab=settings`} className="mobile-touch-target flex items-center px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">⚙ 设置</a>
+          <a href="/feedback" className="mobile-touch-target flex items-center px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">反馈</a>
           {promotionEligible && features.feature_promotion !== false && (
-            <button onClick={() => setShowPromotion(true)} className="px-4 py-2 border border-warning/30 text-xs font-mono text-warning hover:border-warning hover:bg-warning/5 transition-colors">
+            <button onClick={() => setShowPromotion(true)} className="mobile-touch-target px-4 py-2 border border-warning/30 text-xs font-mono text-warning hover:border-warning hover:bg-warning/5 transition-colors">
               申请晋升
             </button>
           )}
@@ -1054,16 +1055,18 @@ export function UserCenter({
 
 
           {/* Tab 导航 */}
-          <div className="flex border-b border-border-subtle mb-6 boot-animate" style={{ animationDelay: '60ms' }}>
+          <div className="mobile-tab-strip flex overflow-x-auto border-b border-border-subtle mb-6 boot-animate" style={{ animationDelay: '60ms' }} role="tablist" aria-label="用户中心栏目">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setTabAndSyncUrl(tab.id)}
-                className={`relative px-4 md:px-6 py-3 text-sm font-mono transition-colors ${
+                className={`mobile-touch-target relative shrink-0 whitespace-nowrap px-4 md:px-6 py-3 text-sm font-mono transition-colors ${
                   activeTab === tab.id
                     ? tab.amber ? 'text-warning' : 'text-brand'
                     : 'text-text-lo hover:text-text-body'
                 }`}
+                role="tab"
+                aria-selected={activeTab === tab.id}
               >
                 {tab.label}
                 {tab.amber
@@ -1300,7 +1303,10 @@ function AwardModal({ userId, isLeaving, onClose, existingAwards, isLight }: {
   const [revokingType, setRevokingType] = useState<string | null>(null);
   const [error, setError]               = useState<string | null>(null);
   const [awardedByType, setAwardedByType] = useState<Record<string, string>>(
-    () => Object.fromEntries(existingAwards.map((a) => [a.type, a.id])),
+    () => existingAwards.reduce<Record<string, string>>((awards, award) => {
+      awards[award.type] = award.id;
+      return awards;
+    }, {}),
   );
   const submit = async () => {
     if (!selectedType) return;
@@ -1421,5 +1427,3 @@ function AwardModal({ userId, isLeaving, onClose, existingAwards, isLight }: {
     </div>
   );
 }
-
-

@@ -406,7 +406,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                       <button
                         onClick={() => toggleLike(comment.id, false)}
                         disabled={likingId === comment.id}
-                        className={`flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-50 ${
+                        className={`mobile-touch-target flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-50 ${
                           comment.isLikedByMe ? 'text-brand' : 'text-text-mid hover:text-text-body'
                         }`}
                       >
@@ -416,7 +416,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                       {currentUserId && (
                         <button
                           onClick={() => openReply(comment.id)}
-                          className={`flex items-center gap-1 text-[10px] font-mono transition-colors ${
+                          className={`mobile-touch-target flex items-center gap-1 text-[10px] font-mono transition-colors ${
                             replyingTo === comment.id ? 'text-brand' : 'text-text-mid hover:text-text-body'
                           }`}
                         >
@@ -427,8 +427,9 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                         <button
                           onClick={() => remove(comment.id, false)}
                           disabled={deletingId === comment.id}
-                          className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-[10px] font-mono
+                          className="mobile-touch-target opacity-100 sm:opacity-0 sm:group-hover:opacity-100 flex items-center justify-center gap-0.5 text-[10px] font-mono
                                      text-danger transition-all disabled:opacity-50"
+                          aria-label="删除评论"
                         >
                           <Trash2 size={10} strokeWidth={1.5} />
                         </button>
@@ -439,7 +440,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
 
                 {/* 回复输入框（仅登录用户） */}
                 {replyingTo === comment.id && currentUserId && (
-                  <div className="ml-10 mt-3 pl-3 border-l-2 border-border">
+                  <div className="ml-4 mt-3 pl-3 border-l-2 border-border sm:ml-10">
                     <textarea
                       ref={replyRef}
                       value={replyDraft}
@@ -455,14 +456,14 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                     <div className="flex justify-end gap-2 mt-1.5">
                       <button
                         onClick={() => { setReplyingTo(null); setReplyDraft(''); }}
-                        className="px-3 py-1 text-[10px] font-mono text-text-lo hover:text-text-body transition-colors"
+                        className="mobile-touch-target px-3 py-1 text-[10px] font-mono text-text-lo hover:text-text-body transition-colors"
                       >
                         取消
                       </button>
                       <button
                         onClick={() => submitReply(comment.id)}
                         disabled={replySubmitting || !replyDraft.trim()}
-                        className="flex items-center gap-1 px-3 py-1 text-[10px] font-mono
+                        className="mobile-touch-target flex items-center gap-1 px-3 py-1 text-[10px] font-mono
                                    bg-brand/10 border border-brand/25 text-brand
                                    hover:bg-brand/15 transition-colors disabled:opacity-50"
                       >
@@ -475,7 +476,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
 
                 {/* 楼中楼回复 */}
                 {comment.replies.length > 0 && (
-                  <div className="ml-10 mt-3 space-y-3 pl-3 border-l-2 border-border-subtle">
+                  <div className="ml-4 mt-3 space-y-3 pl-3 border-l-2 border-border-subtle sm:ml-10">
                     {comment.replies.map(reply => {
                       const isGuestReply = !reply.user;
                       const replyName = getDisplayName(reply);
@@ -511,7 +512,7 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                               <button
                                 onClick={() => toggleLike(reply.id, true, comment.id)}
                                 disabled={likingId === reply.id}
-                                className={`flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-50 ${
+                                className={`mobile-touch-target flex items-center gap-1 text-[10px] font-mono transition-colors disabled:opacity-50 ${
                                   reply.isLikedByMe ? 'text-brand' : 'text-text-mid hover:text-text-body'
                                 }`}
                               >
@@ -522,8 +523,9 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
                                 <button
                                   onClick={() => remove(reply.id, true, comment.id)}
                                   disabled={deletingId === reply.id}
-                                  className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 text-[10px] font-mono
+                                  className="mobile-touch-target opacity-100 sm:opacity-0 sm:group-hover:opacity-100 flex items-center justify-center gap-0.5 text-[10px] font-mono
                                              text-danger transition-all disabled:opacity-50"
+                                  aria-label="删除回复"
                                 >
                                   <Trash2 size={10} strokeWidth={1.5} />
                                 </button>

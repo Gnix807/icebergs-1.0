@@ -46,5 +46,9 @@ const initialList = announcements.map((a: any) => ({
 
 <script>
   // 访问公告列表页时标记已读
-  localStorage.setItem('ann_seen', new Date().toISOString());
+  try {
+    localStorage.setItem('ann_seen', new Date().toISOString());
+  } catch {
+    // 受限 WebView/隐私模式不允许存储时不影响公告列表。
+  }
 </script>

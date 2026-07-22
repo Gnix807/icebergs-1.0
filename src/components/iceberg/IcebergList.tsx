@@ -122,9 +122,9 @@ export function IcebergList() {
   return (
     <div>
       {/* 工具栏 */}
-      <div className="flex flex-wrap items-center gap-3 mb-6">
+      <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:flex-wrap sm:items-center">
         {/* 搜索框 */}
-        <div className="relative flex-1 min-w-[180px] max-w-sm">
+        <div className="relative w-full sm:flex-1 sm:min-w-[180px] sm:max-w-sm">
           <svg
             className="absolute left-3 top-1/2 -translate-y-1/2 text-text-lo"
             width="13" height="13" viewBox="0 0 24 24" fill="none"
@@ -137,13 +137,14 @@ export function IcebergList() {
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder="搜索标题或描述…"
-            className="w-full pl-8 pr-3 py-1.5 bg-surface-2 border border-border text-xs font-mono text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none transition-colors"
+            className="mobile-touch-target w-full pl-8 pr-11 py-1.5 bg-surface-2 border border-border text-xs font-mono text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none transition-colors"
             aria-label="搜索冰山图"
           />
           {q && (
             <button
               onClick={() => setQ('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-lo hover:text-text-hi transition-colors text-xs"
+              className="mobile-touch-target absolute right-0 top-1/2 flex -translate-y-1/2 items-center justify-center text-text-lo hover:text-text-hi transition-colors text-xs"
+              aria-label="清除搜索"
             >
               ✕
             </button>
@@ -151,10 +152,10 @@ export function IcebergList() {
         </div>
 
         {/* 分类 */}
-        <div className="flex items-center gap-1 flex-wrap">
+        <div className="mobile-filter-rail flex w-full items-center gap-1 sm:flex-wrap">
           <button
             onClick={() => { setTopic('all'); setPage(1); }}
-            className={`px-3 py-1.5 text-[10px] font-mono border transition-colors ${
+            className={`mobile-touch-target shrink-0 px-3 py-1.5 text-[10px] font-mono border transition-colors ${
               topic === 'all'
                 ? 'border-brand/25 text-brand bg-brand/5'
                 : 'border-border-subtle text-text-mid hover:border-border hover:text-text-hi'
@@ -166,7 +167,7 @@ export function IcebergList() {
             <button
               key={opt.value}
               onClick={() => { setTopic(opt.value); setPage(1); }}
-              className={`px-3 py-1.5 text-[10px] font-mono border transition-colors ${
+              className={`mobile-touch-target shrink-0 px-3 py-1.5 text-[10px] font-mono border transition-colors ${
                 topic === opt.value
                   ? 'border-info/25 text-info bg-info/5'
                   : 'border-border-subtle text-text-mid hover:border-border hover:text-text-hi'
@@ -175,7 +176,7 @@ export function IcebergList() {
               {opt.label}
             </button>
           ))}
-          <div className="flex items-center gap-1 ml-2">
+          <div className="flex shrink-0 items-center gap-1 sm:ml-2">
             <input
               type="text"
               value={customTopicInput}
@@ -187,7 +188,7 @@ export function IcebergList() {
                 setPage(1);
               }}
               placeholder="自定义分类"
-              className="w-[120px] px-2 py-1.5 bg-surface-2 border border-border text-[10px] font-mono text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none transition-colors"
+              className="mobile-touch-target w-[140px] px-2 py-1.5 bg-surface-2 border border-border text-[10px] font-mono text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none transition-colors sm:w-[120px]"
             />
             <button
               onClick={() => {
@@ -195,7 +196,7 @@ export function IcebergList() {
                 setTopic(next || 'all');
                 setPage(1);
               }}
-              className="px-2.5 py-1.5 text-[10px] font-mono border border-border-subtle text-text-body hover:border-brand hover:text-brand transition-colors"
+              className="mobile-touch-target px-2.5 py-1.5 text-[10px] font-mono border border-border-subtle text-text-body hover:border-brand hover:text-brand transition-colors"
             >
               筛选
             </button>
@@ -203,12 +204,12 @@ export function IcebergList() {
         </div>
 
         {/* 排序 + NSFW 开关 */}
-        <div className="flex items-center gap-1 ml-auto flex-wrap">
+        <div className="mobile-filter-rail flex w-full items-center gap-1 sm:ml-auto sm:w-auto sm:flex-wrap">
           {SORT_OPTIONS.map(opt => (
             <button
               key={opt.value}
               onClick={() => handleSort(opt.value)}
-              className={`px-3 py-1.5 text-[10px] font-mono border transition-colors ${
+              className={`mobile-touch-target shrink-0 px-3 py-1.5 text-[10px] font-mono border transition-colors ${
                 sort === opt.value
                   ? 'border-brand/25 text-brand bg-brand/5'
                   : 'border-border-subtle text-text-mid hover:border-border hover:text-text-hi'
@@ -219,7 +220,7 @@ export function IcebergList() {
           ))}
           <button
             onClick={() => { setShowNsfw(v => !v); setPage(1); }}
-            className={`px-3 py-1.5 text-[10px] font-mono border transition-colors ${
+            className={`mobile-touch-target shrink-0 px-3 py-1.5 text-[10px] font-mono border transition-colors ${
               showNsfw
                 ? 'border-danger/25 text-danger bg-danger/5'
                 : 'border-border-subtle text-text-mid hover:border-danger/25 hover:text-danger'
@@ -294,7 +295,7 @@ export function IcebergList() {
               <a
                 key={iceberg.id}
                 href={`/iceberg/${iceberg.slug || iceberg.id}`}
-                className="archive-card group flex flex-col p-5"
+                className="archive-card group flex flex-col p-4 sm:p-5"
               >
                 {/* 层级深度条 */}
                 <div className="flex gap-px mb-4 tier-strip opacity-50 group-hover:opacity-95 transition-all duration-200">
@@ -338,7 +339,7 @@ export function IcebergList() {
                 )}
 
                 {/* Footer */}
-                <div className="mt-auto pt-2.5 border-t border-border-subtle flex items-center justify-between text-[10px] font-mono">
+                <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border-subtle pt-2.5 text-[10px] font-mono">
                   <div className="flex items-center gap-3 text-text-lo">
                     <span>{tierCount} 层</span>
                     <span className="flex items-center gap-1">
@@ -372,12 +373,17 @@ export function IcebergList() {
           <button
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className="px-3 py-1.5 text-[10px] font-mono border border-border-subtle text-text-mid hover:border-border hover:text-text-hi disabled:opacity-30 transition-colors"
+            className="mobile-touch-target shrink-0 px-3 py-1.5 text-[10px] font-mono border border-border-subtle text-text-mid hover:border-border hover:text-text-hi disabled:opacity-30 transition-colors"
           >
             ← 上一页
           </button>
 
-          {/* 页码 */}
+          <span className="flex min-h-11 min-w-16 items-center justify-center border border-border-subtle px-2 text-[10px] font-mono text-text-mid sm:hidden" aria-current="page">
+            {page} / {meta.totalPages}
+          </span>
+
+          {/* 页码（小屏使用上方紧凑页码摘要） */}
+          <div className="hidden items-center gap-2 sm:flex">
           {Array.from({ length: Math.min(meta.totalPages, 7) }, (_, i) => {
             const tp = meta.totalPages;
             let p: number;
@@ -404,11 +410,12 @@ export function IcebergList() {
               </button>
             );
           })}
+          </div>
 
           <button
             onClick={() => setPage(p => Math.min(meta.totalPages, p + 1))}
             disabled={page >= meta.totalPages}
-            className="px-3 py-1.5 text-[10px] font-mono border border-border-subtle text-text-mid hover:border-border hover:text-text-hi disabled:opacity-30 transition-colors"
+            className="mobile-touch-target shrink-0 px-3 py-1.5 text-[10px] font-mono border border-border-subtle text-text-mid hover:border-border hover:text-text-hi disabled:opacity-30 transition-colors"
           >
             下一页 →
           </button>

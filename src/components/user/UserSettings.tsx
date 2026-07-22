@@ -260,7 +260,7 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
     <div className="space-y-6 max-w-2xl">
       {/* ── 个人资料卡 ── */}
       <section className="border border-border-subtle bg-surface-2">
-        <div className="px-5 py-3 border-b border-border-subtle flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 border-b border-border-subtle px-4 py-3 sm:px-5">
           {/* 头像区域 */}
           <div className="relative flex-shrink-0">
             {avatar ? (
@@ -277,25 +277,25 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
             <div className="text-[10px] font-mono text-text-mid mt-0.5 line-clamp-2">{bio || '未填写简介'}</div>
           </div>
           <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
-            className="px-3 py-1.5 text-xs font-mono border border-border text-text-body hover:border-brand hover:text-brand transition-colors flex-shrink-0">
+            className="mobile-touch-target flex w-full flex-shrink-0 items-center justify-center px-3 py-1.5 text-xs font-mono border border-border text-text-body hover:border-brand hover:text-brand transition-colors sm:w-auto">
             {uploading ? '...' : '上传头像'}
           </button>
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp"
             className="hidden" onChange={handleFileUpload} />
         </div>
-        <div className="p-5 space-y-4">
+        <div className="p-4 space-y-4 sm:p-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-[10px] font-mono text-text-mid mb-1.5 tracking-widest">昵称</label>
               <input type="text" value={nickname} onChange={e => setNickname(e.target.value)} maxLength={50}
                 placeholder="给自己起个名字"
-                className="w-full bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
+                className="mobile-touch-target w-full bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
             </div>
             <div>
               <label className="block text-[10px] font-mono text-text-mid mb-1.5 tracking-widest">头像链接</label>
               <input type="url" value={avatar} onChange={e => setAvatar(e.target.value)}
                 placeholder="或直接粘贴图片URL"
-                className="w-full bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
+                className="mobile-touch-target w-full bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
             </div>
           </div>
           <div>
@@ -313,7 +313,7 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
         <div className="px-5 py-3 border-b border-border-subtle">
           <span className="text-[10px] font-mono text-text-mid tracking-widest">账号绑定</span>
         </div>
-        <div className="p-5 space-y-2">
+        <div className="p-4 space-y-2 sm:p-5">
           {[
             { key: 'github', label: 'GitHub', icon: '🐙', href: '/api/auth/login?provider=github&intent=link' },
           ].map(provider => {
@@ -334,13 +334,13 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
                     <span className="text-[10px] font-mono text-brand">✓ 已绑定</span>
                     <button type="button" onClick={() => handleUnlinkProvider(provider.key as 'github')}
                       disabled={unlinkingProvider === provider.key}
-                      className="text-[10px] font-mono text-text-mid hover:text-danger transition-colors disabled:opacity-50">
+                      className="mobile-touch-target text-[10px] font-mono text-text-mid hover:text-danger transition-colors disabled:opacity-50">
                       {unlinkingProvider === provider.key ? '...' : '解绑'}
                     </button>
                   </div>
                 ) : (
                   <button type="button" onClick={() => window.location.assign(provider.href)}
-                    className="px-3 py-1 text-xs font-mono border border-border text-text-body hover:border-brand hover:text-brand transition-colors">
+                    className="mobile-touch-target px-3 py-1 text-xs font-mono border border-border text-text-body hover:border-brand hover:text-brand transition-colors">
                     绑定
                   </button>
                 )}
@@ -355,7 +355,7 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
         <div className="px-5 py-3 border-b border-border-subtle">
           <span className="text-[10px] font-mono text-text-mid tracking-widest">账号安全</span>
         </div>
-        <div className="p-5 space-y-4">
+        <div className="p-4 space-y-4 sm:p-5">
           <div>
             <div className="text-sm font-mono text-text-hi mb-3">登录密码</div>
             <div className="space-y-2">
@@ -365,18 +365,18 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
               {hasPassword && (
                 <input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)}
                   placeholder="当前密码"
-                  className="w-full bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
+                  className="mobile-touch-target w-full bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
                   placeholder={hasPassword ? '新密码（至少6位）' : '设置密码（至少6位）'}
-                  className="flex-1 bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
+                  className="mobile-touch-target min-w-0 flex-1 bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
                 <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="确认密码"
-                  className="flex-1 bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
+                  className="mobile-touch-target min-w-0 flex-1 bg-surface-1 border border-border-subtle focus:border-brand px-3 py-2 text-sm font-mono text-text-hi outline-none placeholder:text-text-mid" />
               </div>
               <button type="button" onClick={handleChangePassword} disabled={changingPassword}
-                className={`px-4 py-2 text-xs font-mono border transition-colors disabled:opacity-50 ${hasPassword ? 'border-brand/25 text-brand hover:bg-brand/10' : 'border-border text-text-body hover:border-brand'}`}>
+                className={`mobile-touch-target px-4 py-2 text-xs font-mono border transition-colors disabled:opacity-50 ${hasPassword ? 'border-brand/25 text-brand hover:bg-brand/10' : 'border-border text-text-body hover:border-brand'}`}>
                 {changingPassword ? '提交中...' : hasPassword ? '修改密码' : '设置密码'}
               </button>
             </div>
@@ -384,13 +384,13 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
 
           {features.feature_session_mgmt !== false && (
             <div className="pt-4 border-t border-border-subtle">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex flex-col items-start gap-3 mb-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="text-sm font-mono text-text-hi">登录会话</div>
                   <div className="text-[11px] font-mono text-text-mid mt-0.5">管理所有已登录设备</div>
                 </div>
                 <button type="button" onClick={handleLogoutOthers} disabled={sessionBusy || securityLoading}
-                  className="px-3 py-1.5 text-xs font-mono border border-danger/25 text-danger hover:bg-danger/10 transition-colors disabled:opacity-50">
+                  className="mobile-touch-target w-full px-3 py-1.5 text-xs font-mono border border-danger/25 text-danger hover:bg-danger/10 transition-colors disabled:opacity-50 sm:w-auto">
                   下线其他设备
                 </button>
               </div>
@@ -401,16 +401,16 @@ export function UserSettings({ userId, initial, features = {} }: Props) {
               ) : (
                 <div className="space-y-1">
                   {sessions.map(s => (
-                    <div key={s.id} className="flex items-center justify-between py-2 px-3 bg-surface-1 border border-border-subtle">
+                    <div key={s.id} className="flex flex-col items-start gap-2 py-2 px-3 bg-surface-1 border border-border-subtle sm:flex-row sm:items-center sm:justify-between">
                       <div className="min-w-0">
                         <span className="text-xs font-mono text-text-hi">{s.isCurrent ? '当前设备' : `设备 ${s.id.slice(0,8)}`}</span>
-                        <span className="text-[10px] font-mono text-text-mid ml-3">{formatTime(s.createdAt)}</span>
+                        <span className="block break-words text-[10px] font-mono text-text-mid sm:ml-3 sm:inline">{formatTime(s.createdAt)}</span>
                       </div>
                       {s.isCurrent ? (
                         <span className="text-[10px] font-mono text-brand flex-shrink-0">当前</span>
                       ) : (
                         <button type="button" onClick={() => handleLogoutSession(s.id)} disabled={sessionBusy}
-                          className="text-[10px] font-mono text-text-mid hover:text-danger transition-colors flex-shrink-0">
+                          className="mobile-touch-target text-[10px] font-mono text-text-mid hover:text-danger transition-colors flex-shrink-0">
                           下线
                         </button>
                       )}

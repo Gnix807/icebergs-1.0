@@ -59,13 +59,28 @@ export function AdminPanel({ role, isFounder }: Props) {
     const el = scrollRef.current;
     if (!el) return;
     el.addEventListener('scroll', updateArrows, { passive: true });
-    const ro = new ResizeObserver(updateArrows);
-    ro.observe(el);
-    return () => { el.removeEventListener('scroll', updateArrows); ro.disconnect(); };
+    let ro: ResizeObserver | null = null;
+    if (typeof window.ResizeObserver === 'function') {
+      ro = new ResizeObserver(updateArrows);
+      ro.observe(el);
+    } else {
+      window.addEventListener('resize', updateArrows);
+    }
+    return () => {
+      el.removeEventListener('scroll', updateArrows);
+      window.removeEventListener('resize', updateArrows);
+      ro?.disconnect();
+    };
   }, []);
 
   function scrollBy(delta: number) {
-    scrollRef.current?.scrollBy({ left: delta, behavior: 'smooth' });
+    const el = scrollRef.current;
+    if (!el) return;
+    try {
+      el.scrollBy({ left: delta, behavior: 'smooth' });
+    } catch {
+      el.scrollLeft += delta;
+    }
   }
 
   return (

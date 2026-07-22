@@ -9,6 +9,11 @@ interface Props {
   isFounder?: boolean;
 }
 
+const ALL_USERBOXES = USERBOX_LIBRARY.reduce(
+  (boxes, category) => boxes.concat(category.boxes),
+  [] as (typeof USERBOX_LIBRARY)[number]['boxes'],
+);
+
 export function UserboxPicker({
   userId,
   currentIds,
@@ -18,7 +23,7 @@ export function UserboxPicker({
 }: Props) {
   const unlockedSet = new Set(unlockedAchievementIds);
   const validCurrent = currentIds.filter(id => {
-    const def = USERBOX_LIBRARY.flatMap(c => c.boxes).find(b => b.id === id);
+    const def = ALL_USERBOXES.find(b => b.id === id);
     return def && (isFounder || !def.requires || unlockedSet.has(def.requires));
   });
 
