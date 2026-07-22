@@ -126,26 +126,30 @@ const targetDisplay = target.nickname ?? target.username;
   const form     = document.getElementById('impeach-form');
   const btn      = document.getElementById('submit-btn');
 
-  textarea?.addEventListener('input', () => {
-    if (counter) counter.textContent = `${textarea.value.length}/1000`;
-  });
+  if (textarea) {
+    textarea.addEventListener('input', () => {
+      if (counter) counter.textContent = `${textarea.value.length}/1000`;
+    });
+  }
 
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const reason = textarea?.value.trim() ?? '';
-    if (!reason) { alert('请填写弹劾理由'); return; }
-    if (!btn || btn.disabled) return;
-    btn.disabled = true;
-    btn.textContent = '提交中...';
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const reason = textarea ? textarea.value.trim() : '';
+      if (!reason) { alert('请填写弹劾理由'); return; }
+      if (!btn || btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = '提交中...';
 
-    const res = await fetch(`/api/impeach?data=${encodeURIComponent(JSON.stringify({ targetUserId: targetId, reason }))}`);
-    const data = await res.json();
-    if (data.success) {
-      window.location.href = `/impeach/${data.data.request.id}`;
-    } else {
-      alert(data.error?.message ?? '提交失败');
-      btn.disabled = false;
-      btn.textContent = '确认发起弹劾';
-    }
-  });
+      const res = await fetch(`/api/impeach?data=${encodeURIComponent(JSON.stringify({ targetUserId: targetId, reason }))}`);
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = `/impeach/${data.data.request.id}`;
+      } else {
+        alert(data && data.error && data.error.message ? data.error.message : '提交失败');
+        btn.disabled = false;
+        btn.textContent = '确认发起弹劾';
+      }
+    });
+  }
 </script>

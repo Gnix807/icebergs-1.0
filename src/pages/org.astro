@@ -402,46 +402,58 @@ const STATUS_COLOR: Record<string, string> = {
 <style>
   /* 深色模式 */
   .org-founder-card {
+    background: #191817;
     background: color-mix(in srgb, #f59e0b 5%, #0d1117);
   }
   .org-founder-card:hover {
+    background: #221d16;
     background: color-mix(in srgb, #f59e0b 9%, #0d1117);
     box-shadow: -4px 0 20px rgba(245, 158, 11, 0.15);
   }
   .org-admin-card {
+    background: #121317;
     background: color-mix(in srgb, #f59e0b 2%, #0d1117);
   }
   .org-admin-card:hover {
+    background: #191817;
     background: color-mix(in srgb, #f59e0b 5%, #0d1117);
     border-color: rgba(245, 158, 11, 0.22);
     box-shadow: -3px 0 12px rgba(245, 158, 11, 0.10);
   }
   .org-mod-card:hover {
+    background: #0e151b;
     background: color-mix(in srgb, #3b82f6 3%, #0d1117);
   }
   .org-editor-card:hover {
+    background: #0e1719;
     background: color-mix(in srgb, #22c55e 3%, #0d1117);
   }
 
   /* 浅色模式覆盖 */
   :global(html.light) .org-founder-card {
+    background: #fff7eb;
     background: color-mix(in srgb, #f59e0b 8%, #ffffff);
   }
   :global(html.light) .org-founder-card:hover {
+    background: #fef1df;
     background: color-mix(in srgb, #f59e0b 14%, #ffffff);
     box-shadow: -4px 0 20px rgba(245, 158, 11, 0.20);
   }
   :global(html.light) .org-admin-card {
+    background: #fff9f3;
     background: color-mix(in srgb, #f59e0b 5%, #ffffff);
   }
   :global(html.light) .org-admin-card:hover {
+    background: #fff5e7;
     background: color-mix(in srgb, #f59e0b 10%, #ffffff);
     box-shadow: -3px 0 12px rgba(245, 158, 11, 0.15);
   }
   :global(html.light) .org-mod-card:hover {
+    background: #f3f7ff;
     background: color-mix(in srgb, #3b82f6 6%, #ffffff);
   }
   :global(html.light) .org-editor-card:hover {
+    background: #f2fcf7;
     background: color-mix(in srgb, #22c55e 6%, #ffffff);
   }
 </style>

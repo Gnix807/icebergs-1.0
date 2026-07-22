@@ -3,6 +3,20 @@
   "version": "1.0.0",
   "description": "冰山图宇宙 - Astro SSR + React 19",
   "type": "module",
+  "browserslist": {
+    "production": [
+      "Chrome >= 69",
+      "Edge >= 79",
+      "Firefox >= 68",
+      "Safari >= 12.1",
+      "iOS >= 12.2",
+      "not IE <= 11"
+    ],
+    "development": [
+      "last 1 Chrome version",
+      "last 1 Firefox version"
+    ]
+  },
   "scripts": {
     "dev": "astro dev",
     "predev": "node -e \"try { require('fs').rmSync('node_modules/.vite',{recursive:true,force:true}) } catch(e) {}\"",

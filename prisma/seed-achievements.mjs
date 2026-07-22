@@ -204,4 +204,9 @@ async function main() {
   console.log(`完成：新建 ${created} 条，跳过已存在 ${skipped} 条`);
 }
 
-main().catch(console.error).finally(() => prisma.$disconnect());
+main()
+  .catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());

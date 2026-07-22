@@ -3,6 +3,7 @@ import { success, error, ErrorCodes } from '../../../lib/api';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 import { renderMarkdownWithMath } from '../../../lib/markdown';
+import { can } from '../../../lib/permissions';
 
 async function isProjectMember(userId: string, projectId: string | null): Promise<boolean> {
   if (!projectId) return false;
@@ -25,6 +26,28 @@ function sanitizeLabels(raw: unknown): string[] {
 }
 
 export async function ALL(event: APIContext) {
+  const legacyDelete = event.url.searchParams.get('action') === 'delete';
+  const isDelete = event.request.method === 'DELETE' || legacyDelete;
+  if (legacyDelete) {
+    const requestedWith = event.request.headers.get('x-requested-with');
+    const fetchSite = event.request.headers.get('sec-fetch-site');
+    if (requestedWith !== 'XMLHttpRequest' && fetchSite !== 'same-origin') {
+      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '拒绝跨站删除请求')), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+      });
+    }
+  }
+  if (isDelete) {
+    const origin = event.request.headers.get('origin');
+    if (origin && origin !== event.url.origin) {
+      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '拒绝跨站删除请求')), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+      });
+    }
+  }
+
   const session = await getSession(event);
   if (!session) {
     return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
@@ -52,21 +75,55 @@ export async function ALL(event: APIContext) {
     });
   }
 
-  const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
+  const canManageAny = can(session, 'content:edit:any');
   const inProject = await isProjectMember(session.userId, existing.tier.iceberg.projectId);
-  if (existing.tier.iceberg.authorId !== session.userId && !canManageAny && !inProject) {
+  const canEditScoped = can(session, 'content:edit:own')
+    && (existing.tier.iceberg.authorId === session.userId || inProject);
+  if (!canManageAny && !canEditScoped) {
     return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
       status: 403,
       headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  if (event.request.method === 'DELETE' || event.url.searchParams.get('action') === 'delete') {
-    await prisma.item.delete({ where: { id } });
+  if (isDelete) {
+    const deleted = await prisma.$transaction(async (tx) => {
+      const result = await tx.item.deleteMany({
+        where: canManageAny
+          ? { id }
+          : {
+              id,
+              OR: [
+                { tier: { iceberg: { authorId: session.userId } } },
+                {
+                  tier: {
+                    iceberg: {
+                      project: { members: { some: { userId: session.userId } } },
+                    },
+                  },
+                },
+              ],
+            },
+      });
+      if (result.count === 0) return false;
+      await tx.itemRead.deleteMany({ where: { itemId: id } });
+      return true;
+    });
+
+    if (!deleted) {
+      const latest = await prisma.item.findUnique({ where: { id }, select: { id: true } });
+      const body = latest
+        ? error(ErrorCodes.FORBIDDEN, '权限已变化，请刷新后重试')
+        : error(ErrorCodes.NOT_FOUND, '条目不存在');
+      return new Response(JSON.stringify(body), {
+        status: latest ? 403 : 404,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+      });
+    }
 
     return new Response(JSON.stringify(success({ deleted: true })), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
   }
 
@@ -127,4 +184,3 @@ export async function ALL(event: APIContext) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
-

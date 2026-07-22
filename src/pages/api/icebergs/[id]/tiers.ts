@@ -2,6 +2,7 @@ import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
+import { can } from '../../../../lib/permissions';
 
 async function isProjectMember(userId: string, projectId: string | null): Promise<boolean> {
   if (!projectId) return false;
@@ -56,9 +57,11 @@ export async function GET(event: APIContext) {
         });
       }
 
-      const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
+      const canManageAny = can(session, 'content:edit:any');
       const inProject = await isProjectMember(session.userId, iceberg.projectId);
-      if (iceberg.authorId !== session.userId && !canManageAny && !inProject) {
+      const canEditScoped = can(session, 'content:edit:own')
+        && (iceberg.authorId === session.userId || inProject);
+      if (!canManageAny && !canEditScoped) {
         return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
           status: 403,
           headers: { 'Content-Type': 'application/json' },
@@ -122,4 +125,3 @@ export async function GET(event: APIContext) {
     });
   }
 }
-

@@ -416,26 +416,26 @@ const QUICK_QA = [
     </section>
 
     <!-- Stats Bar -->
-    <div class="flex justify-center gap-8 md:gap-16 mb-8 font-mono reveal">
-      <div class="text-center">
+    <div class="mx-auto mb-8 flex w-full max-w-2xl justify-center gap-2 font-mono reveal sm:gap-8 md:gap-16">
+      <div class="min-w-0 flex-1 text-center">
         <div
-          class="text-3xl md:text-4xl font-bold text-brand tabular-nums stat-glow"
+          class="text-2xl sm:text-3xl md:text-4xl font-bold text-brand tabular-nums stat-glow"
           data-countup={stats.total}
         >{stats.total}</div>
         <div class="text-xs text-text-body mt-1 tracking-widest">张图</div>
       </div>
       <div class="stats-divider self-stretch"></div>
-      <div class="text-center">
+      <div class="min-w-0 flex-1 text-center">
         <div
-          class="text-3xl md:text-4xl font-bold text-brand tabular-nums stat-glow"
+          class="text-2xl sm:text-3xl md:text-4xl font-bold text-brand tabular-nums stat-glow"
           data-countup={stats.totalViews}
         >{stats.totalViews.toLocaleString()}</div>
         <div class="text-xs text-text-body mt-1 tracking-widest">次探索</div>
       </div>
       <div class="stats-divider self-stretch"></div>
-      <div class="text-center">
+      <div class="min-w-0 flex-1 text-center">
         <div
-          class="text-3xl md:text-4xl font-bold text-brand tabular-nums stat-glow"
+          class="text-2xl sm:text-3xl md:text-4xl font-bold text-brand tabular-nums stat-glow"
           data-countup={stats.totalItems}
         >{stats.totalItems.toLocaleString()}</div>
         <div class="text-xs text-text-body mt-1 tracking-widest">个词条</div>
@@ -443,22 +443,22 @@ const QUICK_QA = [
     </div>
 
     <!-- Actions -->
-    <div class="flex justify-center flex-wrap gap-3 mb-4 reveal">
+    <div class="mx-auto mb-4 grid w-full max-w-xl grid-cols-2 gap-3 reveal sm:flex sm:flex-wrap sm:justify-center">
       <a
         href={session ? '/iceberg/new' : '/login'}
-        class="px-6 py-2.5 bg-brand text-[#0A0A0A] font-mono font-semibold text-sm hover:bg-brand-hover transition-colors"
+        class="mobile-touch-target col-span-2 flex items-center justify-center px-6 py-2.5 bg-brand text-[#0A0A0A] font-mono font-semibold text-sm hover:bg-brand-hover transition-colors sm:col-auto"
       >
         + 创建冰山图
       </a>
       <a
         href="/iceberg/random"
-        class="px-6 py-2.5 border border-brand text-brand font-mono text-sm hover:bg-brand/10 transition-all"
+        class="mobile-touch-target flex items-center justify-center px-4 sm:px-6 py-2.5 border border-brand text-brand font-mono text-sm hover:bg-brand/10 transition-all"
       >
         ◈ 随机漫游
       </a>
       <a
         href="/iceberg/list"
-        class="px-6 py-2.5 border border-border text-text-body font-mono text-sm hover:border-[#484f58] hover:text-text-hi transition-all"
+        class="mobile-touch-target flex items-center justify-center px-4 sm:px-6 py-2.5 border border-border text-text-body font-mono text-sm hover:border-[#484f58] hover:text-text-hi transition-all"
       >
         浏览全部
       </a>
@@ -609,11 +609,12 @@ const QUICK_QA = [
           {featuredIcebergs.length > 1 && (
             <div class="flex items-center justify-center gap-2 pb-3 pt-1 relative z-10">
               {featuredIcebergs.map((_, i: number) => (
-                <button class="home-featured-dot cursor-pointer transition-all"
+                <button class="home-featured-dot flex h-11 w-11 cursor-pointer items-center justify-center border-0 bg-transparent p-0"
                   data-dot={String(i)}
                   aria-label={`精选 ${i + 1}`}
-                  style={{ background: i === 0 ? '#f59e0b' : 'rgba(245,158,11,0.3)', width: i === 0 ? '14px' : '8px', height: '8px', padding: '4px', border: 'none', borderRadius: '4px', backgroundClip: 'content-box' }}
-                ></button>
+                >
+                  <span class="home-featured-dot-indicator block h-2 rounded-full transition-all" style={{ background: i === 0 ? '#f59e0b' : 'rgba(245,158,11,0.3)', width: i === 0 ? '14px' : '8px' }}></span>
+                </button>
               ))}
             </div>
           )}
@@ -850,11 +851,19 @@ const QUICK_QA = [
     const statsEls = document.querySelectorAll<HTMLElement>('[data-countup]');
     if (!statsEls.length) return;
 
+    if (typeof window.IntersectionObserver !== 'function') {
+      statsEls.forEach((el) => {
+        const target = parseInt(el.dataset.countup || '0', 10);
+        el.textContent = target.toLocaleString();
+      });
+      return;
+    }
+
     const obs = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (!entry.isIntersecting) return;
         const el = entry.target as HTMLElement;
-        const target = parseInt(el.dataset.countup ?? '0', 10);
+        const target = parseInt(el.dataset.countup || '0', 10);
         // 小延迟让 reveal 动画先完成
         setTimeout(() => countUp(el, target), 200);
         obs.unobserve(el);
@@ -919,7 +928,7 @@ const QUICK_QA = [
     setTimeout(function(){
       var cbs=document.querySelectorAll('.ql-cb:checked');
       var ids=[];cbs.forEach(function(cb){ids.push(cb.value)});
-      localStorage.setItem('quicklinks',JSON.stringify(ids));
+      try { localStorage.setItem('quicklinks',JSON.stringify(ids)); } catch(e) {}
     },100);
   };
   loadQuickLinks();
@@ -938,8 +947,10 @@ const QUICK_QA = [
         s.style.pointerEvents = i === n ? 'auto' : 'none';
       });
       dots.forEach(function(d, i) {
-        d.style.background = i === n ? '#f59e0b' : 'rgba(245,158,11,0.3)';
-        d.style.width = i === n ? '14px' : '8px';
+        var indicator = d.querySelector('.home-featured-dot-indicator');
+        if (!indicator) return;
+        indicator.style.background = i === n ? '#f59e0b' : 'rgba(245,158,11,0.3)';
+        indicator.style.width = i === n ? '14px' : '8px';
       });
       current = n;
     }

@@ -127,7 +127,8 @@ var sl={OPEN:'待处理',IN_PROGRESS:'进行中',COMPLETED:'已完成'},sc={OPEN
 var pl={P0:'🔴 紧急',P1:'🟠 高',P2:'⚪ 中',P3:'⚫ 低'},pc={P0:'#ef4444',P1:'#f59e0b',P2:'#6b7280',P3:'#94a3b8'};
 
 window.openTaskModal=function(tid){
-  var m=document.getElementById('task-modal'),c=document.getElementById('task-modal-content'),slug=document.querySelector('main[data-project-slug]')?.dataset?.projectSlug;
+  var projectMain=document.querySelector('main[data-project-slug]');
+  var m=document.getElementById('task-modal'),c=document.getElementById('task-modal-content'),slug=projectMain&&projectMain.dataset?projectMain.dataset.projectSlug:'';
   if(!m||!c||!slug)return;m.classList.remove('hidden');
   var task=null;for(var i=0;i<window.__tasks.length;i++){if(window.__tasks[i].id===tid){task=window.__tasks[i];break}}
   if(!task){c.innerHTML='<p class="text-xs font-mono text-danger">任务不存在</p>';return}
@@ -184,12 +185,38 @@ window.editTaskModal=function(tid,task,slug,isMem){
 </script>
 
 {project && <script is:inline>
-function loadDiscussions(){var dl=document.getElementById('disc-list-sidebar'),di=document.getElementById('disc-input-sidebar');if(!dl)return;var slug=document.querySelector('main[data-project-slug]')?.dataset?.projectSlug;if(!slug)return;var da='/api/projects/'+slug+'/discussions',lastCount=-1;async function ld(){try{var r=await fetch(da),d=await r.json();if(d.success){var ct=d.data.discussions.length;if(ct!==lastCount||lastCount===-1){lastCount=ct;dl.innerHTML=ct?d.data.discussions.slice(0,15).map(function(m){var u=m.user||{},n=u.nickname||u.username||'?';return'<div class="text-[10px] leading-relaxed"><span class="text-text-hi font-bold">'+n+'</span> <span class="text-text-body">'+m.content+'</span></div>'}).join(''):'<p class="text-[10px] font-mono text-text-lo text-center py-4">暂无消息</p>'}}}catch(e){}}
+function loadDiscussions(){var dl=document.getElementById('disc-list-sidebar'),di=document.getElementById('disc-input-sidebar');if(!dl)return;var projectMain=document.querySelector('main[data-project-slug]'),slug=projectMain&&projectMain.dataset?projectMain.dataset.projectSlug:'';if(!slug)return;var da='/api/projects/'+slug+'/discussions',lastCount=-1;async function ld(){try{var r=await fetch(da),d=await r.json();if(d.success){var ct=d.data.discussions.length;if(ct!==lastCount||lastCount===-1){lastCount=ct;dl.innerHTML=ct?d.data.discussions.slice(0,15).map(function(m){var u=m.user||{},n=u.nickname||u.username||'?';return'<div class="text-[10px] leading-relaxed"><span class="text-text-hi font-bold">'+n+'</span> <span class="text-text-body">'+m.content+'</span></div>'}).join(''):'<p class="text-[10px] font-mono text-text-lo text-center py-4">暂无消息</p>'}}}catch(e){}}
   if(di&&!di._bound){di._bound=true;di.onkeydown=async function(e){if(e.key!=='Enter')return;var v=di.value.trim();if(!v)return;di.disabled=true;await fetch(da+'?data='+encodeURIComponent(JSON.stringify({content:v})));di.value='';di.disabled=false;ld()}}ld();window._discInterval&&clearInterval(window._discInterval);window._discInterval=setInterval(ld,30000)}
 loadDiscussions();document.addEventListener('astro:after-swap',function(){setTimeout(loadDiscussions,100)});
 </script>}
 
 <script is:inline>
+function fallbackProjectCopy(text){
+  return new Promise(function(resolve,reject){
+    var textarea=document.createElement('textarea');
+    textarea.value=text;
+    textarea.setAttribute('readonly','');
+    textarea.style.position='fixed';
+    textarea.style.top='0';
+    textarea.style.left='0';
+    textarea.style.opacity='0';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    textarea.setSelectionRange(0,textarea.value.length);
+    var copied=false;
+    try{copied=typeof document.execCommand==='function'&&document.execCommand('copy')}catch(e){}
+    document.body.removeChild(textarea);
+    if(copied)resolve();else reject(new Error('copy_not_supported'));
+  });
+}
+function copyProjectText(text){
+  if(navigator.clipboard&&typeof navigator.clipboard.writeText==='function'){
+    try{return Promise.resolve(navigator.clipboard.writeText(text)).catch(function(){return fallbackProjectCopy(text)})}
+    catch(e){return fallbackProjectCopy(text)}
+  }
+  return fallbackProjectCopy(text);
+}
 function initAll(){
   var main=document.querySelector('main[data-project-slug]');if(!main)return;var slug=main.dataset.projectSlug;
   var tft=document.getElementById('task-form-toggle'),tfb=document.getElementById('task-form-body'),tfa=document.getElementById('task-form-arrow');if(tft&&tfb)tft.onclick=function(){if(tfb.style.display==='none'){tfb.style.display='';tfa.textContent='▾'}else{tfb.style.display='none';tfa.textContent='▸'}};
@@ -200,7 +227,7 @@ function initAll(){
   function setupLinker(b,f,i,s,t){var btn=document.getElementById(b),fm=document.getElementById(f),inp=document.getElementById(i),sub=document.getElementById(s);if(!btn||!fm)return;btn.onclick=function(){fm.classList.toggle('hidden')};if(sub)sub.onclick=async function(){var v=inp.value.trim();if(!v)return;sub.disabled=true;var r=await fetch('/api/projects/'+slug+'/link?data='+encodeURIComponent(JSON.stringify({type:t,id:v})));if(r.ok)location.reload();else sub.disabled=false}}setupLinker('link-iceberg-btn','link-iceberg-form','link-iceberg-input','link-iceberg-submit','iceberg');setupLinker('link-idea-btn','link-idea-form','link-idea-input','link-idea-submit','idea');
   var peb=document.getElementById('edit-project-btn'),pef=document.getElementById('project-edit-form');if(peb&&pef)peb.onclick=function(){pef.classList.toggle('hidden')};var pec=document.getElementById('pe-cancel');if(pec)pec.onclick=function(){pef.classList.add('hidden')};var pes=document.getElementById('pe-save');if(pes)pes.onclick=async function(){var nm=document.getElementById('pe-name').value.trim(),desc=document.getElementById('pe-desc').value.trim()||null;if(!nm)return;pes.disabled=true;await fetch('/api/projects?data='+encodeURIComponent(JSON.stringify({slug:slug,name:nm,description:desc})));location.reload()};
   document.querySelectorAll('.member-action').forEach(function(btn){btn.onclick=async function(e){e.preventDefault();var uid=btn.dataset.uid,act=btn.dataset.action;btn.disabled=true;await fetch('/api/projects/'+slug+'/members?data='+encodeURIComponent(JSON.stringify({userId:uid,action:act})));location.reload()}});
-  var ib=document.getElementById('invite-btn');if(ib)ib.onclick=function(){var link=location.origin+'/projects/'+slug+'?join=1';navigator.clipboard.writeText(link).then(function(){ib.textContent='✅ 已复制';setTimeout(function(){ib.textContent='📋 邀请'},2000)}).catch(function(){})};
+  var ib=document.getElementById('invite-btn');if(ib)ib.onclick=function(){var link=location.origin+'/projects/'+slug+'?join=1';copyProjectText(link).then(function(){ib.textContent='✅ 已复制';setTimeout(function(){ib.textContent='📋 邀请'},2000)}).catch(function(){window.prompt('自动复制失败，请手动复制：',link)})};
   var ti=document.getElementById('task-input'),tp=document.getElementById('task-priority'),ta=document.getElementById('task-assignee'),tb=document.getElementById('task-submit'),td=document.getElementById('task-desc');document.querySelectorAll('.task-tpl').forEach(function(btn){btn.onclick=function(){ti.value=btn.dataset.title;if(btn.dataset.priority)tp.value=btn.dataset.priority;if(btn.dataset.desc)td.value=btn.dataset.desc}});if(tb)tb.onclick=async function(){var v=ti.value.trim();if(!v)return;var p=tp.value||undefined,a=ta.value||undefined,desc=td?td.value.trim()||undefined:undefined;tb.disabled=true;await fetch('/api/projects/'+slug+'/tasks?data='+encodeURIComponent(JSON.stringify({title:v,priority:p,assigneeId:a,description:desc})));ti.value='';tb.disabled=false;location.reload()};
   initProjectPage();
 }

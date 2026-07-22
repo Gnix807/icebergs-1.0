@@ -72,29 +72,29 @@ function topicDot(color: string) {
 
 <Layout title="创意板 | 冰山图宇宙">
   <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
-  <main class="max-w-7xl mx-auto bg-grid px-4 md:px-6 py-12 relative z-10">
+  <main class="max-w-7xl mx-auto bg-grid px-4 md:px-6 py-8 sm:py-12 relative z-10">
 
     <header class="mb-8 reveal">
       <div class="text-xs font-mono text-text-mid mb-3 tracking-widest">[ IDEA BOARD ]</div>
-      <div class="flex items-end justify-between gap-4 flex-wrap">
-        <div>
+      <div class="flex flex-col items-start gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div class="min-w-0">
           <h1 class="text-3xl font-mono font-semibold">
             <span class="text-brand">#</span> 创意板
           </h1>
           <p class="mt-2 text-sm text-text-body font-mono">有想做但没时间做的冰山图？提交创意，让社区帮你实现</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
           <a href={`/ideas?view=${view === 'board' ? 'list' : 'board'}&status=${selectedStatus}${activeTopic ? '&topic=' + activeTopic : ''}`}
-            class="px-3 py-1.5 border border-border text-xs font-mono text-text-mid hover:border-brand hover:text-brand transition-colors"
+            class="mobile-touch-target flex items-center justify-center px-3 py-1.5 border border-border text-xs font-mono text-text-mid hover:border-brand hover:text-brand transition-colors"
             title={view === 'board' ? '列表视图' : '看板视图'}>
             {view === 'board' ? '☰ 列表' : '▦ 看板'}
           </a>
           {isLoggedIn ? (
-            <a href="/ideas/new" class="px-5 py-2 bg-brand text-[#171717] font-mono font-semibold text-sm hover:opacity-90 transition-opacity">
+            <a href="/ideas/new" class="mobile-touch-target flex items-center justify-center px-5 py-2 bg-brand text-[#171717] font-mono font-semibold text-sm hover:opacity-90 transition-opacity">
               + 提交创意
             </a>
           ) : (
-            <a href="/login" class="px-5 py-2 border border-brand text-brand font-mono text-sm hover:bg-brand hover:text-[#171717] transition-colors">
+            <a href="/login" class="mobile-touch-target flex items-center justify-center px-5 py-2 border border-brand text-brand font-mono text-sm hover:bg-brand hover:text-[#171717] transition-colors">
               登录后提交
             </a>
           )}
@@ -106,10 +106,10 @@ function topicDot(color: string) {
     <div class="mb-6 reveal" style="animation-delay:50ms">
       <div class="flex flex-wrap items-center gap-2 mb-2">
         <!-- 状态筛选 -->
-        <div class="flex gap-1">
+        <div class="flex w-full gap-1 sm:w-auto">
           {['OPEN','CLAIMED','COMPLETED'].map(s => (
             <a href={`/ideas?status=${s}&view=${view}${activeTopic ? '&topic=' + activeTopic : ''}`}
-              class={`text-[10px] font-mono px-3 py-1 border transition-colors ${selectedStatus === s ? 'border-current' : 'border-border text-text-body hover:border-brand'}`}
+              class={`mobile-touch-target flex flex-1 items-center justify-center px-3 py-1 text-[10px] font-mono border transition-colors sm:flex-none ${selectedStatus === s ? 'border-current' : 'border-border text-text-body hover:border-brand'}`}
               style={selectedStatus === s ? `color:${statusColor[s]};border-color:${statusColor[s]}40;background:${statusColor[s]}10` : ''}>
               {statusLabel[s]}
             </a>
@@ -117,37 +117,37 @@ function topicDot(color: string) {
         </div>
 
         <!-- 话题切换 + 展开 -->
-        <button id="topic-toggle" class="text-[10px] font-mono px-2 py-1 border border-border text-text-body hover:border-brand transition-colors">
+        <button id="topic-toggle" class="mobile-touch-target text-[10px] font-mono px-3 py-1 border border-border text-text-body hover:border-brand transition-colors" aria-expanded="false" aria-controls="topic-list">
           <span id="topic-arrow" class="inline-block w-2">▸</span> 分类{activeTopic && <span class="text-brand"> ·1</span>}
         </button>
 
         <!-- 排序 -->
         <div class="flex border border-border overflow-hidden">
           <a href={`/ideas?sort=newest&status=${selectedStatus}&view=${view}${activeTopic ? '&topic=' + activeTopic : ''}`}
-            class={`text-[10px] font-mono px-2.5 py-1 transition-colors ${sort === 'newest' ? 'bg-brand/15 text-brand' : 'text-text-body hover:bg-surface-2'}`}>
+            class={`mobile-touch-target flex items-center px-3 py-1 text-[10px] font-mono transition-colors ${sort === 'newest' ? 'bg-brand/15 text-brand' : 'text-text-body hover:bg-surface-2'}`}>
             最新
           </a>
           <a href={`/ideas?sort=votes&status=${selectedStatus}&view=${view}${activeTopic ? '&topic=' + activeTopic : ''}`}
-            class={`text-[10px] font-mono px-2.5 py-1 border-l border-border transition-colors ${sort === 'votes' ? 'bg-brand/15 text-brand' : 'text-text-body hover:bg-surface-2'}`}>
+            class={`mobile-touch-target flex items-center px-3 py-1 text-[10px] font-mono border-l border-border transition-colors ${sort === 'votes' ? 'bg-brand/15 text-brand' : 'text-text-body hover:bg-surface-2'}`}>
             最多票
           </a>
         </div>
 
         <!-- 搜索 -->
-        <form method="get" action="/ideas" class="ml-auto w-48">
+        <form method="get" action="/ideas" class="w-full sm:ml-auto sm:w-48">
           <input type="hidden" name="status" value={selectedStatus} />
           <input type="hidden" name="view" value={view} />
           {activeTopic && <input type="hidden" name="topic" value={activeTopic} />}
           <input type="text" name="q" value={search} placeholder="搜索…"
-            class="w-full px-2.5 py-1 text-[10px] font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none" />
+            class="mobile-touch-target w-full px-3 py-1 text-[10px] font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none" />
         </form>
       </div>
 
       <!-- 话题列表（折叠） -->
-      <div id="topic-list" class="flex flex-wrap gap-1.5 mt-2 hidden">
+      <div id="topic-list" class="mt-3 hidden max-h-56 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:flex sm:max-h-none sm:flex-wrap sm:gap-1.5 sm:overflow-visible">
         {topics.map(t => (
           <a href={`/ideas?${activeTopic === t.key ? '' : 'topic=' + t.key}&status=${selectedStatus}&view=${view}`}
-            class={`text-[10px] font-mono px-2 py-0.5 border transition-colors ${activeTopic === t.key ? 'border-current' : 'border-border text-text-body hover:border-brand'}`}
+            class={`mobile-touch-target flex min-w-0 items-center px-2 py-0.5 text-[10px] font-mono border transition-colors ${activeTopic === t.key ? 'border-current' : 'border-border text-text-body hover:border-brand'}`}
             style={activeTopic === t.key ? `color:${topicColors[t.key]};border-color:${topicColors[t.key]}40;background:${topicColors[t.key]}10` : ''}>
             <span class="inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle" style={`background:${topicColors[t.key]}`}></span>{t.label}
           </a>
@@ -214,7 +214,7 @@ function topicDot(color: string) {
             <a href={`/ideas/${idea.id}`}
               class="block p-4 border border-border hover:border-brand bg-surface-2 transition-all hover:-translate-y-0.5 reveal"
               style={`animation-delay:${80 + i * 40}ms`}>
-              <div class="flex items-start justify-between gap-3">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 flex-wrap mb-1.5">
                     <span class="inline-block w-2 h-2 rounded-full" style={`background:${topicColors[idea.topic] ?? '#6b7280'}`}></span>
@@ -224,14 +224,14 @@ function topicDot(color: string) {
                       {statusLabel[idea.status]}
                     </span>
                   </div>
-                  <h3 class="text-sm font-mono text-text-hi truncate">{idea.title}</h3>
+                  <h3 class="break-words text-sm font-mono text-text-hi line-clamp-2">{idea.title}</h3>
                   {idea.description && (
                     <p class="text-xs text-text-body mt-1 line-clamp-2">{idea.description}</p>
                   )}
                 </div>
-                <div class="flex items-center gap-3 shrink-0 text-[10px] font-mono text-text-lo">
+                <div class="flex w-full shrink-0 items-center justify-between gap-3 border-t border-border-subtle pt-2 text-[10px] font-mono text-text-lo sm:w-auto sm:justify-start sm:border-0 sm:pt-0">
                   <span title="投票数">{idea._count.votes} 票</span>
-                  <span title="创建者">{idea.creator.nickname || idea.creator.username}</span>
+                  <span class="max-w-[60%] truncate sm:max-w-36" title="创建者">{idea.creator.nickname || idea.creator.username}</span>
                 </div>
               </div>
             </a>
@@ -250,7 +250,9 @@ function topicDot(color: string) {
     if (toggle && list && arrow) {
       toggle.onclick = () => {
         const hidden = list.classList.toggle('hidden');
+        list.classList.toggle('grid', !hidden);
         arrow.textContent = hidden ? '▸' : '▾';
+        toggle.setAttribute('aria-expanded', hidden ? 'false' : 'true');
       };
     }
   }

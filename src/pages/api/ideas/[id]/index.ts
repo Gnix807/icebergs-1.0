@@ -2,8 +2,82 @@ import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { getSession } from '../../../../lib/auth/index';
+import { can } from '../../../../lib/permissions';
+
+function json(body: unknown, status: number) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
+function isTrustedLegacyMutation(event: APIContext): boolean {
+  return event.request.headers.get('x-requested-with') === 'XMLHttpRequest'
+    || event.request.headers.get('sec-fetch-site') === 'same-origin';
+}
+
+async function deleteIdea(event: APIContext, legacyGet = false): Promise<Response> {
+  try {
+    if (legacyGet && !isTrustedLegacyMutation(event)) {
+      return json(error(ErrorCodes.FORBIDDEN, '拒绝跨站删除请求'), 403);
+    }
+
+    const origin = event.request.headers.get('origin');
+    if (origin && origin !== event.url.origin) {
+      return json(error(ErrorCodes.FORBIDDEN, '拒绝跨站删除请求'), 403);
+    }
+
+    const session = await getSession(event);
+    if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
+
+    const { id } = event.params;
+    if (!id) return json(error(ErrorCodes.BAD_REQUEST, '缺少 ID'), 400);
+
+    const existing = await prisma.idea.findUnique({
+      where: { id },
+      select: { creatorId: true },
+    });
+    if (!existing) return json(error(ErrorCodes.NOT_FOUND, '创意不存在'), 404);
+
+    const canDeleteAny = can(session, 'content:delete:any');
+    const canDeleteOwn = existing.creatorId === session.userId
+      && can(session, 'content:edit:own');
+    if (!canDeleteAny && !canDeleteOwn) {
+      return json(error(ErrorCodes.FORBIDDEN, '只有创建者或管理员可以删除创意'), 403);
+    }
+
+    // Votes, claimants and comments cascade in the database. Keep ownership
+    // in the final predicate so a concurrent permission change cannot turn
+    // this into an unauthorized delete.
+    const deleted = await prisma.idea.deleteMany({
+      where: canDeleteAny
+        ? { id }
+        : { id, creatorId: session.userId },
+    });
+    if (deleted.count === 0) {
+      const latest = await prisma.idea.findUnique({
+        where: { id },
+        select: { creatorId: true },
+      });
+      if (!latest) return json(error(ErrorCodes.NOT_FOUND, '创意不存在'), 404);
+      return json(error(ErrorCodes.FORBIDDEN, '权限已变化，请刷新后重试'), 403);
+    }
+
+    return json(success({ deleted: true }), 200);
+  } catch (err) {
+    console.error('删除创意失败:', err);
+    return json(error(ErrorCodes.INTERNAL_ERROR, '删除失败'), 500);
+  }
+}
 
 export async function GET(event: APIContext) {
+  if (event.url.searchParams.get('action') === 'delete') {
+    return deleteIdea(event, true);
+  }
+
   const dataParam = event.url.searchParams.get('data');
   if (dataParam) {
 
@@ -125,3 +199,6 @@ export async function GET(event: APIContext) {
   }
 }
 
+export async function DELETE(event: APIContext) {
+  return deleteIdea(event);
+}

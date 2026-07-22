@@ -59,12 +59,11 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
         )}
         <div className="space-y-2">
           {items.map(iceberg => (
-            <a
+            <div
               key={iceberg.id}
-              href={`/iceberg/${iceberg.slug || iceberg.id}`}
-              className="archive-card group flex items-start gap-4 p-4 block"
+              className="archive-card group flex items-start gap-3 p-4 sm:gap-4"
             >
-              <div className="flex-1 min-w-0">
+              <a href={`/iceberg/${iceberg.slug || iceberg.id}`} className="min-w-0 flex-1 block">
                 <h3 className="font-mono text-sm text-text-hi group-hover:text-brand transition-colors truncate">
                   <span className="text-text-mid mr-1">#</span>{iceberg.title}
                 </h3>
@@ -78,7 +77,7 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
                     {iceberg.viewCount}
                   </span>
                 </div>
-              </div>
+              </a>
               <div className="flex-shrink-0 text-right">
                 <span className={`text-xs font-mono px-1.5 py-0.5 ${statusClass(iceberg.status)}`}>
                   {statusLabel(iceberg.status)}
@@ -87,15 +86,15 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
                   {new Date(iceberg.createdAt).toLocaleDateString('zh-CN')}
                 </div>
                 {isOwner && (
-                  <button
-                    onClick={e => { e.preventDefault(); e.stopPropagation(); window.location.href = `/iceberg/edit/${iceberg.id}`; }}
-                    className="block text-xs text-text-lo hover:text-brand font-mono mt-1 transition-colors"
+                  <a
+                    href={`/iceberg/edit/${iceberg.id}`}
+                    className="mobile-touch-target mt-1 flex items-center justify-end text-xs text-text-lo hover:text-brand font-mono transition-colors"
                   >
                     编辑
-                  </button>
+                  </a>
                 )}
               </div>
-            </a>
+            </div>
           ))}
         </div>
       </div>
@@ -119,7 +118,7 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
       {renderList(rejected, '// 需修改后重提')}
       {renderList(archived, '// 已归档')}
       <div className="mt-4 pt-4 border-t border-border-subtle">
-        <a href="/iceberg/new" className="text-xs text-brand font-mono hover:underline">
+        <a href="/iceberg/new" className="mobile-touch-target inline-flex items-center text-xs text-brand font-mono hover:underline">
           + 新建冰山图
         </a>
       </div>

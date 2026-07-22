@@ -22,6 +22,22 @@ const TYPE_META: Record<AnnType, { label: string; color: string; bg: string; bor
 
 const STORAGE_KEY = (id: string) => `ann_banner_dismissed_${id}`;
 
+function safeStorageGet(key: string) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // 存储不可用不应阻止横幅渲染或关闭。
+  }
+}
+
 export function AnnouncementBanner({ initial }: Props) {
   const [ann, setAnn] = useState<BannerAnn | null>(null);
   const [visible, setVisible] = useState(false);
@@ -29,7 +45,7 @@ export function AnnouncementBanner({ initial }: Props) {
 
   useEffect(() => {
     if (!initial) return;
-    const dismissed = localStorage.getItem(STORAGE_KEY(initial.id));
+    const dismissed = safeStorageGet(STORAGE_KEY(initial.id));
     if (!dismissed) {
       setAnn(initial);
       // 稍微延迟出现，避免与页面渲染抢帧
@@ -40,7 +56,7 @@ export function AnnouncementBanner({ initial }: Props) {
   function dismiss() {
     setLeaving(true);
     setTimeout(() => {
-      if (ann) localStorage.setItem(STORAGE_KEY(ann.id), '1');
+      if (ann) safeStorageSet(STORAGE_KEY(ann.id), '1');
       setVisible(false);
       setAnn(null);
       setLeaving(false);
@@ -95,7 +111,7 @@ export function AnnouncementBanner({ initial }: Props) {
         <button
           onClick={dismiss}
           aria-label="关闭横幅"
-          className="flex-shrink-0 w-5 h-5 flex items-center justify-center transition-colors"
+          className="mobile-touch-target flex-shrink-0 w-5 h-5 flex items-center justify-center transition-colors"
           style={{ color: meta.color, opacity: 0.5 }}
           onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
           onMouseLeave={e => (e.currentTarget.style.opacity = '0.5')}

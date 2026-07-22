@@ -7,6 +7,7 @@ import { ViewTransitions } from 'astro:transitions';
 import { prisma } from '../lib/prisma';
 import { getFeatureFlags } from '../lib/features';
 import '../styles/global.css';
+import 'katex/dist/katex.min.css';
 
 interface Props {
   title: string;
@@ -31,7 +32,7 @@ const bannerAnn = await prisma.announcement.findFirst({
   .catch(() => null);
 
 // 功能开关（带缓存，60 秒刷新一次）
-const features = await getFeatureFlags();
+const features = await getFeatureFlags().catch(() => ({}));
 
 // SEO 设置（搜索引擎验证 + 分析代码）
 const seoSettings = await prisma.systemSettings.findMany({
@@ -41,13 +42,51 @@ const seoSettings = await prisma.systemSettings.findMany({
 ---
 
 <!doctype html>
-<html lang="zh">
+<html lang="zh-CN">
   <head>
-    <script is:inline>
-      if (localStorage.getItem('crt-scanlines') === 'on') document.documentElement.classList.add('crt-on');
-    </script>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <script is:inline>
+      (function () {
+        var root = document.documentElement;
+        function addRootClass(name) {
+          if (root.classList) root.classList.add(name);
+          else if ((' ' + root.className + ' ').indexOf(' ' + name + ' ') === -1) root.className += ' ' + name;
+        }
+
+        try {
+          if (window.localStorage.getItem('crt-scanlines') === 'on') addRootClass('crt-on');
+        } catch (error) {
+          /* 存储被隐私模式或内嵌 WebView 禁用时保持默认主题。 */
+        }
+
+        if (
+          typeof window.Promise !== 'function' ||
+          typeof window.fetch !== 'function' ||
+          typeof window.URLSearchParams !== 'function' ||
+          typeof Object.assign !== 'function'
+        ) {
+          addRootClass('legacy-browser');
+        }
+
+        /* flex gap 在旧 Chromium/Safari 中会被静默忽略，给关键布局启用回退。 */
+        try {
+          var flex = document.createElement('div');
+          flex.style.position = 'absolute';
+          flex.style.visibility = 'hidden';
+          flex.style.display = 'flex';
+          flex.style.flexDirection = 'column';
+          flex.style.rowGap = '1px';
+          flex.appendChild(document.createElement('div'));
+          flex.appendChild(document.createElement('div'));
+          root.appendChild(flex);
+          if (flex.scrollHeight !== 1) addRootClass('no-flex-gap');
+          root.removeChild(flex);
+        } catch (error) {
+          addRootClass('no-flex-gap');
+        }
+      })();
+    </script>
     <meta name="description" content={description} />
     <title>{title}</title>
     <!-- Open Graph / Facebook -->
@@ -77,27 +116,30 @@ const seoSettings = await prisma.systemSettings.findMany({
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=PingFang+SC:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=PingFang+SC:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
     <link href="https://cdn.jsdelivr.net/npm/misans@4.0.0/lib/Normal/MiSans-Normal.min.css" rel="stylesheet" media="print" onload="this.media='all'" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous" media="print" onload="this.media='all'" />
-    <ViewTransitions />
+    <ViewTransitions fallback="none" />
   </head>
   <body class="bg-surface-1 text-[var(--text-primary)] antialiased">
+    <div id="legacy-browser-notice" role="status">
+      当前浏览器内核过旧或正处于“兼容模式”。正文仍可阅读，但登录、搜索和编辑功能可能受限；请切换到浏览器“极速模式”或升级浏览器。
+    </div>
+    <noscript><div class="no-script-notice">JavaScript 已关闭：正文仍可阅读，登录、搜索和编辑功能暂不可用。</div></noscript>
     <!-- ViewTransitions 页面切换进度条 -->
     <div id="page-progress" class="page-progress-bar"></div>
 
     <!-- 导航栏 -->
     <NavBar client:load features={JSON.stringify(features)} />
 
-    <!-- 主内容区域（pt-14 抵消固定导航栏高度） -->
-    <div class="pt-14 pb-16 lg:pb-0">
-      <!-- 全站横幅公告（必须在 pt-14 容器内，否则被固定导航栏遮盖） -->
+    <!-- 主内容区域：统一补偿固定导航与移动端安全区 -->
+    <div class="mobile-page-shell">
+      <!-- 全站横幅公告（位于统一导航占位容器内，避免被固定导航遮盖） -->
       <AnnouncementBanner client:load initial={bannerAnn} />
       <slot />
     </div>
 
     <!-- 全站 Footer -->
-    <footer class="hidden md:block relative z-10 border-t border-border-subtle bg-surface-1 mt-16">
+    <footer class="site-footer hidden md:block relative z-10 border-t border-border-subtle bg-surface-1 mt-16">
       <!-- ASCII 装饰线 -->
       <div class="px-4 md:px-6 font-mono">
         <div class="text-[10px] text-text-lo select-none overflow-hidden leading-none py-3 tracking-widest">
@@ -179,7 +221,7 @@ const seoSettings = await prisma.systemSettings.findMany({
     </footer>
 
     <!-- Mobile compact footer -->
-    <footer class="md:hidden border-t border-border-subtle bg-surface-1 mt-12">
+    <footer class="site-footer md:hidden border-t border-border-subtle bg-surface-1 mt-12">
       <div class="max-w-7xl mx-auto px-4 py-4">
         <div class="flex items-center justify-between mb-3">
           <span class="text-brand font-bold text-xs">Iceberg<span class="text-text-lo">::</span><span class="text-text-body">DB</span></span>
@@ -219,7 +261,12 @@ const seoSettings = await prisma.systemSettings.findMany({
         }
 
         const dotEl = document.getElementById('cursor-dot') as HTMLElement | null;
-        if (!dotEl || !window.matchMedia('(pointer: fine)').matches) return;
+        if (
+          !dotEl ||
+          typeof window.matchMedia !== 'function' ||
+          !window.matchMedia('(pointer: fine)').matches ||
+          typeof window.MutationObserver !== 'function'
+        ) return;
         const dot = dotEl;
 
         let visible = false;
@@ -305,19 +352,35 @@ const seoSettings = await prisma.systemSettings.findMany({
 
       // ── 滚动触发进场动画（IntersectionObserver） ──────────────
       function initReveal() {
+        const elements = document.querySelectorAll<HTMLElement>('.reveal, .reveal-grid');
+        const previousObserver = (window as any).__revealObserver as IntersectionObserver | undefined;
+        previousObserver?.disconnect();
+
+        if (typeof window.IntersectionObserver !== 'function') {
+          elements.forEach((el) => {
+            el.classList.remove('reveal-pending');
+            el.classList.add('revealed');
+          });
+          return;
+        }
+
         const observer = new IntersectionObserver((entries) => {
           entries.forEach((entry) => {
             if (!entry.isIntersecting) return;
             const el = entry.target as HTMLElement;
             const delay = parseInt(el.dataset.revealDelay ?? '0', 10);
             setTimeout(() => {
+              el.classList.remove('reveal-pending');
               el.classList.add('revealed');
               observer.unobserve(el);
             }, delay);
           });
         }, { threshold: 0.07, rootMargin: '0px 0px -32px 0px' });
 
-        document.querySelectorAll<HTMLElement>('.reveal, .reveal-grid').forEach(el => {
+        (window as any).__revealObserver = observer;
+        elements.forEach(el => {
+          if (el.classList.contains('revealed')) return;
+          el.classList.add('reveal-pending');
           observer.observe(el);
         });
       }
@@ -329,31 +392,29 @@ const seoSettings = await prisma.systemSettings.findMany({
       initCursor();
 
       // ── CRT 扫描线 — 纯 CSS class 驱动，无 JS timer ──────
-      (function syncCrt() {
-        if (localStorage.getItem('crt-scanlines') === 'on') {
+      function readStoredValue(key: string) {
+        try {
+          return window.localStorage.getItem(key);
+        } catch {
+          return null;
+        }
+      }
+
+      function syncCrt() {
+        if (readStoredValue('crt-scanlines') === 'on') {
           document.documentElement.classList.add('crt-on');
         } else {
           document.documentElement.classList.remove('crt-on');
         }
-      })();
+      }
+
+      syncCrt();
 
       // 监听 NavBar toggle 事件
-      document.addEventListener('crt:toggle', () => {
-        if (localStorage.getItem('crt-scanlines') === 'on') {
-          document.documentElement.classList.add('crt-on');
-        } else {
-          document.documentElement.classList.remove('crt-on');
-        }
-      });
+      document.addEventListener('crt:toggle', syncCrt);
 
       // 页面切换时重新同步
-      document.addEventListener('astro:page-load', () => {
-        if (localStorage.getItem('crt-scanlines') === 'on') {
-          document.documentElement.classList.add('crt-on');
-        } else {
-          document.documentElement.classList.remove('crt-on');
-        }
-      });
+      document.addEventListener('astro:page-load', syncCrt);
 
       // ── ViewTransitions 页面导航进度条 ───────────────────
       (function initProgress() {

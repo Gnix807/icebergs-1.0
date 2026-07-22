@@ -67,7 +67,9 @@ export async function updateIceberg(id: string, data: { title?: string; descript
 }
 
 export async function deleteIceberg(id: string) {
-  return request<{ deleted: boolean }>(`/icebergs/${id}?action=delete`);
+  return request<{ deleted: boolean }>(`/icebergs/${id}?action=delete`, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+  });
 }
 
 // ==================== Tier ====================
@@ -85,7 +87,9 @@ export async function updateTier(id: string, data: { name?: string; order?: numb
 }
 
 export async function deleteTier(id: string) {
-  return request<{ deleted: boolean }>(`/tiers/${id}?action=delete`);
+  return request<{ deleted: boolean }>(`/tiers/${id}?action=delete`, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+  });
 }
 
 // ==================== Item ====================
@@ -99,5 +103,7 @@ export async function updateItem(id: string, data: { title?: string; desc?: stri
 }
 
 export async function deleteItem(id: string) {
-  return request<{ deleted: boolean }>(`/items/${id}?action=delete`);
+  return request<{ deleted: boolean }>(`/items/${id}?action=delete`, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+  });
 }

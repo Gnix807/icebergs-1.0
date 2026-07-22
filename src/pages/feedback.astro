@@ -168,14 +168,17 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
     var INACTIVE_TEXT = 'var(--text-secondary)';
 
     function syncTypeChips() {
-      var radios = document.querySelectorAll('[data-type-radio]');
+      var radios = document.querySelectorAll<HTMLInputElement>('[data-type-radio]');
       radios.forEach(function (radio) {
-        var chip = radio.nextElementSibling;
+        var chip = radio.nextElementSibling as HTMLElement | null;
         if (!chip) return;
         if (radio.checked) {
           chip.style.borderColor = ACTIVE_BORDER;
           chip.style.color = ACTIVE_TEXT;
-          chip.style.background = 'color-mix(in srgb, var(--terminal-green) 10%, transparent)';
+          chip.style.background = 'rgba(62, 207, 142, 0.1)';
+          if (window.CSS && CSS.supports && CSS.supports('background', 'color-mix(in srgb, #3ecf8e 10%, transparent)')) {
+            chip.style.background = 'color-mix(in srgb, var(--terminal-green) 10%, transparent)';
+          }
         } else {
           chip.style.borderColor = INACTIVE_BORDER;
           chip.style.color = INACTIVE_TEXT;
@@ -185,14 +188,14 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
     }
 
     function syncCount() {
-      var textarea = document.getElementById('content');
+      var textarea = document.getElementById('content') as HTMLTextAreaElement | null;
       var counter = document.getElementById('content-count');
       if (!textarea || !counter) return;
       counter.textContent = textarea.value.length + '/2000';
     }
 
     function init() {
-      var radios = document.querySelectorAll('[data-type-radio]');
+      var radios = document.querySelectorAll<HTMLInputElement>('[data-type-radio]');
       radios.forEach(function (radio) {
         radio.addEventListener('change', syncTypeChips);
       });
@@ -203,7 +206,7 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
         });
       });
 
-      var textarea = document.getElementById('content');
+      var textarea = document.getElementById('content') as HTMLTextAreaElement | null;
       if (textarea) {
         textarea.addEventListener('input', syncCount);
       }
@@ -213,7 +216,7 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
 
       // Form submit via fetch
       var form = document.getElementById('feedback-form');
-      var submitBtn = document.getElementById('feedback-submit-btn');
+      var submitBtn = document.getElementById('feedback-submit-btn') as HTMLButtonElement | null;
       var errorEl = document.getElementById('feedback-error');
       var successEl = document.getElementById('feedback-success');
       var formSection = document.getElementById('feedback-form-section');
@@ -223,7 +226,7 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
       form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        var typeRadio = document.querySelector('[name="type"]:checked') as HTMLInputElement;
+        var typeRadio = document.querySelector<HTMLInputElement>('[name="type"]:checked');
         var type = typeRadio ? typeRadio.value : 'bug';
         var content = textarea ? textarea.value.trim() : '';
         var contact = (document.getElementById('contact') as HTMLInputElement)?.value.trim() || '';
@@ -307,6 +310,7 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
 
   .feedback-layout {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1rem;
   }
 
@@ -325,7 +329,12 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
   }
 
   .feedback-form-panel {
+    min-width: 0;
     padding: 1.2rem;
+  }
+
+  .feedback-side {
+    min-width: 0;
   }
 
   .feedback-panel-head h2 {
@@ -403,8 +412,9 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
   }
 
   .feedback-field textarea,
-  .feedback-field input {
+  .feedback-field input:not([type='radio']) {
     width: 100%;
+    min-width: 0;
     border: 1px solid var(--border);
     background: var(--bg-base);
     color: var(--text-primary);
@@ -415,12 +425,12 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
   }
 
   .feedback-field textarea:focus,
-  .feedback-field input:focus {
+  .feedback-field input:not([type='radio']):focus {
     border-color: var(--terminal-green);
   }
 
   .feedback-field textarea::placeholder,
-  .feedback-field input::placeholder {
+  .feedback-field input:not([type='radio'])::placeholder {
     color: var(--text-muted);
   }
 
@@ -436,6 +446,7 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
   .feedback-error {
     border: 1px solid #ef4444;
     color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
     background: color-mix(in srgb, #ef4444 10%, transparent);
     padding: 0.65rem 0.75rem;
     font-size: 0.86rem;
@@ -585,14 +596,14 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
 
   html.light .feedback-context,
   html.light .feedback-field textarea,
-  html.light .feedback-field input {
+  html.light .feedback-field input:not([type='radio']) {
     background: #f7f9fc;
     border-color: #d6dbe5;
     color: #1f2937;
   }
 
   html.light .feedback-field textarea::placeholder,
-  html.light .feedback-field input::placeholder {
+  html.light .feedback-field input:not([type='radio'])::placeholder {
     color: #7b8797;
   }
 
@@ -604,5 +615,80 @@ const returnHref = icebergId ? `/iceberg/${icebergId}` : '/';
     background: #1d4ed8;
     border-color: #1d4ed8;
     color: #ffffff;
+  }
+
+  @media (max-width: 639px) {
+    .feedback-page {
+      padding-top: 2rem;
+      padding-bottom: 2rem;
+    }
+
+    .feedback-title {
+      font-size: clamp(1.8rem, 9vw, 2.25rem);
+    }
+
+    .feedback-form-panel {
+      padding: 1rem;
+    }
+
+    .feedback-context-row,
+    .feedback-meta {
+      flex-wrap: wrap;
+    }
+
+    .feedback-context-row strong {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .feedback-chip-wrap {
+      display: flex;
+      flex: 1 1 calc(50% - 0.55rem);
+    }
+
+    .feedback-chip {
+      display: flex;
+      width: 100%;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .feedback-field input:not([type='radio']),
+    .feedback-actions button,
+    .feedback-back-link,
+    .feedback-card summary,
+    .feedback-success-actions a {
+      min-height: 44px;
+    }
+
+    .feedback-actions {
+      flex-direction: column-reverse;
+      align-items: stretch;
+    }
+
+    .feedback-actions button,
+    .feedback-back-link {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .feedback-card summary,
+    .feedback-success-actions a {
+      display: flex;
+      align-items: center;
+    }
+
+    .feedback-success-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .feedback-success-actions a {
+      justify-content: center;
+    }
   }
 </style>

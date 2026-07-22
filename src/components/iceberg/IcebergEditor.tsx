@@ -709,7 +709,9 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
     if (!tierId.startsWith('tier_')) {
       try {
-        const res = await fetch(`/api/tiers/${tierId}?action=delete`);
+        const res = await fetch(`/api/tiers/${tierId}?action=delete`, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
         if (!res.ok && res.status !== 404) {
           queueSyncFailure({
             key: `tier:delete:${tierId}`,
@@ -840,7 +842,9 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
     if (!itemId.startsWith('item_')) {
       try {
-        const res = await fetch(`/api/items/${itemId}?action=delete`);
+        const res = await fetch(`/api/items/${itemId}?action=delete`, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
         if (!res.ok && res.status !== 404) {
           queueSyncFailure({
             key: `item:delete:${itemId}`,
@@ -1216,7 +1220,9 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     if (!iceberg || iceberg.id.startsWith('temp_')) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/icebergs/${iceberg.id}?action=delete`);
+      const res = await fetch(`/api/icebergs/${iceberg.id}?action=delete`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
       const data = await res.json();
       if (data.success) {
         clearDraft(iceberg.id);
@@ -1311,34 +1317,34 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       {/* ── 编辑器头部 ── */}
       <header className="mb-6 border border-border-subtle bg-surface-1">
         {/* 标题栏 */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border-subtle bg-surface-2">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col items-stretch gap-2 px-3 py-3 border-b border-border-subtle bg-surface-2 sm:flex-row sm:items-center sm:justify-between sm:px-4 sm:py-2">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
             <span className="text-brand font-mono text-xs">▶</span>
             <span className="font-mono text-xs text-text-hi tracking-widest">冰山图::编辑器</span>
             {iceberg.id.startsWith('temp_') && (
-              <a href="/iceberg/import" className="font-mono text-[10px] border border-border px-2 py-1 text-text-body hover:border-brand hover:text-brand transition-colors">📥 导入</a>
+              <a href="/iceberg/import" className="inline-flex min-h-11 items-center px-3 py-1 font-mono text-[10px] border border-border text-text-body hover:border-brand hover:text-brand transition-colors sm:min-h-0 sm:px-2">📥 导入</a>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             <button
               onClick={() => {
                 const prev = versionHistory[Math.min(1, versionHistory.length - 1)] ?? versionHistory[0];
                 if (prev) restoreVersion(prev);
               }}
               disabled={versionHistory.length === 0}
-              className="font-mono text-[10px] border border-border px-2 py-1 text-text-body hover:border-brand hover:text-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="min-h-11 px-3 py-1 font-mono text-[10px] border border-border text-text-body hover:border-brand hover:text-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed sm:min-h-0 sm:px-2"
               title="恢复到上一保存版本"
             >
               恢复上一版
             </button>
             <button
               onClick={() => setShowVersionHistory(true)}
-              className="font-mono text-[10px] border border-border px-2 py-1 text-text-body hover:border-brand hover:text-brand transition-colors"
+              className="min-h-11 px-3 py-1 font-mono text-[10px] border border-border text-text-body hover:border-brand hover:text-brand transition-colors sm:min-h-0 sm:px-2"
               title="查看历史版本"
             >
               版本历史 ({versionHistory.length})
             </button>
-            <div className="font-mono text-[11px]">
+            <div className="w-full font-mono text-[11px] sm:w-auto">
               {isSaving ? (
                 <span className="text-info">[ ● 保存中... ]</span>
               ) : isDirty ? (
@@ -1532,7 +1538,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           >
             <div
               ref={tiersScrollRef}
-              className="editor-scroll-shell max-h-[72vh] overflow-y-auto overscroll-contain pr-1"
+              className="editor-scroll-shell md:max-h-[72vh] md:overflow-y-auto md:overscroll-contain md:pr-1"
             >
               <div className="space-y-4">
                 {iceberg.tiers.map((tier, index) => (
@@ -1585,34 +1591,34 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       {/* ── 添加层级 ── */}
       <button
         onClick={handleAddTier}
-        className="mt-4 w-full py-3 border border-dashed border-border-subtle font-mono text-xs text-text-lo hover:border-brand hover:text-brand transition-colors"
+        className="mt-4 min-h-11 w-full py-3 border border-dashed border-border-subtle font-mono text-xs text-text-lo hover:border-brand hover:text-brand transition-colors"
       >
         [ ++ 添加层级 ]
       </button>
 
       {/* ── 底部操作栏 ── */}
-      <div className="mt-6 flex items-center justify-between border border-border-subtle bg-surface-1 px-4 py-3">
-        <div>
+      <div className="mt-6 flex flex-col items-stretch gap-3 border border-border-subtle bg-surface-1 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+        <div className="sm:flex-shrink-0">
           {!iceberg.id.startsWith('temp_') && (
             <button
               onClick={() => { setDeleteConfirmText(''); setShowDeleteConfirm(true); }}
-              className="font-mono text-xs text-text-lo border border-border-subtle px-3 py-2 hover:border-[#ef444460] hover:text-danger transition-colors"
+              className="min-h-11 w-full px-3 py-2 font-mono text-xs text-text-lo border border-border-subtle hover:border-[#ef444460] hover:text-danger transition-colors sm:w-auto"
             >
               [ 删除 ]
             </button>
           )}
         </div>
-        <div className="flex gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
           <button
             onClick={handleSave}
-            className="font-mono text-xs text-text-body border border-border px-4 py-2 hover:border-brand hover:text-brand transition-colors"
+            className="min-h-11 px-3 py-2 font-mono text-xs text-text-body border border-border hover:border-brand hover:text-brand transition-colors sm:px-4"
           >
             [ 保存草稿 ]
           </button>
           <button
             onClick={() => handleSubmit()}
             disabled={isSubmitting || !canSubmit}
-            className="font-mono text-xs bg-brand text-[#0A0A0A] font-bold px-4 py-2 hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-brand"
+            className="min-h-11 px-3 py-2 font-mono text-xs bg-brand text-[#0A0A0A] font-bold hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-brand sm:px-4"
           >
             {submitButtonText}
           </button>
@@ -1785,20 +1791,20 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       )}
 
       {/* ── 固定返回按钮 ── */}
-      <div className="fixed bottom-8 left-6 z-40 flex flex-col items-start gap-2">
+      <div className="editor-mobile-return fixed left-3 z-[45] flex flex-col items-start gap-2 lg:left-6">
         {showBackConfirm && (
           <div className="bg-surface-1 border border-warning/25 font-mono text-xs p-3 shadow-xl w-44">
             <p className="text-warning mb-2 leading-snug">// 有未保存的内容</p>
             <div className="flex flex-col gap-1.5">
               <button
                 onClick={() => { setShowBackConfirm(false); window.history.length > 1 ? history.back() : (window.location.href = '/'); }}
-                className="w-full py-1.5 border border-[#ef444460] text-danger hover:bg-danger/10 transition-colors"
+                className="min-h-11 w-full py-1.5 border border-[#ef444460] text-danger hover:bg-danger/10 transition-colors"
               >
                 [ 确认离开 ]
               </button>
               <button
                 onClick={() => setShowBackConfirm(false)}
-                className="w-full py-1.5 border border-border-subtle text-text-mid hover:border-[#8b949e] hover:text-text-body transition-colors"
+                className="min-h-11 w-full py-1.5 border border-border-subtle text-text-mid hover:border-[#8b949e] hover:text-text-body transition-colors"
               >
                 [ 继续编辑 ]
               </button>
@@ -1813,7 +1819,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
               window.history.length > 1 ? history.back() : (window.location.href = '/');
             }
           }}
-          className={`font-mono text-sm px-5 py-3 border shadow-lg transition-colors ${
+          className={`min-h-11 font-mono text-sm px-5 py-3 border shadow-lg transition-colors ${
             showBackConfirm
               ? 'border-warning text-warning bg-surface-1'
               : 'border-border text-text-mid bg-surface-1 hover:border-brand hover:text-brand'
@@ -1847,10 +1853,10 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
               {/* NSFW 确认复选框 */}
               {checklistItems.some(i => i.key === 'nsfw' && !i.pass) && (
-                <label className="flex items-center gap-3 mb-6 cursor-pointer select-none">
+                <label className="flex min-h-11 items-center gap-3 mb-6 cursor-pointer select-none">
                   <span
                     onClick={() => setNsfwConfirmed(v => !v)}
-                    className={`w-4 h-4 border flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors ${
+                    className={`w-6 h-6 border flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors ${
                       nsfwConfirmed ? 'bg-brand border-brand' : 'border-[#4b5563] hover:border-brand'
                     }`}
                   >

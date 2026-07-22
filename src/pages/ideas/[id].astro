@@ -41,7 +41,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
 
 <Layout title={`${idea?.title || '创意详情'} | 冰山图宇宙`}>
   <div class="vignette fixed inset-0 z-[9997] pointer-events-none"></div>
-  <main class="bg-grid max-w-3xl mx-auto px-4 py-12 relative z-10" data-idea-id={id} data-is-owner={String(isOwner)}>
+  <main class="bg-grid max-w-3xl mx-auto px-4 py-8 sm:py-12 relative z-10" data-idea-id={id} data-is-owner={String(isOwner)}>
 
     {error ? (
       <div class="p-8 border border-border text-center reveal">
@@ -60,10 +60,10 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
             </span>
             <span class="text-[10px] font-mono text-text-lo">{getIcebergTopicLabel(idea.topic)}</span>
           </div>
-          <h1 class="text-2xl font-mono font-semibold">{idea.title}</h1>
+          <h1 class="break-words text-2xl font-mono font-semibold">{idea.title}</h1>
 
-          <div class="flex items-center gap-3 mt-4 text-[10px] font-mono text-text-lo">
-            <span>由 <a href={`/user/${idea.creator.id}`} class="text-text-body hover:text-brand transition-colors">{idea.creator.nickname || idea.creator.username}</a> 提交</span>
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-4 text-[10px] font-mono text-text-lo">
+            <span class="min-w-0">由 <a href={`/user/${idea.creator.id}`} class="break-all text-text-body hover:text-brand transition-colors">{idea.creator.nickname || idea.creator.username}</a> 提交</span>
             <span>·</span>
             <span>{new Date(idea.createdAt).toLocaleDateString('zh-CN')}</span>
           </div>
@@ -78,49 +78,49 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
           <section id="edit-form" class="mb-8 p-4 border border-border bg-surface-2 space-y-3 hidden reveal" style="animation-delay:60ms">
             <div>
               <label class="text-[10px] font-mono text-text-mid mb-1 block">标题</label>
-              <input id="edit-title" type="text" value={idea.title} class="w-full px-2.5 py-1.5 text-xs font-mono border border-border bg-surface-1 text-text-hi focus:border-brand focus:outline-none" />
+              <input id="edit-title" type="text" value={idea.title} class="mobile-touch-target w-full px-2.5 py-1.5 text-xs font-mono border border-border bg-surface-1 text-text-hi focus:border-brand focus:outline-none" />
             </div>
             <div>
               <label class="text-[10px] font-mono text-text-mid mb-1 block">描述</label>
               <textarea id="edit-desc" rows="4" class="w-full px-2.5 py-1.5 text-xs font-mono border border-border bg-surface-1 text-text-hi focus:border-brand focus:outline-none resize-none">{idea.description || ''}</textarea>
             </div>
             <div class="flex gap-2">
-              <button id="save-edit-btn" class="px-4 py-1.5 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors">保存</button>
-              <button id="cancel-edit-btn" class="px-4 py-1.5 border border-border text-xs font-mono text-text-body hover:border-[#8b949e] transition-colors">取消</button>
+              <button id="save-edit-btn" class="mobile-touch-target px-4 py-1.5 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors">保存</button>
+              <button id="cancel-edit-btn" class="mobile-touch-target px-4 py-1.5 border border-border text-xs font-mono text-text-body hover:border-[#8b949e] transition-colors">取消</button>
             </div>
           </section>
         )}
 
-        <div class="flex flex-wrap items-center gap-4 mb-10 reveal" style="animation-delay:100ms">
+        <div class="grid grid-cols-2 gap-2 mb-10 reveal sm:flex sm:flex-wrap sm:items-center sm:gap-4" style="animation-delay:100ms">
           <!-- 投票 -->
-          <button id="vote-btn" class={`flex items-center gap-1.5 px-3 py-1.5 border text-xs font-mono transition-colors ${session ? 'hover:border-brand cursor-pointer' : 'cursor-not-allowed opacity-50'} border-border text-text-body`} disabled={!session}>
+          <button id="vote-btn" class={`mobile-touch-target flex items-center justify-center gap-1.5 px-3 py-1.5 border text-xs font-mono transition-colors ${session ? 'hover:border-brand cursor-pointer' : 'cursor-not-allowed opacity-50'} border-border text-text-body`} disabled={!session}>
             <span id="vote-icon">▲</span>
             <span id="vote-count">{idea._count.votes}</span> 票
           </button>
 
           <!-- 认领（所有登录用户，含创建者） -->
           {idea.status === 'OPEN' && session && (
-            <button id="claim-btn" class="px-3 py-1.5 border border-brand text-brand text-xs font-mono hover:bg-brand hover:text-[#171717] transition-colors">
+            <button id="claim-btn" class="mobile-touch-target px-3 py-1.5 border border-brand text-brand text-xs font-mono hover:bg-brand hover:text-[#171717] transition-colors">
               {isOwner ? '开始创作' : '认领这个创意'}
             </button>
           )}
           {idea.status === 'OPEN' && isOwner && (
-            <button id="edit-toggle-btn" class="px-3 py-1.5 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">
+            <button id="edit-toggle-btn" class="mobile-touch-target px-3 py-1.5 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">
               编辑
             </button>
           )}
           {idea.status === 'CLAIMED' && (isOwner || isClaimant) && (
             <>
-              <button id="complete-btn" class="px-3 py-1.5 border border-success text-success text-xs font-mono hover:bg-success hover:text-[#171717] transition-colors">
+              <button id="complete-btn" class="mobile-touch-target px-3 py-1.5 border border-success text-success text-xs font-mono hover:bg-success hover:text-[#171717] transition-colors">
                 标记为已完成
               </button>
-              <button id="unclaim-btn" class="px-3 py-1.5 border border-border text-xs font-mono text-text-mid hover:border-warning hover:text-warning transition-colors">
+              <button id="unclaim-btn" class="mobile-touch-target px-3 py-1.5 border border-border text-xs font-mono text-text-mid hover:border-warning hover:text-warning transition-colors">
                 取消认领
               </button>
             </>
           )}
           {idea.status === 'OPEN' && isOwner && (
-            <select id="status-select" class="px-2 py-1.5 border border-border text-xs font-mono bg-surface-2 text-text-body">
+            <select id="status-select" class="mobile-touch-target min-w-0 px-2 py-1.5 border border-border text-xs font-mono bg-surface-2 text-text-body">
               <option value="OPEN" selected={idea.status === 'OPEN'}>待认领</option>
               <option value="COMPLETED">已通过其他方式完成</option>
             </select>
@@ -128,19 +128,19 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
 
           <!-- iceberg link -->
           {idea.icebergId && (
-            <a href={`/iceberg/${idea.icebergId}`} class="px-3 py-1.5 border border-border text-xs font-mono text-text-body hover:border-brand transition-colors">
+            <a href={`/iceberg/${idea.icebergId}`} class="mobile-touch-target flex items-center justify-center px-3 py-1.5 border border-border text-xs font-mono text-text-body hover:border-brand transition-colors">
               查看完成的冰山图 →
             </a>
           )}
 
           {/* 管理操作 */}
           {(isOwner || isAdmin) && idea.status !== 'OPEN' && (
-            <button id="reopen-btn" class="px-3 py-1.5 border border-border text-xs font-mono text-text-mid hover:border-info hover:text-info transition-colors">
+            <button id="reopen-btn" class="mobile-touch-target px-3 py-1.5 border border-border text-xs font-mono text-text-mid hover:border-info hover:text-info transition-colors">
               重新打开
             </button>
           )}
           {(isOwner || isAdmin) && (
-            <button id="delete-btn" class="px-3 py-1.5 border border-danger/30 text-danger text-xs font-mono hover:bg-danger hover:text-white transition-colors">
+            <button id="delete-btn" class="mobile-touch-target px-3 py-1.5 border border-danger/30 text-danger text-xs font-mono hover:bg-danger hover:text-white transition-colors">
               删除
             </button>
           )}
@@ -151,7 +151,7 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
           <section class="mb-6 p-4 border border-border-minimal bg-surface-1 reveal" style="animation-delay:140ms">
             <div class="flex items-center justify-between mb-2">
               <span class="text-[10px] font-mono text-text-mid">认领者</span>
-              <button id="join-btn" class="text-[10px] font-mono px-2 py-0.5 border border-brand/30 text-brand hover:bg-brand/10 transition-colors">
+              <button id="join-btn" class="mobile-touch-target text-[10px] font-mono px-3 py-0.5 border border-brand/30 text-brand hover:bg-brand/10 transition-colors">
                 参与认领
               </button>
             </div>
@@ -168,10 +168,10 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
               <span class="text-xs font-mono text-text-hi">评论</span>
               <span class="text-[9px] font-mono text-text-lo">支持 #id 引用其他创意</span>
             </div>
-            <div class="flex gap-2 mb-5">
+            <div class="flex flex-col gap-2 mb-5 sm:flex-row">
               <textarea id="comment-input" rows="2" maxlength="2000" placeholder="写下你的想法…"
                 class="flex-1 px-3 py-2 text-xs font-mono border border-border bg-surface-2 text-text-hi placeholder:text-text-lo focus:border-brand focus:outline-none resize-none rounded"></textarea>
-              <button id="comment-submit" class="px-4 py-2 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors flex-shrink-0 self-end rounded">
+              <button id="comment-submit" class="mobile-touch-target w-full px-4 py-2 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors flex-shrink-0 rounded sm:w-auto sm:self-end">
                 发表
               </button>
             </div>
@@ -185,10 +185,10 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
         {idea.status === 'COMPLETED' && !idea.icebergId && (isOwner || isClaimant) && (
           <div class="mb-8 p-4 border border-dashed border-border reveal" style="animation-delay:120ms">
             <p class="text-xs font-mono text-text-mid mb-2">输入完成的冰山图 ID 或 slug：</p>
-            <div class="flex gap-2">
+            <div class="flex flex-col gap-2 sm:flex-row">
               <input id="iceberg-link-input" type="text" placeholder="iceberg slug…"
                 class="flex-1 px-2.5 py-1.5 text-xs font-mono border border-border bg-surface-2 text-text-hi focus:border-brand focus:outline-none" />
-              <button id="link-btn" class="px-3 py-1.5 border border-brand text-brand text-xs font-mono hover:bg-brand hover:text-[#171717] transition-colors">
+              <button id="link-btn" class="mobile-touch-target px-3 py-1.5 border border-brand text-brand text-xs font-mono hover:bg-brand hover:text-[#171717] transition-colors">
                 关联
               </button>
             </div>
@@ -310,8 +310,37 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
   if (deleteBtn) {
     deleteBtn.addEventListener('click', async () => {
       if (!confirm('确定删除这个创意吗？')) return;
-      const res = await fetch(`/api/ideas/${ideaId}?action=delete`);
-      if (res.ok) window.location.href = '/ideas';
+      if (!ideaId) return;
+
+      deleteBtn.disabled = true;
+      const originalText = deleteBtn.textContent;
+      deleteBtn.textContent = '删除中...';
+      let deleted = false;
+
+      try {
+        const res = await fetch(`/api/ideas/${encodeURIComponent(ideaId)}?action=delete`, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        const data = await res.json().catch(() => null);
+        if (res.ok && data?.success) {
+          deleted = true;
+          deleteBtn.textContent = '已删除';
+          window.location.href = '/ideas';
+          return;
+        }
+        window.dispatchEvent(new CustomEvent('app:toast', {
+          detail: { message: data?.error?.message || '删除失败，请稍后重试', type: 'error' },
+        }));
+      } catch {
+        window.dispatchEvent(new CustomEvent('app:toast', {
+          detail: { message: '网络错误，请稍后重试', type: 'error' },
+        }));
+      } finally {
+        if (!deleted) {
+          deleteBtn.disabled = false;
+          deleteBtn.textContent = originalText;
+        }
+      }
     });
   }
 

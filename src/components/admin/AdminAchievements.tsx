@@ -94,8 +94,12 @@ const BLOCK_CATEGORIES: { label: string; blocks: BlockDef[] }[] = [
   },
 ];
 
-const ALL_BLOCKS = BLOCK_CATEGORIES.flatMap(c => c.blocks);
-const BLOCK_BY_KEY = Object.fromEntries(ALL_BLOCKS.map(b => [b.key, b]));
+const ALL_BLOCKS = BLOCK_CATEGORIES.reduce(
+  (blocks, category) => blocks.concat(category.blocks),
+  [] as (typeof BLOCK_CATEGORIES)[number]['blocks'],
+);
+const BLOCK_BY_KEY: Record<string, (typeof ALL_BLOCKS)[number]> = {};
+ALL_BLOCKS.forEach((block) => { BLOCK_BY_KEY[block.key] = block; });
 const VAR_OPTIONS = [
   'totalRead','searchCount','randomCount','nightReadCount',
   'visitedIcebergCount','consecutiveDays','totalVotesCast','currentIcebergReadCount',
@@ -674,4 +678,3 @@ export function AdminAchievements({ isFounder }: { isFounder?: boolean }) {
     </div>
   );
 }
-

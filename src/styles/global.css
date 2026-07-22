@@ -47,6 +47,8 @@
   --font-size-base: clamp(1.06rem, 1.01rem + 0.16vw, 1.16rem);
   --font-size-lg: clamp(1.16rem, 1.08rem + 0.22vw, 1.3rem);
   --font-size-xl: clamp(1.28rem, 1.18rem + 0.3vw, 1.46rem);
+  --site-top-nav-height: 3.5rem;
+  --mobile-bottom-nav-height: 4rem;
 }
 
 * {
@@ -54,7 +56,8 @@
 }
 
 html {
-  font-family: 'Space Grotesk', 'MiSans', 'PingFang SC', 'Source Han Sans SC', system-ui, sans-serif;
+  font-family: 'Space Grotesk', 'MiSans', 'PingFang SC', 'Microsoft YaHei', 'Source Han Sans SC', Arial, sans-serif;
+  font-size: 17px;
   font-size: clamp(17px, 16.4px + 0.24vw, 18.2px);
   letter-spacing: -0.01em;
   scroll-behavior: smooth;
@@ -67,7 +70,7 @@ input,
 textarea,
 select,
 button {
-  font-family: 'Space Grotesk', 'MiSans', 'PingFang SC', 'Source Han Sans SC', system-ui, sans-serif;
+  font-family: 'Space Grotesk', 'MiSans', 'PingFang SC', 'Microsoft YaHei', 'Source Han Sans SC', Arial, sans-serif;
 }
 
 /* 正文 */
@@ -87,48 +90,84 @@ h1, h2, h3, h4, h5, h6 {
 
 body {
   min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
   max-width: 100%;
   overflow-x: hidden;
   overflow-x: clip;
   background-color: var(--bg-base);
   color: var(--text-primary);
+  font-size: 1.06rem;
   font-size: var(--font-size-base);
   line-height: 1.65;
   transition: background-color 0.3s ease;
 }
 
+/* 固定导航的统一占位，避免各页面各自猜测高度。 */
+.site-navbar {
+  padding-top: 0;
+  padding-top: env(safe-area-inset-top, 0px);
+  background-color: rgba(22, 27, 34, 0.96);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.mobile-page-shell {
+  padding-top: var(--site-top-nav-height);
+  padding-top: calc(var(--site-top-nav-height) + env(safe-area-inset-top, 0px));
+}
+
+.mobile-bottom-nav {
+  background-color: rgba(22, 27, 34, 0.96);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+html.light .site-navbar,
+html.light .mobile-bottom-nav {
+  background-color: rgba(255, 255, 255, 0.96);
+}
+
 /* 全局字号映射：提升 125% 缩放下的可读性 */
 .text-xs {
+  font-size: 0.9rem !important;
   font-size: var(--font-size-xs) !important;
   line-height: 1.55 !important;
 }
 .text-sm {
+  font-size: 1rem !important;
   font-size: var(--font-size-sm) !important;
   line-height: 1.62 !important;
 }
 .text-base {
+  font-size: 1.1rem !important;
   font-size: var(--font-size-base) !important;
   line-height: 1.68 !important;
 }
 .text-lg {
+  font-size: 1.2rem !important;
   font-size: var(--font-size-lg) !important;
   line-height: 1.58 !important;
 }
 .text-xl {
+  font-size: 1.32rem !important;
   font-size: var(--font-size-xl) !important;
   line-height: 1.5 !important;
 }
 
 /* 补齐大量精确像素小字类（Tailwind arbitrary values） */
 .text-\[10px\] {
+  font-size: 0.75rem !important;
   font-size: clamp(0.72rem, 0.7rem + 0.06vw, 0.78rem) !important;
   line-height: 1.5 !important;
 }
 .text-\[11px\] {
+  font-size: 0.79rem !important;
   font-size: clamp(0.76rem, 0.74rem + 0.06vw, 0.82rem) !important;
   line-height: 1.52 !important;
 }
 .text-\[12px\] {
+  font-size: 0.83rem !important;
   font-size: clamp(0.8rem, 0.78rem + 0.06vw, 0.87rem) !important;
   line-height: 1.56 !important;
 }
@@ -140,6 +179,10 @@ body {
 :where(.flex, .inline-flex, .grid) > * {
   min-width: 0;
 }
+main, section, article, aside, header, footer, nav,
+.flex > *, .inline-flex > *, .grid > * {
+  min-width: 0;
+}
 img,
 video {
   max-width: 100%;
@@ -149,6 +192,11 @@ iframe,
 canvas {
   max-width: 100%;
 }
+
+/* inset 简写在旧 Chromium 中不可用，保留长属性回退。 */
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.inset-x-0 { right: 0; left: 0; }
+.inset-y-0 { top: 0; bottom: 0; }
 
 /* 等宽字体：标题、层级编号、标签 */
 .font-mono {
@@ -666,9 +714,9 @@ a:focus-visible,
 
 /* 金银铜 rank 卡片 */
 .rank-card { border-left: 4px solid var(--color-border); }
-.rank-card.top-1 { border-left-color: var(--color-gold); background: color-mix(in srgb, #FFD700 5%, var(--color-surface-2)); }
-.rank-card.top-2 { border-left-color: var(--color-silver); background: color-mix(in srgb, #C0C0C0 4%, var(--color-surface-2)); }
-.rank-card.top-3 { border-left-color: var(--color-bronze); background: color-mix(in srgb, #CD7F32 5%, var(--color-surface-2)); }
+.rank-card.top-1 { border-left-color: var(--color-gold); background: #28271d; background: color-mix(in srgb, #FFD700 5%, var(--color-surface-2)); }
+.rank-card.top-2 { border-left-color: var(--color-silver); background: #24292f; background: color-mix(in srgb, #C0C0C0 4%, var(--color-surface-2)); }
+.rank-card.top-3 { border-left-color: var(--color-bronze); background: #27251f; background: color-mix(in srgb, #CD7F32 5%, var(--color-surface-2)); }
 .rank-card:hover { transform: translateX(4px); box-shadow: -4px 0 12px rgba(0,0,0,0.4); }
 .rank-card.top-1:hover { box-shadow: -4px 0 18px rgba(255,215,0,0.15); }
 .rank-card.top-2:hover { box-shadow: -4px 0 18px rgba(192,192,192,0.12); }
@@ -694,7 +742,7 @@ a:focus-visible,
 }
 .boot-animate {
   animation: initBoot 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
+  opacity: 1;
 }
 
 /* Glitch hover 文字色差 */
@@ -1037,12 +1085,35 @@ html.light .page-progress-bar {
   display: none;
 }
 
-/* ── 滚动触发进场动画 ────────────────────────────────── */
+/* ── 旧内核提示：正文保持可读，交互能力明确降级 ───────── */
+#legacy-browser-notice,
+.no-script-notice {
+  display: none;
+  position: relative;
+  z-index: 100000;
+  padding: 10px 14px;
+  border-bottom: 1px solid #b45309;
+  background: #fffbeb;
+  color: #78350f;
+  font: 14px/1.55 Arial, 'Microsoft YaHei', sans-serif;
+  text-align: center;
+}
+
+html.legacy-browser #legacy-browser-notice,
+noscript .no-script-notice {
+  display: block;
+}
+
+/* ── 滚动触发进场动画：默认可见，JS 确认可用后才隐藏 ── */
 .reveal {
-  opacity: 0;
-  transform: translateY(20px);
+  opacity: 1;
+  transform: translateY(0);
   transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
               transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.reveal-pending {
+  opacity: 0;
+  transform: translateY(20px);
 }
 .reveal.revealed {
   opacity: 1;
@@ -1051,10 +1122,14 @@ html.light .page-progress-bar {
 
 /* 网格子项交错进场 */
 .reveal-grid {
-  opacity: 0;
-  transform: translateY(18px);
+  opacity: 1;
+  transform: translateY(0);
   transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
               transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal-grid.reveal-pending {
+  opacity: 0;
+  transform: translateY(18px);
 }
 .reveal-grid.revealed { opacity: 1; transform: translateY(0); }
 
@@ -1063,7 +1138,103 @@ html.light .page-progress-bar {
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
   textarea,
   select {
+    font-size: 16px !important;
     font-size: max(16px, 1em) !important;
+  }
+
+  /* 仅给明确标记的主要交互扩充触控区，避免影响正文中的行内链接。 */
+  .mobile-touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .mobile-full-width {
+    width: 100%;
+  }
+
+  .mobile-filter-rail {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding-bottom: 0.25rem;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-filter-rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-tab-strip {
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-tab-strip::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .mobile-page-shell {
+    padding-bottom: calc(var(--mobile-bottom-nav-height) + 1rem);
+    padding-bottom: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+
+  .mobile-menu-panel {
+    max-height: calc(100vh - var(--site-top-nav-height) - var(--mobile-bottom-nav-height));
+    max-height: calc(100dvh - var(--site-top-nav-height) - var(--mobile-bottom-nav-height) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  .mobile-notification-panel {
+    position: fixed !important;
+    top: calc(var(--site-top-nav-height) + 0.5rem) !important;
+    top: calc(var(--site-top-nav-height) + env(safe-area-inset-top, 0px) + 0.5rem) !important;
+    right: 0.75rem !important;
+    left: 0.75rem !important;
+    width: auto !important;
+    max-height: calc(100vh - var(--site-top-nav-height) - var(--mobile-bottom-nav-height) - 1rem);
+    max-height: calc(100dvh - var(--site-top-nav-height) - var(--mobile-bottom-nav-height) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 1rem);
+  }
+
+  .mobile-search-overlay {
+    padding-top: calc(var(--site-top-nav-height) + 0.75rem) !important;
+    padding-top: calc(var(--site-top-nav-height) + env(safe-area-inset-top, 0px) + 0.75rem) !important;
+  }
+
+  .site-footer {
+    padding-bottom: var(--mobile-bottom-nav-height);
+    padding-bottom: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mobile-toast-stack {
+    right: 1rem;
+    bottom: calc(var(--mobile-bottom-nav-height) + 0.75rem);
+    bottom: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 0.75rem);
+    left: 1rem;
+    transform: none;
+    align-items: stretch;
+  }
+
+  .mobile-toast-stack > * {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .achievement-toast {
+    top: calc(var(--site-top-nav-height) + 0.75rem) !important;
+    top: calc(var(--site-top-nav-height) + env(safe-area-inset-top, 0px) + 0.75rem) !important;
+    right: 0.75rem !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mobile-page-shell {
+    padding-bottom: 0;
   }
 }
 
@@ -1092,7 +1263,78 @@ html.light .page-progress-bar {
 
 /* ── 移动端底部导航栏 ───────────────────────────────── */
 .mobile-bottom-nav {
+  padding-bottom: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* 动态视口弹层：横屏与软键盘弹起时仍能滚动到全部操作。 */
+.app-modal-viewport {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1rem;
+  padding-top: max(1rem, env(safe-area-inset-top, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+}
+
+.app-modal-panel {
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 2rem);
+}
+
+.editor-mobile-return {
+  bottom: 5rem;
+  bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.reading-progress-top {
+  top: var(--site-top-nav-height);
+  top: calc(var(--site-top-nav-height) + env(safe-area-inset-top, 0px));
+}
+
+@media (min-width: 1024px) {
+  .editor-mobile-return {
+    bottom: 2rem;
+  }
+}
+
+/* flex gap 回退只在运行时检测失败的浏览器启用，避免影响现代布局。 */
+html.no-flex-gap .flex.gap-1:not(.flex-col):not(.flex-wrap) > * + * { margin-left: 0.25rem; }
+html.no-flex-gap .flex.gap-1\.5:not(.flex-col):not(.flex-wrap) > * + * { margin-left: 0.375rem; }
+html.no-flex-gap .flex.gap-2:not(.flex-col):not(.flex-wrap) > * + * { margin-left: 0.5rem; }
+html.no-flex-gap .flex.gap-2\.5:not(.flex-col):not(.flex-wrap) > * + * { margin-left: 0.625rem; }
+html.no-flex-gap .flex.gap-3:not(.flex-col):not(.flex-wrap) > * + * { margin-left: 0.75rem; }
+html.no-flex-gap .flex.gap-4:not(.flex-col):not(.flex-wrap) > * + * { margin-left: 1rem; }
+html.no-flex-gap .flex.gap-5:not(.flex-col):not(.flex-wrap) > * + * { margin-left: 1.25rem; }
+html.no-flex-gap .flex.gap-6:not(.flex-col):not(.flex-wrap) > * + * { margin-left: 1.5rem; }
+html.no-flex-gap .flex.gap-8:not(.flex-col):not(.flex-wrap) > * + * { margin-left: 2rem; }
+html.no-flex-gap .flex.flex-col.gap-1 > * + * { margin-top: 0.25rem; }
+html.no-flex-gap .flex.flex-col.gap-1\.5 > * + * { margin-top: 0.375rem; }
+html.no-flex-gap .flex.flex-col.gap-2 > * + * { margin-top: 0.5rem; }
+html.no-flex-gap .flex.flex-col.gap-2\.5 > * + * { margin-top: 0.625rem; }
+html.no-flex-gap .flex.flex-col.gap-3 > * + * { margin-top: 0.75rem; }
+html.no-flex-gap .flex.flex-col.gap-4 > * + * { margin-top: 1rem; }
+html.no-flex-gap .flex.flex-col.gap-5 > * + * { margin-top: 1.25rem; }
+html.no-flex-gap .flex.flex-col.gap-6 > * + * { margin-top: 1.5rem; }
+html.no-flex-gap .flex.flex-col.gap-8 > * + * { margin-top: 2rem; }
+html.no-flex-gap .flex.flex-wrap.gap-2 > * { margin-right: 0.5rem; margin-bottom: 0.5rem; }
+html.no-flex-gap .flex.flex-wrap.gap-3 > * { margin-right: 0.75rem; margin-bottom: 0.75rem; }
+html.no-flex-gap .flex.flex-wrap.gap-4 > * { margin-right: 1rem; margin-bottom: 1rem; }
+html.no-flex-gap .flex.flex-wrap.gap-6 > * { margin-right: 1.5rem; margin-bottom: 1.5rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Markdown 内容浅色 */

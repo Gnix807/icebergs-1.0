@@ -181,9 +181,10 @@ export const LABEL_DEFS: LabelDef[] = [
   { key: '视频',     emoji: '🎞️', category: '来源' },
 ];
 
-export const LABEL_EMOJI_MAP: Record<string, string> = Object.fromEntries(
-  LABEL_DEFS.map(d => [d.key, d.emoji])
-);
+export const LABEL_EMOJI_MAP: Record<string, string> = {};
+LABEL_DEFS.forEach((definition) => {
+  LABEL_EMOJI_MAP[definition.key] = definition.emoji;
+});
 
 export function labelEmoji(key: string): string {
   return LABEL_EMOJI_MAP[key] || '';
