@@ -18,6 +18,14 @@ export async function GET(event: APIContext) {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
+    if (event.url.searchParams.get('action') === 'read-all') {
+      const { count } = await prisma.notification.updateMany({
+        where: { userId: session.userId, read: false },
+        data: { read: true },
+      });
+      return json(success({ updated: count }));
+    }
+
     const [notifications, unreadCount] = await Promise.all([
       prisma.notification.findMany({
         where: { userId: session.userId },
