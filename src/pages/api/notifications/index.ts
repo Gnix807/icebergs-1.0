@@ -19,6 +19,18 @@ export async function GET(event: APIContext) {
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
     if (event.url.searchParams.get('action') === 'read-all') {
+      // 先清理已有 read=true 同 aggregateKey 的 unread 记录，避免唯一约束冲突
+      await prisma.$executeRaw`
+        DELETE FROM notifications
+        WHERE "userId" = ${session.userId} AND "read" = false
+        AND "aggregateKey" IS NOT NULL
+        AND EXISTS (
+          SELECT 1 FROM notifications n2
+          WHERE n2."userId" = ${session.userId}
+          AND n2."aggregateKey" = notifications."aggregateKey"
+          AND n2."read" = true
+        )
+      `;
       const { count } = await prisma.notification.updateMany({
         where: { userId: session.userId, read: false },
         data: { read: true },
