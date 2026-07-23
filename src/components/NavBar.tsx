@@ -109,8 +109,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
         .then(d => {
           if (d.success) {
             setNotifications(d.data.notifications);
-            // 刚标记已读后不覆盖本地计数，防止 API 写入未完成时回退
-            if (Date.now() - lastMarkReadRef.current > 5000) {
+            if (!markReadConfirmedRef.current) {
               setUnreadCount(d.data.unreadCount);
             }
           }
@@ -160,6 +159,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userRef = useRef<User | null>(null);
   const lastMarkReadRef = useRef(0);
+  const markReadConfirmedRef = useRef(false);
 
   // ── 用户 ──────────────────────────────────────
   const fetchUser = async () => {
@@ -168,8 +168,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
       const d = await r.json().catch(() => ({}));
       if (r.ok && d.success) {
         setUser(d.data);
-        // 刚标为已读后 5 秒内不覆盖本地计数，防止轮询在 DB 写入完成前回退
-        if (typeof d.data.unreadCount === 'number' && Date.now() - lastMarkReadRef.current > 5000) {
+        if (typeof d.data.unreadCount === 'number' && !markReadConfirmedRef.current) {
           setUnreadCount(d.data.unreadCount);
         }
         if (d.data.pendingAchievements?.length > 0) {
@@ -187,17 +186,29 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
   };
 
   const markAllRead = async () => {
-    fetch('/api/notifications/read-all').catch(() => {});
     setNotifications(ns => ns.map(n => ({ ...n, read: true })));
     setUnreadCount(0);
-    lastMarkReadRef.current = Date.now();
+    markReadConfirmedRef.current = false;
+    try {
+      const res = await fetch('/api/notifications/read-all', { method: 'POST', credentials: 'include' });
+      if (res.ok) {
+        markReadConfirmedRef.current = true;
+        lastMarkReadRef.current = Date.now();
+      }
+    } catch { /* ignore */ }
   };
 
   const markRead = async (id: string, link: string | null) => {
-    fetch(`/api/notifications/${id}`).catch(() => {});
     setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
     setUnreadCount(c => Math.max(0, c - 1));
-    lastMarkReadRef.current = Date.now();
+    markReadConfirmedRef.current = false;
+    try {
+      const res = await fetch(`/api/notifications/${id}`, { method: 'POST', credentials: 'include' });
+      if (res.ok) {
+        markReadConfirmedRef.current = true;
+        lastMarkReadRef.current = Date.now();
+      }
+    } catch { /* ignore */ }
     if (link) window.location.href = link;
   };
 
