@@ -151,6 +151,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userRef = useRef<User | null>(null);
+  const lastMarkReadRef = useRef(0);
 
   // ── 用户 ──────────────────────────────────────
   const fetchUser = async () => {
@@ -159,7 +160,10 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
       const d = await r.json().catch(() => ({}));
       if (r.ok && d.success) {
         setUser(d.data);
-        if (typeof d.data.unreadCount === 'number') setUnreadCount(d.data.unreadCount);
+        // 刚标为已读后 5 秒内不覆盖本地计数，防止轮询在 DB 写入完成前回退
+        if (typeof d.data.unreadCount === 'number' && Date.now() - lastMarkReadRef.current > 5000) {
+          setUnreadCount(d.data.unreadCount);
+        }
         if (d.data.pendingAchievements?.length > 0) {
           enqueueAchievements(d.data.pendingAchievements);
           fetch('/api/auth/achievements/ack').catch(() => {});
@@ -175,15 +179,23 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
   };
 
   const markAllRead = async () => {
-    await fetch('/api/notifications/read-all');
-    setNotifications(ns => ns.map(n => ({ ...n, read: true })));
-    setUnreadCount(0);
+    const res = await fetch('/api/notifications/read-all');
+    const d = await res.json().catch(() => null);
+    if (res.ok && d?.success) {
+      setNotifications(ns => ns.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+      lastMarkReadRef.current = Date.now();
+    }
   };
 
   const markRead = async (id: string, link: string | null) => {
-    await fetch(`/api/notifications/${id}`);
-    setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
-    setUnreadCount(c => Math.max(0, c - 1));
+    const res = await fetch(`/api/notifications/${id}`);
+    const d = await res.json().catch(() => null);
+    if (res.ok && d?.success) {
+      setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
+      setUnreadCount(c => Math.max(0, c - 1));
+      lastMarkReadRef.current = Date.now();
+    }
     if (link) window.location.href = link;
   };
 
