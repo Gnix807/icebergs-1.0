@@ -3,6 +3,47 @@ import { success, error, ErrorCodes } from '../../../lib/api';
 import { getSession } from '../../../lib/auth/index';
 import { prisma } from '../../../lib/prisma';
 
+export async function POST(event: APIContext) {
+  const session = await getSession(event);
+  if (!session) {
+    return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
+      status: 401, headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  let body: { icebergId?: string | null; data?: string };
+  try { body = await event.request.json(); } catch {
+    return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '请求格式错误')), {
+      status: 400, headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (!body.data) {
+    return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '缺少 data')), {
+      status: 400, headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const resolvedIcebergId = body.icebergId || null;
+
+  try {
+    const draft = await prisma.draft.upsert({
+      where: { userId_icebergId: { userId: session.userId, icebergId: resolvedIcebergId! } },
+      create: { userId: session.userId, icebergId: resolvedIcebergId, data: body.data },
+      update: { data: body.data },
+    });
+
+    return new Response(JSON.stringify(success({ draft })), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (err) {
+    console.error('保存草稿失败:', err);
+    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '保存失败')), {
+      status: 500, headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
 export async function GET(event: APIContext) {
   const dataParam = event.url.searchParams.get('data');
   if (dataParam) {
