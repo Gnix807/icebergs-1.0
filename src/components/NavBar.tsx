@@ -190,7 +190,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
     setUnreadCount(0);
     markReadConfirmedRef.current = false;
     try {
-      const res = await fetch('/api/notifications/read-all', { method: 'POST', credentials: 'include' });
+      const res = await fetch('/api/notifications/read-all', { credentials: 'include' });
       if (res.ok) {
         markReadConfirmedRef.current = true;
         lastMarkReadRef.current = Date.now();
@@ -203,7 +203,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
     setUnreadCount(c => Math.max(0, c - 1));
     markReadConfirmedRef.current = false;
     try {
-      const res = await fetch(`/api/notifications/${id}`, { method: 'POST', credentials: 'include' });
+      const res = await fetch(`/api/notifications/${id}`, { credentials: 'include' });
       if (res.ok) {
         markReadConfirmedRef.current = true;
         lastMarkReadRef.current = Date.now();
