@@ -124,114 +124,6 @@ export async function GET(event: APIContext) {
     return deleteIceberg(event, true);
   }
 
-  const dataParam = event.url.searchParams.get('data');
-  if (dataParam) {
-
-    try {
-      const session = await getSession(event);
-      if (!session) {
-        return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      const { id } = event.params;
-
-      if (!id) {
-        return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '缺少 ID')), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      const existing = await prisma.iceberg.findFirst({
-        where: { OR: [{ id }, { slug: id }] },
-      });
-      if (!existing) {
-        return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '冰山图不存在')), {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      const canManageAny = can(session, 'content:edit:any');
-      const inProject = await isProjectMember(session.userId, existing.projectId);
-
-      const body = JSON.parse(dataParam || '{}')
-      const { title, description, status, topic, updatedAt: clientUpdatedAt } = body;
-
-      const canEditScoped = can(session, 'content:edit:own')
-        && (existing.authorId === session.userId || inProject);
-      if (!canManageAny && !canEditScoped) {
-        return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
-          status: 403,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Status transitions belong to the dedicated submit/review/override
-      // endpoints. Accept an unchanged status for existing editor clients, but
-      // never let this generic metadata endpoint publish or otherwise move it.
-      if (status !== undefined && status !== existing.status) {
-        return json(error(
-          ErrorCodes.CONFLICT,
-          '冰山图状态已变化，状态变更必须通过提交或审核流程完成',
-        ), 409);
-      }
-
-      // 乐观锁：避免协作时多人同时编辑互相覆盖
-      if (clientUpdatedAt && existing.projectId) {
-        const serverTime = new Date(existing.updatedAt).getTime();
-        const clientTime = new Date(clientUpdatedAt).getTime();
-        if (clientTime < serverTime) {
-          return new Response(JSON.stringify(error(
-            ErrorCodes.CONFLICT,
-            '编辑冲突：自你打开此页面后，有其他协作者保存了修改。请刷新页面后重新编辑。',
-          )), {
-            status: 409,
-            headers: { 'Content-Type': 'application/json' },
-          });
-        }
-      }
-
-      const updateData: { title?: string; description?: string; renderedDescription?: string | null; topic?: string } = {};
-      if (title != null && title !== undefined) updateData.title = String(title).trim();
-      if (description !== undefined) {
-        updateData.description = description;
-        updateData.renderedDescription = description ? renderMarkdownWithMath(description) : null;
-      }
-      if (topic !== undefined) updateData.topic = normalizeIcebergTopic(topic);
-
-      const iceberg = await prisma.iceberg.update({
-        where: { id: existing.id },
-        data: updateData,
-        include: {
-          tiers: {
-            orderBy: { order: 'asc' },
-            include: { items: true },
-          },
-          author: {
-            select: { id: true, username: true, nickname: true },
-          },
-        },
-      });
-
-      return new Response(JSON.stringify(success(iceberg)), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    } catch (err) {
-      console.error('更新冰山图失败:', err);
-      const msg = err instanceof Error ? err.message : String(err);
-      return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '更新失败: ' + msg)), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-  }
-
   try {
     const { id } = event.params;
     const url = new URL(event.request.url);
@@ -326,6 +218,106 @@ export async function GET(event: APIContext) {
     return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '获取失败')), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+// PUT /api/icebergs/:id - 更新冰山图元数据
+export async function PUT(event: APIContext) {
+  try {
+    const session = await getSession(event);
+    if (!session) {
+      return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
+        status: 401, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { id } = event.params;
+    if (!id) {
+      return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '缺少 ID')), {
+        status: 400, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const existing = await prisma.iceberg.findFirst({
+      where: { OR: [{ id }, { slug: id }] },
+    });
+    if (!existing) {
+      return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '冰山图不存在')), {
+        status: 404, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const canManageAny = can(session, 'content:edit:any');
+    const inProject = await isProjectMember(session.userId, existing.projectId);
+
+    const body = await event.request.json().catch(() => null);
+    if (!body || typeof body !== 'object') {
+      return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '请求格式错误')), {
+        status: 400, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { title, description, status, topic, updatedAt: clientUpdatedAt } = body;
+
+    const canEditScoped = can(session, 'content:edit:own')
+      && (existing.authorId === session.userId || inProject);
+    if (!canManageAny && !canEditScoped) {
+      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
+        status: 403, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (status !== undefined && status !== existing.status) {
+      return json(error(
+        ErrorCodes.CONFLICT,
+        '冰山图状态已变化，状态变更必须通过提交或审核流程完成',
+      ), 409);
+    }
+
+    if (clientUpdatedAt && existing.projectId) {
+      const serverTime = new Date(existing.updatedAt).getTime();
+      const clientTime = new Date(clientUpdatedAt).getTime();
+      if (clientTime < serverTime) {
+        return new Response(JSON.stringify(error(
+          ErrorCodes.CONFLICT,
+          '编辑冲突：自你打开此页面后，有其他协作者保存了修改。请刷新页面后重新编辑。',
+        )), {
+          status: 409, headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
+    const updateData: { title?: string; description?: string; renderedDescription?: string | null; topic?: string } = {};
+    if (title != null && title !== undefined) updateData.title = String(title).trim();
+    if (description !== undefined) {
+      updateData.description = description;
+      updateData.renderedDescription = description ? renderMarkdownWithMath(description) : null;
+    }
+    if (topic !== undefined) updateData.topic = normalizeIcebergTopic(topic);
+
+    const iceberg = await prisma.iceberg.update({
+      where: { id: existing.id },
+      data: updateData,
+      include: {
+        tiers: {
+          orderBy: { order: 'asc' },
+          include: { items: true },
+        },
+        author: {
+          select: { id: true, username: true, nickname: true },
+        },
+      },
+    });
+
+    return new Response(JSON.stringify(success(iceberg)), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (err) {
+    console.error('更新冰山图失败:', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '更新失败: ' + msg)), {
+      status: 500, headers: { 'Content-Type': 'application/json' },
     });
   }
 }
