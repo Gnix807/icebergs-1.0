@@ -1,5 +1,5 @@
 /**
- * PUT /api/notifications/read-all   将当前用户所有未读通知标为已读
+ * GET /api/notifications/read-all   将当前用户所有未读通知标为已读
  */
 import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../lib/api';
@@ -13,7 +13,7 @@ function json(body: unknown, status = 200) {
   });
 }
 
-export async function ALL(event: APIContext) {
+export async function GET(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
