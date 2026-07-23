@@ -36,11 +36,13 @@ export async function saveDraft(icebergId: string | null, data: any): Promise<vo
   } catch {}
 
   // save to server (fire-and-forget)
-  fetch(`${API_BASE}?data=${encodeURIComponent(JSON.stringify({
-    icebergId: icebergId || null,
-    data: JSON.stringify(data),
-  }))}`, {
+  fetch(API_BASE, {
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      icebergId: icebergId || null,
+      data: JSON.stringify(data),
+    }),
   }).catch(() => {});
 }
 
