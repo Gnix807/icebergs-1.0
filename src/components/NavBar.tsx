@@ -179,23 +179,17 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
   };
 
   const markAllRead = async () => {
-    const res = await fetch('/api/notifications/read-all');
-    const d = await res.json().catch(() => null);
-    if (res.ok && d?.success) {
-      setNotifications(ns => ns.map(n => ({ ...n, read: true })));
-      setUnreadCount(0);
-      lastMarkReadRef.current = Date.now();
-    }
+    fetch('/api/notifications/read-all').catch(() => {});
+    setNotifications(ns => ns.map(n => ({ ...n, read: true })));
+    setUnreadCount(0);
+    lastMarkReadRef.current = Date.now();
   };
 
   const markRead = async (id: string, link: string | null) => {
-    const res = await fetch(`/api/notifications/${id}`);
-    const d = await res.json().catch(() => null);
-    if (res.ok && d?.success) {
-      setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
-      setUnreadCount(c => Math.max(0, c - 1));
-      lastMarkReadRef.current = Date.now();
-    }
+    fetch(`/api/notifications/${id}`).catch(() => {});
+    setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n));
+    setUnreadCount(c => Math.max(0, c - 1));
+    lastMarkReadRef.current = Date.now();
     if (link) window.location.href = link;
   };
 
