@@ -106,7 +106,15 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
       setNotifLoading(true);
       fetch('/api/notifications')
         .then(r => r.json())
-        .then(d => { if (d.success) { setNotifications(d.data.notifications); setUnreadCount(d.data.unreadCount); } })
+        .then(d => {
+          if (d.success) {
+            setNotifications(d.data.notifications);
+            // 刚标记已读后不覆盖本地计数，防止 API 写入未完成时回退
+            if (Date.now() - lastMarkReadRef.current > 5000) {
+              setUnreadCount(d.data.unreadCount);
+            }
+          }
+        })
         .finally(() => setNotifLoading(false));
     }
   };
