@@ -26,6 +26,18 @@ export async function ALL(event: APIContext) {
       return json(error(ErrorCodes.NOT_FOUND, '通知不存在'), 404);
     }
 
+    // 检查是否已存在同 aggregateKey 的 read=true 记录，避免唯一约束冲突
+    if (notif.aggregateKey) {
+      const existingRead = await prisma.notification.findFirst({
+        where: { userId: session.userId, type: notif.type, aggregateKey: notif.aggregateKey, read: true },
+        select: { id: true },
+      });
+      if (existingRead) {
+        await prisma.notification.delete({ where: { id } });
+        return json(success({ id }));
+      }
+    }
+
     await prisma.notification.update({ where: { id }, data: { read: true } });
     return json(success({ id }));
   } catch (err) {
