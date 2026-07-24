@@ -1,14 +1,12 @@
-# slim 变体不保证包含系统 CA；服务器经 HTTPS 代理访问 Debian 源时会导致
-# apt 在安装 ca-certificates 之前就因证书校验失败。使用固定 Debian 12
-# 的完整 Node 镜像，保留系统 CA 与常用构建依赖。
-FROM node:22-bookworm
+# Alpine 镜像更小，并自带 apk 可用的系统证书链；Prisma 会自动生成
+# 对应 musl/OpenSSL 3 的引擎，适合当前 PostgreSQL 部署。
+FROM node:22-alpine3.22
 
 WORKDIR /app
 
 # PostgreSQL 客户端（启动脚本需要 pg_isready / psql）
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    postgresql-client ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache \
+    postgresql-client ca-certificates openssl
 
 # 依赖
 COPY package.json package-lock.json* ./
