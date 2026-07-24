@@ -290,6 +290,31 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     setSyncFailures((prev) => prev.filter((item) => item.key !== key));
   }, []);
 
+  // 元数据保存接口会返回完整冰山图，但层级/词条可能是请求开始时的旧快照。
+  // 这里只接收服务端时间戳，始终保留编辑器中的最新层级和词条，避免异步响应覆盖本地新增内容。
+  const reconcileMetadataSave = useCallback((savedSnapshot: Iceberg, serverData: any) => {
+    let savedWithoutNewerChanges = false;
+
+    useIcebergStore.setState((state) => {
+      const current = state.iceberg;
+      if (!current || current.id !== savedSnapshot.id) return state;
+
+      savedWithoutNewerChanges = current === savedSnapshot;
+      return {
+        iceberg: {
+          ...current,
+          updatedAt: typeof serverData?.updatedAt === 'string'
+            ? serverData.updatedAt
+            : current.updatedAt,
+        },
+        // 请求发出后如果又有编辑，继续保持 dirty，让下一轮自动保存处理新内容。
+        isDirty: savedWithoutNewerChanges ? false : state.isDirty,
+      };
+    });
+
+    return savedWithoutNewerChanges;
+  }, []);
+
   const retrySyncFailure = useCallback(async (key: string) => {
     const target = syncFailures.find((item) => item.key === key);
     if (!target) return;
@@ -484,10 +509,10 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           });
           const data = await res.json().catch(() => null);
           if (res.ok && data?.success) {
-            setIceberg({ ...data.data, tiers: data.data.tiers.map((t: any) => ({ ...t, items: t.items.map((i: any) => ({ ...i, labels: typeof i.labels === 'string' ? (() => { try { return JSON.parse(i.labels); } catch { return []; } })() : (i.labels || []) })) })) });
+            const savedWithoutNewerChanges = reconcileMetadataSave(iceberg, data.data);
             setLastSaved(new Date());
             pushVersionSnapshot(iceberg, 'auto');
-            clearDraft(iceberg.id);
+            if (savedWithoutNewerChanges) clearDraft(iceberg.id);
             clearSyncFailure(`iceberg:update:${iceberg.id}`);
           } else {
             queueSyncFailure({
@@ -525,7 +550,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
         clearTimeout(autoSaveTimerRef.current);
       }
     };
-  }, [isDirty, iceberg, customSlug, pushVersionSnapshot, getDraftStorageKey, clearSyncFailure, queueSyncFailure]);
+  }, [isDirty, iceberg, customSlug, pushVersionSnapshot, getDraftStorageKey, clearSyncFailure, queueSyncFailure, reconcileMetadataSave]);
 
   const createTempIcebergOnServer = useCallback(async (
     source: 'auto' | 'manual' | 'sync',
@@ -790,21 +815,25 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       });
       const data = await res.json().catch(() => null);
       if (res.ok && data?.success) {
-        // 更新本地 id
-        const currentIceberg = useIcebergStore.getState().iceberg;
-        if (currentIceberg) {
-          const updatedTiers = currentIceberg.tiers.map((t) =>
-            t.id === tierId
-              ? {
-                  ...t,
-                  items: t.items.map((i) =>
-                    i.id === item.id ? { ...i, id: data.data.id } : i
-                  ),
-                }
-              : t
-          );
-          setIceberg({ ...currentIceberg, tiers: updatedTiers });
-        }
+        // 只替换服务端生成的词条 id，不重置 dirty，也不覆盖请求期间发生的其他编辑。
+        useIcebergStore.setState((state) => {
+          if (!state.iceberg) return state;
+          return {
+            iceberg: {
+              ...state.iceberg,
+              tiers: state.iceberg.tiers.map((t) =>
+                t.id === tierId
+                  ? {
+                      ...t,
+                      items: t.items.map((i) =>
+                        i.id === item.id ? { ...i, id: data.data.id } : i
+                      ),
+                    }
+                  : t
+              ),
+            },
+          };
+        });
         clearSyncFailure(`item:create:${item.id}`);
       } else {
         queueSyncFailure({
@@ -1145,8 +1174,8 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
         });
         const data = await res.json().catch(() => null);
         if (res.ok && data?.success) {
-          setIceberg({ ...data.data, tiers: data.data.tiers.map((t: any) => ({ ...t, items: t.items.map((i: any) => ({ ...i, labels: typeof i.labels === 'string' ? (() => { try { return JSON.parse(i.labels); } catch { return []; } })() : (i.labels || []) })) })) });
-          clearDraft(iceberg.id);
+          const savedWithoutNewerChanges = reconcileMetadataSave(iceberg, data.data);
+          if (savedWithoutNewerChanges) clearDraft(iceberg.id);
           setLastSaved(new Date());
           pushVersionSnapshot(iceberg, 'manual');
           clearSyncFailure(`iceberg:update:${iceberg.id}`);
