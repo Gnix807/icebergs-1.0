@@ -133,6 +133,7 @@ export interface AchievementContext {
   stats: AchievementUserStats
   user: {
     qualityLevel: number
+    qualityScore: number
     warningCount: number
     createdIcebergCount: number
     watchlistCount: number

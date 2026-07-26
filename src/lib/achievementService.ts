@@ -90,6 +90,7 @@ async function buildContext(userId: string, trigger: TriggerParams): Promise<Ach
     stats: stats as AchievementUserStats,
     user: {
       qualityLevel,
+      qualityScore: user.qualityScore,
       warningCount,
       createdIcebergCount: createdCount,
       watchlistCount,
