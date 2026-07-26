@@ -102,6 +102,7 @@ function evaluateBlock(cond: BlockCondition, ctx: AchievementContext): boolean {
     case 'totalVotesCast':          ctxValue = ctx.stats.totalVotesCast; break;
     case 'createdIcebergCount':     ctxValue = ctx.user.createdIcebergCount; break;
     case 'qualityLevel':            ctxValue = ctx.user.qualityLevel; break;
+    case 'qualityScore':            ctxValue = ctx.user.qualityScore; break;
     case 'unlockedAchievementCount':ctxValue = ctx.user.unlockedAchievementCount; break;
     case 'warningCount':            ctxValue = ctx.user.warningCount; break;
     case 'hasUnreadNotification':   ctxValue = ctx.user.hasUnreadNotification; break;
