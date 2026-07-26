@@ -22,6 +22,86 @@ function sanitizeLabels(raw: unknown): string[] {
     .slice(0, 10);
 }
 
+export async function POST(event: APIContext) {
+  try {
+    const session = await getSession(event);
+    if (!session) {
+      return new Response(JSON.stringify(error(ErrorCodes.UNAUTHORIZED, '请先登录')), {
+        status: 401, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { id } = event.params;
+    if (!id) {
+      return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '缺少 ID')), {
+        status: 400, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const body = await event.request.json().catch(() => null);
+    if (!body || typeof body !== 'object') {
+      return new Response(JSON.stringify(error(ErrorCodes.BAD_REQUEST, '请求格式错误')), {
+        status: 400, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { title, desc, order } = body;
+    if (!title || title.trim() === '') {
+      return new Response(JSON.stringify(error(ErrorCodes.VALIDATION_ERROR, '标题不能为空')), {
+        status: 400, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const labels = sanitizeLabels(body.labels);
+
+    const tier = await prisma.tier.findUnique({ where: { id }, include: { iceberg: true } });
+    if (!tier) {
+      return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '层级不存在')), {
+        status: 404, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
+    const inProject = await isProjectMember(session.userId, tier.iceberg.projectId);
+    if (tier.iceberg.authorId !== session.userId && !canManageAny && !inProject) {
+      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
+        status: 403, headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    let itemOrder = order;
+    if (itemOrder === undefined) {
+      const maxOrderItem = await prisma.item.findFirst({
+        where: { tierId: id },
+        orderBy: { order: 'desc' },
+      });
+      itemOrder = maxOrderItem ? maxOrderItem.order + 1 : 0;
+    }
+
+    const renderedDesc = desc ? renderMarkdownWithMath(desc) : null;
+
+    const item = await prisma.item.create({
+      data: {
+        title: title.trim(),
+        desc: desc || '',
+        renderedDesc,
+        order: itemOrder,
+        tierId: id,
+        labels: JSON.stringify(labels),
+      },
+    });
+
+    return new Response(JSON.stringify(success(item)), {
+      status: 201, headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (err) {
+    console.error('创建条目失败:', err);
+    return new Response(JSON.stringify(error(ErrorCodes.INTERNAL_ERROR, '操作失败')), {
+      status: 500, headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
 export async function GET(event: APIContext) {
   const dataParam = event.url.searchParams.get('data');
   if (dataParam) {
