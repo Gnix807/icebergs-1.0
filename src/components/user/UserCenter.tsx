@@ -534,7 +534,7 @@ const NO_LINES: React.CSSProperties = {};
 
 function StatCard({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
-    <div className="border border-border-subtle bg-surface-2 px-3 py-2.5 text-center">
+    <div className="user-stat-card border border-border-subtle bg-surface-2 px-3 py-2.5 text-center">
       <div className="text-[10px] font-mono text-text-mid mb-1 tracking-widest">{label}</div>
       <div className="text-sm font-mono font-bold tabular-nums text-text-hi" style={valueColor ? { color: valueColor } : undefined}>{value}</div>
     </div>
@@ -812,7 +812,7 @@ export function UserCenter({
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-6 py-8">
+    <div className="user-center-shell max-w-6xl mx-auto px-4 py-6 md:px-6 md:py-9">
 
       {/* ── 账户状态栏 ───────────────────────────────────────────────────── */}
       {isOwner && user.status !== 'ACTIVE' && (() => {
@@ -827,7 +827,7 @@ export function UserCenter({
         if (!c) return null;
         const canAppeal = appealEligible && ['WARNED_2', 'READ_ONLY', 'TEMP_BANNED', 'PERM_BANNED'].includes(user.status);
         return (
-          <div className="border mb-5 px-4 py-3 font-mono boot-animate" style={{ borderColor: `${c.color}40`, background: c.bg, animationDelay: '0ms' }}>
+          <div className="user-context-bar border mb-5 px-4 py-3 font-mono boot-animate" style={{ borderColor: `${c.color}40`, background: c.bg, animationDelay: '0ms' }}>
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-2">
                 <span className="text-base font-bold flex-shrink-0" style={{ color: c.color }}>[{c.icon}]</span>
@@ -851,7 +851,7 @@ export function UserCenter({
 
       {/* ── 管理操作栏（对他人）──────────────────────────────────────────── */}
       {!isOwner && isEditorViewer && (
-        <div className="border border-border-subtle bg-surface-2 mb-5 px-4 py-3 flex items-center gap-3 flex-wrap boot-animate" style={{ animationDelay: '0ms' }}>
+        <div className="user-context-bar border border-border-subtle bg-surface-2 mb-5 px-4 py-3 flex items-center gap-3 flex-wrap boot-animate" style={{ animationDelay: '0ms' }}>
           <span className="text-xs font-mono text-text-mid mr-auto tracking-wider">管理操作</span>
           {(isAdminViewer || viewerIsFounder) && (
             <button onClick={() => setShowAwardModal(true)} className="px-3 py-1.5 text-xs font-mono border border-warning/25 text-warning hover:bg-warning/10 transition-colors">✦ 授予勋章</button>
@@ -867,7 +867,7 @@ export function UserCenter({
       )}
 
       {isOwner && viewerIsFounder && (
-        <div className="border border-border-subtle bg-surface-2 mb-5 px-4 py-3 flex items-center gap-3 flex-wrap boot-animate" style={{ animationDelay: '0ms' }}>
+        <div className="user-context-bar border border-border-subtle bg-surface-2 mb-5 px-4 py-3 flex items-center gap-3 flex-wrap boot-animate" style={{ animationDelay: '0ms' }}>
           <span className="text-xs font-mono text-text-mid mr-auto tracking-wider">站长操作</span>
           <button
             onClick={() => setShowAwardModal(true)}
@@ -879,17 +879,17 @@ export function UserCenter({
       )}
 
       {/* ── 档案头部 ──────────────────────────────────── */}
-      <div className="border border-border bg-surface-2 mb-6 overflow-hidden boot-animate" style={{ animationDelay: '20ms' }}>
-        <div className="p-5 md:p-6">
-          <div className="flex items-start gap-5">
+      <div className="user-profile-hero border border-border bg-surface-2 mb-5 overflow-hidden boot-animate" style={{ animationDelay: '20ms' }}>
+        <div className="user-profile-hero-body p-5 md:p-7">
+          <div className="user-profile-main flex items-start gap-4 sm:gap-5">
             {/* 头像 */}
             <div className="flex-shrink-0">
-              <div className="relative p-0.5 rounded-full" style={{ background: `conic-gradient(${levelColor} 0deg, ${levelColor} ${Math.round(qLevel.progress * 360)}deg, #21262d ${Math.round(qLevel.progress * 360)}deg)` }}>
+              <div className="user-avatar-ring relative rounded-full p-[3px]" style={{ background: `conic-gradient(${levelColor} 0deg, ${levelColor} ${Math.round(qLevel.progress * 360)}deg, #21262d ${Math.round(qLevel.progress * 360)}deg)` }}>
                 {user.avatar ? (
-                  <img src={user.avatar} alt={displayName} className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover block"
+                  <img src={user.avatar} alt={displayName} className="block h-[4.5rem] w-[4.5rem] rounded-full object-cover md:h-[5.5rem] md:w-[5.5rem]"
                     onError={e => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex'; }} />
                 ) : null}
-                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-surface-3 items-center justify-center" style={{ display: user.avatar ? 'none' : 'flex' }}>
+                <div className="h-[4.5rem] w-[4.5rem] rounded-full bg-surface-3 items-center justify-center md:h-[5.5rem] md:w-[5.5rem]" style={{ display: user.avatar ? 'none' : 'flex' }}>
                   <span className="font-mono text-2xl font-bold" style={{ color: levelColor }}>{displayName.charAt(0).toUpperCase()}</span>
                 </div>
               </div>
@@ -897,8 +897,8 @@ export function UserCenter({
 
             {/* 信息 */}
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                <h1 className="text-xl font-mono font-bold text-text-hi">{displayName}</h1>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <h1 className="user-profile-name text-xl font-mono font-bold text-text-hi md:text-2xl">{displayName}</h1>
                 {user.nickname && <span className="text-xs font-mono text-text-mid">@{user.username}</span>}
                 <span className="text-[10px] font-mono px-1.5 py-0.5 border rounded" style={{ color: roleBadge.color, borderColor: `${roleBadge.color}40`, background: `${roleBadge.color}10` }}>
                   {roleBadge.label}
@@ -920,7 +920,7 @@ export function UserCenter({
               {!isOwner && (
                 <div className="flex items-center gap-2 mb-2.5">
                   <button onClick={toggleFollow} disabled={followBusy}
-                    className={`text-[10px] font-mono border px-2.5 py-0.5 rounded transition-colors ${
+                    className={`user-follow-button min-h-9 text-xs font-mono border px-3 rounded-lg transition-colors ${
                       following ? 'border-success/30 text-success bg-success/5 hover:border-danger hover:text-danger' : 'border-brand/30 text-brand hover:bg-brand/10'
                     }`}>
                     {following ? '✓ 已关注' : '+ 关注'}
@@ -965,15 +965,15 @@ export function UserCenter({
               )}
 
               {/* 统计行 */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-mono text-text-mid">
-                <span className="flex items-center gap-1"><span className="text-text-lo">加入于</span> {new Date(user.createdAt).toLocaleDateString('zh-CN')}</span>
+              <div className="user-profile-metrics flex flex-wrap items-center gap-x-1 gap-y-1 text-[10px] font-mono text-text-mid">
+                <span className="user-profile-metric flex items-center gap-1"><span className="text-text-lo">加入于</span> {new Date(user.createdAt).toLocaleDateString('zh-CN')}</span>
                 {showStats && (
                   <>
-                    <span className="text-text-hi">{user._count.icebergs} <span className="text-text-mid">张冰山图</span></span>
+                    <span className="user-profile-metric text-text-hi">{user._count.icebergs} <span className="text-text-mid">张冰山图</span></span>
                     {socialStats && (
                       <>
-                        <span className="text-text-hi">{socialStats.totalViews.toLocaleString()} <span className="text-text-mid">次浏览</span></span>
-                        <span className="text-text-hi">+{socialStats.totalVotes} <span className="text-text-mid">票</span></span>
+                        <span className="user-profile-metric text-text-hi">{socialStats.totalViews.toLocaleString()} <span className="text-text-mid">次浏览</span></span>
+                        <span className="user-profile-metric text-text-hi">+{socialStats.totalVotes} <span className="text-text-mid">票</span></span>
                       </>
                     )}
                   </>
@@ -1005,7 +1005,7 @@ export function UserCenter({
 
         {/* 成就条 */}
         {topAchievements.length > 0 && (
-          <div className="border-t border-border-subtle px-5 py-2 flex items-center gap-2 flex-wrap">
+          <div className="user-achievement-strip border-t border-border-subtle px-5 py-3 flex items-center gap-2 flex-wrap">
             <span className="text-[10px] font-mono text-text-mid tracking-widest flex-shrink-0">成就</span>
             {(showAllAchievements ? topAchievements : topAchievements.slice(0, 4)).map(ach => (
               <span key={ach.key} className="text-[10px] font-mono px-1.5 py-0.5 border rounded"
@@ -1036,10 +1036,10 @@ export function UserCenter({
 
       {/* Actions Bar (owner only) */}
       {isOwner && (
-        <div className="flex items-center gap-3 mb-5 flex-wrap boot-animate" style={{ animationDelay: '40ms' }}>
-          <a href="/iceberg/new" className="mobile-touch-target flex items-center px-4 py-2 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors">+ 创建冰山图</a>
-          <a href={`/user/${user.id}?tab=settings`} className="mobile-touch-target flex items-center px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">⚙ 设置</a>
-          <a href="/feedback" className="mobile-touch-target flex items-center px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">反馈</a>
+        <div className="user-quick-actions flex items-center gap-2 mb-5 flex-wrap border border-border-subtle bg-surface-1 p-2 boot-animate" style={{ animationDelay: '40ms' }}>
+          <a href="/iceberg/new" className="user-primary-action mobile-touch-target flex items-center px-4 py-2 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors">+ 创建冰山图</a>
+          <a href={`/user/${user.id}?tab=settings`} className="user-secondary-action mobile-touch-target flex items-center px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">⚙ 设置</a>
+          <a href="/feedback" className="user-secondary-action mobile-touch-target flex items-center px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">反馈</a>
           {promotionEligible && features.feature_promotion !== false && (
             <button onClick={() => setShowPromotion(true)} className="mobile-touch-target px-4 py-2 border border-warning/30 text-xs font-mono text-warning hover:border-warning hover:bg-warning/5 transition-colors">
               申请晋升
@@ -1055,14 +1055,14 @@ export function UserCenter({
 
 
           {/* Tab 导航 */}
-          <div className="mobile-tab-strip flex overflow-x-auto border-b border-border-subtle mb-6 boot-animate" style={{ animationDelay: '60ms' }} role="tablist" aria-label="用户中心栏目">
+          <div className="user-tab-strip mobile-tab-strip flex overflow-x-auto mb-5 border border-border-subtle bg-surface-1 p-1.5 boot-animate" style={{ animationDelay: '60ms' }} role="tablist" aria-label="用户中心栏目">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setTabAndSyncUrl(tab.id)}
-                className={`mobile-touch-target relative shrink-0 whitespace-nowrap px-4 md:px-6 py-3 text-sm font-mono transition-colors ${
+                className={`user-tab-button mobile-touch-target relative shrink-0 whitespace-nowrap px-4 md:px-5 py-2.5 text-sm font-mono transition-colors ${
                   activeTab === tab.id
-                    ? tab.amber ? 'text-warning' : 'text-brand'
+                    ? tab.amber ? 'is-active is-warning text-warning' : 'is-active text-brand'
                     : 'text-text-lo hover:text-text-body'
                 }`}
                 role="tab"
@@ -1073,14 +1073,11 @@ export function UserCenter({
                   ? <span className="ml-1.5 text-[10px] opacity-50">[RESTRICTED]</span>
                   : null
                 }
-                {activeTab === tab.id && (
-                  <span className={`absolute bottom-0 left-4 right-4 h-0.5 ${tab.amber ? 'bg-warning' : 'bg-brand'}`} />
-                )}
               </button>
             ))}
           </div>
 
-          <div className="boot-animate" style={{ animationDelay: '100ms' }}>
+          <div className="user-tab-content boot-animate" style={{ animationDelay: '100ms' }}>
             {activeTab === 'icebergs'  && <UserIcebergs icebergs={icebergs.filter((i: any) => i.status === 'PUBLISHED')} isOwner={isOwner} />}
             {activeTab === 'drafts' && isOwner && <UserIcebergs icebergs={icebergs.filter((i: any) => i.status === 'DRAFT')} isOwner={isOwner} />}
             {activeTab === 'watchlist' && <UserWatchlist userId={user.id} isOwner={isOwner} publiclyVisible={user.privacyShowWatchlist} />}
@@ -1089,8 +1086,8 @@ export function UserCenter({
             {activeTab === 'settings' && isOwner && (
               <div className="space-y-6">
                 {/* 账号设置 */}
-                <div className="border border-border-subtle bg-surface-2">
-                  <div className="px-5 py-3 border-b border-border-subtle bg-surface-1 flex items-center gap-2">
+                <div className="user-settings-card border border-border-subtle bg-surface-2">
+                  <div className="user-settings-card-header px-5 py-3 border-b border-border-subtle bg-surface-1 flex items-center gap-2">
                     <span className="text-brand font-mono text-xs">⚙</span>
                     <span className="font-mono text-xs text-text-hi tracking-widest">账号设置</span>
                   </div>
@@ -1101,8 +1098,8 @@ export function UserCenter({
 
                 {/* 用户框定制 */}
                 {features.feature_userboxes !== false && (
-                <div className="border border-border-subtle bg-surface-2">
-                  <div className="px-5 py-3 border-b border-border-subtle bg-surface-1 flex items-center gap-2">
+                <div className="user-settings-card border border-border-subtle bg-surface-2">
+                  <div className="user-settings-card-header px-5 py-3 border-b border-border-subtle bg-surface-1 flex items-center gap-2">
                     <span className="text-warning font-mono text-xs">🎨</span>
                     <span className="font-mono text-xs text-text-hi tracking-widest">用户框定制</span>
                   </div>
@@ -1123,9 +1120,9 @@ export function UserCenter({
       </div>
 
       {notifMounted && (
-        <div className={`${notifLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/60 flex items-start justify-center z-50 pt-16 px-4`}>
-          <div ref={notifPanelRef} className={`${notifLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-md font-mono max-h-[75vh] flex flex-col`}>
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-border-subtle">
+        <div className={`modern-modal-viewport ${notifLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/60 flex items-start justify-center z-50 pt-16 px-4`}>
+          <div ref={notifPanelRef} className={`modern-modal-panel ${notifLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-md font-mono max-h-[75vh] flex flex-col overflow-hidden`} role="dialog" aria-modal="true" aria-label="通知">
+            <div className="modern-modal-header flex items-center justify-between px-5 py-3.5 border-b border-border-subtle">
               <div>
                 <span className="text-[11px] text-text-mid tracking-[0.2em]">// NOTIFICATIONS</span>
                 {unreadCount > 0 && (
@@ -1138,11 +1135,11 @@ export function UserCenter({
                     {markingAll ? '标记中...' : '全部已读'}
                   </button>
                 )}
-                <button onClick={() => setShowNotifPanel(false)} className="text-text-mid hover:text-text-hi transition-colors text-lg leading-none">×</button>
+                <button onClick={() => setShowNotifPanel(false)} className="modal-icon-button text-text-mid hover:text-text-hi transition-colors text-lg leading-none" aria-label="关闭通知">×</button>
               </div>
             </div>
 
-            <div className="overflow-y-auto flex-1">
+            <div className="modern-modal-body overflow-y-auto flex-1">
               {!notifLoaded ? (
                 <div className="py-10 text-center text-sm text-text-mid animate-pulse">加载中...</div>
               ) : notifications.length === 0 ? (
@@ -1174,8 +1171,8 @@ export function UserCenter({
 
       {/* ── 管理操作模态框 ───────────────────────────────────────────────── */}
       {actionMounted && actionModal && (
-        <div className={`${actionLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${actionLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-sm p-6 font-mono`}>
+        <div className={`modern-modal-viewport ${actionLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
+          <div className={`modern-modal-panel modern-modal-danger ${actionLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-sm p-6 font-mono`} role="alertdialog" aria-modal="true" aria-label="用户管理操作">
             <div className="text-sm text-text-lo mb-1.5">对象：@{displayName}</div>
             <div className="text-base text-text-hi mb-5">
               {actionModal === 'warn' && '发出警告'}{actionModal === 'restrict' && '设为只读'}{actionModal === 'ban' && '封禁用户'}
@@ -1213,7 +1210,7 @@ export function UserCenter({
                 rows={2} className="w-full px-3 py-2.5 bg-surface-2 border border-border text-sm text-text-hi focus:border-brand focus:outline-none resize-none"
                 placeholder="理由（至少 5 字）" />
             </div>
-            <div className="flex gap-3">
+            <div className="modern-modal-actions flex gap-3">
               <button onClick={() => { setActionModal(null); setActionForm({}); }} className="flex-1 py-2.5 border border-border text-sm hover:border-border transition-colors">取消</button>
               <button onClick={execAction} disabled={actionBusy || (actionForm.reason ?? '').trim().length < 5}
                 className="flex-1 py-2.5 bg-danger/20 border border-[#ef444450] text-danger text-sm hover:bg-danger/20 transition-colors disabled:opacity-50">
@@ -1226,8 +1223,8 @@ export function UserCenter({
 
       {/* ── 晋升申请模态框 ───────────────────────────────────────────────── */}
       {promoMounted && (
-        <div className={`${promoLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${promoLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-md p-6 font-mono`}>
+        <div className={`modern-modal-viewport ${promoLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
+          <div className={`modern-modal-panel ${promoLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-md p-6 font-mono`} role="dialog" aria-modal="true" aria-label="晋升申请">
             <div className="text-xs text-text-mid mb-1.5 tracking-widest">PROMOTION REQUEST</div>
             <div className="text-base text-text-hi mb-1.5">申请晋升至 CONTRIBUTOR</div>
             <div className="text-sm text-text-lo mb-5">可附上申请说明（可选），编辑审核后将通知结果。</div>
@@ -1238,7 +1235,7 @@ export function UserCenter({
             <textarea value={promotionStatement} onChange={e => setPromotionStatement(e.target.value.slice(0, 200))}
               rows={4} className="w-full px-3 py-2.5 bg-surface-2 border border-border text-sm text-text-hi focus:border-brand focus:outline-none resize-none mb-5"
               placeholder="简述申请理由（非必填）" />
-            <div className="flex gap-3">
+            <div className="modern-modal-actions flex gap-3">
               <button onClick={() => { setShowPromotion(false); setPromotionStatement(''); }} className="flex-1 py-2.5 border border-border text-sm hover:border-border transition-colors">取消</button>
               <button onClick={submitPromotion} disabled={promotionBusy}
                 className="flex-1 py-2.5 bg-brand/10 border border-brand/25 text-brand text-sm hover:bg-brand/15 transition-colors disabled:opacity-50">
@@ -1262,8 +1259,8 @@ export function UserCenter({
 
       {/* ── 申诉模态框 ───────────────────────────────────────────────────── */}
       {appealMounted && (
-        <div className={`${appealLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-          <div className={`${appealLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-md p-6 font-mono`}>
+        <div className={`modern-modal-viewport ${appealLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
+          <div className={`modern-modal-panel ${appealLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border w-full max-w-md p-6 font-mono`} role="dialog" aria-modal="true" aria-label="提交申诉">
             <div className="text-xs text-text-mid mb-1.5 tracking-widest">APPEAL REQUEST</div>
             <div className="text-base text-text-hi mb-1.5">提交申诉</div>
             <div className="text-sm text-text-lo mb-5">详细说明情况，管理员审核后将通知结果。</div>
@@ -1274,7 +1271,7 @@ export function UserCenter({
             <textarea value={appealStatement} onChange={e => setAppealStatement(e.target.value)}
               rows={5} className="w-full px-3 py-2.5 bg-surface-2 border border-border text-sm text-text-hi focus:border-brand focus:outline-none resize-none mb-5"
               placeholder="请详细说明申诉原因，包括对相关事件的解释和今后的改进承诺..." />
-            <div className="flex gap-3">
+            <div className="modern-modal-actions flex gap-3">
               <button onClick={() => { setShowAppeal(false); setAppealStatement(''); }} className="flex-1 py-2.5 border border-border text-sm hover:border-border transition-colors">取消</button>
               <button onClick={submitAppeal} disabled={appealBusy || appealStatement.trim().length < 20}
                 className="flex-1 py-2.5 bg-brand/10 border border-brand/25 text-brand text-sm hover:bg-brand/15 transition-colors disabled:opacity-50">
@@ -1350,8 +1347,8 @@ function AwardModal({ userId, isLeaving, onClose, existingAwards, isLight }: {
   };
 
   return (
-    <div className={`${isLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3 sm:p-4`}>
-      <div className={`${isLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border border-l-4 border-l-[#f59e0b] w-full max-w-[26rem] max-h-[82vh] overflow-y-auto p-4 sm:p-5 font-mono`}>
+    <div className={`modern-modal-viewport ${isLeaving ? 'modal-overlay-out' : 'modal-overlay'} fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3 sm:p-4`}>
+      <div className={`modern-modal-panel ${isLeaving ? 'modal-content-out' : 'modal-content'} bg-surface-4 border border-border border-l-4 border-l-[#f59e0b] w-full max-w-[26rem] max-h-[82vh] overflow-y-auto p-4 sm:p-5 font-mono`} role="dialog" aria-modal="true" aria-label="授予勋章">
         <div className="text-[10px] text-text-mid mb-1.5 tracking-widest">[ AWARD SYSTEM ]</div>
         <div className="text-base text-text-hi mb-1.5"><span className="text-warning">#</span> 授予勋章</div>
         <div className="text-xs text-text-lo mb-3">选择勋章类型并填写颁奖留言（可选）。已授予的勋章可直接撤回。</div>
@@ -1408,7 +1405,7 @@ function AwardModal({ userId, isLeaving, onClose, existingAwards, isLight }: {
           placeholder="写下对该用户贡献的认可…"
         />
 
-        <div className="flex gap-3">
+        <div className="modern-modal-actions flex gap-3">
           <button onClick={onClose} className="flex-1 py-2 border border-border text-sm text-text-body hover:border-border transition-colors">取消</button>
           <button
             onClick={submit} disabled={busy || !selectedType}

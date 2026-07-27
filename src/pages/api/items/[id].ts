@@ -87,12 +87,22 @@ export async function ALL(event: APIContext) {
   }
 
   if (isDelete) {
+    const expectedUpdatedAtRaw = event.url.searchParams.get('baseUpdatedAt');
+    const expectedUpdatedAt = expectedUpdatedAtRaw ? new Date(expectedUpdatedAtRaw) : null;
     const deleted = await prisma.$transaction(async (tx) => {
       const result = await tx.item.deleteMany({
         where: canManageAny
-          ? { id }
+          ? {
+              id,
+              ...(expectedUpdatedAt && !Number.isNaN(expectedUpdatedAt.getTime())
+                ? { updatedAt: expectedUpdatedAt }
+                : {}),
+            }
           : {
               id,
+              ...(expectedUpdatedAt && !Number.isNaN(expectedUpdatedAt.getTime())
+                ? { updatedAt: expectedUpdatedAt }
+                : {}),
               OR: [
                 { tier: { iceberg: { authorId: session.userId } } },
                 {
@@ -105,23 +115,37 @@ export async function ALL(event: APIContext) {
               ],
             },
       });
-      if (result.count === 0) return false;
+      if (result.count === 0) return null;
       await tx.itemRead.deleteMany({ where: { itemId: id } });
-      return true;
+      const revision = await tx.iceberg.update({
+        where: { id: existing.tier.iceberg.id },
+        data: { updatedAt: new Date() },
+        select: { updatedAt: true },
+      });
+      return revision.updatedAt;
     });
 
     if (!deleted) {
-      const latest = await prisma.item.findUnique({ where: { id }, select: { id: true } });
-      const body = latest
-        ? error(ErrorCodes.FORBIDDEN, '权限已变化，请刷新后重试')
+      const latest = await prisma.item.findUnique({
+        where: { id },
+        select: { id: true, updatedAt: true },
+      });
+      const responseBody = latest
+        ? expectedUpdatedAt
+          ? error(
+              ErrorCodes.CONFLICT,
+              '该词条已被其他协作者修改，未执行删除。',
+              { current: latest },
+            )
+          : error(ErrorCodes.FORBIDDEN, '权限已变化，请刷新后重试')
         : error(ErrorCodes.NOT_FOUND, '条目不存在');
-      return new Response(JSON.stringify(body), {
-        status: latest ? 403 : 404,
+      return new Response(JSON.stringify(responseBody), {
+        status: latest ? (expectedUpdatedAt ? 409 : 403) : 404,
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
       });
     }
 
-    return new Response(JSON.stringify(success({ deleted: true })), {
+    return new Response(JSON.stringify(success({ deleted: true, icebergUpdatedAt: deleted })), {
       status: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
@@ -174,12 +198,41 @@ export async function ALL(event: APIContext) {
     updateData.labels = JSON.stringify(sanitizeLabels(body.labels));
   }
 
-  const item = await prisma.item.update({
-    where: { id },
-    data: updateData,
+  const expectedUpdatedAt = typeof body.baseUpdatedAt === 'string'
+    ? new Date(body.baseUpdatedAt)
+    : null;
+  const result = await prisma.$transaction(async (tx) => {
+    const claimed = await tx.item.updateMany({
+      where: {
+        id,
+        ...(expectedUpdatedAt && !Number.isNaN(expectedUpdatedAt.getTime())
+          ? { updatedAt: expectedUpdatedAt }
+          : {}),
+      },
+      data: updateData,
+    });
+    if (claimed.count !== 1) return null;
+    const item = await tx.item.findUniqueOrThrow({ where: { id } });
+    const revision = await tx.iceberg.update({
+      where: { id: existing.tier.iceberg.id },
+      data: { updatedAt: new Date() },
+      select: { updatedAt: true },
+    });
+    return { ...item, icebergUpdatedAt: revision.updatedAt };
   });
+  if (!result) {
+    const current = await prisma.item.findUnique({ where: { id } });
+    return new Response(JSON.stringify(error(
+      ErrorCodes.CONFLICT,
+      '该词条已被其他协作者修改，当前修改未覆盖对方内容。',
+      { current },
+    )), {
+      status: 409,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    });
+  }
 
-  return new Response(JSON.stringify(success(item)), {
+  return new Response(JSON.stringify(success(result)), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });

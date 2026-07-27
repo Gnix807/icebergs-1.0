@@ -69,7 +69,7 @@ export function AnnouncementBanner({ initial }: Props) {
 
   return (
     <div
-      className="w-full border-b font-mono text-xs z-[9990] transition-all duration-250"
+      className="relative z-[39] w-full border-b font-mono text-xs shadow-sm transition-all duration-250"
       style={{
         background: meta.bg,
         borderColor: meta.border,
@@ -77,10 +77,10 @@ export function AnnouncementBanner({ initial }: Props) {
         transform: leaving ? 'translateY(-100%)' : 'translateY(0)',
       }}
     >
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-2.5 flex items-center gap-3">
+      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5 md:px-6">
         {/* 类型标签 */}
         <span
-          className="px-1.5 py-0.5 border text-[10px] flex-shrink-0"
+          className="flex-shrink-0 rounded-full border px-2 py-0.5 text-[10px]"
           style={{ color: meta.color, borderColor: meta.border }}
         >
           {meta.label}
@@ -111,7 +111,7 @@ export function AnnouncementBanner({ initial }: Props) {
         <button
           onClick={dismiss}
           aria-label="关闭横幅"
-          className="mobile-touch-target flex-shrink-0 w-5 h-5 flex items-center justify-center transition-colors"
+          className="mobile-touch-target flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors"
           style={{ color: meta.color, opacity: 0.5 }}
           onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
           onMouseLeave={e => (e.currentTarget.style.opacity = '0.5')}

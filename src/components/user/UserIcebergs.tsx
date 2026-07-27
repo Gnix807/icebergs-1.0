@@ -23,10 +23,12 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
 
   if (icebergs.length === 0) {
     return (
-      <div className="py-16 text-center border border-dashed border-border">
-        <p className="text-text-body font-mono text-sm mb-3">暂无冰山图</p>
+      <div className="user-empty-state py-16 text-center border border-dashed border-border">
+        <div className="user-empty-state-icon mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-border-subtle bg-surface-2 text-xl text-brand" aria-hidden="true">◇</div>
+        <p className="text-text-hi font-mono text-sm mb-1.5">暂无冰山图</p>
+        <p className="mx-auto mb-4 max-w-sm text-xs text-text-lo">这里会展示已经创建或发布的冰山图。</p>
         {isOwner && (
-          <a href="/iceberg/new" className="text-brand font-mono text-sm hover:underline">
+          <a href="/iceberg/new" className="mobile-touch-target inline-flex items-center rounded-lg border border-brand/25 bg-brand/10 px-4 py-2 text-brand font-mono text-xs hover:bg-brand/15">
             立即创建 →
           </a>
         )}
@@ -53,24 +55,24 @@ export function UserIcebergs({ icebergs, isOwner }: Props) {
   const renderList = (items: Iceberg[], label?: string) => {
     if (items.length === 0) return null;
     return (
-      <div className="mb-6">
+      <div className="user-content-section mb-6">
         {label && (
-          <div className="text-xs font-mono text-text-mid mb-2 tracking-widest">{label}</div>
+          <div className="user-section-label text-xs font-mono text-text-mid mb-2.5 tracking-widest">{label}</div>
         )}
-        <div className="space-y-2">
+        <div className="grid gap-3 md:grid-cols-2">
           {items.map(iceberg => (
             <div
               key={iceberg.id}
-              className="archive-card group flex items-start gap-3 p-4 sm:gap-4"
+              className="user-iceberg-card archive-card group flex min-h-36 items-start gap-3 p-4 sm:gap-4"
             >
               <a href={`/iceberg/${iceberg.slug || iceberg.id}`} className="min-w-0 flex-1 block">
-                <h3 className="font-mono text-sm text-text-hi group-hover:text-brand transition-colors truncate">
+                <h3 className="font-mono text-sm font-semibold text-text-hi group-hover:text-brand transition-colors truncate">
                   <span className="text-text-mid mr-1">#</span>{iceberg.title}
                 </h3>
                 {iceberg.description && (
-                  <p className="text-xs text-text-body mt-1 truncate">{iceberg.description}</p>
+                  <p className="text-xs text-text-body mt-1.5 line-clamp-2 leading-relaxed">{iceberg.description}</p>
                 )}
-                <div className="flex gap-3 mt-2 text-xs text-text-lo font-mono">
+                <div className="flex gap-3 mt-3 text-xs text-text-lo font-mono">
                   <span>{iceberg._count.tiers} 层</span>
                   <span className="flex items-center gap-1">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>

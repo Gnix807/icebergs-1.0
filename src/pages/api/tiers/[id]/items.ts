@@ -69,29 +69,34 @@ export async function POST(event: APIContext) {
       });
     }
 
-    let itemOrder = order;
-    if (itemOrder === undefined) {
-      const maxOrderItem = await prisma.item.findFirst({
+    const renderedDesc = desc ? renderMarkdownWithMath(desc) : null;
+
+    const result = await prisma.$transaction(async (tx) => {
+      const maxOrderItem = await tx.item.findFirst({
         where: { tierId: id },
         orderBy: { order: 'desc' },
       });
-      itemOrder = maxOrderItem ? maxOrderItem.order + 1 : 0;
-    }
-
-    const renderedDesc = desc ? renderMarkdownWithMath(desc) : null;
-
-    const item = await prisma.item.create({
-      data: {
-        title: title.trim(),
-        desc: desc || '',
-        renderedDesc,
-        order: itemOrder,
-        tierId: id,
-        labels: JSON.stringify(labels),
-      },
+      const appendOrder = maxOrderItem ? maxOrderItem.order + 1 : 0;
+      const requestedOrder = typeof order === 'number' && Number.isFinite(order) ? order : appendOrder;
+      const item = await tx.item.create({
+        data: {
+          title: title.trim(),
+          desc: desc || '',
+          renderedDesc,
+          order: Math.max(requestedOrder, appendOrder),
+          tierId: id,
+          labels: JSON.stringify(labels),
+        },
+      });
+      const revision = await tx.iceberg.update({
+        where: { id: tier.icebergId },
+        data: { updatedAt: new Date() },
+        select: { updatedAt: true },
+      });
+      return { ...item, icebergUpdatedAt: revision.updatedAt };
     });
 
-    return new Response(JSON.stringify(success(item)), {
+    return new Response(JSON.stringify(success(result)), {
       status: 201, headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
@@ -154,29 +159,34 @@ export async function GET(event: APIContext) {
       }
 
       // 计算 order
-      let itemOrder = order;
-      if (itemOrder === undefined) {
-        const maxOrderItem = await prisma.item.findFirst({
+      const renderedDesc = desc ? renderMarkdownWithMath(desc) : null;
+
+      const result = await prisma.$transaction(async (tx) => {
+        const maxOrderItem = await tx.item.findFirst({
           where: { tierId: id },
           orderBy: { order: 'desc' },
         });
-        itemOrder = maxOrderItem ? maxOrderItem.order + 1 : 0;
-      }
-
-      const renderedDesc = desc ? renderMarkdownWithMath(desc) : null;
-
-      const item = await prisma.item.create({
-        data: {
-          title: title.trim(),
-          desc: desc || '',
-          renderedDesc,
-          order: itemOrder,
-          tierId: id,
-          labels: JSON.stringify(labels),
-        },
+        const appendOrder = maxOrderItem ? maxOrderItem.order + 1 : 0;
+        const requestedOrder = typeof order === 'number' && Number.isFinite(order) ? order : appendOrder;
+        const item = await tx.item.create({
+          data: {
+            title: title.trim(),
+            desc: desc || '',
+            renderedDesc,
+            order: Math.max(requestedOrder, appendOrder),
+            tierId: id,
+            labels: JSON.stringify(labels),
+          },
+        });
+        const revision = await tx.iceberg.update({
+          where: { id: tier.icebergId },
+          data: { updatedAt: new Date() },
+          select: { updatedAt: true },
+        });
+        return { ...item, icebergUpdatedAt: revision.updatedAt };
       });
 
-      return new Response(JSON.stringify(success(item)), {
+      return new Response(JSON.stringify(success(result)), {
         status: 201,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -225,4 +235,3 @@ export async function GET(event: APIContext) {
     });
   }
 }
-

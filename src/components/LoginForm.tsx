@@ -229,7 +229,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
   if (!isOpen || !mounted) return null;
 
   return createPortal(
-    <div className="app-modal-viewport fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="app-modal-viewport modern-modal-viewport fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* 遮罩 */}
       <div
         className="modal-overlay absolute inset-0 bg-black/80 backdrop-blur-sm"
@@ -237,9 +237,9 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
       />
 
       {/* 弹窗 */}
-      <div className="app-modal-panel relative flex w-full max-w-md flex-col bg-surface-1 border border-border-subtle border-l-4 border-l-brand overflow-hidden shadow-2xl shadow-[#00FF41]/10" role="dialog" aria-modal="true" aria-label={mode === 'login' ? '登录' : mode === 'register' ? '注册' : '重置密码'}>
+      <div className="app-modal-panel modern-modal-panel auth-modal-panel relative flex w-full max-w-md flex-col bg-surface-1 border border-border-subtle border-l-4 border-l-brand overflow-hidden shadow-2xl shadow-[#00FF41]/10" role="dialog" aria-modal="true" aria-label={mode === 'login' ? '登录' : mode === 'register' ? '注册' : '重置密码'}>
         {/* 头部 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle bg-surface-0">
+        <div className="modern-modal-header flex items-center justify-between px-6 py-4 border-b border-border-subtle bg-surface-0">
           <div>
             <div className="text-[10px] font-mono text-text-mid tracking-widest mb-1">[ AUTH TERMINAL ]</div>
             <h2 className="text-base font-mono font-semibold text-text-hi">
@@ -248,14 +248,14 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
           </div>
           <button
             onClick={handleClose}
-            className="mobile-touch-target text-text-mid hover:text-brand border border-border-subtle hover:border-brand px-2.5 py-1.5 text-xs font-mono transition-all"
+            className="modal-icon-button mobile-touch-target text-text-mid hover:text-brand border border-border-subtle hover:border-brand px-2.5 py-1.5 text-xs font-mono transition-all"
           >
             ESC
           </button>
         </div>
 
         {/* 内容 */}
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        <div className="modern-modal-body min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
           {error && (
             <div className="p-3 bg-[#1a0808] border border-danger/25 text-danger text-xs font-mono">
               &gt; ERROR: {error}
@@ -471,7 +471,7 @@ export function LoginForm({ isOpen, onClose, initialMode = 'login' }: LoginFormP
         </div>
 
         {/* 底部 */}
-        <div className="px-6 py-3 border-t border-border-subtle bg-surface-0 flex items-center justify-between">
+        <div className="modern-modal-footer px-6 py-3 border-t border-border-subtle bg-surface-0 flex items-center justify-between">
           <p className="text-[10px] text-text-lo font-mono">
             {mode === 'reset' ? (
               '重置密码请确保邮箱可用'

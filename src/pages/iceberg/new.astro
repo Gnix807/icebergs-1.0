@@ -8,8 +8,8 @@ const session = await getSessionById(sessionId);
 if (!session) return Astro.redirect('/login');
 ---
 
-<Layout title="创建冰山图 | 冰山图宇宙" description="创建你的冰山图——梳理任何话题的知识层级，从表面对深渊">
-  <main class="min-h-screen">
+<Layout title="创建冰山图 | 冰山图宇宙" description="创建你的冰山图——梳理任何话题的知识层级，从表面对深渊" editorMode>
+  <main class="editor-page-shell min-h-screen">
     <IcebergEditor client:load />
   </main>
 </Layout>

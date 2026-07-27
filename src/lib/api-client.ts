@@ -79,11 +79,17 @@ export async function getTiers(icebergId: string) {
 }
 
 export async function createTier(icebergId: string, data: { name: string; order?: number }) {
-  return request<Tier>(`/icebergs/${icebergId}/tiers?data=${encodeURIComponent(JSON.stringify(data))}`);
+  return request<Tier>(`/icebergs/${icebergId}/tiers`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 }
 
 export async function updateTier(id: string, data: { name?: string; order?: number }) {
-  return request<Tier>(`/tiers/${id}?data=${encodeURIComponent(JSON.stringify(data))}`);
+  return request<Tier>(`/tiers/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
 }
 
 export async function deleteTier(id: string) {
@@ -95,11 +101,17 @@ export async function deleteTier(id: string) {
 // ==================== Item ====================
 
 export async function createItem(tierId: string, data: { title: string; desc?: string }) {
-  return request<Item>(`/tiers/${tierId}/items?data=${encodeURIComponent(JSON.stringify(data))}`);
+  return request<Item>(`/tiers/${tierId}/items`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
 }
 
 export async function updateItem(id: string, data: { title?: string; desc?: string }) {
-  return request<Item>(`/items/${id}?data=${encodeURIComponent(JSON.stringify(data))}`);
+  return request<Item>(`/items/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
 }
 
 export async function deleteItem(id: string) {

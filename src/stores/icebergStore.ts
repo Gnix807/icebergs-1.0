@@ -8,6 +8,7 @@ export interface Item {
   order: number;
   tierId: string;
   labels: string[];
+  updatedAt?: string;
 }
 
 export interface Tier {
@@ -26,6 +27,7 @@ export interface Iceberg {
   description?: string;
   topic: IcebergTopic;
   authorId: string;
+  projectId?: string | null;
   status: 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED' | 'ARCHIVED';
   viewCount: number;
   tiers: Tier[];

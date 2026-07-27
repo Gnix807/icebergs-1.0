@@ -1,18 +1,30 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 
-const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
+const isSyncMode = Astro.url.searchParams.has('target');
 ---
 
-<Layout title="导入冰山图 | 冰山图宇宙">
+<Layout
+  title={`${isSyncMode ? '同步源站更新' : '导入冰山图'} | 冰山图宇宙`}
+  description={isSyncMode
+    ? '从 Iceberg Threads 获取更新，安全合并到现有冰山图并保留本地内容'
+    : '从 Iceberg Threads 导入层级、词条和标签，创建新的冰山图'}
+>
   <main class="max-w-3xl mx-auto px-4 py-8">
 
     <div class="mb-8">
-      <a href="/iceberg/new" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">← 返回新建</a>
-      <h1 class="text-2xl font-mono font-bold text-text-hi mt-2">
+      <a id="import-back" href="/iceberg/new" class="text-[10px] font-mono text-text-mid hover:text-brand transition-colors">← 返回新建</a>
+      <h1 id="import-heading" class="text-2xl font-mono font-bold text-text-hi mt-2">
         <span class="text-brand">#</span> 导入冰山图
       </h1>
-      <p class="text-xs text-text-body font-mono mt-1">从 icebergthreads.com 导入已有冰山图数据</p>
+      <p id="import-subtitle" class="text-xs text-text-body font-mono mt-1">从 icebergthreads.com 导入已有冰山图数据</p>
+    </div>
+
+    <div id="sync-safety" class="hidden mb-6 rounded-xl border border-brand/25 bg-brand/5 p-4">
+      <div class="text-xs font-mono font-semibold text-brand">安全同步模式</div>
+      <p class="mt-2 text-[10px] font-mono leading-relaxed text-text-body">
+        同名层级和词条会更新，源站新增内容会加入；本站独有层级、词条、标签以及已有词条 ID 都会保留。源站删除不会同步删除，正式写入前还会在编辑器中生成备份并再次确认。
+      </p>
     </div>
 
     <!-- 输入区 -->
@@ -74,7 +86,7 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
       >
         导入到编辑器
       </button>
-      <p class="text-[10px] font-mono text-text-lo text-center">
+      <p id="import-hint" class="text-[10px] font-mono text-text-lo text-center">
         导入后可在编辑器中自由修改、补充描述和标签，然后保存为你的冰山图
       </p>
     </div>
@@ -85,7 +97,21 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
 <script>
   // @ts-nocheck
   var currentData = null;
-  var FIRESTORE = 'https://firestore.googleapis.com/v1/projects/iceberg-charts/databases/(default)/documents/icebergs/';
+  var targetId = new URLSearchParams(window.location.search).get('target');
+
+  if (targetId) {
+    document.getElementById('import-back').href = '/iceberg/edit/' + encodeURIComponent(targetId);
+    document.getElementById('import-back').textContent = '← 返回原冰山图';
+    document.getElementById('import-heading').innerHTML = '<span class="text-brand">#</span> 同步源站更新';
+    document.getElementById('import-subtitle').textContent = '从 icebergthreads.com 获取更新并安全合并到当前冰山图';
+    document.getElementById('sync-safety').classList.remove('hidden');
+    document.getElementById('import-go').textContent = '带到编辑器确认同步';
+    document.getElementById('import-hint').textContent = '此步骤不会修改现有内容；回到编辑器后仍需确认，写入会使用协作版本校验。';
+    try {
+      var rememberedSource = localStorage.getItem('icebergthreads_source_' + targetId);
+      if (rememberedSource) document.getElementById('import-url').value = rememberedSource;
+    } catch {}
+  }
 
   function showStatus(msg, isError) {
     var el = document.getElementById('import-status');
@@ -204,9 +230,22 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
     showStatus('正在连接 icebergthreads...', false);
 
     try {
-      var res = await fetch(FIRESTORE + encodeURIComponent(docId), { headers: { Accept: 'application/json' } });
-      if (!res.ok) { showStatus('获取失败: HTTP ' + res.status + '，请检查链接是否正确', true); return; }
-      var doc = await res.json();
+      // 生产环境优先通过本站服务端访问固定的 Firestore 上游，避免浏览器跨域、
+      // 本地网络和扩展注入影响导入流程。
+      var res = await fetch('/api/import/icebergthreads?id=' + encodeURIComponent(docId), {
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      });
+      var payload = await res.json().catch(function() { return null; });
+      if (!res.ok || !payload || !payload.success) {
+        showStatus(
+          (payload && payload.error && payload.error.message)
+            || ('获取失败: HTTP ' + res.status + '，请稍后重试'),
+          true,
+        );
+        return;
+      }
+      var doc = payload.data;
       if (!doc.fields) { showStatus('数据格式异常，请确认链接是有效的 icebergthreads 冰山图', true); return; }
 
       currentData = parseDoc(doc);
@@ -216,17 +255,31 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
       document.getElementById('preview-desc').textContent = currentData.description || '(无描述)';
       document.getElementById('preview-layers').textContent = currentData.tiers.length + ' 层';
       document.getElementById('preview-items').textContent = currentData.stats.itemCount + ' 个词条';
-      if (currentData.isNsfw) document.getElementById('preview-nsfw').classList.remove('hidden');
+      document.getElementById('preview-nsfw').classList.toggle('hidden', !currentData.isNsfw);
 
       var colors = ['#22c55e','#3b82f6','#f59e0b','#ef4444','#ec4899','#8b5cf6'];
-      var tiersHtml = '';
+      var tiersContainer = document.getElementById('preview-tiers');
+      tiersContainer.textContent = '';
       currentData.tiers.forEach(function(t, i) {
-        tiersHtml += '<div class="border border-border-subtle bg-surface-2 p-3 flex items-start gap-3">' +
-          '<span class="text-[10px] font-mono font-bold mt-0.5 flex-shrink-0" style="color:' + colors[i % 6] + '">' + (i + 1) + '.</span>' +
-          '<div><div class="text-xs font-mono text-text-hi">' + t.name + '</div>' +
-          '<div class="text-[10px] font-mono text-text-mid mt-0.5">' + t.items.length + ' 个词条</div></div></div>';
+        var row = document.createElement('div');
+        row.className = 'border border-border-subtle bg-surface-2 p-3 flex items-start gap-3';
+        var index = document.createElement('span');
+        index.className = 'text-[10px] font-mono font-bold mt-0.5 flex-shrink-0';
+        index.style.color = colors[i % 6];
+        index.textContent = (i + 1) + '.';
+        var body = document.createElement('div');
+        var name = document.createElement('div');
+        name.className = 'text-xs font-mono text-text-hi';
+        name.textContent = t.name;
+        var count = document.createElement('div');
+        count.className = 'text-[10px] font-mono text-text-mid mt-0.5';
+        count.textContent = t.items.length + ' 个词条';
+        body.appendChild(name);
+        body.appendChild(count);
+        row.appendChild(index);
+        row.appendChild(body);
+        tiersContainer.appendChild(row);
       });
-      document.getElementById('preview-tiers').innerHTML = tiersHtml;
       document.getElementById('import-preview').classList.remove('hidden');
     } catch (err) {
       showStatus('网络错误：' + (err.message || '请求超时，请检查是否可以访问 Google 服务'), true);
@@ -252,7 +305,20 @@ const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5
       }
     }
 
-    sessionStorage.setItem('imported_iceberg', JSON.stringify(currentData));
-    window.location.href = '/iceberg/edit/imported';
+    var sourceUrl = document.getElementById('import-url').value.trim();
+    if (targetId) {
+      try {
+        localStorage.setItem('icebergthreads_source_' + targetId, sourceUrl);
+      } catch {}
+      sessionStorage.setItem('imported_iceberg_sync', JSON.stringify({
+        targetId: targetId,
+        sourceUrl: sourceUrl,
+        imported: currentData,
+      }));
+      window.location.href = '/iceberg/edit/' + encodeURIComponent(targetId);
+    } else {
+      sessionStorage.setItem('imported_iceberg', JSON.stringify(currentData));
+      window.location.href = '/iceberg/edit/imported';
+    }
   });
 </script>

@@ -16,9 +16,17 @@ interface Props {
   ogImage?: string;
   /** 当前页面规范 URL，不传则取 Astro.url */
   canonicalURL?: string;
+  /** 编辑器专注模式：保留导航，隐藏页脚并启用工作区视口 */
+  editorMode?: boolean;
 }
 
-const { title, description = '水面之上的只是冰山一角。社区共建的开放式知识图谱，追溯每个话题不为人知的秘密与真相。', ogImage, canonicalURL } = Astro.props;
+const {
+  title,
+  description = '水面之上的只是冰山一角。社区共建的开放式知识图谱，追溯每个话题不为人知的秘密与真相。',
+  ogImage,
+  canonicalURL,
+  editorMode = false,
+} = Astro.props;
 const SITE = Astro.site?.origin || 'https://icebergs.gnix807.cn';
 const pageUrl = canonicalURL || Astro.url.href;
 const ogImageUrl = ogImage || `${SITE}/og-image.svg`;
@@ -120,7 +128,7 @@ const seoSettings = await prisma.systemSettings.findMany({
     <link href="https://cdn.jsdelivr.net/npm/misans@4.0.0/lib/Normal/MiSans-Normal.min.css" rel="stylesheet" media="print" onload="this.media='all'" />
     <ViewTransitions fallback="none" />
   </head>
-  <body class="bg-surface-1 text-[var(--text-primary)] antialiased">
+  <body class:list={['bg-surface-1 text-[var(--text-primary)] antialiased', { 'editor-focus-mode': editorMode }]}>
     <div id="legacy-browser-notice" role="status">
       当前浏览器内核过旧或正处于“兼容模式”。正文仍可阅读，但登录、搜索和编辑功能可能受限；请切换到浏览器“极速模式”或升级浏览器。
     </div>
@@ -139,16 +147,19 @@ const seoSettings = await prisma.systemSettings.findMany({
     </div>
 
     <!-- 全站 Footer -->
-    <footer class="site-footer hidden md:block relative z-10 border-t border-border-subtle bg-surface-1 mt-16">
+    {!editorMode && (
+    <footer class="site-footer relative z-10 mt-20 hidden overflow-hidden border-t border-border-subtle bg-surface-1/80 backdrop-blur md:block">
       <!-- ASCII 装饰线 -->
-      <div class="px-4 md:px-6 font-mono">
-        <div class="text-[10px] text-text-lo select-none overflow-hidden leading-none py-3 tracking-widest">
-          ─────────────────────────────────────────────────────────────────────────────────────
+      <div class="mx-auto max-w-7xl px-4 font-mono md:px-6">
+        <div class="flex items-center gap-3 py-5 text-[10px] tracking-widest text-text-lo" aria-hidden="true">
+          <span class="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"></span>
+          <span class="text-brand/70">BELOW THE SURFACE</span>
+          <span class="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent"></span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 pb-8">
+        <div class="grid grid-cols-1 gap-4 pb-8 sm:grid-cols-2 xl:grid-cols-4">
           {/* 品牌 */}
-          <div>
+          <div class="site-footer-column">
             <div class="flex items-center gap-1 mb-3">
               <span class="text-brand font-bold text-sm">Iceberg</span>
               <span class="text-text-lo font-bold text-sm">::</span>
@@ -163,7 +174,7 @@ const seoSettings = await prisma.systemSettings.findMany({
           </div>
 
           {/* 探索 */}
-          <div>
+          <div class="site-footer-column">
             <div class="text-[10px] text-text-mid tracking-widest mb-3">// 探索</div>
             <nav class="space-y-1.5">
               <a href="/iceberg/list" class="block text-xs text-text-body hover:text-brand transition-colors">冰山广场</a>
@@ -176,7 +187,7 @@ const seoSettings = await prisma.systemSettings.findMany({
           </div>
 
           {/* 社区 */}
-          <div>
+          <div class="site-footer-column">
             <div class="text-[10px] text-text-mid tracking-widest mb-3">// 社区/帮助</div>
             <nav class="space-y-1.5">
               <a href="/announcements" class="block text-xs text-text-body hover:text-brand transition-colors">公告</a>
@@ -188,7 +199,7 @@ const seoSettings = await prisma.systemSettings.findMany({
           </div>
 
           {/* 支持 */}
-          <div>
+          <div class="site-footer-column">
             <div class="text-[10px] text-text-mid tracking-widest mb-3">// 关于</div>
             <nav class="space-y-1.5">
               <a href="/changelog" class="block text-xs text-text-body hover:text-brand transition-colors">更新日志</a>
@@ -200,10 +211,10 @@ const seoSettings = await prisma.systemSettings.findMany({
         </div>
 
         <!-- 支持本站 -->
-        <div class="border-t border-border-subtle bg-surface-2 py-3 flex flex-wrap items-center justify-center gap-3 text-[11px] font-mono">
+        <div class="mb-4 flex flex-wrap items-center justify-center gap-3 rounded-xl border border-border-subtle bg-surface-2/80 px-4 py-3 text-[11px] font-mono">
           <span class="text-warning">♥</span>
           <span class="text-text-body">喜欢冰山图宇宙？</span>
-          <a href="/support" class="px-3 py-1 bg-warning text-[#0A0A0A] font-bold text-xs hover:bg-warning/80 transition-colors">支持我们</a>
+          <a href="/support" class="rounded-lg bg-warning px-3 py-1.5 text-xs font-bold text-[#0A0A0A] transition-colors hover:bg-warning/80">支持我们</a>
         </div>
 
         <!-- 底部版权行 -->
@@ -219,10 +230,12 @@ const seoSettings = await prisma.systemSettings.findMany({
         </div>
       </div>
     </footer>
+    )}
 
     <!-- Mobile compact footer -->
-    <footer class="site-footer md:hidden border-t border-border-subtle bg-surface-1 mt-12">
-      <div class="max-w-7xl mx-auto px-4 py-4">
+    {!editorMode && (
+    <footer class="site-footer mt-12 border-t border-border-subtle bg-surface-1/85 backdrop-blur md:hidden">
+      <div class="mx-auto max-w-7xl px-4 py-5">
         <div class="flex items-center justify-between mb-3">
           <span class="text-brand font-bold text-xs">Iceberg<span class="text-text-lo">::</span><span class="text-text-body">DB</span></span>
           <span class="text-[10px] text-text-lo">v1.0.0</span>
@@ -238,6 +251,7 @@ const seoSettings = await prisma.systemSettings.findMany({
         <div class="text-[10px] text-text-lo mt-3">&copy; {new Date().getFullYear()} 冰山图宇宙 · Astro + React + Prisma</div>
       </div>
     </footer>
+    )}
 
     <!-- 噪点纹理叠加层 -->
     <div class="noise-overlay pointer-events-none fixed inset-0 z-[9996]"></div>

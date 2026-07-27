@@ -15,8 +15,9 @@ interface TierCardProps {
   onUpdateTier: (tierId: string, updates: Partial<Tier>) => void;
   onDeleteTier: (tierId: string) => void;
   onAddItem: (tierId: string, item: Item) => void;
-  onUpdateItem: (itemId: string, updates: Partial<Item>) => void;
+  onEditItem: (itemId: string) => void;
   onDeleteItem: (itemId: string) => void;
+  selectedItemId?: string | null;
 }
 
 const TIER_COLORS = [
@@ -35,8 +36,9 @@ export function TierCard({
   onUpdateTier,
   onDeleteTier,
   onAddItem,
-  onUpdateItem,
+  onEditItem,
   onDeleteItem,
+  selectedItemId,
 }: TierCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(tier.name);
@@ -60,6 +62,7 @@ export function TierCard({
     attributes: tierDragAttributes,
     listeners: tierDragListeners,
     setNodeRef: setSortableNodeRef,
+    setActivatorNodeRef: setTierActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -76,7 +79,7 @@ export function TierCard({
   const tierColor = TIER_COLORS[Math.min(tierIndex, TIER_COLORS.length - 1)];
   const tierStyle = {
     borderLeftColor: tierColor,
-    borderLeftWidth: '3px',
+    borderLeftWidth: '4px',
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.75 : 1,
@@ -109,25 +112,26 @@ export function TierCard({
   return (
     <div
       ref={setNodeRef}
-      className={`border border-border-subtle bg-surface-1 transition-colors ${isOver ? 'border-brand/30' : ''}`}
+      className={`overflow-hidden rounded-xl border border-border-subtle bg-surface-1 shadow-[0_8px_28px_rgba(0,0,0,0.06)] transition-[border-color,box-shadow,background-color] ${isOver ? 'border-brand/40 bg-brand/[0.015] shadow-[0_0_0_3px_rgba(0,255,65,0.07)]' : 'hover:border-border'}`}
       style={tierStyle}
     >
       {/* ── Tier 标题栏 ── */}
-      <div className="flex items-center justify-between gap-1 px-2 py-1 border-b border-border-subtle sm:gap-2 sm:px-3 sm:py-2"
-           style={{ background: `linear-gradient(90deg, ${tierColor}0d 0%, transparent 60%)` }}>
+      <div className="flex items-center justify-between gap-1 border-b border-border-subtle px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-2.5"
+           style={{ background: `linear-gradient(90deg, ${tierColor}14 0%, ${tierColor}05 42%, transparent 78%)` }}>
         <div className="flex flex-1 items-center gap-1 min-w-0 sm:gap-2">
           <button
+            ref={setTierActivatorNodeRef}
             type="button"
             {...tierDragAttributes}
             {...tierDragListeners}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center font-mono text-[10px] text-text-lo hover:text-text-body cursor-grab active:cursor-grabbing sm:min-h-0 sm:min-w-0 sm:px-1"
+            className="inline-flex min-h-11 min-w-11 touch-none cursor-grab items-center justify-center rounded-lg font-mono text-[10px] text-text-lo transition-colors hover:bg-surface-0/60 hover:text-text-body active:cursor-grabbing sm:min-h-8 sm:min-w-8"
             title="拖拽排序层级"
             aria-label="拖拽排序"
           >
             ⋮⋮
           </button>
           <button onClick={() => setIsCollapsed(!isCollapsed)}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center font-mono text-xs transition-colors flex-shrink-0 sm:min-h-0 sm:min-w-0"
+            className="inline-flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center rounded-lg font-mono text-xs transition-colors hover:bg-surface-0/60 sm:min-h-8 sm:min-w-8"
             style={{ color: tierColor }}
             aria-label={isCollapsed ? '展开层级' : '折叠层级'}>
             {isCollapsed ? '▶' : '▼'}
@@ -157,19 +161,19 @@ export function TierCard({
             </h3>
           )}
 
-          <span className="text-[10px] font-mono text-text-lo flex-shrink-0">
-            [{tier.items.length}]
+          <span className="flex-shrink-0 rounded-full border border-border-subtle bg-surface-0/60 px-2 py-0.5 font-mono text-[9px] text-text-lo">
+            {tier.items.length}
           </span>
         </div>
 
         <button onClick={() => onDeleteTier(tier.id)}
-          className="inline-flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center border border-transparent px-1.5 py-0.5 font-mono text-[10px] text-text-lo hover:border-danger/25 hover:text-danger transition-colors sm:ml-3 sm:min-h-0 sm:min-w-0">
-          DEL
+          className="inline-flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center rounded-lg border border-transparent px-2 py-0.5 font-mono text-[10px] text-text-lo transition-colors hover:border-danger/20 hover:bg-danger/5 hover:text-danger sm:ml-3 sm:min-h-8 sm:min-w-0">
+          删除
         </button>
       </div>
 
       {/* ── 层级描述 ── */}
-      <div className="px-4 py-1.5 border-b border-border-subtle/50">
+      <div className="border-b border-border-subtle/50 px-4 py-2">
         {isEditingDesc ? (
           <input
             type="text"
@@ -196,7 +200,7 @@ export function TierCard({
         <div className="p-3">
           {tier.items.length === 0 && (
             <div
-              className={`mb-2 rounded border border-dashed px-3 py-2 text-[11px] font-mono transition-colors ${
+              className={`mb-2 rounded-lg border border-dashed px-3 py-2.5 text-[11px] font-mono transition-colors ${
                 isOver ? 'border-brand text-brand bg-brand/5' : 'border-border text-text-mid'
               }`}
             >
@@ -206,13 +210,19 @@ export function TierCard({
           <SortableContext items={tier.items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
               {tier.items.map((item) => (
-                <ItemCard key={item.id} item={item} onUpdate={onUpdateItem} onDelete={onDeleteItem} />
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  onEdit={onEditItem}
+                  onDelete={onDeleteItem}
+                  isSelected={selectedItemId === item.id}
+                />
               ))}
             </div>
           </SortableContext>
 
           <button onClick={handleAddItem}
-            className="mt-3 min-h-11 w-full py-2 border border-dashed font-mono text-xs transition-colors"
+            className="mt-3 min-h-11 w-full rounded-lg border border-dashed py-2 font-mono text-xs transition-[border-color,color,background-color]"
             style={{ borderColor: `${tierColor}40`, color: `${tierColor}80` }}
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = tierColor; (e.currentTarget as HTMLButtonElement).style.color = tierColor; }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = `${tierColor}40`; (e.currentTarget as HTMLButtonElement).style.color = `${tierColor}80`; }}>

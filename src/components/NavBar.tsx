@@ -369,12 +369,12 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
   // ── render ─────────────────────────────────────
   return (
     <>
-      <nav className="site-navbar fixed top-0 left-0 right-0 z-40 bg-surface-1/96 backdrop-blur-sm border-b border-border-subtle">
+      <nav className="site-navbar fixed left-0 right-0 top-0 z-40 border-b border-border-subtle bg-surface-1/90 backdrop-blur-xl">
         <div className="w-full max-w-none px-3 md:px-4 lg:px-6 xl:px-8">
           <div className="flex items-center justify-between h-14 gap-2 lg:gap-3">
             <div className="flex min-w-0 flex-1 items-center gap-2 lg:gap-4">
               {/* Logo */}
-              <a href="/" className="flex items-center gap-1 font-mono group glitch-hover flex-shrink-0">
+              <a href="/" className="group glitch-hover flex flex-shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 font-mono transition-colors hover:bg-brand/5">
                 <span className="text-brand font-bold text-[15px] transition-colors">Iceberg</span>
                 <span className="text-text-lo font-bold text-[15px] group-hover:text-text-mid transition-colors">::</span>
                 <span className="text-text-body font-bold text-[15px] group-hover:text-text-hi transition-colors">DB</span>
@@ -389,10 +389,10 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                   const isCreate = href === '/iceberg/new';
                   return (
                     <a key={href} href={href}
-                      className={`relative px-2.5 xl:px-3 py-2 text-[15px] transition-all font-mono border-b-2 ${
+                      className={`relative rounded-lg border px-2.5 py-2 font-mono text-[15px] transition-all xl:px-3 ${
                         active
-                          ? 'text-brand border-brand'
-                          : 'text-text-hi hover:text-brand border-transparent hover:border-brand/25'
+                          ? 'border-brand/20 bg-brand/10 text-brand shadow-[0_0_0_1px_rgba(62,207,142,0.03)]'
+                          : 'border-transparent text-text-hi hover:border-border-subtle hover:bg-surface-2/70 hover:text-brand'
                       }`}>
                       {isCreate && <span className="mr-0.5">+</span>}
                       {label}
@@ -408,28 +408,32 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                   onMouseEnter={openMore} onMouseLeave={closeMore}>
                   <button
                     onClick={() => setOpenDropdown(openDropdown === 'more' ? null : 'more')}
-                    className={`relative px-2.5 xl:px-3 py-2 text-[15px] transition-all font-mono border-b-2 ${
+                    aria-haspopup="true"
+                    aria-expanded={openDropdown === 'more'}
+                    className={`relative rounded-lg border px-2.5 py-2 font-mono text-[15px] transition-all xl:px-3 ${
                       openDropdown === 'more'
-                        ? 'text-brand border-brand'
-                        : 'text-text-hi hover:text-brand border-transparent hover:border-brand/25'
+                        ? 'border-brand/20 bg-brand/10 text-brand'
+                        : 'border-transparent text-text-hi hover:border-border-subtle hover:bg-surface-2/70 hover:text-brand'
                     }`}
                   >
                     功能
                     <span className="ml-0.5 text-[10px]">{openDropdown === 'more' ? '▲' : '▼'}</span>
                   </button>
                   {moreMounted && (
-                    <div className={`absolute top-full right-0 mt-1.5 w-44 bg-surface-2 border border-border rounded-lg shadow-2xl z-50 overflow-hidden ${moreLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
+                    <div className={`nav-floating-panel nav-menu-panel absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-xl border border-border bg-surface-2 p-1.5 shadow-2xl ${moreLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
+                      <div className="nav-panel-eyebrow px-3 pb-1.5 pt-1">探索与帮助</div>
                       {moreLinks.map(({ href, label }) => {
                         const active = isActive(href);
                         return (
                           <a key={href} href={href}
                             onClick={() => setOpenDropdown(null)}
-                            className={`flex items-center gap-2.5 px-4 py-2.5 text-xs font-mono transition-colors ${
+                            className={`nav-menu-item flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-xs font-mono transition-colors ${
                               active
-                                ? 'text-brand bg-brand/5 border-l-2 border-brand'
+                                ? 'border-l-2 border-brand bg-brand/10 text-brand'
                                 : 'text-text-body hover:text-brand hover:bg-surface-3'
                             }`}>
-                            {label}
+                            <span className="min-w-0 flex-1 truncate">{label}</span>
+                            <span className="nav-menu-arrow text-text-lo" aria-hidden="true">›</span>
                           </a>
                         );
                       })}
@@ -445,7 +449,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
               {/* 搜索按钮（桌面端） */}
                 <button
                   onClick={() => setShowSearch(true)}
-                  className="hidden lg:flex items-center gap-2 px-2.5 xl:px-3 py-1.5 text-[15px] text-text-body bg-surface-2 border border-border hover:border-brand transition-all font-mono w-32 xl:w-40"
+                  className="hidden w-32 items-center gap-2 rounded-lg border border-border bg-surface-2/70 px-2.5 py-1.5 font-mono text-[15px] text-text-body transition-all hover:border-brand/60 hover:bg-surface-2 hover:text-text-hi lg:flex xl:w-40 xl:px-3"
                   title="搜索 (Ctrl+K)"
                 >
                 <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -457,7 +461,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
 
               {/* 主题切换 */}
               <button onClick={toggleTheme}
-                className="hidden sm:flex w-11 h-11 lg:w-9 lg:h-9 items-center justify-center text-text-body hover:text-brand border border-border hover:border-brand transition-all"
+                className="hidden h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface-2/60 text-text-body transition-all hover:border-brand/60 hover:bg-brand/5 hover:text-brand sm:flex lg:h-9 lg:w-9"
                 title={theme === 'dark' ? '切换浅色' : '切换深色'}
                 aria-label={theme === 'dark' ? '切换到浅色模式' : '切换到深色模式'}>
                 {theme === 'dark' ? (
@@ -478,7 +482,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                   onMouseEnter={openNotifHover} onMouseLeave={closeNotifHover}>
                   <button
                     onClick={() => showNotif ? setShowNotif(false) : openNotifHover()}
-                    className="relative w-11 h-11 lg:w-9 lg:h-9 flex items-center justify-center text-text-body hover:text-brand border border-border hover:border-brand transition-all"
+                    className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-surface-2/60 text-text-body transition-all hover:border-brand/60 hover:bg-brand/5 hover:text-brand lg:h-9 lg:w-9"
                     title="通知"
                     aria-label="通知"
                     aria-expanded={showNotif}
@@ -498,10 +502,10 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
 
                   {notifMounted && (
                     <div
-                      className={`mobile-notification-panel absolute right-0 top-full mt-2 w-[min(384px,90vw)] bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden rounded-lg ${notifLeaving ? 'nav-dropout' : 'nav-dropin'}`}
+                      className={`nav-floating-panel nav-notification-panel mobile-notification-panel absolute right-0 top-full mt-2 w-[min(384px,90vw)] bg-surface-2 border border-border shadow-2xl z-50 overflow-hidden rounded-xl ${notifLeaving ? 'nav-dropout' : 'nav-dropin'}`}
                       onMouseEnter={openNotifHover}
                     >
-                      <div className="flex items-center justify-between px-5 py-3 border-b border-border-subtle">
+                      <div className="nav-panel-header flex items-center justify-between px-5 py-3 border-b border-border-subtle">
                         <span className="text-xs font-mono font-semibold text-text-hi tracking-wide">通知</span>
                         <div className="flex items-center gap-3">
                           <button onClick={unreadCount > 0 ? markAllRead : undefined}
@@ -515,7 +519,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                         </div>
                       </div>
 
-                      <div className="max-h-[400px] overflow-y-auto">
+                      <div className="nav-panel-scroll max-h-[400px] overflow-y-auto">
                         {notifLoading && (
                           <div className="py-12 text-center text-text-lo font-mono text-xs">加载中...</div>
                         )}
@@ -560,7 +564,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                             <button
                               key={n.id}
                               onClick={() => { markRead(n.id, n.link); setShowNotif(false); }}
-                              className="w-full text-left px-5 py-3 hover:bg-surface-3 transition-colors border-b border-border-subtle last:border-0 flex items-start gap-3"
+                              className="nav-notification-item w-full text-left px-5 py-3 hover:bg-surface-3 transition-colors border-b border-border-subtle last:border-0 flex items-start gap-3"
                             >
                               <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
                                 style={{ background: !n.read ? cfg.color : 'transparent' }} />
@@ -594,7 +598,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                     <div className="relative" ref={dropdownRef}
                       onMouseEnter={openUser} onMouseLeave={closeUser}>
                       <button onClick={() => setShowDropdown(!showDropdown)}
-                        className="flex min-h-11 min-w-11 items-center justify-center gap-2 px-2 sm:px-3 text-[15px] text-text-hi hover:text-brand border border-border hover:border-brand transition-all font-mono"
+                        className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg border border-border bg-surface-2/60 px-2 font-mono text-[15px] text-text-hi transition-all hover:border-brand/60 hover:bg-brand/5 hover:text-brand sm:px-3"
                         aria-label="打开用户菜单"
                         aria-expanded={showDropdown}>
                         {user.avatar ? (
@@ -610,8 +614,8 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                       </button>
 
                       {dropdownMounted && (
-                        <div className={`absolute right-0 top-full mt-2 w-64 bg-surface-2 border border-border shadow-xl overflow-hidden z-50 ${dropdownLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
-                          <div className="px-4 py-3.5 border-b border-border">
+                        <div className={`nav-floating-panel nav-user-panel absolute right-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border border-border bg-surface-2 p-1.5 shadow-2xl ${dropdownLeaving ? 'nav-dropdown-out' : 'nav-dropdown-in'}`}>
+                          <div className="nav-profile-header rounded-lg px-3 py-3 border-b border-border">
                             <div className="flex items-center gap-3">
                               {user.avatar ? (
                                 <img src={user.avatar} alt="" className="h-10 w-10 rounded-full object-cover ring-1 ring-border" />
@@ -649,18 +653,18 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                           </div>
                           <div className="py-1">
                             <a href={`/user/${user.id}`}
-                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
+                              className="nav-menu-item flex items-center gap-2.5 px-3 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
                               onClick={() => setShowDropdown(false)}>
                               <LayoutDashboard size={15} strokeWidth={1.5} /> 我的主页
                             </a>
                             <a href="/iceberg/new"
-                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
+                              className="nav-menu-item flex items-center gap-2.5 px-3 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
                               onClick={() => setShowDropdown(false)}>
                               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                               创建冰山图
                             </a>
                             <a href={`/user/${user.id}?tab=watchlist`}
-                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
+                              className="nav-menu-item flex items-center gap-2.5 px-3 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
                               onClick={() => setShowDropdown(false)}>
                               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                               收藏
@@ -668,16 +672,16 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                           </div>
                           <div className="border-t border-border py-1">
                             <a href={`/user/${user.id}?tab=settings`}
-                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
+                              className="nav-menu-item flex items-center gap-2.5 px-3 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono"
                               onClick={() => setShowDropdown(false)}>
                               <Settings size={15} strokeWidth={1.5} /> 账号设置
                             </a>
                             <button onClick={(e) => { e.preventDefault(); toggleCrt(); }}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono text-left">
+                              className="nav-menu-item w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-text-hi hover:text-brand hover:bg-surface-3 transition-colors font-mono text-left">
                               <span className="w-[15px] text-center text-[13px]">{crtOn ? '⊟' : '⊡'}</span> CRT 扫描线 <span className="ml-auto text-[10px] text-text-lo">{crtOn ? 'ON' : 'OFF'}</span>
                             </button>
                             <a href="/api/auth/logout"
-                              className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-danger hover:bg-surface-3 transition-colors font-mono">
+                              className="nav-menu-item nav-menu-item-danger flex items-center gap-2.5 px-3 py-2.5 text-sm text-danger hover:bg-surface-3 transition-colors font-mono">
                               <LogOut size={15} strokeWidth={1.5} /> 退出登录
                             </a>
                           </div>
@@ -686,7 +690,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
                     </div>
                   ) : (
                     <button onClick={() => setShowLogin(true)}
-                      className="flex min-h-11 min-w-11 items-center justify-center gap-2 px-2 sm:px-3 text-sm text-text-hi hover:text-brand border border-border hover:border-brand transition-all font-mono"
+                      className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg border border-border bg-surface-2/60 px-2 font-mono text-sm text-text-hi transition-all hover:border-brand/60 hover:bg-brand/5 hover:text-brand sm:px-3"
                       aria-label="登录或注册">
                       <Lock size={14} strokeWidth={1.5} />
                       <span className="hidden sm:inline">登录/注册</span>
@@ -706,7 +710,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
 
               {/* 移动端汉堡 */}
               <button onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="lg:hidden w-11 h-11 flex items-center justify-center text-text-body hover:text-brand transition-colors"
+                className="flex h-11 w-11 items-center justify-center rounded-lg border border-transparent text-text-body transition-colors hover:border-border-subtle hover:bg-surface-2 hover:text-brand lg:hidden"
                 aria-label={showMobileMenu ? '关闭菜单' : '打开菜单'}
                 aria-expanded={showMobileMenu}>
                 {showMobileMenu ? (
@@ -725,16 +729,16 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
 
         {/* 移动端展开菜单 */}
         {showMobileMenu && (
-          <div className="mobile-menu-panel lg:hidden border-t border-border-subtle bg-surface-1/98 mobile-menu-animate">
+          <div className="nav-mobile-panel mobile-menu-panel mobile-menu-animate border-t border-border-subtle bg-surface-1 p-2 lg:hidden">
             {allLinks.map(({ href, label }) => {
               const active = isActive(href);
               const isAnn = href === '/announcements';
               return (
                 <a key={href} href={href}
-                  className={`flex items-center gap-2 px-6 py-3.5 text-sm font-mono border-b border-border-subtle last:border-0 transition-colors ${
+                  className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-mono transition-colors ${
                     active
-                      ? 'text-brand bg-brand/5'
-                      : 'text-text-hi hover:text-brand hover:bg-brand/5'
+                      ? 'bg-brand/10 text-brand'
+                      : 'text-text-hi hover:bg-brand/5 hover:text-brand'
                   }`}
                   onClick={() => setShowMobileMenu(false)}>
                   <span className={`text-xs font-mono w-3 ${active ? 'text-brand' : 'text-transparent'}`}>›</span>
@@ -747,7 +751,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
             })}
             {!loading && !user && (
               <button
-                className="w-full flex items-center gap-2 px-6 py-3.5 text-sm text-text-hi hover:text-brand hover:bg-brand/5 font-mono transition-colors border-t border-border-subtle"
+                className="flex w-full items-center gap-2 rounded-lg border-t border-border-subtle px-4 py-3 text-sm text-text-hi transition-colors hover:bg-brand/5 hover:text-brand font-mono"
                 onClick={() => { setShowMobileMenu(false); setShowLogin(true); }}>
                 <Lock size={14} strokeWidth={1.5} /> 登录/注册
               </button>
@@ -757,31 +761,31 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
       </nav>
 
       {/* ── 移动端底部导航栏 ── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-1/96 backdrop-blur-sm border-t border-border-subtle mobile-bottom-nav" aria-label="移动端主导航">
+      <nav className="mobile-bottom-nav fixed bottom-0 left-0 right-0 z-40 border-t border-border-subtle bg-surface-1/90 backdrop-blur-xl lg:hidden" aria-label="移动端主导航">
         <div className="flex items-stretch min-h-[64px]">
           {/* 首页 */}
-          <a href="/" aria-current={isActive('/') ? 'page' : undefined} className={`min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/') ? 'text-brand' : 'text-text-body'}`}>
+          <a href="/" aria-current={isActive('/') ? 'page' : undefined} className={`mobile-bottom-nav-item min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/') ? 'text-brand' : 'text-text-body'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
             首页
           </a>
           {/* 广场 */}
-          <a href="/iceberg/list" aria-current={isActive('/iceberg/list') ? 'page' : undefined} className={`min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/iceberg/list') ? 'text-brand' : 'text-text-body'}`}>
+          <a href="/iceberg/list" aria-current={isActive('/iceberg/list') ? 'page' : undefined} className={`mobile-bottom-nav-item min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/iceberg/list') ? 'text-brand' : 'text-text-body'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
             </svg>
             广场
           </a>
           {/* 搜索 */}
-          <button onClick={() => setShowSearch(true)} className="min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-text-body transition-colors" aria-label="搜索">
+          <button onClick={() => setShowSearch(true)} className="mobile-bottom-nav-item min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-text-body transition-colors" aria-label="搜索">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
             </svg>
             搜索
           </button>
           {/* 创意 */}
-          <a href="/ideas" aria-current={isActive('/ideas') ? 'page' : undefined} className={`min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/ideas') ? 'text-brand' : 'text-text-body'}`}>
+          <a href="/ideas" aria-current={isActive('/ideas') ? 'page' : undefined} className={`mobile-bottom-nav-item min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${isActive('/ideas') ? 'text-brand' : 'text-text-body'}`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M9 18h6"/><path d="M10 22h4"/><path d="M8.2 14.7A7 7 0 1 1 15.8 14.7C14.7 15.5 14 16.6 14 18h-4c0-1.4-.7-2.5-1.8-3.3z"/>
             </svg>
@@ -789,14 +793,14 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
           </a>
           {/* 我的 / 登录 */}
           {user ? (
-            <a href={`/user/${user.id}`} aria-current={currentPath.startsWith('/user/') ? 'page' : undefined} className={`min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${currentPath.startsWith('/user/') ? 'text-brand' : 'text-text-body'}`}>
+            <a href={`/user/${user.id}`} aria-current={currentPath.startsWith('/user/') ? 'page' : undefined} className={`mobile-bottom-nav-item min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono transition-colors ${currentPath.startsWith('/user/') ? 'text-brand' : 'text-text-body'}`}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
               </svg>
               我的
             </a>
           ) : (
-            <button onClick={() => setShowLogin(true)} className="min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-text-body transition-colors">
+            <button onClick={() => setShowLogin(true)} className="mobile-bottom-nav-item min-w-0 flex-1 flex flex-col items-center justify-center gap-1 py-3.5 text-[10px] font-mono text-text-body transition-colors">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
@@ -809,18 +813,18 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
       {/* ── 全局搜索覆盖层 ── */}
       {searchMounted && (
         <div
-          className={`${searchLeaving ? 'modal-overlay-out' : 'modal-overlay'} search-modal-overlay mobile-search-overlay app-modal-viewport fixed inset-0 z-[60] flex items-start justify-center pt-20 px-4`}
+          className={`${searchLeaving ? 'modal-overlay-out' : 'modal-overlay'} search-modal-overlay mobile-search-overlay app-modal-viewport modern-modal-viewport fixed inset-0 z-[60] flex items-start justify-center pt-20 px-4`}
           onClick={() => setShowSearch(false)}
         >
           <div
-            className={`${searchLeaving ? 'modal-content-out' : 'modal-content'} search-modal-panel app-modal-panel flex w-full max-w-2xl flex-col overflow-hidden shadow-2xl`}
+            className={`${searchLeaving ? 'modal-content-out' : 'modal-content'} search-modal-panel app-modal-panel modern-modal-panel command-palette flex w-full max-w-2xl flex-col overflow-hidden shadow-2xl`}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
             aria-label="全站搜索"
           >
             {/* 搜索输入框 */}
-            <div className="search-modal-header flex items-center gap-3 px-4 py-3 border-b">
+            <div className="search-modal-header modern-modal-header flex items-center gap-3 px-4 py-3 border-b">
               <svg className="text-brand flex-shrink-0" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
                 <circle cx="9" cy="9" r="6"/><path d="M13 13l4 4"/>
               </svg>
@@ -835,7 +839,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
               />
               <button
                 onClick={() => setShowSearch(false)}
-                className="search-modal-close mobile-touch-target text-lg transition-colors font-mono"
+                className="search-modal-close modal-icon-button mobile-touch-target text-lg transition-colors font-mono"
                 aria-label="关闭搜索"
               >
                 ×
@@ -843,7 +847,7 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
             </div>
 
             {/* 搜索结果 */}
-            <div className="search-modal-results min-h-0 flex-1 overflow-y-auto">
+            <div className="search-modal-results modern-modal-body min-h-0 flex-1 overflow-y-auto">
               {searchQuery.length < 2 && (
                 <SearchQuickLinks onNavigate={() => setShowSearch(false)} />
               )}
@@ -888,10 +892,10 @@ export function NavBar({ features: featuresRaw }: { features?: string }) {
             </div>
 
             {/* 底部提示 */}
-            <div className="search-modal-footer px-4 py-2 border-t flex items-center justify-end gap-4 text-xs font-mono">
-              <span>↑↓ 导航</span>
-              <span>↵ 打开</span>
-              <span>Esc 关闭</span>
+            <div className="search-modal-footer modern-modal-footer px-4 py-2 border-t flex items-center justify-end gap-4 text-xs font-mono">
+              <span><kbd>↑↓</kbd> 导航</span>
+              <span><kbd>↵</kbd> 打开</span>
+              <span><kbd>Esc</kbd> 关闭</span>
             </div>
           </div>
         </div>
