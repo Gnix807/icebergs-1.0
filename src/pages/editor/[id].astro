@@ -5,8 +5,8 @@ import { IcebergEditor } from '../../components/iceberg/IcebergEditor';
 const { id } = Astro.params;
 ---
 
-<Layout title="编辑器 | 冰山图宇宙">
-  <main class="min-h-screen py-8">
+<Layout title="编辑器 | 冰山图宇宙" editorMode>
+  <main class="editor-page-shell min-h-screen">
     <IcebergEditor client:load icebergId={id} />
   </main>
 </Layout>

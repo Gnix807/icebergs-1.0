@@ -63,22 +63,30 @@ export async function POST(event: APIContext) {
       });
     }
 
-    const maxOrderTier = await prisma.tier.findFirst({
-      where: { icebergId: iceberg.id },
-      orderBy: { order: 'desc' },
+    const result = await prisma.$transaction(async (tx) => {
+      const maxOrderTier = await tx.tier.findFirst({
+        where: { icebergId: iceberg.id },
+        orderBy: { order: 'desc' },
+      });
+      const appendOrder = maxOrderTier ? maxOrderTier.order + 1 : 0;
+      const requestedOrder = typeof order === 'number' && Number.isFinite(order) ? order : appendOrder;
+      const tier = await tx.tier.create({
+        data: {
+          name: name.trim(),
+          desc: typeof desc === 'string' ? desc : '',
+          order: Math.max(requestedOrder, appendOrder),
+          icebergId: iceberg.id,
+        },
+      });
+      const revision = await tx.iceberg.update({
+        where: { id: iceberg.id },
+        data: { updatedAt: new Date() },
+        select: { updatedAt: true },
+      });
+      return { ...tier, icebergUpdatedAt: revision.updatedAt };
     });
-    const newOrder = order !== undefined ? order : (maxOrderTier ? maxOrderTier.order + 1 : 0);
 
-    const tier = await prisma.tier.create({
-      data: {
-        name: name.trim(),
-        desc: typeof desc === 'string' ? desc : '',
-        order: newOrder,
-        icebergId: iceberg.id,
-      },
-    });
-
-    return new Response(JSON.stringify(success(tier)), {
+    return new Response(JSON.stringify(success(result)), {
       status: 201, headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
@@ -143,23 +151,30 @@ export async function GET(event: APIContext) {
         });
       }
 
-      const maxOrderTier = await prisma.tier.findFirst({
-        where: { icebergId: iceberg.id },
-        orderBy: { order: 'desc' },
+      const result = await prisma.$transaction(async (tx) => {
+        const maxOrderTier = await tx.tier.findFirst({
+          where: { icebergId: iceberg.id },
+          orderBy: { order: 'desc' },
+        });
+        const appendOrder = maxOrderTier ? maxOrderTier.order + 1 : 0;
+        const requestedOrder = typeof order === 'number' && Number.isFinite(order) ? order : appendOrder;
+        const tier = await tx.tier.create({
+          data: {
+            name: name.trim(),
+            desc: typeof desc === 'string' ? desc : '',
+            order: Math.max(requestedOrder, appendOrder),
+            icebergId: iceberg.id,
+          },
+        });
+        const revision = await tx.iceberg.update({
+          where: { id: iceberg.id },
+          data: { updatedAt: new Date() },
+          select: { updatedAt: true },
+        });
+        return { ...tier, icebergUpdatedAt: revision.updatedAt };
       });
 
-      const newOrder = order !== undefined ? order : (maxOrderTier ? maxOrderTier.order + 1 : 0);
-
-      const tier = await prisma.tier.create({
-        data: {
-          name: name.trim(),
-          desc: typeof desc === 'string' ? desc : '',
-          order: newOrder,
-          icebergId: iceberg.id,
-        },
-      });
-
-      return new Response(JSON.stringify(success(tier)), {
+      return new Response(JSON.stringify(success(result)), {
         status: 201,
         headers: { 'Content-Type': 'application/json' },
       });

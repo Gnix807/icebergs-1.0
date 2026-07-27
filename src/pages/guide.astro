@@ -150,7 +150,18 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
       <div class="space-y-3">
 
         <div class="border border-border-minimal bg-surface-2 p-4 mb-3 text-[11px] font-mono text-text-body">
-          <p class="leading-relaxed mb-3">除了从零开始创作，你也可以从 <strong class="text-text-hi">icebergthreads.com</strong> 导入已有的冰山图数据。在编辑器中点击导入按钮，粘贴 icebergthreads.com 上的冰山图链接，系统将自动解析层级和词条结构（每层最多 500 条），导入后可在编辑器中继续修改和完善。导入时自动检测词条自身的 NSFW 标记并映射为系统标签，原图的分类和标记也会自动转换为词条标签。</p>
+          <div class="text-[10px] text-brand mb-3">// 从 Iceberg Threads 导入或同步</div>
+          <p class="leading-relaxed mb-3">
+            <strong class="text-text-hi">创建新冰山图：</strong>
+            在新建编辑器中点击「导入」，粘贴 icebergthreads.com 上的冰山图链接，系统会解析层级和词条结构（每层最多 500 条），导入后可继续修改和完善。词条自身的 NSFW 标记、原图分类和标记会自动转换为本站标签。
+          </p>
+          <p class="leading-relaxed mb-3">
+            <strong class="text-text-hi">更新已经导入的冰山图：</strong>
+            打开原冰山图的编辑器，等待当前修改保存完成后点击「同步源站」。获取并预览最新内容，再回到编辑器点击「备份并应用同步」即可。
+          </p>
+          <div class="border border-brand/20 bg-brand/5 px-3 py-2 text-[10px] leading-relaxed text-text-mid">
+            同步采用安全合并：同名层级和词条会更新，源站新增内容会加入；本站独有层级、词条、标签和已有词条 ID 会保留，源站删除不会在本站执行。写入前会生成版本备份并检查协作版本，检测到其他协作者的新修改时整次同步取消，不会只写入一部分。
+          </div>
         </div>
 
         <!-- 字段说明 -->
@@ -222,6 +233,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
             <p class="text-[10px] text-text-mid">
               · 审核通常在 24–48 小时内完成。NSFW 内容进入专项审核队列，审核时间可能更长。<br/>
               · 被驳回时会收到通知并附上驳回原因，修改后可重新提交。<br/>
+              · 从 Iceberg Threads 同步现有作品前，编辑器会自动保存一份「源站同步前备份」，可在版本历史中恢复。<br/>
               · 编辑器支持 <strong class="text-text-hi">Ctrl+S</strong> 快速保存草稿，<strong class="text-text-hi">Ctrl+Enter</strong> 提交审核。
             </p>
           </div>
@@ -497,6 +509,10 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           {
             q: '冰山图被驳回后我该怎么做？',
             a: '你会收到站内通知，并附有驳回原因。根据原因修改草稿（尤其是层级结构、描述质量、NSFW 标签）后，可重新提交审核。',
+          },
+          {
+            q: '如何把 Iceberg Threads 的更新同步到现有冰山图？',
+            a: '进入这张冰山图的编辑器，等待当前修改保存后点击「同步源站」，粘贴或确认原始链接并获取数据。预览无误后返回编辑器，点击「备份并应用同步」。系统只更新同名内容并加入新增内容，不会因为源站删除而删除本站内容；同步前也会生成可恢复的版本备份。',
           },
           {
             q: '什么样的内容会被驳回？',

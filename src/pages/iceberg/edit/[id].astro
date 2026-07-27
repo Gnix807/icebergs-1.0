@@ -6,8 +6,8 @@ const { id } = Astro.params;
 if (!id) return Astro.redirect('/iceberg/list');
 ---
 
-<Layout title="编辑冰山图 | 冰山图宇宙">
-  <main class="min-h-screen py-8">
+<Layout title="编辑冰山图 | 冰山图宇宙" editorMode>
+  <main class="editor-page-shell min-h-screen">
     <IcebergEditor client:load icebergId={id} />
   </main>
 </Layout>

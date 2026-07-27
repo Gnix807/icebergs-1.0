@@ -54,7 +54,7 @@ export function Toast() {
       {toasts.map(t => (
         <div
           key={t.id}
-          className={`toast-item px-4 py-2.5 font-mono text-sm border bg-surface-2 pointer-events-auto ${STYLES[t.type]}`}
+          className={`toast-item rounded-xl border bg-surface-2/95 px-4 py-3 font-mono text-sm shadow-2xl backdrop-blur pointer-events-auto ${STYLES[t.type]}`}
         >
           <span className="mr-2 opacity-60">{ICONS[t.type]}</span>
           {t.message}
