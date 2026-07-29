@@ -23,6 +23,11 @@ if [ ! -f "${ENV_FILE}" ]; then
   exit 1
 fi
 
+case "${ENV_FILE}" in
+  /*) ENV_FILE_PATH="${ENV_FILE}" ;;
+  *) ENV_FILE_PATH="${APP_DIR}/${ENV_FILE}" ;;
+esac
+
 COMPOSE="docker compose --env-file ${ENV_FILE}"
 
 echo "==> 1/8 拉取最新代码（仅允许快进）"
@@ -31,9 +36,10 @@ git pull --ff-only origin main
 echo "==> 2/8 检查生产配置"
 docker run --rm \
   -v "${APP_DIR}:/app:ro" \
+  -v "${ENV_FILE_PATH}:/run/icebergs.env" \
   -w /app \
   node:22-alpine3.22 \
-  node scripts/deploy-preflight.mjs --env-file "${ENV_FILE}"
+  node scripts/deploy-preflight.mjs --env-file /run/icebergs.env --repair-secrets
 ${COMPOSE} config >/dev/null
 
 echo "==> 3/8 确保数据库已启动并等待就绪"
