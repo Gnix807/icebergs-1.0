@@ -14,7 +14,8 @@ docker compose up -d
 
 ```bash
 # 更新
-git pull && docker compose up -d --build
+git pull --ff-only origin main
+docker compose up -d --build
 
 # 备份
 docker compose exec db pg_dump -U icebergs icebergs > backups/$(date +%Y%m%d).sql
@@ -166,10 +167,23 @@ https://你的域名/api/auth/callback
 以后每次更新代码只需要：
 
 ```bash
-cd /opt/icebergs && bash deploy.sh
+cd /opt/icebergs
+git pull --ff-only origin main
+bash deploy.sh
 ```
 
-或在 1Panel 计划任务中设置定时执行 `bash /opt/icebergs/deploy.sh`。
+`deploy.sh` 会再次执行仅快进同步校验，然后先备份数据库，再停止现有
+Docker 服务、复用缓存重建镜像、启动全部服务，最后执行增量 Schema 同步、
+回填和健康检查。`docker compose down` 不带 `-v`，不会删除 PostgreSQL
+数据卷；停服后的构建如果失败，脚本会尝试使用现有镜像重新拉起服务。
+不要跳过前面的手动拉取，也不要使用会覆盖服务器本地改动的强制重置命令。
+
+脚本默认优先读取 `.env.production`；如果服务器是旧部署且只有 `.env`，
+会自动回退使用 `.env`，不会覆盖或复制现有生产密钥。也可以临时通过
+`ENV_FILE=.env bash deploy.sh` 明确指定。
+
+如需使用 1Panel 计划任务，应执行包含“进入目录 → 拉取 → 部署”的脚本，
+不要只单独运行 `deploy.sh`。
 
 唯一需要手动改的永远是 `.env`，其他全部自动。
 
