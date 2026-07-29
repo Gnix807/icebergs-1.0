@@ -67,6 +67,8 @@ export interface ChecklistItem {
   key: string;
   label: string;
   pass: boolean;
+  /** false 表示建议项：展示提醒，但不阻止提交审核 */
+  blocking?: boolean;
   hint?: string;
 }
 

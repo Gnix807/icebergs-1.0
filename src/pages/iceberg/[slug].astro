@@ -246,7 +246,7 @@ const estimatedMinutes = allItemsFlat.length > 0 ? Math.max(1, Math.ceil(allItem
 const totalItems = allItemsFlat.length;
 const itemsWithDesc = (iceberg?.tiers ?? []).reduce((s: number, t: any) => s + t.items.filter((i: any) => i.desc).length, 0);
 const descRatio = totalItems > 0 ? itemsWithDesc / totalItems : 0;
-stubLevel = totalItems < 5 ? 'stub' : totalItems < 10 && descRatio < 0.3 ? 'expand' : null;
+stubLevel = totalItems < 5 ? 'stub' : descRatio < 0.3 ? 'expand' : null;
 
 // 每层词条的全局起始 index（用于按钮的 data-index）
 let globalIdx = 0;
@@ -358,7 +358,7 @@ if (iceberg?.status === 'PUBLISHED') {
             </span>
           </div>
 
-          <h1 class="break-words text-3xl md:text-4xl font-mono font-semibold mb-4 leading-tight">
+          <h1 class="break-words text-2xl sm:text-3xl md:text-4xl font-mono font-semibold mb-4 leading-tight">
             <span class="text-brand">#</span> {iceberg.title}
           </h1>
 
@@ -394,13 +394,13 @@ if (iceberg?.status === 'PUBLISHED') {
               <div class="flex shrink-0 flex-col gap-2 sm:flex-row">
                 <a
                   href={`/iceberg/${iceberg.slug}/collaboration?newIssue=1`}
-                  class="mobile-touch-target inline-flex items-center justify-center rounded-lg border border-warning/50 px-3 py-2 font-mono text-xs text-warning transition-colors hover:bg-warning/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning/50"
+                  class="mobile-touch-target inline-flex items-center justify-center whitespace-nowrap rounded-lg border border-warning/50 px-3 py-2 font-mono text-xs text-warning transition-colors hover:bg-warning/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning/50"
                 >
                   提出 Issue
                 </a>
                 <a
                   href={`/iceberg/${iceberg.slug}/collaboration`}
-                  class="mobile-touch-target inline-flex items-center justify-center gap-2 rounded-lg border border-brand/50 px-3 py-2 font-mono text-xs text-brand transition-colors hover:border-brand hover:bg-brand/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
+                  class="mobile-touch-target inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-brand/50 px-3 py-2 font-mono text-xs text-brand transition-colors hover:border-brand hover:bg-brand/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/50"
                 >
                   版本与协作
                   <span aria-hidden="true">→</span>
@@ -409,39 +409,41 @@ if (iceberg?.status === 'PUBLISHED') {
             </section>
           )}
 
-          <div class="iceberg-meta mt-5 flex flex-wrap items-center justify-between gap-4 text-xs text-text-body font-mono">
-            <div class="flex flex-wrap items-center gap-4">
-              <span class="text-text-mid">
+          <div class="iceberg-meta mt-5 flex flex-col items-stretch gap-4 text-xs text-text-body font-mono sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div class="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
+              <span class="whitespace-nowrap text-text-mid">
                 <span class="text-text-body">{iceberg.tiers.length}</span> 层 ·
                 <span class="text-text-body ml-1">{allItemsFlat.length}</span> 词条
                 <span class="ml-1 text-text-lo">(~{estimatedMinutes} 分钟)</span>
               </span>
-              <span class="text-text-mid">
+              <span class="whitespace-nowrap text-text-mid">
                 <span class="text-text-body">{iceberg.viewCount}</span> 次探索
               </span>
-              <span>
+              <span class="min-w-0">
                 作者:
-                <a href={`/user/${iceberg.author?.id}`} class="break-all text-text-body hover:text-brand transition-colors ml-1">
+                <a href={`/user/${iceberg.author?.id}`} class="break-words text-text-body hover:text-brand transition-colors ml-1">
                   {iceberg.author?.nickname || iceberg.author?.username || '匿名'}
                 </a>
               </span>
             </div>
-            {iceberg.status === 'PUBLISHED' && <SocialBar client:load icebergId={iceberg.id} />}
             {iceberg.status === 'PUBLISHED' && (
-              <ExportButton
-                client:load
-                icebergTitle={iceberg.title}
-                tiers={iceberg.tiers.map((tier: any, ti: number) => ({
-                  name: tier.name,
-                  color: tierColors[ti % 6],
-                  items: tier.items.map((item: any) => ({
-                    title: item.title,
-                    labels: ((item as any)._labels as string[]) || [],
-                  })),
-                }))}
-                icebergUrl={`${Astro.url.origin}/iceberg/${iceberg.slug}`}
-                labelColors={labelColorMap}
-              />
+              <div class="iceberg-meta-actions flex min-w-0 flex-wrap items-center gap-2">
+                <SocialBar client:load icebergId={iceberg.id} />
+                <ExportButton
+                  client:load
+                  icebergTitle={iceberg.title}
+                  tiers={iceberg.tiers.map((tier: any, ti: number) => ({
+                    name: tier.name,
+                    color: tierColors[ti % 6],
+                    items: tier.items.map((item: any) => ({
+                      title: item.title,
+                      labels: ((item as any)._labels as string[]) || [],
+                    })),
+                  }))}
+                  icebergUrl={`${Astro.url.origin}/iceberg/${iceberg.slug}`}
+                  labelColors={labelColorMap}
+                />
+              </div>
             )}
           </div>
         </header>
@@ -520,14 +522,14 @@ if (iceberg?.status === 'PUBLISHED') {
             return (
               <div
                 id={`tier-${ti}`}
-                class="reveal tier-section relative overflow-hidden"
+                class="tier-section relative overflow-hidden"
                 data-tier-idx={String(ti)}
                 style={{ borderLeft: `3px solid ${color}`, background: `${color}0d` }}
               >
                 <div class="px-4 py-2.5">
-                  <div class="flex items-center gap-3">
-                    <h3 class="font-mono text-sm font-semibold" style={{ color }}>{tier.name}</h3>
-                    <span class="text-[10px] font-mono text-text-lo">{tier.items.length}</span>
+                  <div class="flex min-w-0 items-start gap-3">
+                    <h3 class="min-w-0 break-words font-mono text-sm font-semibold" style={{ color }}>{tier.name}</h3>
+                    <span class="shrink-0 pt-0.5 text-[10px] font-mono text-text-lo">{tier.items.length}</span>
                   </div>
                   {tier.desc && (
                     <p class="mt-0.5 font-mono text-[11px] text-text-body max-w-2xl">{tier.desc}</p>
@@ -1341,6 +1343,15 @@ if (iceberg?.status === 'PUBLISHED') {
     .iceberg-filter-options::-webkit-scrollbar {
       display: none;
     }
+    .iceberg-filter-option {
+      max-width: none;
+      white-space: nowrap;
+      overflow-wrap: normal;
+      word-break: normal;
+    }
+    .iceberg-meta-actions {
+      width: 100%;
+    }
   }
 
   /* ── Label filter buttons (per-label color via --lc var) ── */
@@ -1402,16 +1413,25 @@ if (iceberg?.status === 'PUBLISHED') {
   .item-chip {
     min-height: 44px;
     min-width: 44px;
+    max-width: 100%;
   }
   @media (max-width: 640px) {
-    .item-chip { padding: 8px 12px; font-size: 13px; }
+    .item-chip {
+      align-items: flex-start;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
     #modal-popup { padding: 8px; }
     #modal-body { padding: 16px; }
   }
 
   /* ── Item chips ── */
   .chip-title {
+    min-width: 0;
     font-weight: 600;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .item-chip {
     border-color: #30363d;

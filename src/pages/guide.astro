@@ -200,7 +200,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
             </div>
             <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">词条</span>
-              <span class="text-text-body">每个知识点。每层至少 <strong class="text-text-hi">2 个词条</strong>，词条有标题（必填）和描述（推荐填写，全图 50% 以上词条须有描述）。词条数少于 5 个将被标记为 🌱 小作品。词条撰写规范详见 <a href="/guide/writing" class="text-brand hover:underline border-b border-brand/30">撰写指南 →</a></span>
+              <span class="text-text-body">每个知识点。每层至少 <strong class="text-text-hi">2 个词条</strong>，词条标题必填，描述可以在提交后逐步补充（建议全图 50% 以上词条有描述）。词条数少于 5 个将被标记为 🌱 小作品。词条撰写规范详见 <a href="/guide/writing" class="text-brand hover:underline border-b border-brand/30">撰写指南 →</a></span>
             </div>
             <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">标签</span>
@@ -219,7 +219,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
               '已选择主题分类',
               '层数 ≥ 3 层',
               '每层词条数 ≥ 2 条',
-              '词条描述覆盖率 ≥ 50%（超过一半的词条有描述）',
+              '词条描述覆盖率建议 ≥ 50%（不足时会提醒，但不阻止提交）',
               '含 NSFW 内容时已勾选确认',
             ].map(item => (
               <li class="flex items-center gap-2">
@@ -534,7 +534,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           {
             icon: '◉', label: '小作品（Stub）标记',
             link: null, linkLabel: null,
-            desc: '自动评估冰山图质量：词条数 < 5 显示 🌱 标记，词条数 < 10 且描述覆盖率 < 30% 显示 🔧 标记，提示读者该作品尚待完善，欢迎作者继续补充内容。',
+            desc: '自动评估冰山图的完善程度：词条数 < 5 显示 🌱 标记，描述覆盖率 < 30% 显示 🔧 标记。标记只作完善提醒，不影响提交，作者可以在移植后继续补充内容。',
           },
           {
             icon: '☰', label: '草稿系统',
@@ -625,7 +625,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           },
           {
             q: '什么样的内容会被驳回？',
-            a: '无事实依据的内容、层级梯度不合理（上层常识和底层内容区分不明显）、词条描述覆盖率低于 50%、NSFW 内容未打标、含广告/垃圾信息、与主题无关、重复提交相似主题等情况均可能被驳回。',
+            a: '无事实依据的内容、层级梯度不合理（上层常识和底层内容区分不明显）、NSFW 内容未打标、含广告/垃圾信息、与主题无关、重复提交相似主题等情况均可能被驳回。词条描述覆盖率不足会被标记为待完善，但不会单独成为阻止提交或驳回的理由。',
           },
           {
             q: '我能修改已发布的冰山图吗？',
@@ -645,7 +645,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           },
           {
             q: '小作品（Stub）标记是什么？',
-            a: '词条数少于 5 个显示 🌱，词条数少于 10 个且描述覆盖率低于 30% 显示 🔧。这是自动评估标记，提示该作品内容尚浅，欢迎作者继续完善。',
+            a: '词条数少于 5 个显示 🌱，描述覆盖率低于 30% 显示 🔧。这是完善程度提醒，不影响提交，作者可以先移植作品，再逐步补充词条介绍。',
           },
           {
             q: '如何找到感兴趣的主题？',

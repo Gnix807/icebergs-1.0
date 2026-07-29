@@ -2,7 +2,8 @@
  * POST /api/icebergs/[id]/submit
  *
  * Submit an iceberg for editorial review.
- * Runs the 6-point pre-submission checklist; blocks if any non-NSFW check fails.
+ * Runs the 6-point pre-submission checklist. Required items block submission;
+ * recommended completeness items are returned as warnings.
  * On success creates (or reuses) an IcebergReview record and sets status → PENDING_REVIEW.
  */
 import type { APIContext } from 'astro';
@@ -85,6 +86,9 @@ export async function ALL(event: APIContext) {
         422,
       );
     }
+    const hasDescriptionWarning = checklist.items.some(
+      item => item.key === 'coverage' && !item.pass && item.blocking === false,
+    );
 
     const isNsfw = iceberg.tiers
       .flatMap(t => t.items)
@@ -170,7 +174,9 @@ export async function ALL(event: APIContext) {
         isNsfw,
         message: isNsfw
           ? '该冰山图已在 NSFW 专项审核队列中'
-          : '该冰山图已在审核队列中',
+          : hasDescriptionWarning
+            ? '该冰山图已在审核队列中，词条介绍可以后续逐步补充'
+            : '该冰山图已在审核队列中',
         scoreRewarded: false,
         checklist: checklist.items,
       }), 200);
@@ -180,8 +186,12 @@ export async function ALL(event: APIContext) {
       submitted: true,
       isNsfw,
       message: isNsfw
-        ? '已提交，含 NSFW 内容将进入专项审核队列'
-        : '已提交，等待发布审核',
+        ? hasDescriptionWarning
+          ? '已提交至 NSFW 专项审核，词条介绍可以后续逐步补充'
+          : '已提交，含 NSFW 内容将进入专项审核队列'
+        : hasDescriptionWarning
+          ? '已提交，等待发布审核；词条介绍可以后续逐步补充'
+          : '已提交，等待发布审核',
       scoreRewarded: false,
       checklist: checklist.items,
     }), 200);

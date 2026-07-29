@@ -70,6 +70,24 @@ const STATIC_PHASE3_ENTRIES: Array<{
   author: { username: string; nickname: string };
 }> = [
   {
+    _staticKey: 'phase3-v45',
+    id: 'phase3-v45',
+    title: '词条介绍不再卡住提交审核',
+    type: 'update',
+    pinned: false,
+    createdAt: new Date('2026-07-29T12:00:00.000Z'),
+    updatedAt: new Date('2026-07-29T12:00:00.000Z'),
+    author: { username: 'icebergs', nickname: 'Icebergs 团队' },
+    content: `## 词条介绍不再卡住提交审核
+
+不少早期冰山图和外站作品只有词条标题，介绍需要在迁移后慢慢补。本次调整后：
+
+- 词条描述覆盖率低于 50% 时仍会显示完善提醒，但不再阻止提交审核。
+- 标题、摘要、层级数量、每层最低词条数和 NSFW 确认仍按原规则检查。
+- 低描述覆盖率不会单独成为驳回理由，创作者可以先完成移植，再通过后续版本逐步补充介绍。
+- 自查清单会用建议提示区分硬性问题，避免把“可以以后完善”误认为“现在必须补齐”。`,
+  },
+  {
     _staticKey: 'phase3-v44',
     id: 'phase3-v44',
     title: '协作中心可以单独提 Issue 了',

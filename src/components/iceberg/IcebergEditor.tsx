@@ -3159,11 +3159,18 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
               <ul className="space-y-2 mb-6">
                 {checklistItems.map(item => (
                   <li key={item.key} className="flex items-start gap-3 text-xs">
-                    <span className={`flex-shrink-0 mt-0.5 ${item.pass ? 'text-success' : 'text-danger'}`}>
-                      {item.pass ? '✓' : '✗'}
+                    <span className={`flex-shrink-0 mt-0.5 ${
+                      item.pass ? 'text-success' : item.blocking === false ? 'text-warning' : 'text-danger'
+                    }`}>
+                      {item.pass ? '✓' : item.blocking === false ? '!' : '✗'}
                     </span>
-                    <span className={item.pass ? 'text-text-mid' : 'text-text-hi'}>
-                      {item.pass ? item.label : (item.hint ?? item.label)}
+                    <span className={
+                      item.pass ? 'text-text-mid' : item.blocking === false ? 'text-warning' : 'text-text-hi'
+                    }>
+                      <span className="block">{item.label}</span>
+                      {!item.pass && item.hint && (
+                        <span className="mt-0.5 block text-[10px] leading-relaxed text-text-mid">{item.hint}</span>
+                      )}
                     </span>
                   </li>
                 ))}
@@ -3191,7 +3198,11 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
               )}
 
               {checklistItems.every(i => i.pass) || (
-                checklistItems.every(i => i.pass || (i.key === 'nsfw' && nsfwConfirmed))
+                checklistItems.every(i => (
+                  i.pass
+                  || i.blocking === false
+                  || (i.key === 'nsfw' && nsfwConfirmed)
+                ))
               ) ? (
                 <div className="modern-modal-actions flex gap-3">
                   <button
