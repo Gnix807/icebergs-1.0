@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomBytes } from 'node:crypto';
 
 const args = process.argv.slice(2);
 const envIndex = args.indexOf('--env-file');
 const envFile = path.resolve(envIndex >= 0 ? args[envIndex + 1] || '' : '.env.production');
+const repairSecrets = args.includes('--repair-secrets');
 
 const requiredFiles = [
   'Dockerfile',
@@ -18,6 +20,7 @@ const requiredFiles = [
 
 const errors = [];
 const warnings = [];
+const repairedSecrets = [];
 
 for (const file of requiredFiles) {
   if (!fs.existsSync(path.resolve(file))) errors.push(`缺少部署文件：${file}`);
@@ -41,14 +44,55 @@ function parseEnv(source) {
   return values;
 }
 
+const placeholder = /(change-me|你的|example|replace-me|replace-with|localhost)/i;
+
+function isWeakSecret(value) {
+  return !value || placeholder.test(value) || value.length < 12;
+}
+
+function upsertEnvValue(source, key, value) {
+  const newline = source.includes('\r\n') ? '\r\n' : '\n';
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const matcher = new RegExp(`^\\s*${escapedKey}\\s*=.*$`);
+  const lines = source.split(/\r?\n/);
+  let replaced = false;
+
+  const updatedLines = lines.map((line) => {
+    if (!matcher.test(line)) return line;
+    replaced = true;
+    return `${key}=${value}`;
+  });
+
+  if (!replaced) {
+    if (updatedLines.length > 0 && updatedLines.at(-1) !== '') updatedLines.push('');
+    updatedLines.push(`${key}=${value}`);
+  }
+
+  return updatedLines.join(newline);
+}
+
 let env = {};
+let envSource = '';
 if (!fs.existsSync(envFile)) {
   errors.push(`缺少生产环境文件：${envFile}`);
 } else {
-  env = parseEnv(fs.readFileSync(envFile, 'utf8'));
+  envSource = fs.readFileSync(envFile, 'utf8');
+  env = parseEnv(envSource);
+
+  if (repairSecrets) {
+    for (const key of ['CRON_SECRET', 'EMAIL_VERIFICATION_SECRET']) {
+      if (!isWeakSecret(env[key] || '')) continue;
+      envSource = upsertEnvValue(envSource, key, randomBytes(32).toString('hex'));
+      repairedSecrets.push(key);
+    }
+
+    if (repairedSecrets.length > 0) {
+      fs.writeFileSync(envFile, envSource, 'utf8');
+      env = parseEnv(envSource);
+    }
+  }
 }
 
-const placeholder = /(change-me|你的|example|replace-me|replace-with|localhost)/i;
 for (const key of ['DB_PASSWORD', 'CRON_SECRET', 'EMAIL_VERIFICATION_SECRET']) {
   const value = env[key] || '';
   if (!value) errors.push(`${key} 未配置`);
@@ -86,6 +130,13 @@ if (provider === 'console') {
 
 if (!env.GITHUB_CLIENT_ID && !env.GOOGLE_CLIENT_ID) {
   warnings.push('GitHub 和 Google OAuth 均未配置；仅保留邮箱登录');
+}
+
+if (repairedSecrets.length > 0) {
+  console.log('部署前置自动修复：');
+  for (const key of repairedSecrets) {
+    console.log(`  - 已为 ${key} 生成随机密钥`);
+  }
 }
 
 if (warnings.length > 0) {
