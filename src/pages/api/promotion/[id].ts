@@ -8,9 +8,13 @@ import { getSession } from '../../../lib/auth';
 import { can } from '../../../lib/permissions';
 import { notify } from '../../../lib/notify';
 import { logScore } from '../../../lib/scoreLog';
+import { legacyGovernanceWritesEnabled } from '../../../lib/governance';
 
 export async function ALL(event: APIContext) {
   try {
+    if (!await legacyGovernanceWritesEnabled()) {
+      return json(error(ErrorCodes.LEGACY_GOVERNANCE_RETIRED, '角色晋升流程已转为只读历史'), 409);
+    }
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
     if (!can(session, 'user:warn')) return json(error(ErrorCodes.FORBIDDEN, '需要编辑权限'), 403);
@@ -80,4 +84,3 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
-

@@ -5,6 +5,7 @@ interface EditorActionBarProps {
   isSaving: boolean;
   isSubmitting: boolean;
   submitText: string;
+  saveText?: string;
   variant: 'desktop' | 'mobile';
 }
 
@@ -15,13 +16,14 @@ export function EditorActionBar({
   isSaving,
   isSubmitting,
   submitText,
+  saveText = '[ 保存草稿 ]',
   variant,
 }: EditorActionBarProps) {
   const buttons = (
     <div className="grid w-full grid-cols-2 gap-2.5">
       <button type="button" onClick={onSave} disabled={isSaving}
         className="min-h-11 rounded-lg border border-border bg-surface-0/70 px-3 py-2 font-mono text-xs text-text-body transition-[border-color,color,background-color] hover:border-brand hover:bg-brand/5 hover:text-brand disabled:cursor-not-allowed disabled:opacity-50">
-        {isSaving ? '[ 保存中... ]' : '[ 保存草稿 ]'}
+        {isSaving ? '[ 保存中... ]' : saveText}
       </button>
       <button type="button" onClick={onSubmit} disabled={isSubmitting || !canSubmit}
         className="min-h-11 rounded-lg bg-brand px-3 py-2 font-mono text-xs font-bold text-[#0A0A0A] shadow-[0_8px_24px_rgba(0,255,65,0.18)] transition-[background-color,box-shadow,transform] hover:-translate-y-px hover:bg-brand-hover hover:shadow-[0_10px_28px_rgba(0,255,65,0.26)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0">

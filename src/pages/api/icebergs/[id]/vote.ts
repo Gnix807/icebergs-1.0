@@ -4,7 +4,6 @@ import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth/index';
 import { checkAchievements, updateDailyStreak } from '../../../../lib/achievementService';
 import { awardNewVoteScore } from '../../../../lib/activityScore';
-import { logScore } from '../../../../lib/scoreLog';
 import { notifyAggregated } from '../../../../lib/notify';
 import { isRateLimited } from '../../../../lib/rateLimit';
 
@@ -61,40 +60,25 @@ export async function ALL(event: APIContext) {
     // Check existing vote
     const existing = await prisma.vote.findUnique({ where: { userId_icebergId: key } });
 
-    // 计算对作者质量分的净影响
-    let scoreDelta = 0;
     if (existing && existing.value === value) {
-      // 取消投票：撤回之前的影响
       await prisma.vote.delete({ where: { userId_icebergId: key } });
-      scoreDelta = -value; // 撤回 +1 → -1; 撤回 -1 → +1
     } else {
-      // 新投票或换票
-      const prevValue = existing?.value ?? 0;
       await prisma.vote.upsert({
         where: { userId_icebergId: key },
         create: { userId: session.userId, icebergId: iceberg.id, value },
         update: { value },
       });
-      scoreDelta = value - prevValue; // 如换票: +1→-1 delta=-2
     }
 
-    // 异步更新作者质量分（不阻塞响应）
-    if (scoreDelta !== 0 && iceberg.authorId !== session.userId) {
-      prisma.user.update({
-        where: { id: iceberg.authorId },
-        data: { qualityScore: { increment: scoreDelta } },
-      }).catch(() => {});
-      logScore(iceberg.authorId, scoreDelta, 'iceberg_voted');
-      // 仅新 upvote 时通知（换票/取消/downvote 不打扰作者）
-      if (!existing && value === 1) {
-        notifyAggregated(
-          iceberg.authorId,
-          'iceberg_voted',
-          `iceberg:${iceberg.id}`,
-          n => n === 1 ? '有人赞了你的冰山图' : `${n} 人赞了你的冰山图`,
-          `/iceberg/${iceberg.id}`,
-        );
-      }
+    // 质量分已冻结；投票仍保留内容反馈与新赞通知。
+    if (!existing && value === 1 && iceberg.authorId !== session.userId) {
+      notifyAggregated(
+        iceberg.authorId,
+        'iceberg_voted',
+        `iceberg:${iceberg.id}`,
+        n => n === 1 ? '有人赞了你的冰山图' : `${n} 人赞了你的冰山图`,
+        `/iceberg/${iceberg.id}`,
+      );
     }
 
     // Return new score
@@ -131,4 +115,3 @@ export async function ALL(event: APIContext) {
     });
   }
 }
-

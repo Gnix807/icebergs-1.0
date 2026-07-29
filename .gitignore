@@ -4,6 +4,7 @@ node_modules/
 .env
 .env.local
 .env.*.local
+.env.production
 
 # 数据库
 *.db
@@ -30,6 +31,7 @@ docs/
 
 # 开发服务器日志
 .dev-server.*.log
+.astro-dev-*.log
 
 # 本地测试与临时清单（不入库）
 risk-checklist/

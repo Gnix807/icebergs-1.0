@@ -23,7 +23,17 @@
     "dev:clean": "node -e \"try { require('fs').rmSync('node_modules/.vite',{recursive:true,force:true});require('fs').rmSync('.vite',{recursive:true,force:true}) } catch(e) {}\" && astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "check:capabilities": "node scripts/check-capability-boundaries.mjs",
+    "test:version-control": "node scripts/test-version-control.mjs",
+    "deploy:check": "npm run check && npm run build && npm run check:capabilities && npm run test:version-control",
+    "deploy:env-check": "node scripts/deploy-preflight.mjs --env-file .env.production",
+    "vc:backfill": "node scripts/backfill-version-control.mjs",
+    "vc:backfill:dry-run": "node scripts/backfill-version-control.mjs --dry-run",
+    "vc:verify": "node scripts/backfill-version-control.mjs --verify-only",
+    "governance:backfill": "node scripts/backfill-capabilities-contributions.mjs",
+    "governance:backfill:dry-run": "node scripts/backfill-capabilities-contributions.mjs --dry-run",
+    "governance:verify": "node scripts/backfill-capabilities-contributions.mjs --verify-only"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.8",

@@ -10,6 +10,7 @@ import { success, error, ErrorCodes } from '../../../../lib/api';
 import { getRfaWeight } from '../../../../lib/rfa';
 import { hasRole } from '../../../../lib/permissions';
 import { notify } from '../../../../lib/notify';
+import { legacyGovernanceWritesEnabled } from '../../../../lib/governance';
 
 const db = prisma;
 
@@ -22,6 +23,9 @@ function json(body: unknown, status = 200) {
 }
 
 export async function ALL(event: APIContext) {
+  if (!await legacyGovernanceWritesEnabled()) {
+    return json(error(ErrorCodes.LEGACY_GOVERNANCE_RETIRED, 'RfA 投票已停用，请使用能力认证'), 409);
+  }
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -85,4 +89,3 @@ export async function ALL(event: APIContext) {
 
   return json(success({ vote, weight }), existing ? 200 : 201);
 }
-

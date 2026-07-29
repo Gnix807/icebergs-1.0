@@ -35,10 +35,8 @@ const ROLE_COLOR: Record<string, string> = {
 
 interface ActionModal {
   user: UserRow;
-  type: 'warn' | 'restrict' | 'ban' | 'unban' | 'role' | 'delete';
+  type: 'warn' | 'restrict' | 'ban' | 'unban' | 'delete';
 }
-
-const APPOINT_ROLES = ['USER', 'CONTRIBUTOR', 'EDITOR', 'MODERATOR'] as const;
 
 export function AdminUsers() {
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -89,11 +87,6 @@ export function AdminUsers() {
       } else if (modal.type === 'unban') {
         url = `/api/users/${modal.user.id}/unban`;
         body = { reason: formData.reason ?? '管理员手动解除' };
-      }
-
-      if (modal.type === 'role') {
-        url = `/api/users/${modal.user.id}/role`;
-        body = { role: formData.role, reason: formData.reason };
       }
 
       if (modal.type === 'delete') {
@@ -189,21 +182,13 @@ export function AdminUsers() {
                     </span>
                   </div>
                   <div className="text-[10px] font-mono text-text-mid mt-0.5">
-                    {u.qualityScore} pts · {u._count.icebergs} 冰山图 · {new Date(u.createdAt).toLocaleDateString('zh-CN')}
+                    {u._count.icebergs} 冰山图 · 注册于 {new Date(u.createdAt).toLocaleDateString('zh-CN')}
                     {u.banUntil && <span className="text-danger ml-2">封至 {new Date(u.banUntil).toLocaleDateString('zh-CN')}</span>}
                   </div>
                 </a>
 
                 {/* 操作按钮 */}
                 <div className="flex gap-1.5 flex-shrink-0">
-                  {!u.isFounder && (
-                    <button
-                      onClick={() => { setModal({ user: u, type: 'role' }); setFormData({ role: u.role }); }}
-                      className="btn-purple px-2 py-1 text-[10px] font-mono border border-[#8b5cf630] text-purple hover:bg-purple/10 transition-colors"
-                    >
-                      任命
-                    </button>
-                  )}
                   {u.status === 'ACTIVE' || u.status === 'WARNED_1' ? (
                     <button
                       onClick={() => { setModal({ user: u, type: 'warn' }); setFormData({ level: '1' }); }}
@@ -280,7 +265,6 @@ export function AdminUsers() {
               {modal.type === 'restrict' && '设为只读'}
               {modal.type === 'ban' && '封禁用户'}
               {modal.type === 'unban' && '解除限制'}
-              {modal.type === 'role' && '直接任命角色'}
               {modal.type === 'delete' && '⚠ 删除用户'}
             </div>
 
@@ -290,30 +274,9 @@ export function AdminUsers() {
                   此操作将永久删除 <strong>@{modal.user.nickname ?? modal.user.username}</strong> 及其所有冰山图。
                 </div>
                 <div className="text-[10px] text-text-lo font-mono">
-                  冰山图：{modal.user._count.icebergs} 个 · 积分：{modal.user.qualityScore} · 角色：{modal.user.role}
+                  冰山图：{modal.user._count.icebergs} 个 · 旧版身份：{modal.user.role}
                 </div>
                 <div className="text-[10px] text-warning mt-2">此操作不可撤销。</div>
-              </div>
-            )}
-
-            {modal.type === 'role' && (
-              <div className="mb-3">
-                <div className="text-[10px] text-text-lo mb-1">目标角色</div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {APPOINT_ROLES.map(r => (
-                    <button
-                      key={r}
-                      onClick={() => setFormData(f => ({ ...f, role: r }))}
-                      className={`py-1.5 text-xs font-mono border transition-colors ${
-                        formData.role === r
-                          ? 'border-[#8b5cf6] text-purple bg-purple/10'
-                          : 'border-border text-text-lo hover:border-border'
-                      }`}
-                    >
-                      {r}
-                    </button>
-                  ))}
-                </div>
               </div>
             )}
 
@@ -373,14 +336,14 @@ export function AdminUsers() {
             {(modal.type !== 'unban' && modal.type !== 'delete') && (
               <div className="mb-4">
                 <div className="text-[10px] text-text-lo mb-1">
-                  {modal.type === 'role' ? '备注（可选）' : '理由'}
+                  理由
                 </div>
                 <textarea
                   value={formData.reason ?? ''}
                   onChange={e => setFormData(f => ({ ...f, reason: e.target.value }))}
                   rows={2}
                   className="w-full px-3 py-2 bg-surface-2 border border-border text-xs text-text-hi focus:border-brand focus:outline-none resize-none"
-                  placeholder={modal.type === 'role' ? '备注原因（可选）' : '理由（至少 5 字）'}
+                  placeholder="理由（至少 5 字）"
                 />
               </div>
             )}
@@ -397,14 +360,11 @@ export function AdminUsers() {
                 disabled={
                   acting ||
                   (modal.type === 'delete' ? false :
-                   modal.type !== 'unban' && modal.type !== 'role' && (formData.reason ?? '').trim().length < 5) ||
-                  (modal.type === 'role' && (!formData.role || formData.role === modal.user.role))
+                   modal.type !== 'unban' && (formData.reason ?? '').trim().length < 5)
                 }
                 className={`flex-1 py-2 text-xs transition-colors disabled:opacity-50 ${
                   modal.type === 'delete'
                     ? 'btn-danger bg-[#7f1d1d] border border-danger text-danger hover:bg-[#7f1d1d80]'
-                    : modal.type === 'role'
-                    ? 'btn-purple bg-purple/20 border border-[#8b5cf650] text-purple hover:bg-purple/20'
                     : 'btn-danger bg-danger/20 border border-[#ef444450] text-danger hover:bg-danger/20'
                 }`}
               >

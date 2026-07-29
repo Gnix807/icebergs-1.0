@@ -4,6 +4,7 @@ import { prisma } from '../../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { notify } from '../../../../lib/notify';
 import { AWARD_TYPES } from '../../../../lib/awards';
+import { hasCapability } from '../../../../lib/capabilities';
 
 const db = prisma;
 
@@ -20,8 +21,11 @@ export async function GET(event: APIContext) {
   if (dataParam) {
     const url = new URL(event.request.url);
     const session = await getSession(event);
-    if (!session?.isFounder && session?.role !== 'ADMIN') {
-      return json(error(ErrorCodes.FORBIDDEN, '需要管理员或站长权限'), 403);
+    if (!session) {
+      return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
+    }
+    if (!hasCapability(session, 'SITE_ADMINISTRATION')) {
+      return json(error(ErrorCodes.CAPABILITY_REQUIRED, '需要站点管理能力'), 403);
     }
 
     const { id } = event.params;

@@ -2,7 +2,7 @@ import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../../lib/api';
-import { hasRole } from '../../../../lib/permissions';
+import { hasCapability } from '../../../../lib/capabilities';
 
 // DELETE /api/comments/[id] — 删除自己的评论，或 EDITOR+ 删除任意评论
 export async function ALL(event: APIContext) {
@@ -25,7 +25,7 @@ export async function ALL(event: APIContext) {
   }
 
   const isOwn = comment.userId === session.userId;
-  const isModerator = session.isFounder || hasRole(session.role, 'EDITOR');
+  const isModerator = hasCapability(session, 'COMMUNITY_MODERATION');
   if (!isOwn && !isModerator) {
     return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权删除此评论')), {
       status: 403, headers: { 'Content-Type': 'application/json' },
@@ -37,4 +37,3 @@ export async function ALL(event: APIContext) {
     status: 200, headers: { 'Content-Type': 'application/json' },
   });
 }
-

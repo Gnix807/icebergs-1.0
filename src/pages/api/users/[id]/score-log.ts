@@ -8,6 +8,7 @@ import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth/index';
+import { hasCapability } from '../../../../lib/capabilities';
 
 export async function GET(event: APIContext) {
   try {
@@ -18,7 +19,7 @@ export async function GET(event: APIContext) {
 
     const session = await getSession(event);
     const isOwner = session?.userId === id;
-    const isAdmin = session && (session.role === 'ADMIN' || session.isFounder);
+    const isAdmin = hasCapability(session, 'SITE_ADMINISTRATION');
     if (!isOwner && !isAdmin) {
       return json(error(ErrorCodes.FORBIDDEN, '无权查看'), 403);
     }
@@ -54,4 +55,3 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
-

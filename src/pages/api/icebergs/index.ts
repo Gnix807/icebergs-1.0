@@ -5,6 +5,7 @@ import { getSession } from '../../../lib/auth';
 import { normalizeIcebergTopic } from '../../../lib/icebergTopic';
 import { can } from '../../../lib/permissions';
 import { renderMarkdownWithMath } from '../../../lib/markdown';
+import { normalizeSnapshot } from '../../../lib/icebergRepository';
 
 const SLUG_RE = /^[a-zA-Z0-9_-]{2,60}$/;
 
@@ -170,10 +171,49 @@ export async function GET(event: APIContext) {
       prisma.iceberg.count({ where }),
     ]);
 
+    let responseItems: any[] = icebergs;
+    if (status === 'PUBLISHED' && !authorFilter && icebergs.length > 0) {
+      try {
+        const publications = await (prisma as any).icebergPublication.findMany({
+          where: { icebergId: { in: icebergs.map((item) => item.id) } },
+        });
+        const publicationMap = new Map(publications.map((publication: any) => [
+          publication.icebergId,
+          publication,
+        ]));
+        responseItems = icebergs.map((item: any) => {
+          const publication: any = publicationMap.get(item.id);
+          const snapshot = normalizeSnapshot(publication?.snapshot);
+          if (!publication || !snapshot) return item;
+          return {
+            ...item,
+            title: publication.title,
+            description: publication.description,
+            topic: publication.topic,
+            _count: { tiers: snapshot.tiers.length },
+            tiers: snapshot.tiers.slice(0, 1).map((tier) => ({
+              items: tier.items.slice(0, 3).map((entry) => ({ title: entry.title })),
+            })),
+            _publicationSearchText: publication.searchText || '',
+            _publicationHasNsfw: snapshot.tiers.some((tier) =>
+              tier.items.some((entry) => entry.labels.some((label) => label.toLowerCase() === 'nsfw'))),
+          };
+        }).filter((item: any) => {
+          if (q && item._publicationSearchText
+            && !item._publicationSearchText.toLowerCase().includes(q.toLowerCase())) return false;
+          if (topic && item.topic !== topic) return false;
+          if (nsfw !== 'show' && item._publicationHasNsfw) return false;
+          return true;
+        }).map(({ _publicationSearchText, _publicationHasNsfw, ...item }: any) => item);
+      } catch {
+        // 迁移尚未完成时继续返回旧列表，功能开关可保持关闭。
+      }
+    }
+
     return new Response(
       JSON.stringify(
         success({
-          items: icebergs,
+          items: responseItems,
           meta: {
             page,
             limit,

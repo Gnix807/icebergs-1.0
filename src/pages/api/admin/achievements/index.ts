@@ -6,7 +6,8 @@ import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
-import { can } from '../../../../lib/permissions';
+import { hasCapability } from '../../../../lib/capabilities';
+import { validateAchievementConditions } from '../../../../lib/achievementRules';
 
 function json(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
@@ -22,7 +23,9 @@ export async function GET(event: APIContext) {
     try {
       const session = await getSession(event);
       if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
-      if (!can(session, 'user:ban')) return json(error(ErrorCodes.FORBIDDEN, '需要管理员权限'), 403);
+      if (!hasCapability(session, 'SITE_ADMINISTRATION')) {
+        return json(error(ErrorCodes.CAPABILITY_REQUIRED, '需要站点管理能力'), 403);
+      }
 
       const body = JSON.parse(dataParam || '{}') as {
         key?: string; icon?: string; label?: string; labelZh?: string;
@@ -37,6 +40,10 @@ export async function GET(event: APIContext) {
 
       const existing = await prisma.achievement.findUnique({ where: { key: body.key.trim() } });
       if (existing) return json(error(ErrorCodes.CONFLICT, '该 key 已存在'), 409);
+      const conditionCheck = validateAchievementConditions(body.conditions ?? '[]');
+      if (!conditionCheck.valid) {
+        return json(error(ErrorCodes.VALIDATION_ERROR, conditionCheck.message!), 400);
+      }
 
       const achievement = await prisma.achievement.create({
         data: {
@@ -52,6 +59,8 @@ export async function GET(event: APIContext) {
           isHidden:      body.isHidden ?? false,
           conditions:    body.conditions ?? '[]',
           category:      body.category || null,
+          ruleVersion:   1,
+          lifecycle:     'ACTIVE',
         },
       } as any);
 
@@ -66,7 +75,9 @@ export async function GET(event: APIContext) {
   try {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
-    if (!can(session, 'user:ban')) return json(error(ErrorCodes.FORBIDDEN, '需要管理员权限'), 403);
+    if (!hasCapability(session, 'SITE_ADMINISTRATION')) {
+      return json(error(ErrorCodes.CAPABILITY_REQUIRED, '需要站点管理能力'), 403);
+    }
 
     const achievements = await prisma.achievement.findMany({ orderBy: { sortOrder: 'asc' } });
     return json(success(achievements), 200);
@@ -75,4 +86,3 @@ export async function GET(event: APIContext) {
     return json(error(ErrorCodes.INTERNAL_ERROR, '获取失败'), 500);
   }
 }
-

@@ -13,6 +13,7 @@ import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { notify } from '../../../../lib/notify';
+import { legacyGovernanceWritesEnabled } from '../../../../lib/governance';
 
 const ALLOWED_ROLES         = ['USER', 'CONTRIBUTOR', 'EDITOR', 'MODERATOR'] as const;
 const FOUNDER_ALLOWED_ROLES = ['USER', 'CONTRIBUTOR', 'EDITOR', 'MODERATOR', 'ADMIN'] as const;
@@ -28,6 +29,12 @@ const ROLE_LABELS: Record<AllowedRole, string> = {
 
 export async function ALL(event: APIContext) {
   try {
+    if (!await legacyGovernanceWritesEnabled()) {
+      return json(error(
+        ErrorCodes.LEGACY_GOVERNANCE_RETIRED,
+        '直接修改全站角色已停用，请使用能力申请与双人复核',
+      ), 409);
+    }
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
     if (session.role !== 'ADMIN' && !session.isFounder) {
@@ -103,4 +110,3 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
-

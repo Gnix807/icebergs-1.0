@@ -4,6 +4,7 @@ import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 import { renderMarkdownWithMath } from '../../../lib/markdown';
 import { can } from '../../../lib/permissions';
+import { legacyRepositoryWriteBlocked } from '../../../lib/icebergRepository';
 
 async function isProjectMember(userId: string, projectId: string | null): Promise<boolean> {
   if (!projectId) return false;
@@ -72,6 +73,15 @@ export async function ALL(event: APIContext) {
     return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '条目不存在')), {
       status: 404,
       headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  if (await legacyRepositoryWriteBlocked(existing.tier.iceberg.id)) {
+    return new Response(JSON.stringify(error(
+      'VERSION_CONTROL_ENABLED' as any,
+      '该冰山图已启用版本控制，请刷新编辑器。',
+    )), {
+      status: 409,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     });
   }
 

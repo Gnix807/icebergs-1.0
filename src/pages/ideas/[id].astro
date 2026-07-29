@@ -4,6 +4,7 @@ import { prisma } from '../../lib/prisma';
 import { getSessionById } from '../../lib/auth/index';
 import { getIcebergTopicLabel } from '../../lib/icebergTopic';
 import { renderMarkdownWithMath } from '../../lib/markdown';
+import { hasCapability } from '../../lib/capabilities';
 
 const { id } = Astro.params;
 let idea: any = null;
@@ -36,7 +37,7 @@ const statusLabel: Record<string, string> = {
 };
 const isOwner = session && idea && idea.creator.id === session.userId;
 const isClaimant = session && idea && idea.claimedBy === session.userId;
-const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
+const canModerate = hasCapability(session, 'COMMUNITY_MODERATION');
 ---
 
 <Layout title={`${idea?.title || '创意详情'} | 冰山图宇宙`}>
@@ -134,12 +135,12 @@ const isAdmin = session && (session.isFounder || session.role === 'ADMIN');
           )}
 
           {/* 管理操作 */}
-          {(isOwner || isAdmin) && idea.status !== 'OPEN' && (
+          {(isOwner || canModerate) && idea.status !== 'OPEN' && (
             <button id="reopen-btn" class="mobile-touch-target px-3 py-1.5 border border-border text-xs font-mono text-text-mid hover:border-info hover:text-info transition-colors">
               重新打开
             </button>
           )}
-          {(isOwner || isAdmin) && (
+          {(isOwner || canModerate) && (
             <button id="delete-btn" class="mobile-touch-target px-3 py-1.5 border border-danger/30 text-danger text-xs font-mono hover:bg-danger hover:text-white transition-colors">
               删除
             </button>

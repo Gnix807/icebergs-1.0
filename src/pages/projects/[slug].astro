@@ -8,6 +8,7 @@ const { slug } = Astro.params;
 const tab = Astro.url.searchParams.get('tab') || 'overview';
 let project: any = null; let error = null;
 let relatedIcebergs: any[] = []; let openIdeas: any[] = []; let tasks: any[] = [];
+let canViewProjectWorkspace = false;
 
 const sessionId = Astro.cookies.get('session')?.value;
 const session = await getSessionById(sessionId);
@@ -20,8 +21,33 @@ try { project = await prisma.project.findUnique({ where: { slug }, select: {
   _count: { select: { members: true, tasks: true, discussions: true } },
 } });
 if (!project) { error = '专题不存在'; } else {
+  canViewProjectWorkspace = !!session && (
+    project.creatorId === session.userId
+    || project.members.some((m: any) => m.user.id === session.userId)
+  );
   [relatedIcebergs, openIdeas, tasks] = await Promise.all([
-    prisma.iceberg.findMany({ where: { projectId: project.id, status: 'PUBLISHED' }, orderBy: { updatedAt: 'desc' }, take: 20, select: { id: true, slug: true, title: true, viewCount: true, _count: { select: { tiers: true } } } }),
+    prisma.iceberg.findMany({
+      where: {
+        projectId: project.id,
+        ...(canViewProjectWorkspace ? {} : { status: 'PUBLISHED' }),
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 20,
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        status: true,
+        viewCount: true,
+        updatedAt: true,
+        repositoryInitializedAt: true,
+        repositoryPullRequests: {
+          where: { status: 'OPEN' },
+          select: { id: true },
+        },
+        _count: { select: { tiers: true } },
+      },
+    }),
     prisma.idea.findMany({ where: { projectId: project.id, status: { not: 'COMPLETED' } }, orderBy: { createdAt: 'desc' }, take: 20, select: { id: true, title: true, status: true, _count: { select: { votes: true } } } }),
     prisma.projectTask.findMany({ where: { projectId: project.id }, orderBy: [{ priority: 'asc' }, { createdAt: 'desc' }], select: { id: true, title: true, description: true, status: true, priority: true, dueDate: true, createdAt: true, assignee: { select: { id: true, nickname: true, username: true, avatar: true } }, creator: { select: { id: true, nickname: true, username: true } } } }),
   ]);
@@ -32,9 +58,12 @@ if (!project) { error = '专题不存在'; } else {
 }} catch (err) { error = '加载失败'; }
 
 const isMember = session && project?.members.some((m: any) => m.user.id === session.userId);
-const isModerator = session && project?.members.some((m: any) => m.user.id === session.userId && m.role === 'MODERATOR');
 const isCreator = session?.userId === project?.creatorId;
-const isAdmin = session?.isFounder || session?.role === 'ADMIN';
+const isModerator = !!session && (
+  isCreator
+  || project?.members.some((m: any) => m.user.id === session.userId && m.role === 'MODERATOR')
+);
+const projectRepositoryRole = isModerator ? '维护者' : isMember ? '贡献者' : '访客';
 
 // Pre-compute JSON for modal
 const tasksJson = JSON.stringify(tasks.map((t: any) => ({ id: t.id, title: t.title, description: t.description, status: t.status, priority: t.priority, dueDate: t.dueDate, createdAt: t.createdAt, creator: t.creator, assignee: t.assignee })));
@@ -46,7 +75,7 @@ const statusLabel = { OPEN: '待处理', IN_PROGRESS: '进行中', COMPLETED: '�
 const statusColor = { OPEN: '#f59e0b', IN_PROGRESS: '#3b82f6', COMPLETED: '#22c55e' };
 const priorityLabel = { P0: '🔴 紧急', P1: '🟠 高', P2: '⚪ 中', P3: '⚫ 低' };
 const priorityColor = { P0: '#ef4444', P1: '#f59e0b', P2: '#6b7280', P3: '#94a3b8' };
-const tabs = [{ key: 'overview', label: '概览' }, { key: 'tasks', label: '任务' }, { key: 'members', label: '成员' }];
+const tabs = [{ key: 'overview', label: '概览' }, { key: 'collaboration', label: '版本协作' }, { key: 'tasks', label: '任务' }, { key: 'members', label: '成员' }];
 ---
 
 <Layout title={`${project?.name || '专题'} | 冰山图宇宙`}>
@@ -60,7 +89,7 @@ const tabs = [{ key: 'overview', label: '概览' }, { key: 'tasks', label: '任�
             <button id="leave-btn" class="px-4 py-1.5 border border-border text-xs font-mono text-text-body hover:border-danger hover:text-danger" style={isLoggedIn && isMember ? '' : 'display:none'}>退出</button>
             {isModerator && <button id="invite-btn" class="px-4 py-1.5 border border-info/30 text-info text-xs font-mono hover:bg-info/10">📋 邀请</button>}
             {isModerator && <button id="edit-project-btn" class="px-4 py-1.5 border border-border text-xs font-mono text-text-body hover:border-brand">编辑</button>}
-            {(isCreator || isAdmin) && <button id="delete-btn" class="px-4 py-1.5 border border-danger/30 text-danger text-xs font-mono hover:bg-danger hover:text-white">删除</button>}
+            {isCreator && <button id="delete-btn" class="px-4 py-1.5 border border-danger/30 text-danger text-xs font-mono hover:bg-danger hover:text-white">删除</button>}
            </div></div>
       </header>
       <div class="flex gap-0 mb-6 border border-border w-fit">{tabs.map(t => (<a href={`/projects/${project.slug}?tab=${t.key}`} class={`px-4 py-1.5 text-[10px] font-mono border-r border-border last:border-r-0 ${tab===t.key?'bg-brand text-[#0A0A0A] font-bold':'text-text-body hover:bg-surface-2'}`}>{t.label}</a>))}</div>
@@ -74,7 +103,50 @@ const tabs = [{ key: 'overview', label: '概览' }, { key: 'tasks', label: '任�
         {project.description && <div class="p-4 border border-border bg-surface-2 text-xs text-text-body whitespace-pre-wrap">{project.description}</div>}
         {['iceberg','idea'].map(type => (<section><div class="flex items-center justify-between mb-2"><span class="text-[10px] font-mono text-text-mid tracking-widest">{type==='iceberg'?'📊 冰山图':'💡 创意'}</span>{isMember && <button id={`link-${type}-btn`} class="text-[10px] font-mono px-2 py-0.5 border border-border text-text-body hover:border-brand">+ 关联</button>}</div>
           <div id={`link-${type}-form`} class="hidden flex gap-2 mb-2"><input id={`link-${type}-input`} type="text" placeholder="slug 或 ID" class="flex-1 px-2.5 py-1 text-[10px] font-mono border border-border bg-surface-2 text-text-hi focus:border-brand focus:outline-none"/><button id={`link-${type}-submit`} class="px-3 py-1 text-[10px] font-mono bg-brand text-[#0A0A0A]">确认</button></div>
-          {(type==='iceberg'?relatedIcebergs:openIdeas).length===0?<p class="text-[10px] font-mono text-text-lo py-3">点击上方关联</p>:<div class={type==='iceberg'?'grid grid-cols-1 sm:grid-cols-2 gap-2':'space-y-1'}>{(type==='iceberg'?relatedIcebergs:openIdeas).map((r:any)=>(type==='iceberg'?<div class="relative group p-3 border border-border bg-surface-2"><button class="absolute top-2 right-2 text-text-lo hover:text-danger text-xs hidden group-hover:block" onclick={`unlink('iceberg','${r.id}')`}>✕</button><a href={`/iceberg/${r.slug||r.id}`} class="text-xs font-mono text-text-hi truncate block pr-6">{r.title}</a><div class="text-[9px] font-mono text-text-lo mt-1">{r._count.tiers} 层 · {r.viewCount} 浏览</div></div>:<div class="flex items-center justify-between p-2.5 border border-border bg-surface-2 group"><a href={`/ideas/${r.id}`} class="text-xs font-mono text-text-body truncate flex-1">{r.title}</a><button class="text-text-lo hover:text-danger text-xs ml-2 hidden group-hover:block" onclick={`unlink('idea','${r.id}')`}>✕</button></div>))}</div>}</section>))}
+          {(type==='iceberg'?relatedIcebergs:openIdeas).length===0?<p class="text-[10px] font-mono text-text-lo py-3">点击上方关联</p>:<div class={type==='iceberg'?'grid grid-cols-1 sm:grid-cols-2 gap-2':'space-y-1'}>{(type==='iceberg'?relatedIcebergs:openIdeas).map((r:any)=>(type==='iceberg'?<div class="relative group p-3 border border-border bg-surface-2"><button class="absolute top-2 right-2 text-text-lo hover:text-danger text-xs hidden group-hover:block" onclick={`unlink('iceberg','${r.id}')`}>✕</button><a href={`/iceberg/${r.slug||r.id}`} class="text-xs font-mono text-text-hi truncate block pr-6">{r.title}</a><div class="mt-1 flex flex-wrap items-center gap-1.5 text-[9px] font-mono text-text-lo"><span>{r._count.tiers} 层 · {r.viewCount} 浏览</span>{canViewProjectWorkspace && r.status !== 'PUBLISHED' && <span class="border border-warning/30 px-1 text-warning">{r.status === 'PENDING_REVIEW' ? '待审核' : '草稿'}</span>}{canViewProjectWorkspace && r.repositoryPullRequests.length > 0 && <span class="border border-info/30 px-1 text-info">{r.repositoryPullRequests.length} 个合并请求</span>}</div></div>:<div class="flex items-center justify-between p-2.5 border border-border bg-surface-2 group"><a href={`/ideas/${r.id}`} class="text-xs font-mono text-text-body truncate flex-1">{r.title}</a><button class="text-text-lo hover:text-danger text-xs ml-2 hidden group-hover:block" onclick={`unlink('idea','${r.id}')`}>✕</button></div>))}</div>}</section>))}
+      </div>)}
+      {tab === 'collaboration' && (<div class="space-y-4">
+        <div class="border border-border bg-surface-1 p-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div class="text-xs font-mono font-semibold text-text-hi">项目版本协作</div>
+              <p class="mt-1 text-[10px] font-mono leading-relaxed text-text-mid">每张冰山图独立维护主版本、改动分支和合并请求；Projects 统一管理团队身份与权限。</p>
+            </div>
+            <span class="border border-brand/30 bg-brand/5 px-2 py-1 text-[10px] font-mono text-brand">当前身份：{projectRepositoryRole}</span>
+          </div>
+          <div class="mt-3 grid grid-cols-1 gap-2 text-[10px] font-mono text-text-mid sm:grid-cols-3">
+            <div class="border border-border-subtle bg-surface-2 p-2.5"><span class="text-text-hi">项目成员</span><br/>创建分支并发起合并请求</div>
+            <div class="border border-border-subtle bg-surface-2 p-2.5"><span class="text-text-hi">项目管理员</span><br/>审阅、处理冲突并合并</div>
+            <div class="border border-border-subtle bg-surface-2 p-2.5"><span class="text-text-hi">公开访客</span><br/>仅查看已经发布的版本</div>
+          </div>
+        </div>
+        {relatedIcebergs.length === 0 ? (
+          <div class="border border-dashed border-border p-8 text-center text-xs font-mono text-text-lo">这个专题还没有关联冰山图</div>
+        ) : (
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {relatedIcebergs.map((iceberg: any) => (
+              <article class="border border-border bg-surface-1 p-4 transition-colors hover:border-brand/50">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <a href={`/iceberg/${iceberg.slug || iceberg.id}`} class="block truncate text-sm font-mono font-semibold text-text-hi hover:text-brand">{iceberg.title}</a>
+                    <div class="mt-1 flex flex-wrap gap-1.5 text-[9px] font-mono">
+                      <span class="border border-border px-1.5 py-0.5 text-text-mid">{iceberg.status === 'PUBLISHED' ? '已发布' : iceberg.status === 'PENDING_REVIEW' ? '待审核' : '草稿'}</span>
+                      <span class="border border-border px-1.5 py-0.5 text-text-mid">{iceberg._count.tiers} 层</span>
+                      {iceberg.repositoryInitializedAt && <span class="border border-brand/25 bg-brand/5 px-1.5 py-0.5 text-brand">版本库已启用</span>}
+                      {canViewProjectWorkspace && iceberg.repositoryPullRequests.length > 0 && <span class="border border-info/30 bg-info/5 px-1.5 py-0.5 text-info">{iceberg.repositoryPullRequests.length} 个待处理</span>}
+                    </div>
+                  </div>
+                  <time class="shrink-0 text-[9px] font-mono text-text-lo" datetime={iceberg.updatedAt.toISOString()}>{iceberg.updatedAt.toLocaleDateString('zh-CN')}</time>
+                </div>
+                <div class="mt-4 flex flex-wrap gap-2">
+                  <a href={`/iceberg/${iceberg.slug || iceberg.id}`} class="px-2.5 py-1.5 text-[10px] font-mono border border-border text-text-body hover:border-brand hover:text-brand">查看</a>
+                  {iceberg.repositoryInitializedAt && <a href={`/iceberg/${iceberg.slug || iceberg.id}/collaboration`} class="px-2.5 py-1.5 text-[10px] font-mono border border-info/30 text-info hover:bg-info/10">{canViewProjectWorkspace ? '协作中心' : '版本历史'}</a>}
+                  {canViewProjectWorkspace && <a href={`/iceberg/edit/${iceberg.id}`} class="px-2.5 py-1.5 text-[10px] font-mono bg-brand text-[#0A0A0A] font-bold hover:opacity-90">{isModerator ? '编辑主版本' : '开始改动'}</a>}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </div>)}
       {tab === 'tasks' && (<div>
         {isMember && <div>

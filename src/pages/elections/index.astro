@@ -1,0 +1,71 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { prisma } from '../../lib/prisma';
+
+const elections = await prisma.election.findMany({
+  orderBy: { createdAt: 'desc' },
+  select: {
+    id: true,
+    title: true,
+    description: true,
+    status: true,
+    applyDeadline: true,
+    voteDeadline: true,
+    confirmedAt: true,
+    createdAt: true,
+    _count: { select: { candidates: true, votes: true } },
+  },
+}).catch(() => []);
+
+const statusLabel: Record<string, string> = {
+  OPEN_APPLY: '历史申请期',
+  VOTING: '历史投票期',
+  CLOSED: '已结束',
+  CONFIRMED: '已确认',
+};
+---
+
+<Layout title="选举历史 | 冰山图宇宙" description="已退役角色选举制度的只读历史档案">
+  <main class="relative z-10 mx-auto max-w-4xl px-4 py-10 sm:py-14">
+    <a href="/org" class="text-xs font-mono text-text-mid hover:text-brand">← 社区职责</a>
+
+    <header class="mt-6 border-b border-border-subtle pb-6">
+      <div class="text-[10px] font-mono tracking-[0.22em] text-text-lo">// LEGACY GOVERNANCE ARCHIVE</div>
+      <h1 class="mt-2 text-2xl font-mono font-semibold text-text-hi">选举历史档案</h1>
+      <p class="mt-3 max-w-2xl text-sm leading-7 text-text-body">
+        角色加权选举已经退役。这里仅保留既有过程与结果供追溯，不再接受报名、投票或确认操作。
+        当前职责统一通过能力申请、证据审核和双人复核管理。
+      </p>
+    </header>
+
+    <section class="mt-7 space-y-3">
+      {elections.length === 0 ? (
+        <div class="rounded-xl border border-dashed border-border px-5 py-12 text-center text-xs font-mono text-text-lo">
+          暂无历史选举记录
+        </div>
+      ) : elections.map((election) => (
+        <a
+          href={`/elections/${election.id}`}
+          class="block rounded-xl border border-border-subtle bg-surface-2 p-4 transition-colors hover:border-brand/35 sm:p-5"
+        >
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <h2 class="font-mono text-sm font-semibold text-text-hi">{election.title}</h2>
+              {election.description && (
+                <p class="mt-1 line-clamp-2 text-xs leading-6 text-text-body">{election.description}</p>
+              )}
+            </div>
+            <span class="rounded-full border border-border px-2.5 py-1 text-[10px] font-mono text-text-mid">
+              {statusLabel[election.status] || election.status}
+            </span>
+          </div>
+          <div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-mono text-text-lo">
+            <span>{election._count.candidates} 名候选人</span>
+            <span>{election._count.votes} 份历史投票</span>
+            <span>{new Date(election.createdAt).toLocaleDateString('zh-CN')}</span>
+          </div>
+        </a>
+      ))}
+    </section>
+  </main>
+</Layout>

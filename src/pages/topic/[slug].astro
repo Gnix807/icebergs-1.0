@@ -3,52 +3,86 @@ import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
 import { getIcebergTopicLabel } from '../../lib/icebergTopic';
 import { ICEBERG_TOPICS } from '../../lib/icebergTopic';
+import { normalizeSnapshot } from '../../lib/icebergRepository';
 
 const { slug } = Astro.params;
 
 const topicDef = ICEBERG_TOPICS.find(t => t.value === slug);
 if (!topicDef) return Astro.redirect('/ideas');
 
-const [featuredIcebergs, newest, popular, openIdeas, topAuthors] = await Promise.all([
+const [publications, legacyIcebergs, openIdeas] = await Promise.all([
+  (prisma as any).icebergPublication.findMany({
+    where: { topic: slug, iceberg: { status: 'PUBLISHED' } },
+    include: {
+      iceberg: {
+        select: {
+          id: true,
+          slug: true,
+          viewCount: true,
+          featured: true,
+          authorId: true,
+          author: { select: { id: true, username: true, nickname: true, avatar: true } },
+        },
+      },
+    },
+    orderBy: { publishedAt: 'desc' },
+  }).catch(() => []),
   prisma.iceberg.findMany({
-    where: { topic: slug, status: 'PUBLISHED', featured: true },
+    where: {
+      topic: slug,
+      status: 'PUBLISHED',
+      repositoryInitializedAt: null,
+    },
     orderBy: { createdAt: 'desc' },
-    take: 5,
-    select: { id: true, slug: true, title: true, viewCount: true, _count: { select: { tiers: true } } },
-  }),
-  prisma.iceberg.findMany({
-    where: { topic: slug, status: 'PUBLISHED' },
-    orderBy: { createdAt: 'desc' }, take: 6,
-    select: { id: true, slug: true, title: true, viewCount: true, _count: { select: { tiers: true } } },
-  }),
-  prisma.iceberg.findMany({
-    where: { topic: slug, status: 'PUBLISHED' },
-    orderBy: { viewCount: 'desc' }, take: 3,
-    select: { id: true, slug: true, title: true, viewCount: true, _count: { select: { tiers: true } } },
-  }),
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      viewCount: true,
+      featured: true,
+      authorId: true,
+      createdAt: true,
+      author: { select: { id: true, username: true, nickname: true, avatar: true } },
+      _count: { select: { tiers: true } },
+    },
+  }).catch(() => []),
   prisma.idea.findMany({
     where: { topic: slug, status: 'OPEN' },
     orderBy: { createdAt: 'desc' }, take: 5,
     select: { id: true, title: true, _count: { select: { votes: true } } },
   }),
-  prisma.iceberg.groupBy({
-    by: ['authorId'],
-    where: { topic: slug, status: 'PUBLISHED' },
-    _count: { id: true },
-    orderBy: { _count: { id: 'desc' } },
-    take: 5,
-  }).then(async rows => {
-    const ids = rows.map(r => r.authorId);
-    const users = await prisma.user.findMany({
-      where: { id: { in: ids } },
-      select: { id: true, username: true, nickname: true, avatar: true },
-    });
-    const counts = Object.fromEntries(rows.map(r => [r.authorId, r._count.id]));
-    return users.map(u => ({ ...u, count: counts[u.id] ?? 0 })).sort((a, b) => b.count - a.count);
-  }),
 ]);
 
-const totalIcebergs = newest.length;
+const publicIcebergs: any[] = publications.map((publication: any) => {
+  const snapshot = normalizeSnapshot(publication.snapshot);
+  return {
+    ...publication.iceberg,
+    title: publication.title,
+    publishedAt: publication.publishedAt,
+    _count: { tiers: snapshot?.tiers.length ?? 0 },
+  };
+}).concat(legacyIcebergs.map((row: any) => ({ ...row, publishedAt: row.createdAt })))
+  .sort((left: any, right: any) =>
+    new Date(right.publishedAt).getTime() - new Date(left.publishedAt).getTime());
+const featuredIcebergs = publicIcebergs.filter((row: any) => row.featured).slice(0, 5);
+const newest = publicIcebergs.slice(0, 6);
+const popular = [...publicIcebergs]
+  .sort((left: any, right: any) => right.viewCount - left.viewCount)
+  .slice(0, 3);
+const authorCounts = new Map<string, { count: number; user: any }>();
+for (const row of publicIcebergs) {
+  const current = authorCounts.get(row.authorId);
+  authorCounts.set(row.authorId, {
+    count: (current?.count ?? 0) + 1,
+    user: row.author,
+  });
+}
+const topAuthors = [...authorCounts.values()]
+  .sort((left, right) => right.count - left.count)
+  .slice(0, 5)
+  .map((row) => ({ ...row.user, count: row.count }));
+
+const totalIcebergs = publicIcebergs.length;
 
 const isEmpty = totalIcebergs === 0 && featuredIcebergs.length === 0 && openIdeas.length === 0;
 ---

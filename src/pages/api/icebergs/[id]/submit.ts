@@ -11,9 +11,12 @@ import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { can } from '../../../../lib/permissions';
 import { runChecklist } from '../../../../lib/checklist';
-
-const CREATE_SCORE_DELTA = 5;
-const CREATE_SCORE_DAILY_LIMIT = 2;
+import {
+  DEFAULT_BRANCH_NAME,
+  ensureRepository,
+  getRepositoryRole,
+  isRepositoryFeatureEnabled,
+} from '../../../../lib/icebergRepository';
 
 async function isProjectMember(userId: string, projectId: string | null): Promise<boolean> {
   if (!projectId) return false;
@@ -61,7 +64,8 @@ export async function ALL(event: APIContext) {
 
     // Only the author or project members can submit
     const inProject = await isProjectMember(session.userId, iceberg.projectId);
-    if (iceberg.authorId !== session.userId && !inProject) {
+    const repositoryRole = await getRepositoryRole(session, iceberg);
+    if (iceberg.authorId !== session.userId && !inProject && repositoryRole !== 'MAINTAINER') {
       return json(error(ErrorCodes.FORBIDDEN, '无权操作'), 403);
     }
 
@@ -89,23 +93,31 @@ export async function ALL(event: APIContext) {
         catch { return false; }
       });
 
-    let submittedFromDraft = false;
+    let reviewCommitId: string | null = null;
+    if (await isRepositoryFeatureEnabled()) {
+      await ensureRepository(iceberg.id, session.userId);
+      const mainBranch = await (prisma as any).icebergBranch.findFirst({
+        where: {
+          icebergId: iceberg.id,
+          normalizedName: DEFAULT_BRANCH_NAME,
+          archivedAt: null,
+        },
+        select: { headCommitId: true },
+      });
+      reviewCommitId = mainBranch?.headCommitId ?? null;
+    }
+
     let alreadyInPendingQueue = false;
     let blockedByStatus: string | null = null;
-    let scoreRewarded = false;
-    let scoreSkippedByDailyLimit = false;
 
-    // 状态迁移 + 审核记录 + 质量分发放（受每日上限控制）
-    // 并发下只允许一次 DRAFT -> PENDING_REVIEW 成功，从而保证奖励幂等。
+    // 状态迁移 + 审核记录。旧质量分已经冻结，不再产生奖励写入。
     await prisma.$transaction(async (tx) => {
       const fromDraft = await tx.iceberg.updateMany({
         where: { id: iceberg.id, status: 'DRAFT' },
         data: { status: 'PENDING_REVIEW' },
       });
 
-      if (fromDraft.count > 0) {
-        submittedFromDraft = true;
-      } else {
+      if (fromDraft.count === 0) {
         const fromRejected = await tx.iceberg.updateMany({
           where: { id: iceberg.id, status: 'REJECTED' },
           data: { status: 'PENDING_REVIEW' },
@@ -130,9 +142,11 @@ export async function ALL(event: APIContext) {
         create: {
           icebergId: iceberg.id,
           status: 'PENDING',
+          commitId: reviewCommitId,
         },
         update: {
           status: 'PENDING',
+          commitId: reviewCommitId,
           reviewerId: null,
           note: null,
           overriddenBy: null,
@@ -141,36 +155,6 @@ export async function ALL(event: APIContext) {
         },
       });
 
-      if (!submittedFromDraft) return;
-
-      const dayStart = new Date();
-      dayStart.setHours(0, 0, 0, 0);
-      const rewardedCountToday = await tx.scoreLog.count({
-        where: {
-          userId: session.userId,
-          reason: 'iceberg_created',
-          createdAt: { gte: dayStart },
-        },
-      });
-
-      if (rewardedCountToday >= CREATE_SCORE_DAILY_LIMIT) {
-        scoreSkippedByDailyLimit = true;
-        return;
-      }
-
-      await tx.user.update({
-        where: { id: session.userId },
-        data: { qualityScore: { increment: CREATE_SCORE_DELTA } },
-      });
-      await tx.scoreLog.create({
-        data: {
-          userId: session.userId,
-          delta: CREATE_SCORE_DELTA,
-          reason: 'iceberg_created',
-          note: iceberg.title.slice(0, 120),
-        },
-      });
-      scoreRewarded = true;
     });
 
     if (blockedByStatus) {
@@ -192,19 +176,13 @@ export async function ALL(event: APIContext) {
       }), 200);
     }
 
-    const rewardHint = scoreRewarded
-      ? `，并获得 +${CREATE_SCORE_DELTA} 质量分`
-      : (submittedFromDraft && scoreSkippedByDailyLimit)
-        ? `（今日创建分已达上限 ${CREATE_SCORE_DAILY_LIMIT} 次）`
-        : '';
-
     return json(success({
       submitted: true,
       isNsfw,
       message: isNsfw
-        ? `已提交，含 NSFW 内容将进入专项审核队列${rewardHint}`
-        : `已提交，等待编辑审核${rewardHint}`,
-      scoreRewarded,
+        ? '已提交，含 NSFW 内容将进入专项审核队列'
+        : '已提交，等待发布审核',
+      scoreRewarded: false,
       checklist: checklist.items,
     }), 200);
 
@@ -220,4 +198,3 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
-

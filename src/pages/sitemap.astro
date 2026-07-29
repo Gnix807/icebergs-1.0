@@ -1,14 +1,16 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { getSessionById } from '../lib/auth/index';
+import { hasCapability } from '../lib/capabilities';
 
 const sessionId = Astro.cookies.get('session')?.value;
 const session = await getSessionById(sessionId);
 const isLoggedIn = !!session;
-const role = session?.role || 'guest';
-const isFounder = session?.isFounder ?? false;
-const isAdmin = isFounder || role === 'ADMIN';
-const isEditor = isAdmin || role === 'EDITOR' || role === 'MODERATOR';
+const canReview = hasCapability(session, 'PUBLICATION_REVIEW');
+const canCurate = hasCapability(session, 'CONTENT_CURATION');
+const canModerate = hasCapability(session, 'COMMUNITY_MODERATION');
+const canAdmin = hasCapability(session, 'SITE_ADMINISTRATION');
+const capabilityCount = [canReview, canCurate, canModerate, canAdmin].filter(Boolean).length;
 
 const sections = [
   {
@@ -29,6 +31,7 @@ const sections = [
     items: [
       { href: '/iceberg/new', label: '创建冰山图', desc: '从零创建，或从 Iceberg Threads 导入内容', needLogin: true },
       { href: '/guide', label: '使用指南', desc: '冰山图撰写规范与技巧' },
+      { href: '/guide#version-control', label: '版本协作指南', desc: '多人改稿、提交审阅和解决冲突的使用说明' },
       { href: '/guide/writing', label: '写作指南', desc: '如何写好一张冰山图的深度指南' },
       { href: '/ideas', label: '创意板', desc: '看板 + 列表视图，提交、认领协作创意' },
     ],
@@ -40,16 +43,17 @@ const sections = [
       { href: '/feedback', label: '反馈建议', desc: '提交Bug或功能建议' },
       { href: '/feedback/progress', label: '反馈进展', desc: '追踪反馈处理状态' },
       { href: '/changelog', label: '更新日志', desc: '版本变更记录' },
-      { href: '/projects', label: '专题协作', desc: '创建或加入协作项目，任务看板、成员管理、话题讨论' },
+      { href: '/projects', label: '专题协作', desc: '和同好分工，一起完成大型选题' },
     ],
   },
   {
     title: '治理',
     items: [
       { href: '/org', label: '机构', desc: '管理组名单与站点架构' },
-      { href: '/rfa/index', label: 'RfA 申请', desc: '申请编辑/管理员权限', needLogin: true },
-      { href: '/elections', label: '站长选举', desc: '站长轮换选举', needLogin: true },
-      { href: '/impeach/index', label: '弹劾', desc: '弹劾管理员或版主', needLogin: true },
+      { href: '/org', label: '社区职责', desc: '查看站务分工，申请参与审核或管理', needLogin: true },
+      { href: '/rfa/index', label: 'RfA 历史', desc: '已退役制度的只读档案', needLogin: true },
+      { href: '/elections', label: '选举历史', desc: '已退役制度的只读档案', needLogin: true },
+      { href: '/impeach/index', label: '弹劾历史', desc: '已退役制度的只读档案', needLogin: true },
     ],
   },
   {
@@ -71,14 +75,6 @@ const sections = [
   },
 ];
 
-const statusLabel: Record<string, string> = {
-  guest: '访客',
-  USER: 'USER',
-  CONTRIBUTOR: 'CONTRIBUTOR',
-  EDITOR: 'EDITOR',
-  MODERATOR: 'MODERATOR',
-  ADMIN: 'ADMIN',
-};
 ---
 
 <Layout title="功能大厅 | 冰山图宇宙">
@@ -93,22 +89,36 @@ const statusLabel: Record<string, string> = {
       <p class="mt-2 text-sm text-text-body font-mono">
         所有可用功能入口
         {isLoggedIn && (
-          <span> · 已登录 <span class="text-brand">{session.userId}</span>（{statusLabel[role] || role}）</span>
+          <span> · 已登录 <span class="text-brand">{session.userId}</span>（{capabilityCount > 0 ? `${capabilityCount} 项当前职责` : '普通参与者'}）</span>
         )}
       </p>
     </header>
 
+    <section class="mb-8 border border-purple/25 bg-purple/5 p-4 sm:p-5 reveal">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="max-w-2xl">
+          <div class="text-[10px] font-mono text-purple tracking-widest mb-2">NEW · 版本协作</div>
+          <h2 class="text-base font-mono font-semibold text-text-hi">多人改同一张图，也不会互相覆盖</h2>
+          <p class="mt-2 text-xs font-mono leading-relaxed text-text-body">每个人先保存自己的改稿，完成后再交给维护者。维护者可以查看前后差异、提出修改意见或合并内容；合并后的草稿仍要通过发布审核才会公开。</p>
+        </div>
+        <div class="flex shrink-0 flex-wrap gap-2">
+          <a href="/guide#version-control" class="border border-purple/30 px-3 py-2 text-[10px] font-mono text-purple hover:bg-purple/10">使用说明</a>
+          <a href="/projects" class="border border-border px-3 py-2 text-[10px] font-mono text-text-body hover:border-brand hover:text-brand">进入专题协作</a>
+        </div>
+      </div>
+    </section>
+
     <div class="space-y-8">
       {sections.map((section, i) => {
-        if (section.needAdmin && !isAdmin) return null;
-        const visibleItems = section.items.filter((item: any) => !item.needAdmin || isAdmin);
+        if (section.needAdmin && !canAdmin) return null;
+        const visibleItems = section.items.filter((item: any) => !item.needAdmin || canAdmin);
 
         return (
           <section class="reveal" style={`animation-delay:${i * 60}ms`}>
             <div class="text-[10px] font-mono text-brand tracking-widest mb-3">{section.title}</div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {visibleItems.map((item: any) => {
-                const locked = (item.needLogin && !isLoggedIn) || (item.needAdmin && !isAdmin);
+                const locked = (item.needLogin && !isLoggedIn) || (item.needAdmin && !canAdmin);
                 return (
                   <a
                     href={locked ? '/login' : item.href}
@@ -133,19 +143,18 @@ const statusLabel: Record<string, string> = {
     </div>
 
     {/* 管理后台快捷入口 */}
-    {isLoggedIn && (isEditor || isAdmin) && (
+    {isLoggedIn && capabilityCount > 0 && (
       <div class="mt-8 p-4 border border-brand/30 bg-brand/5 reveal" style="animation-delay:400ms">
         <div class="text-[10px] font-mono text-brand tracking-widest mb-2">管理后台</div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
-            { href: `/user/${session.userId}?tab=admin&subtab=reviews`, label: '审核' },
-            { href: `/user/${session.userId}?tab=admin&subtab=promotions`, label: '晋升' },
-            { href: `/user/${session.userId}?tab=admin&subtab=reports`, label: '举报' },
-            { href: `/user/${session.userId}?tab=admin&subtab=feedback`, label: '反馈' },
-            isAdmin && { href: `/user/${session.userId}?tab=admin&subtab=users`, label: '用户管理' },
-            isAdmin && { href: `/user/${session.userId}?tab=admin&subtab=appeals`, label: '申诉' },
-            isAdmin && { href: `/user/${session.userId}?tab=admin&subtab=elections`, label: '选举' },
-            isAdmin && { href: `/user/${session.userId}?tab=admin&subtab=settings`, label: '系统设置' },
+            canReview && { href: `/user/${session.userId}?tab=admin&subtab=reviews`, label: '发布审核' },
+            canModerate && { href: `/user/${session.userId}?tab=admin&subtab=reports`, label: '举报处理' },
+            canModerate && { href: `/user/${session.userId}?tab=admin&subtab=appeals`, label: '申诉处理' },
+            canCurate && { href: `/user/${session.userId}?tab=admin&subtab=feedback`, label: '内容与反馈' },
+            canAdmin && { href: `/user/${session.userId}?tab=admin&subtab=capabilities`, label: '权限管理' },
+            canAdmin && { href: `/user/${session.userId}?tab=admin&subtab=users`, label: '用户管理' },
+            canAdmin && { href: `/user/${session.userId}?tab=admin&subtab=settings`, label: '系统设置' },
           ].filter(Boolean).map((item: any) => (
             <a href={item.href} class="block px-3 py-2 border border-border text-[10px] font-mono text-text-body hover:border-brand hover:text-brand transition-colors text-center">
               {item.label}

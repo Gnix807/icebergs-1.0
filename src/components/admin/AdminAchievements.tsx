@@ -57,7 +57,6 @@ const BLOCK_CATEGORIES: { label: string; blocks: BlockDef[] }[] = [
       { key: 'watchlistCount',         label: '收藏冰山图数',    ops: ['>=','=='],      valueType: 'number' },
       { key: 'totalVotesCast',         label: '累计投票次数',    ops: ['>=','=='],      valueType: 'number' },
       { key: 'createdIcebergCount',    label: '已发布冰山图数',  ops: ['>=','=='],      valueType: 'number' },
-      { key: 'qualityLevel',           label: '质量等级(0-3)',   ops: ['>=','=='],      valueType: 'number' },
       { key: 'unlockedAchievementCount',label:'已解锁成就数',    ops: ['<=','>=','=='], valueType: 'number' },
       { key: 'warningCount',           label: '已收到警告次数',  ops: ['>=','=='],      valueType: 'number' },
       { key: 'hasUnreadNotification',  label: '是否有未读通知',  ops: ['=='],           valueType: 'boolean' },
@@ -88,8 +87,12 @@ const BLOCK_CATEGORIES: { label: string; blocks: BlockDef[] }[] = [
       { key: 'projectJoinedCount',  label: '加入的协作组数',  ops: ['>=','=='], valueType: 'number' },
       { key: 'projectCreatedCount', label: '创建的协作组数',  ops: ['>=','=='], valueType: 'number' },
       { key: 'ideaSubmittedCount',  label: '提交的创意数',    ops: ['>=','=='], valueType: 'number' },
-      { key: 'taskCompletedCount',  label: '完成的协作任务数',ops: ['>=','=='], valueType: 'number' },
-      { key: 'collabEditCount',     label: '编辑过的他人冰山图',ops: ['>=','=='], valueType: 'number' },
+      { key: 'publishedIcebergCount', label: '正式发布冰山图数', ops: ['>=','=='], valueType: 'number' },
+      { key: 'mergedPullRequestCount', label: '已合并 PR 数', ops: ['>=','=='], valueType: 'number' },
+      { key: 'distinctCollabIcebergCount', label: '协作冰山图数', ops: ['>=','=='], valueType: 'number' },
+      { key: 'nonSelfReviewCount', label: '非本人 PR 审阅数', ops: ['>=','=='], valueType: 'number' },
+      { key: 'validReviewCount', label: '审计通过的审核数', ops: ['>=','=='], valueType: 'number' },
+      { key: 'completedTaskCount', label: '已完成项目任务数', ops: ['>=','=='], valueType: 'number' },
     ],
   },
 ];
@@ -103,8 +106,10 @@ ALL_BLOCKS.forEach((block) => { BLOCK_BY_KEY[block.key] = block; });
 const VAR_OPTIONS = [
   'totalRead','searchCount','randomCount','nightReadCount',
   'visitedIcebergCount','consecutiveDays','totalVotesCast','currentIcebergReadCount',
-  'watchlistCount','createdIcebergCount','qualityLevel',
-  'projectJoinedCount','projectCreatedCount','ideaSubmittedCount','taskCompletedCount','collabEditCount',
+  'watchlistCount','createdIcebergCount',
+  'projectJoinedCount','projectCreatedCount','ideaSubmittedCount','taskCompletedCount',
+  'publishedIcebergCount','mergedPullRequestCount','distinctCollabIcebergCount',
+  'nonSelfReviewCount','validReviewCount','completedTaskCount',
 ];
 const DAY_OPTIONS = ['周日','周一','周二','周三','周四','周五','周六'];
 const MONTH_OPTIONS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
@@ -473,6 +478,8 @@ interface AchievementDef {
   desc: string; color: string; triggerType: string; triggerTarget: number;
   sortOrder: number; isHidden: boolean; conditions: string; category?: string | null;
   rarity?: string | null;
+  ruleVersion: number;
+  lifecycle: 'ACTIVE' | 'LEGACY' | 'ARCHIVED';
   createdAt: string;
 }
 
@@ -483,8 +490,6 @@ export function AdminAchievements({ isFounder }: { isFounder?: boolean }) {
   const [deleting, setDeleting]         = useState<string | null>(null);
   const [deleteConfirming, setDeleteConfirming] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState('全部');
-  const [resetting, setResetting]       = useState(false);
-  const [resetConfirm, setResetConfirm] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -507,8 +512,8 @@ export function AdminAchievements({ isFounder }: { isFounder?: boolean }) {
     try {
       const res  = await fetch(`/api/admin/achievements/${ach.id}?action=delete`);
       const data = await res.json();
-      if (data.success) { toast('已删除'); if (expandedId === ach.id) setExpandedId(null); load(); }
-      else toast(data.error?.message ?? '删除失败', 'error');
+      if (data.success) { toast('已归档，既有解锁记录仍会保留'); if (expandedId === ach.id) setExpandedId(null); load(); }
+      else toast(data.error?.message ?? '归档失败', 'error');
     } finally { setDeleting(null); }
   };
 
@@ -604,6 +609,12 @@ export function AdminAchievements({ isFounder }: { isFounder?: boolean }) {
                       <span className="text-xs font-mono text-text-hi">{ach.labelZh}</span>
                       {ach.isHidden && <span className="text-[9px] text-text-body border border-border px-1">隐藏</span>}
                       {ach.category && <span className="text-[9px] text-text-lo border border-border-subtle px-1">{ach.category}</span>}
+                      {ach.lifecycle !== 'ACTIVE' && (
+                        <span className="text-[9px] text-warning border border-warning/30 px-1">
+                          {ach.lifecycle === 'LEGACY' ? '旧版' : '已归档'}
+                        </span>
+                      )}
+                      <span className="text-[9px] text-text-lo">v{ach.ruleVersion}</span>
                     </div>
                     <div className="text-[10px] text-text-lo font-mono mt-0.5">
                       {preview.length > 0 ? preview.join(' + ') : ach.triggerType}
@@ -622,7 +633,7 @@ export function AdminAchievements({ isFounder }: { isFounder?: boolean }) {
                       onClick={() => deleteConfirming === ach.id ? deleteAch(ach) : setDeleteConfirming(ach.id)} 
                       disabled={deleting === ach.id}
                       className={`text-[10px] font-mono transition-colors ${deleteConfirming === ach.id ? 'text-danger font-bold' : 'text-text-body hover:text-danger'}`}>
-                      {deleting === ach.id ? '...' : deleteConfirming === ach.id ? '再次确认' : '删除'}
+                      {deleting === ach.id ? '...' : deleteConfirming === ach.id ? '再次确认' : '归档'}
                     </button>
                   </div>
                 </div>
@@ -645,36 +656,11 @@ export function AdminAchievements({ isFounder }: { isFounder?: boolean }) {
         </div>
       )}
 
-      {isFounder && <div className="mt-8 pt-6 border-t border-danger/20">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs font-mono text-danger mb-1">重置我的数据</div>
-            <div className="text-[10px] font-mono text-text-mid">清空你的成就、统计数据和质量分，回到与新用户一样的起跑线。不影响冰山图和其他用户。</div>
-          </div>
-          {!resetConfirm ? (
-            <button onClick={() => setResetConfirm(true)} className="px-3 py-1.5 text-xs font-mono border border-danger/40 text-danger hover:bg-danger/10 transition-colors flex-shrink-0">
-              重置我的数据
-            </button>
-          ) : (
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <button onClick={() => setResetConfirm(false)} className="px-3 py-1.5 text-xs font-mono border border-border text-text-body hover:border-brand transition-colors">取消</button>
-              <button onClick={async () => {
-                setResetting(true);
-                try {
-                  const r = await fetch('/api/admin/achievements/reset-all', { method: 'GET' });
-                  const d = await r.json();
-                  if (d.success) { toast(d.data.message || '已清空'); setResetConfirm(false); load(); }
-                  else toast(d.error?.message || '操作失败');
-                } catch { toast('网络错误'); }
-                finally { setResetting(false); }
-              }} disabled={resetting} className="px-3 py-1.5 text-xs font-mono bg-danger text-white hover:bg-danger/80 disabled:opacity-40 transition-colors">
-                {resetting ? '重置中…' : '确认重置'}
-              </button>
-            </div>
-          )}
+      {isFounder && (
+        <div className="mt-8 border-t border-border-subtle pt-5 text-[10px] font-mono text-text-lo">
+          成就采用永久解锁记录；停用定义请使用“归档”，不会删除用户历史。
         </div>
-      </div>
-      }
+      )}
     </div>
   );
 }

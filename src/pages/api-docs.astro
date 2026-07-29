@@ -14,7 +14,18 @@ const sections = [
   {
     title: '精选',
     items: [
-      { method: 'ALL', path: '/api/icebergs/[id]/featured', desc: '切换精选状态（ADMIN）' },
+      { method: 'ALL', path: '/api/icebergs/[id]/featured', desc: '切换精选状态（需要 CONTENT_CURATION）' },
+    ],
+  },
+  {
+    title: '能力、认证与贡献',
+    items: [
+      { method: 'GET', path: '/api/capabilities', desc: '读取当前能力状态、申请记录与发布审核员认证进度；站点管理员可读取待决申请和当前能力' },
+      { method: 'POST', path: '/api/capabilities', desc: '提交能力申请或申诉。JSON body: action=apply|appeal' },
+      { method: 'POST', path: '/api/capabilities/:id', desc: '双人决策、72 小时紧急暂停、永久撤销申请与创始人 break-glass 处置' },
+      { method: 'GET', path: '/api/capabilities/audit', desc: '读取不可变能力审计记录（需要 SITE_ADMINISTRATION）' },
+      { method: 'GET', path: '/api/contributions/:userId', desc: '读取按创作、协作、审阅和服务拆分的贡献档案；旧质量分仅本人可见' },
+      { method: 'POST', path: '/api/review-audits', desc: '提交发布决定抽查结果；严重问题会从发布层下架，不修改版本历史' },
     ],
   },
   {
@@ -25,6 +36,20 @@ const sections = [
       { method: 'ALL', path: '/api/tiers/:id/items', desc: '创建词条。?data=<JSON>' },
       { method: 'ALL', path: '/api/items/:id', desc: '更新/删除词条。?data=<JSON> 或 ?action=delete' },
       { method: 'ALL', path: '/api/items/read', desc: '标记词条已读。?data={<JSON>}' },
+    ],
+  },
+  {
+    title: '冰山图版本协作',
+    items: [
+      { method: 'GET', path: '/api/icebergs/:id/repository?view=state', desc: '仓库、当前分支、工作副本 revision、领先/落后与权限状态' },
+      { method: 'GET', path: '/api/icebergs/:id/repository?view=history&limit=50', desc: '提交历史；访客仅能读取公开版本可追溯的提交' },
+      { method: 'GET', path: '/api/icebergs/:id/repository?view=diff&base=&head=', desc: '任意两次提交的结构化差异' },
+      { method: 'GET', path: '/api/icebergs/:id/repository?view=pulls', desc: '合并请求列表；?view=pull&number=N 读取详情' },
+      { method: 'GET', path: '/api/icebergs/:id/repository?view=collaborators', desc: '协作者列表与待接受邀请（需仓库权限）' },
+      { method: 'POST', path: '/api/icebergs/:id/repository', desc: '分支与工作副本：create-branch / archive-branch / save-workspace' },
+      { method: 'POST', path: '/api/icebergs/:id/repository', desc: '提交与冲突：commit / revert / resolve-conflicts' },
+      { method: 'POST', path: '/api/icebergs/:id/repository', desc: '审阅与合并：create-pull / review / comment / resolve-comment / merge' },
+      { method: 'POST', path: '/api/icebergs/:id/repository', desc: '协作者：invite / respond-invite / update-collaborator' },
     ],
   },
   {
@@ -52,14 +77,14 @@ const sections = [
       { method: 'ALL', path: '/api/auth/achievements/ack', desc: '确认成就通知' },
       { method: 'GET', path: '/api/users/:id', desc: '用户资料；?data=<JSON> 更新' },
       { method: 'ALL', path: '/api/users/:id/follow', desc: '关注/取关（toggle）' },
-      { method: 'ALL', path: '/api/users/:id/warn', desc: '警告用户（ADMIN）。?data={<JSON>}' },
-      { method: 'ALL', path: '/api/users/:id/restrict', desc: '设为只读（ADMIN）。?data={<JSON>}' },
-      { method: 'ALL', path: '/api/users/:id/ban', desc: '封禁用户（ADMIN）。?data={<JSON>}' },
-      { method: 'ALL', path: '/api/users/:id/unban', desc: '解除封禁（ADMIN）。?data={<JSON>}' },
-      { method: 'ALL', path: '/api/users/:id/role', desc: '变更角色（ADMIN）。?data={<JSON>}' },
-      { method: 'ALL', path: '/api/users/:id/delete', desc: '删除用户及其冰山图（ADMIN）。?data=<JSON>' },
+      { method: 'ALL', path: '/api/users/:id/warn', desc: '警告用户（需要 COMMUNITY_MODERATION）。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/users/:id/restrict', desc: '设为只读（需要 COMMUNITY_MODERATION）。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/users/:id/ban', desc: '封禁用户（需要 COMMUNITY_MODERATION）。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/users/:id/unban', desc: '解除封禁（需要 COMMUNITY_MODERATION）。?data={<JSON>}' },
+      { method: 'ALL', path: '/api/users/:id/role', desc: '旧角色写入口已退役，返回 LEGACY_GOVERNANCE_RETIRED' },
+      { method: 'ALL', path: '/api/users/:id/delete', desc: '删除用户及其冰山图（需要 SITE_ADMINISTRATION）。?data=<JSON>' },
       { method: 'ALL', path: '/api/users/:id/appeal', desc: '提交申述。?data={<JSON>}' },
-      { method: 'ALL', path: '/api/users/:id/awards', desc: '授予勋章。?data=<JSON> 或 ?action=delete&awardId=' },
+      { method: 'ALL', path: '/api/users/:id/awards', desc: '授予勋章（需要 SITE_ADMINISTRATION）。?data=<JSON> 或 ?action=delete&awardId=' },
       { method: 'ALL', path: '/api/users/:id/userboxes', desc: '更新用户框。?data={<JSON>}' },
       { method: 'ALL', path: '/api/users/:id/avatar', desc: '上传头像（multipart）' },
     ],
@@ -114,17 +139,9 @@ const sections = [
   {
     title: '治理',
     items: [
-      { method: 'ALL', path: '/api/elections', desc: '创建选举。?data=<JSON>' },
-      { method: 'ALL', path: '/api/elections/:id', desc: '编辑选举。?data=<JSON>' },
-      { method: 'ALL', path: '/api/elections/:id/confirm', desc: '确认选举结果。?data=<JSON>' },
-      { method: 'ALL', path: '/api/elections/:id/vote', desc: '选举投票。?data=<JSON>' },
-      { method: 'ALL', path: '/api/elections/:id/candidates', desc: '候选人操作。?data=<JSON> 或 ?action=delete' },
-      { method: 'ALL', path: '/api/rfa', desc: '提交 RfA 申请。?data=<JSON>' },
-      { method: 'ALL', path: '/api/rfa/:id', desc: '取消 RfA。?action=delete' },
-      { method: 'ALL', path: '/api/rfa/:id/vote', desc: 'RfA 投票。?data=<JSON>' },
-      { method: 'ALL', path: '/api/impeach', desc: '发起弹劾。?data=<JSON>' },
-      { method: 'ALL', path: '/api/impeach/:id', desc: '取消弹劾。?action=delete' },
-      { method: 'ALL', path: '/api/impeach/:id/vote', desc: '弹劾投票。?data=<JSON>' },
+      { method: 'GET', path: '/api/elections', desc: '读取旧选举历史；创建、候选、投票和确认写操作已退役' },
+      { method: 'GET', path: '/api/rfa', desc: '读取旧 RfA 历史；申请、取消和投票写操作已退役' },
+      { method: 'GET', path: '/api/impeach', desc: '读取旧弹劾历史；发起、取消和投票写操作已退役' },
     ],
   },
   {
@@ -137,13 +154,12 @@ const sections = [
       { method: 'ALL', path: '/api/admin/reports/:id', desc: '处理举报。?data=<JSON>' },
       { method: 'ALL', path: '/api/admin/reports/batch', desc: '批量处理举报。?data=<JSON>' },
       { method: 'ALL', path: '/api/admin/appeals/:id', desc: '处理申述。?data=<JSON>' },
-      { method: 'ALL', path: '/api/admin/promotions/:id', desc: '处理晋升。?data=<JSON>' },
+      { method: 'ALL', path: '/api/admin/promotions/:id', desc: '旧晋升写入口已退役；历史读取继续可用' },
       { method: 'ALL', path: '/api/admin/feedback/:id', desc: '处理反馈。?data=<JSON> 或 ?action=delete' },
       { method: 'ALL', path: '/api/admin/achievements', desc: '创建成就配置。?data=<JSON>' },
       { method: 'ALL', path: '/api/admin/achievements/:id', desc: '编辑/删除成就。?data=<JSON> 或 ?action=delete' },
-      { method: 'ALL', path: '/api/admin/achievements/reset-all', desc: '重置创始人成就数据' },
       { method: 'ALL', path: '/api/achievements/recheck', desc: '复核成就解锁条件' },
-      { method: 'ALL', path: '/api/promotion/request', desc: '提交晋升申请。?data=<JSON>' },
+      { method: 'ALL', path: '/api/promotion/request', desc: '旧晋升申请入口已退役，返回 LEGACY_GOVERNANCE_RETIRED' },
     ],
   },
   {
@@ -183,6 +199,22 @@ const sections = [
       <p class="text-[10px] font-mono text-text-lo mt-2">
         示例：创建冰山图 → <code>GET /api/icebergs?data=%7B%22title%22%3A%22%E6%B5%8B%E8%AF%95%22%7D</code>
       </p>
+    </div>
+
+    <div class="border border-purple/25 bg-purple/5 p-5 mb-10">
+      <div class="text-[10px] font-mono text-purple mb-2 tracking-widest">// 版本协作接口约定</div>
+      <p class="text-xs font-mono text-text-body leading-relaxed">
+        版本协作写操作统一使用 <code class="text-purple">POST /api/icebergs/:id/repository</code>，
+        JSON body 通过 <code class="text-purple">action</code> 区分行为。工作副本必须携带当前
+        <code>revision</code>，提交和合并必须携带预期的分支头；服务端使用乐观锁和可串行化事务，绝不以最后写入静默覆盖并发修改。
+      </p>
+      <div class="mt-3 grid grid-cols-1 gap-2 text-[10px] font-mono sm:grid-cols-2">
+        <div class="border border-border-subtle bg-surface-2 p-3"><code class="text-warning">WORKSPACE_CONFLICT</code><p class="mt-1 text-text-mid">同一用户的另一个标签页已推进工作副本 revision。</p></div>
+        <div class="border border-border-subtle bg-surface-2 p-3"><code class="text-warning">BRANCH_BEHIND</code><p class="mt-1 text-text-mid">分支头已变化，需要载入或合并最新提交。</p></div>
+        <div class="border border-border-subtle bg-surface-2 p-3"><code class="text-warning">MERGE_CONFLICT</code><p class="mt-1 text-text-mid">三方合并发现必须人工选择的字段或结构冲突。</p></div>
+        <div class="border border-border-subtle bg-surface-2 p-3"><code class="text-warning">REVIEW_REQUIRED</code><p class="mt-1 text-text-mid">缺少有效批准，或仍存在未解除的“要求修改”。</p></div>
+        <div class="border border-border-subtle bg-surface-2 p-3 sm:col-span-2"><code class="text-warning">VERSION_CONTROL_ENABLED</code><p class="mt-1 text-text-mid">该冰山图已启用新版本协议；旧编辑页面必须刷新，旧写接口不能绕过提交历史修改主版本。</p></div>
+      </div>
     </div>
 
     <div class="space-y-8">

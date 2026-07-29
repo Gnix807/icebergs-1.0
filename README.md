@@ -223,30 +223,47 @@ npx prisma db push # 同步 Prisma Schema 到数据库
 ```bash
 git clone https://github.com/Gnix807/icebergs-1.0.git /opt/icebergs
 cd /opt/icebergs
-cp .env.docker .env                  # 编辑填入 OAuth 密钥和域名
-docker compose up -d                 # 自动建库、迁移、种子、启动
+cp .env.production.example .env.production
+# 编辑 .env.production，填写数据库密码、站点域名和密钥
+sh deploy.sh
 ```
 
-容器启动后自动完成：等待数据库就绪 → 执行迁移 → 导入种子数据 → 创建全文索引 → 启动应用。
+之后每次更新只需要：
+
+```bash
+cd /opt/icebergs
+sh deploy.sh
+```
+
+部署脚本会依次完成：仅快进拉取代码 → 校验生产变量 → 等待数据库 →
+在 `./backups/` 创建部署前备份 → 复用缓存构建镜像 → 执行无破坏性
+Schema 同步 → 创建全文索引 → 幂等回填版本库与贡献档案 → 校验数据 →
+等待应用健康检查通过。检测到可能丢失数据的 Schema 变更时，部署会停止，
+不会自动使用 `--accept-data-loss`。
 
 之后用 nginx 或 1Panel 反代到 `127.0.0.1:4321`，配置 SSL 证书。
 
 ```bash
-# 更新到最新版本
-git pull && docker compose up -d --build
+# 本地提交或推送前的完整校验
+npm run deploy:check
 
-# 数据库备份
-docker compose exec db pg_dump -U icebergs icebergs > backup.sql
+# 单独检查生产环境文件（不会输出密钥）
+npm run deploy:env-check
 ```
 
-### 手动部署
+### 手动部署（仅用于排障）
 
 ```bash
-cp .env.example .env                 # 填写所有生产环境变量
 npm install
-npx prisma generate && npx prisma db push
-node prisma/seed.mjs && node prisma/seed-achievements.mjs
-psql -d icebergs -f prisma/migrations/001_fulltext_search.sql
+npx prisma generate
+npx prisma db push --skip-generate
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/001_fulltext_search.sql
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f prisma/migrations/002_capabilities_contributions.sql
+node prisma/seed.mjs
+node prisma/seed-achievements.mjs
+node prisma/seed-features.mjs
+node scripts/backfill-version-control.mjs
+node scripts/backfill-capabilities-contributions.mjs
 npm run build
 node dist/server/entry.mjs           # 用 PM2 或 systemd 托管
 ```

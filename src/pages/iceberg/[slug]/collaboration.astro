@@ -1,0 +1,23 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { RepositoryHub } from '../../../components/iceberg/RepositoryHub';
+
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect('/iceberg/list');
+---
+
+<Layout
+  title="协作中心 | 冰山图宇宙"
+  description="提交 Issue、查看冰山图版本历史，并通过分支和 Pull Request 协作修改"
+>
+  <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+    <div class="mb-5 font-mono text-[10px] text-text-lo">
+      <a href={`/iceberg/${encodeURIComponent(slug)}`} class="hover:text-brand">冰山图</a>
+      <span class="mx-2">/</span>
+      <span>协作中心</span>
+      <span class="mx-2">·</span>
+      <a href="/guide#version-control" class="text-purple hover:underline">协作说明</a>
+    </div>
+    <RepositoryHub client:load icebergId={slug} />
+  </main>
+</Layout>

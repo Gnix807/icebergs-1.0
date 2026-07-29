@@ -8,6 +8,7 @@ import { getSession } from '../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { getImpeachSettings } from '../../../lib/impeach';
 import { notify } from '../../../lib/notify';
+import { legacyGovernanceWritesEnabled } from '../../../lib/governance';
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -18,6 +19,9 @@ function json(body: unknown, status = 200) {
 export async function GET(event: APIContext) {
   const dataParam = event.url.searchParams.get('data');
   if (dataParam) {
+    if (!await legacyGovernanceWritesEnabled()) {
+      return json(error(ErrorCodes.LEGACY_GOVERNANCE_RETIRED, '角色弹劾已转为证据化能力复核'), 409);
+    }
 
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -93,4 +97,3 @@ export async function GET(event: APIContext) {
   });
   return json(success({ requests }));
 }
-

@@ -8,10 +8,14 @@ import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 import { can } from '../../../lib/permissions';
 import { logScore } from '../../../lib/scoreLog';
+import { legacyGovernanceWritesEnabled } from '../../../lib/governance';
 
 export async function GET(event: APIContext) {
   const dataParam = event.url.searchParams.get('data');
   if (dataParam) {
+    if (!await legacyGovernanceWritesEnabled()) {
+      return json(error(ErrorCodes.LEGACY_GOVERNANCE_RETIRED, '角色晋升流程已转为只读历史'), 409);
+    }
 
     try {
       const session = await getSession(event);
@@ -109,4 +113,3 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
-

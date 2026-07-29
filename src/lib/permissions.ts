@@ -1,5 +1,10 @@
 import type { Role, AccountStatus } from './types';
 import { isRestricted } from './types';
+import {
+  hasCapability,
+  type Capability,
+  type CapabilityUser,
+} from './capabilities';
 
 // ── Role hierarchy ─────────────────────────────────────────
 
@@ -17,42 +22,30 @@ export function hasRole(userRole: string, required: Role): boolean {
 
 // ── Permission definitions ──────────────────────────────────
 
-/**
- * Permissions indexed by action string.
- * Values are the minimum Role required.
- * Special rules (e.g. status checks) are handled in can().
- */
-const ACTION_ROLE: Record<string, Role> = {
-  // Content
-  'content:read':        'USER',
-  'content:create':      'USER',
-  'content:edit:own':    'USER',
-  'content:submit':      'USER',       // submit for review
-  'content:suggest':     'CONTRIBUTOR',// suggest item edits
-  'content:review':      'EDITOR',     // approve / reject icebergs
-  'content:edit:any':    'EDITOR',
-  'content:feature':     'EDITOR',
-  'content:delete:any':  'ADMIN',
-  'content:override':    'ADMIN',      // ADMIN Override on reviews
-
-  // Social
-  'social:vote':         'USER',
-  'social:watchlist':    'USER',
-  'social:rfa:vote:editor': 'CONTRIBUTOR', // qualityScore checked separately
-  'social:rfa:vote:admin':  'CONTRIBUTOR',
-
-  // User management
-  'user:warn':           'EDITOR',
-  'user:restrict':       'ADMIN',
-  'user:ban':            'ADMIN',
-  'user:role':           'ADMIN',
-
-  // Reports / Appeals
-  'report:file':         'USER',
-  'report:handle':       'EDITOR',
-  'appeal:file':         'USER',
-  'appeal:handle':       'ADMIN',
+const ACTION_CAPABILITY: Record<string, Capability> = {
+  'content:review': 'PUBLICATION_REVIEW',
+  'content:feature': 'CONTENT_CURATION',
+  'content:delete:any': 'SITE_ADMINISTRATION',
+  'content:override': 'SITE_ADMINISTRATION',
+  'user:warn': 'COMMUNITY_MODERATION',
+  'user:restrict': 'COMMUNITY_MODERATION',
+  'user:ban': 'COMMUNITY_MODERATION',
+  'user:role': 'SITE_ADMINISTRATION',
+  'report:handle': 'COMMUNITY_MODERATION',
+  'appeal:handle': 'COMMUNITY_MODERATION',
 };
+
+const AUTHENTICATED_ACTIONS = new Set([
+  'content:read',
+  'content:create',
+  'content:edit:own',
+  'content:submit',
+  'content:suggest',
+  'social:vote',
+  'social:watchlist',
+  'report:file',
+  'appeal:file',
+]);
 
 // Actions that restricted/banned users CAN still perform
 const ALLOWED_WHEN_RESTRICTED = new Set([
@@ -61,7 +54,7 @@ const ALLOWED_WHEN_RESTRICTED = new Set([
   'appeal:file',
 ]);
 
-export interface CanUser {
+export interface CanUser extends Partial<CapabilityUser> {
   role: string;
   status: string;
   isFounder?: boolean;
@@ -77,9 +70,6 @@ export function can(user: CanUser | null | undefined, action: string): boolean {
     return action === 'content:read';
   }
 
-  // FOUNDER bypasses all permission checks unconditionally
-  if (user.isFounder) return true;
-
   const status = user.status as AccountStatus;
 
   // Banned users get no session (resolved in auth layer), but guard here too
@@ -88,8 +78,16 @@ export function can(user: CanUser | null | undefined, action: string): boolean {
   // Restricted users: only allow safe read actions
   if (isRestricted(status) && !ALLOWED_WHEN_RESTRICTED.has(action)) return false;
 
-  const required = ACTION_ROLE[action];
-  if (!required) return false; // unknown action → deny
+  const capability = ACTION_CAPABILITY[action];
+  if (capability) return hasCapability(user, capability);
 
-  return hasRole(user.role, required);
+  // Direct edits of somebody else's repository are intentionally retired.
+  // Site staff submit a PR or use an audited break-glass workflow instead.
+  if (action === 'content:edit:any') return false;
+  if (action.startsWith('social:rfa:')) return false;
+  if (AUTHENTICATED_ACTIONS.has(action)) return true;
+
+  // New actions must be explicitly classified above. Falling back to a role
+  // comparison would silently reconnect legacy rank to authorization.
+  return false;
 }

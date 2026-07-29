@@ -1954,6 +1954,170 @@ html.legacy-browser .site-footer {
   }
 }
 
+/* ── 版本协作 / Issue 工作区 ────────────────────────── */
+@keyframes repositoryViewIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.repository-view-enter {
+  animation: repositoryViewIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.repository-tab-nav {
+  scrollbar-width: thin;
+}
+
+.repository-tab-button {
+  position: relative;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.repository-tab-button:hover {
+  transform: translateY(-1px);
+}
+
+.repository-tab-button::after {
+  content: "";
+  position: absolute;
+  right: 30%;
+  bottom: 0.25rem;
+  left: 30%;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--color-brand);
+  opacity: 0;
+  transform: scaleX(0.35);
+  transition: opacity 160ms ease, transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.repository-tab-button.is-active::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.repository-issue-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(245, 158, 11, 0.13), transparent 34%),
+    radial-gradient(circle at 6% 100%, rgba(62, 207, 142, 0.08), transparent 32%),
+    var(--color-surface-1);
+}
+
+.repository-issue-hero::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: -5rem;
+  right: -4rem;
+  width: 13rem;
+  height: 13rem;
+  border: 1px solid rgba(245, 158, 11, 0.16);
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 2.25rem rgba(245, 158, 11, 0.035),
+    0 0 0 4.5rem rgba(245, 158, 11, 0.02);
+  pointer-events: none;
+}
+
+.repository-issue-card {
+  isolation: isolate;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.045);
+  transition:
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.repository-issue-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--color-brand);
+  opacity: 0;
+  transform: scaleY(0.45);
+  transition: opacity 180ms ease, transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.repository-issue-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-brand) 42%, var(--color-border-subtle));
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.1);
+}
+
+.repository-issue-card:hover::before,
+.repository-issue-card:focus-visible::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.repository-issue-excerpt {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.repository-issue-timeline {
+  position: relative;
+}
+
+.repository-issue-timeline::before {
+  content: "";
+  position: absolute;
+  top: 2.35rem;
+  bottom: 0;
+  left: 0.82rem;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--color-border), transparent);
+  pointer-events: none;
+}
+
+.repository-issue-comment::before {
+  content: "";
+  position: absolute;
+  top: 1.5rem;
+  left: -1.42rem;
+  width: 0.42rem;
+  height: 0.42rem;
+  border: 2px solid var(--color-surface-0);
+  border-radius: 999px;
+  background: var(--color-brand);
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+
+@supports not (color: color-mix(in srgb, black 50%, white)) {
+  .repository-issue-card:hover {
+    border-color: var(--color-brand);
+  }
+}
+
+@media (max-width: 639px) {
+  .repository-issue-hero::after {
+    top: -7rem;
+    right: -7rem;
+  }
+
+  .repository-issue-timeline::before,
+  .repository-issue-comment::before {
+    display: none;
+  }
+}
+
 /* flex gap 回退只在运行时检测失败的浏览器启用，避免影响现代布局。 */
 html.no-flex-gap .flex.gap-1:not(.flex-col):not(.flex-wrap) > * + * { margin-left: 0.25rem; }
 html.no-flex-gap .flex.gap-1\.5:not(.flex-col):not(.flex-wrap) > * + * { margin-left: 0.375rem; }

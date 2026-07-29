@@ -3,6 +3,7 @@ import { success, error, ErrorCodes } from '../../../lib/api';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 import { can } from '../../../lib/permissions';
+import { legacyRepositoryWriteBlocked } from '../../../lib/icebergRepository';
 
 async function isProjectMember(userId: string, projectId: string | null): Promise<boolean> {
   if (!projectId) return false;
@@ -49,12 +50,14 @@ async function deleteTier(event: APIContext, legacyGet = false): Promise<Respons
       include: { iceberg: { select: { id: true, authorId: true, projectId: true } } },
     });
     if (!existing) return json(error(ErrorCodes.NOT_FOUND, '层级不存在'), 404);
+    if (await legacyRepositoryWriteBlocked(existing.iceberg.id)) {
+      return json(error('VERSION_CONTROL_ENABLED' as any, '该冰山图已启用版本控制，请刷新编辑器。'), 409);
+    }
 
-    const canDeleteAny = can(session, 'content:delete:any');
     const inProject = await isProjectMember(session.userId, existing.iceberg.projectId);
     const canDeleteScoped = can(session, 'content:edit:own')
       && (existing.iceberg.authorId === session.userId || inProject);
-    if (!canDeleteAny && !canDeleteScoped) {
+    if (!canDeleteScoped) {
       return json(error(ErrorCodes.FORBIDDEN, '无权删除该层级'), 403);
     }
 
@@ -91,17 +94,15 @@ async function deleteTier(event: APIContext, legacyGet = false): Promise<Respons
         }
       }
       const result = await tx.tier.deleteMany({
-        where: canDeleteAny
-          ? { id }
-          : {
-              id,
-              iceberg: {
-                OR: [
-                  { authorId: session.userId },
-                  { project: { members: { some: { userId: session.userId } } } },
-                ],
-              },
-            },
+        where: {
+          id,
+          iceberg: {
+            OR: [
+              { authorId: session.userId },
+              { project: { members: { some: { userId: session.userId } } } },
+            ],
+          },
+        },
       });
       if (result.count === 0) return { deleted: false as const };
       if (itemIds.length > 0) {
@@ -157,6 +158,9 @@ export async function PUT(event: APIContext) {
       include: { iceberg: true },
     });
     if (!existing) return json(error(ErrorCodes.NOT_FOUND, '层级不存在'), 404);
+    if (await legacyRepositoryWriteBlocked(existing.iceberg.id)) {
+      return json(error('VERSION_CONTROL_ENABLED' as any, '该冰山图已启用版本控制，请刷新编辑器。'), 409);
+    }
     const canManageAny = can(session, 'content:edit:any');
     const inProject = await isProjectMember(session.userId, existing.iceberg.projectId);
     const canEditScoped = can(session, 'content:edit:own')
@@ -240,6 +244,12 @@ export async function GET(event: APIContext) {
           status: 404,
           headers: { 'Content-Type': 'application/json' },
         });
+      }
+      if (await legacyRepositoryWriteBlocked(existing.iceberg.id)) {
+        return new Response(JSON.stringify(error(
+          'VERSION_CONTROL_ENABLED' as any,
+          '该冰山图已启用版本控制，请刷新编辑器。',
+        )), { status: 409, headers: { 'Content-Type': 'application/json' } });
       }
 
       const canManageAny = can(session, 'content:edit:any');

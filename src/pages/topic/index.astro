@@ -4,35 +4,83 @@ import { prisma } from '../../lib/prisma';
 import { ICEBERG_TOPICS } from '../../lib/icebergTopic';
 
 const topicValues = ICEBERG_TOPICS.map(t => t.value);
+const db = prisma as any;
 
-const [icebergCounts, featuredCounts, ideaCounts, latestMap] = await Promise.all([
-  prisma.iceberg.groupBy({
+const [
+  publicationCounts,
+  publicationFeaturedCounts,
+  legacyCounts,
+  legacyFeaturedCounts,
+  ideaCounts,
+  latestPublications,
+  latestLegacy,
+] = await Promise.all([
+  db.icebergPublication.groupBy({
     by: ['topic'],
-    where: { topic: { in: topicValues }, status: 'PUBLISHED' },
-    _count: { id: true },
+    where: { topic: { in: topicValues }, iceberg: { status: 'PUBLISHED' } },
+    _count: { icebergId: true },
+  }),
+  db.icebergPublication.groupBy({
+    by: ['topic'],
+    where: { topic: { in: topicValues }, iceberg: { status: 'PUBLISHED', featured: true } },
+    _count: { icebergId: true },
   }),
   prisma.iceberg.groupBy({
     by: ['topic'],
-    where: { topic: { in: topicValues }, status: 'PUBLISHED', featured: true },
+    where: {
+      topic: { in: topicValues },
+      status: 'PUBLISHED',
+      repositoryInitializedAt: null,
+    },
     _count: { id: true },
-  }),
+  }).catch(() => []),
+  prisma.iceberg.groupBy({
+    by: ['topic'],
+    where: {
+      topic: { in: topicValues },
+      status: 'PUBLISHED',
+      featured: true,
+      repositoryInitializedAt: null,
+    },
+    _count: { id: true },
+  }).catch(() => []),
   prisma.idea.groupBy({
     by: ['topic'],
     where: { topic: { in: topicValues }, status: 'OPEN' },
     _count: { id: true },
   }),
-  prisma.$queryRawUnsafe<{ topic: string; title: string; slug: string }[]>(`
-    SELECT DISTINCT ON (topic) topic, title, slug
-    FROM icebergs
-    WHERE topic = ANY($1) AND status = 'PUBLISHED'
-    ORDER BY topic, "updatedAt" DESC
-  `, topicValues),
+  db.icebergPublication.findMany({
+    where: { topic: { in: topicValues }, iceberg: { status: 'PUBLISHED' } },
+    orderBy: { publishedAt: 'desc' },
+    distinct: ['topic'],
+    select: { topic: true, title: true, iceberg: { select: { slug: true } } },
+  }),
+  prisma.iceberg.findMany({
+    where: {
+      topic: { in: topicValues },
+      status: 'PUBLISHED',
+      repositoryInitializedAt: null,
+    },
+    orderBy: { updatedAt: 'desc' },
+    distinct: ['topic'],
+    select: { topic: true, title: true, slug: true },
+  }).catch(() => []),
 ]);
 
-const countByTopic = Object.fromEntries(icebergCounts.map(r => [r.topic, r._count.id]));
-const featByTopic = Object.fromEntries(featuredCounts.map(r => [r.topic, r._count.id]));
+const countByTopic: Record<string, number> = {};
+for (const row of publicationCounts) countByTopic[row.topic] = row._count.icebergId;
+for (const row of legacyCounts) countByTopic[row.topic] = (countByTopic[row.topic] ?? 0) + row._count.id;
+const featByTopic: Record<string, number> = {};
+for (const row of publicationFeaturedCounts) featByTopic[row.topic] = row._count.icebergId;
+for (const row of legacyFeaturedCounts) featByTopic[row.topic] = (featByTopic[row.topic] ?? 0) + row._count.id;
 const ideaByTopic = Object.fromEntries(ideaCounts.map(r => [r.topic, r._count.id]));
-const latestByTopic = Object.fromEntries(latestMap.map(r => [r.topic, { title: r.title, slug: r.slug }]));
+const latestByTopic = Object.fromEntries(latestPublications.map((r: any) => [
+  r.topic,
+  { title: r.title, slug: r.iceberg.slug },
+]));
+for (const row of latestLegacy) {
+  if (!latestByTopic[row.topic]) latestByTopic[row.topic] = { title: row.title, slug: row.slug };
+}
 
 const topicData = ICEBERG_TOPICS.map(t => ({
   ...t,

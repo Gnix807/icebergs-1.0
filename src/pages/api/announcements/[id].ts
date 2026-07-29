@@ -6,7 +6,7 @@ import type { APIContext } from 'astro';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../lib/api';
-import { can } from '../../../lib/permissions';
+import { hasCapability } from '../../../lib/capabilities';
 
 const db = prisma;
 
@@ -19,13 +19,18 @@ function json(body: unknown, status: number) {
 async function requireAdmin(event: APIContext) {
   const session = await getSession(event);
   if (!session) return { session: null, resp: json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401) };
-  if (!can(session, 'user:ban')) return { session: null, resp: json(error(ErrorCodes.FORBIDDEN, '需要管理员权限'), 403) };
+  if (!hasCapability(session, 'SITE_ADMINISTRATION')) {
+    return {
+      session: null,
+      resp: json(error(ErrorCodes.CAPABILITY_REQUIRED, '需要站点管理能力'), 403),
+    };
+  }
   return { session, resp: null };
 }
 
 // ALL /api/announcements/[id] — 编辑或删除公告（GET 兼容 WAF）
 export async function ALL(event: APIContext) {
-  const { session, resp } = await requireAdmin(event);
+  const { resp } = await requireAdmin(event);
   if (resp) return resp;
 
   const id = event.params.id!;
@@ -87,4 +92,3 @@ export async function ALL(event: APIContext) {
 
   return json(success({ announcement }), 200);
 }
-

@@ -4,7 +4,7 @@ import { prisma } from '../lib/prisma';
 import { renderMarkdown } from '../lib/markdown';
 import ChangelogTypeFilter from '../components/changelog/ChangelogTypeFilter.astro';
 import { getSessionById } from '../lib/auth';
-import { can } from '../lib/permissions';
+import { hasCapability } from '../lib/capabilities';
 import type { Prisma } from '@prisma/client';
 
 const TYPE_META: Record<string, { label: string; color: string }> = {
@@ -16,7 +16,7 @@ const TYPE_META: Record<string, { label: string; color: string }> = {
 
 const typeFromQuery = Astro.url.searchParams.get('type') ?? 'all';
 const session = await getSessionById(Astro.cookies.get('session')?.value);
-const canPublishChangelog = session ? can(session, 'user:ban') : false;
+const canPublishChangelog = hasCapability(session, 'SITE_ADMINISTRATION');
 const allowedTypes = ['all', 'update', 'maintenance', 'warning'] as const;
 
 function isAllowedType(v: string): v is (typeof allowedTypes)[number] {
@@ -69,6 +69,104 @@ const STATIC_PHASE3_ENTRIES: Array<{
   updatedAt: Date;
   author: { username: string; nickname: string };
 }> = [
+  {
+    _staticKey: 'phase3-v44',
+    id: 'phase3-v44',
+    title: '协作中心可以单独提 Issue 了',
+    type: 'update',
+    pinned: false,
+    createdAt: new Date('2026-07-29T11:00:00.000Z'),
+    updatedAt: new Date('2026-07-29T11:00:00.000Z'),
+    author: { username: 'icebergs', nickname: 'Icebergs 团队' },
+    content: `## 协作中心可以单独提 Issue 了
+
+发现内容有误，但还没准备好直接改？现在可以先提一个 Issue，和作者或其他读者把问题说清楚。
+
+- Issue 分为内容问题、功能问题、改进建议和其他四类，可以继续回复讨论。
+- 提 Issue 不会创建分支，也不会碰主版本；真正要改内容时，再点击「开始改动」。
+- Issue 提交者和维护者可以关闭或重新打开讨论，历史回复会一直保留。
+- 公开冰山图的 Issue 可以查看；登录且账号状态正常后可以提交或回复。
+- 冰山图详情页和协作中心已经把「提出 Issue」与「开始改动」分成两个独立入口。`,
+  },
+  {
+    _staticKey: 'phase3-v43',
+    id: 'phase3-v43',
+    title: '站务权限和成就规则调整',
+    type: 'update',
+    pinned: false,
+    createdAt: new Date('2026-07-28T14:00:00.000Z'),
+    updatedAt: new Date('2026-07-28T14:00:00.000Z'),
+    author: { username: 'icebergs', nickname: 'Icebergs 团队' },
+    content: `## 站务权限和成就规则调整
+
+以前，质量分、身份和权限之间的关系不够清楚。这次调整后，成就仍然用来记录经历，但不再自动带来审核或管理权限。
+
+### 🔐 站务按工作内容分开
+
+- 发布审核、内容整理、社区管理和站点管理现在分别授权。
+- 负责站务，不代表可以修改其他人的冰山图；作品和专题仍有自己的成员权限。
+- 重要权限的授予和永久撤销需要两名管理员确认。紧急情况下可以先暂停 72 小时，但必须写明原因。
+- 旧 RfA、晋升、选举和弹劾已经停用，过去的申请和结果仍可查看。
+
+### 🌿 给别人的冰山图投稿
+
+- 作者开放投稿后，登录用户可以建立自己的分支并提交 PR。
+- 投稿人只能修改自己的分支，不能直接改主版本，也不能操作其他人的 PR。
+- 专题默认仍只对成员开放；作者也可以关闭投稿或屏蔽特定用户。
+- 为避免滥用，未关闭 PR 的数量和每天新建数量都有上限。
+
+### 🧭 个人主页和审核员试用
+
+- 个人主页会分别显示已发布作品、已合并协作、有效审阅和项目参与，不再合成一个总分。
+- 满足注册时间、合并 PR、跨作品协作和审阅等条件后，可以进入 30 天发布审核试用。
+- 试用期间每天最多处理 3 次发布申请，部分结果会交给其他审核人员复查；审核自己的作品则每次都会复查。
+
+### 🏅 成就仍然保留
+
+- 已解锁成就永久保留；阅读、收藏、创作、探索和彩蛋成就继续运行。
+- 依赖质量分、旧角色或旧协作计数的规则标记为旧版并停止新解锁。
+- 新的协作成就会根据实际合并、有效审阅和项目任务解锁。
+- 旧质量分停止更新，只在本人可见的历史记录中保留；排行榜改为按创作、协作、审阅和项目参与分别统计。`,
+  },
+  {
+    _staticKey: 'phase3-v42',
+    id: 'phase3-v42',
+    title: '多人协作改用分支和合并请求',
+    type: 'update',
+    pinned: false,
+    createdAt: new Date('2026-07-28T10:00:00.000Z'),
+    updatedAt: new Date('2026-07-28T10:00:00.000Z'),
+    author: { username: 'icebergs', nickname: 'Icebergs 团队' },
+    content: `## 多人协作改用分支和合并请求
+
+过去几个人同时编辑一张冰山图时，后保存的人可能覆盖前面的修改。新版协作把每个人的改稿分开保存，完成后再交给维护者合并。
+
+### 🌿 先改自己的，再交稿
+
+- 自动保存只保存在自己的工作区，不会立刻影响其他人。
+- 点击「提交版本」以后，这次修改才会出现在协作记录中。
+- 作者和维护者可以直接更新主版本；其他贡献者先在自己的分支上修改，再发起合并请求。
+- 恢复旧内容也会留下记录，中间发生过的修改不会消失。
+
+### 🔍 审阅和冲突处理
+
+- 合并请求会列出标题、简介、层级、词条和排序等变化，也可以在具体改动旁留言。
+- 维护者可以批准或要求修改。贡献者重新提交后，需要再次确认。
+- 两个人改的是不同地方时，网站会尝试自动合并；改到同一处时，会显示两个版本供人选择。
+- 合并要么完整成功，要么不写入，避免主版本只更新一半。
+
+### 🏗 与专题协作结合
+
+- 专题成员可以直接修改专题里的冰山图，不需要每张图重复邀请。
+- 专题页面新增「版本协作」，可以查看相关作品、草稿和待处理的合并请求。
+- 不属于专题的个人冰山图仍然可以单独邀请协作者。
+
+### 🛡 合并以后还要审核
+
+- 合并只会更新主草稿，不会直接改变公开页面。维护者仍要按原流程提交发布审核。
+- 读者看到的始终是上一次审核通过的版本，正在修改的草稿和 PR 不会提前公开。
+- 旧冰山图会自动补上一条初始版本记录，不需要作者重新创建。`,
+  },
   {
     _staticKey: 'phase3-v41',
     id: 'phase3-v41',

@@ -5,12 +5,14 @@ import { getSessionById } from '../../lib/auth';
 import { RfaVotePanel } from '../../components/rfa/RfaVotePanel';
 import { getRfaSettings, evaluateRfa } from '../../lib/rfa';
 import FeatureGate from '../../components/FeatureGate.astro';
+import { legacyGovernanceWritesEnabled } from '../../lib/governance';
 
 const { id } = Astro.params;
 const sessionId = Astro.cookies.get('session')?.value;
 const session   = await getSessionById(sessionId);
 
 const db = prisma;
+const legacyWritesEnabled = await legacyGovernanceWritesEnabled();
 
 const rfaRaw = await db.rfaRequest.findUnique({
   where: { id },
@@ -35,7 +37,7 @@ if (!rfaRaw) {
 
 // 懒推进：到期后自动关闭并评估
 let status = rfaRaw.status;
-if (status === 'OPEN' && new Date() >= new Date(rfaRaw.closesAt)) {
+if (legacyWritesEnabled && status === 'OPEN' && new Date() >= new Date(rfaRaw.closesAt)) {
   const settings = await getRfaSettings();
   const votes    = rfaRaw.votes.map((v: any) => ({ vote: v.vote, weight: v.weight }));
   const outcome  = evaluateRfa(votes, settings);
@@ -109,6 +111,11 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
 <Layout title={`@${applicantDisplay} 的编辑资格申请 — RfA`}>
   <FeatureGate feature="feature_rfa" name="RfA 编辑选举">
   <main class="max-w-2xl mx-auto px-4 py-8 reveal">
+    {!legacyWritesEnabled && (
+      <div class="mb-6 rounded-xl border border-info/30 bg-info/5 p-4 text-xs text-info">
+        此页面是旧版 RfA 历史档案。投票与晋升已停用，发布审核资格改由可审计贡献自动认证。
+      </div>
+    )}
 
     <!-- 面包屑 -->
     <div class="text-[10px] font-mono text-text-lo mb-6">
@@ -179,7 +186,7 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
     )}
 
     <!-- 申请人自己可以撤销（仅 OPEN 状态） -->
-    {session?.userId === rfaRaw.userId && status === 'OPEN' && (
+    {legacyWritesEnabled && session?.userId === rfaRaw.userId && status === 'OPEN' && (
       <div class="mb-6">
         <button
           id="cancel-rfa-btn"
@@ -195,7 +202,7 @@ const applicantDisplay = rfaRaw.user.nickname ?? rfaRaw.user.username;
     <RfaVotePanel
       client:load
       rfaId={id!}
-      rfaStatus={status}
+      rfaStatus={legacyWritesEnabled ? status : 'ARCHIVED'}
       closesAt={rfaRaw.closesAt.toISOString()}
       applicantId={rfaRaw.userId}
       votes={votes}

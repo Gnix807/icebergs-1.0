@@ -2,6 +2,7 @@ import { prisma } from './prisma';
 import { notify } from './notify';
 import { evaluateConditions } from './achievementEngine';
 import { getQualityLevel } from './qualityLevel';
+import { getContributionProfile } from './contributions';
 import type { AchievementContext, AchievementUserStats, Condition } from './types';
 
 // ── UserStats 辅助 ────────────────────────────────────────
@@ -42,7 +43,7 @@ interface TriggerParams {
 
 async function buildContext(userId: string, trigger: TriggerParams): Promise<AchievementContext> {
   const [stats, user, watchlistCount, createdCount, warningCount, unlockedCount, hasUnread,
-    projectJoinedCount, projectCreatedCount, ideaSubmittedCount, taskCompletedCount, collabEditCount] =
+    projectJoinedCount, projectCreatedCount, ideaSubmittedCount, taskCompletedCount, contributionProfile] =
     await Promise.all([
       getOrCreateStats(userId),
       prisma.user.findUnique({
@@ -58,11 +59,7 @@ async function buildContext(userId: string, trigger: TriggerParams): Promise<Ach
       prisma.project.count({ where: { creatorId: userId } }),
       prisma.idea.count({ where: { creatorId: userId } }),
       prisma.projectTask.count({ where: { status: 'COMPLETED', assigneeId: userId } }),
-      prisma.projectMember.findMany({ where: { userId }, select: { projectId: true } }).then(members =>
-        members.length === 0 ? 0 : prisma.iceberg.count({
-          where: { projectId: { in: members.map(m => m.projectId) }, NOT: { authorId: userId } },
-        })
-      ),
+      getContributionProfile(userId),
     ]);
 
   if (!user) throw new Error(`User ${userId} not found`);
@@ -101,7 +98,15 @@ async function buildContext(userId: string, trigger: TriggerParams): Promise<Ach
       projectCreatedCount,
       ideaSubmittedCount,
       taskCompletedCount,
-      collabEditCount,
+      // Legacy alias kept for old unlocked-record rendering only. New active
+      // definitions use the explicit audited contribution fields below.
+      collabEditCount: contributionProfile.mergedPullRequestCount,
+      publishedIcebergCount: contributionProfile.publishedIcebergCount,
+      mergedPullRequestCount: contributionProfile.mergedPullRequestCount,
+      distinctCollabIcebergCount: contributionProfile.distinctCollabIcebergCount,
+      nonSelfReviewCount: contributionProfile.nonSelfReviewCount,
+      validReviewCount: contributionProfile.validReviewCount,
+      completedTaskCount: contributionProfile.completedTaskCount,
     },
   };
 }
@@ -133,7 +138,10 @@ export async function checkAchievements(
   try {
     const [ctx, allAchievements, existingRaw] = await Promise.all([
       buildContext(userId, trigger),
-      prisma.achievement.findMany({ orderBy: { sortOrder: 'asc' } }),
+      prisma.achievement.findMany({
+        where: { lifecycle: 'ACTIVE' },
+        orderBy: { sortOrder: 'asc' },
+      }),
       prisma.userAchievement.findMany({
         where: { userId },
         select: { achievementId: true },
@@ -168,8 +176,23 @@ export async function checkAchievements(
     const keys = toUnlock.map(a => a.key);
 
     // 写入解锁记录（toUnlock 已去重，无需 skipDuplicates）
-    await prisma.userAchievement.createMany({
-      data: keys.map(achievementId => ({ userId, achievementId })),
+    await (prisma as any).userAchievement.createMany({
+      data: toUnlock.map(achievement => ({
+        userId,
+        achievementId: achievement.key,
+        ruleVersion: (achievement as any).ruleVersion ?? 1,
+        evidence: {
+          triggerType: trigger.type,
+          contribution: {
+            publishedIcebergCount: ctx.user.publishedIcebergCount,
+            mergedPullRequestCount: ctx.user.mergedPullRequestCount,
+            distinctCollabIcebergCount: ctx.user.distinctCollabIcebergCount,
+            nonSelfReviewCount: ctx.user.nonSelfReviewCount,
+            validReviewCount: ctx.user.validReviewCount,
+            completedTaskCount: ctx.user.completedTaskCount,
+          },
+        },
+      })),
     });
 
     // 写入 pendingAchievements（供 NavBar 展示）+ 发站内通知（非关键）
@@ -209,7 +232,10 @@ export async function recheckAllAchievements(
     });
 
     const [allAchievements, existingRaw] = await Promise.all([
-      prisma.achievement.findMany({ orderBy: { sortOrder: 'asc' } }),
+      prisma.achievement.findMany({
+        where: { lifecycle: 'ACTIVE' },
+        orderBy: { sortOrder: 'asc' },
+      }),
       prisma.userAchievement.findMany({
         where: { userId },
         select: { achievementId: true },
@@ -239,8 +265,23 @@ export async function recheckAllAchievements(
     if (toUnlock.length === 0) return [];
 
     const keys = toUnlock.map(a => a.key);
-    await prisma.userAchievement.createMany({
-      data: keys.map(achievementId => ({ userId, achievementId })),
+    await (prisma as any).userAchievement.createMany({
+      data: toUnlock.map(achievement => ({
+        userId,
+        achievementId: achievement.key,
+        ruleVersion: (achievement as any).ruleVersion ?? 1,
+        evidence: {
+          triggerType: 'visit',
+          contribution: {
+            publishedIcebergCount: ctx.user.publishedIcebergCount,
+            mergedPullRequestCount: ctx.user.mergedPullRequestCount,
+            distinctCollabIcebergCount: ctx.user.distinctCollabIcebergCount,
+            nonSelfReviewCount: ctx.user.nonSelfReviewCount,
+            validReviewCount: ctx.user.validReviewCount,
+            completedTaskCount: ctx.user.completedTaskCount,
+          },
+        },
+      })),
     });
 
     for (const ach of toUnlock) {

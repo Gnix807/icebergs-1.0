@@ -14,7 +14,7 @@ export async function ALL(event: APIContext) {
     try {
       const project = await prisma.project.findUnique({ where: { slug: body.slug }, select: { id: true, creatorId: true } });
       if (!project) return json(error(ErrorCodes.NOT_FOUND, '专题不存在'), 404);
-      if (project.creatorId !== session.userId && !session.isFounder && session.role !== 'ADMIN') return json(error(ErrorCodes.FORBIDDEN, '无权限'), 403);
+      if (project.creatorId !== session.userId) return json(error(ErrorCodes.FORBIDDEN, '只有项目创建者可以删除'), 403);
       await prisma.project.delete({ where: { id: project.id } });
       return json(success({ deleted: true }), 200);
     } catch (err) { return json(error(ErrorCodes.INTERNAL_ERROR, '删除失败'), 500); }
@@ -25,7 +25,7 @@ export async function ALL(event: APIContext) {
       const project = await prisma.project.findUnique({ where: { slug: body.slug }, select: { id: true, creatorId: true } });
       if (!project) return json(error(ErrorCodes.NOT_FOUND, '专题不存在'), 404);
       const mod = await prisma.projectMember.findFirst({ where: { projectId: project.id, userId: session.userId, role: 'MODERATOR' } });
-      if (!mod && project.creatorId !== session.userId && !session.isFounder && session.role !== 'ADMIN') return json(error(ErrorCodes.FORBIDDEN, '无权限'), 403);
+      if (!mod && project.creatorId !== session.userId) return json(error(ErrorCodes.FORBIDDEN, '无权限'), 403);
       const data: any = {};
       if (body.name?.trim()) data.name = body.name.trim();
       if (body.description !== undefined) data.description = body.description.trim() || null;

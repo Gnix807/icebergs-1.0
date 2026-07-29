@@ -18,27 +18,27 @@ datasource db {
 // ============================================
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  username     String   @unique
+  id           String  @id @default(cuid())
+  email        String  @unique
+  username     String  @unique
   nickname     String?
-  passwordHash String?  // 邮箱注册用户存哈希；OAuth 用户为 null
+  passwordHash String? // 邮箱注册用户存哈希；OAuth 用户为 null
 
   // role: "USER" | "CONTRIBUTOR" | "EDITOR" | "ADMIN"
-  role         String   @default("USER")
+  role String @default("USER")
 
   // status: "ACTIVE" | "WARNED_1" | "WARNED_2" | "READ_ONLY" | "TEMP_BANNED" | "PERM_BANNED"
-  status       String   @default("ACTIVE")
-  banUntil     DateTime? // TEMP_BANNED 解封时间
+  status   String    @default("ACTIVE")
+  banUntil DateTime? // TEMP_BANNED 解封时间
 
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 
   // 个人资料
-  bio          String?
-  avatar       String?
+  bio    String?
+  avatar String?
 
   // 创始人标识（不可通过 UI 修改，仅直接数据库操作）
-  isFounder    Boolean  @default(false)
+  isFounder Boolean @default(false)
 
   // 质量分系统
   qualityScore      Int       @default(0)
@@ -49,21 +49,21 @@ model User {
   privacyShowWatchlist Boolean @default(false)
 
   // 用户框（自选，JSON string[]）
-  userboxIds           String  @default("[]")
+  userboxIds String @default("[]")
 
-  icebergs           Iceberg[]
-  sessions           Session[]
-  oauthIdentities    OAuthIdentity[]
-  votes              Vote[]
-  watchlist          Watchlist[]
-  warnings           UserWarning[]
-  appeals            Appeal[]
-  promotionRequests  PromotionRequest[]
-  icebergReviews     IcebergReview[]  @relation("ReviewedBy")
-  reportsFiled       Report[]         @relation("ReportFiler")
-  reportsHandled     Report[]         @relation("ReportHandler")
-  notifications      Notification[]
-  achievements       UserAchievement[]
+  icebergs             Iceberg[]
+  sessions             Session[]
+  oauthIdentities      OAuthIdentity[]
+  votes                Vote[]
+  watchlist            Watchlist[]
+  warnings             UserWarning[]
+  appeals              Appeal[]
+  promotionRequests    PromotionRequest[]
+  icebergReviews       IcebergReview[]     @relation("ReviewedBy")
+  reportsFiled         Report[]            @relation("ReportFiler")
+  reportsHandled       Report[]            @relation("ReportHandler")
+  notifications        Notification[]
+  achievements         UserAchievement[]
   itemReads            ItemRead[]
   stats                UserStats?
   electionCandidacies  ElectionCandidate[]
@@ -73,24 +73,24 @@ model User {
   rfaRequests          RfaRequest[]
   rfaVotesCast         RfaVote[]
   scoreLogs            ScoreLog[]
-  impeachTargets       ImpeachRequest[] @relation("ImpeachTarget")
-  impeachInitiated     ImpeachRequest[] @relation("ImpeachInitiator")
+  impeachTargets       ImpeachRequest[]    @relation("ImpeachTarget")
+  impeachInitiated     ImpeachRequest[]    @relation("ImpeachInitiator")
   impeachVotesCast     ImpeachVote[]
-  receivedAwards       UserAward[]      @relation("AwardReceiver")
-  givenAwards          UserAward[]      @relation("AwardGiver")
+  receivedAwards       UserAward[]         @relation("AwardReceiver")
+  givenAwards          UserAward[]         @relation("AwardGiver")
   announcements        Announcement[]
   ideas                Idea[]
   ideaVotes            IdeaVote[]
   ideaClaims           IdeaClaimant[]
   collections          Collection[]
-  followers            Follow[]         @relation("FollowFollowing")
-  following            Follow[]         @relation("FollowFollower")
+  followers            Follow[]            @relation("FollowFollowing")
+  following            Follow[]            @relation("FollowFollower")
   drafts               Draft[]
   projects             Project[]
   projectMemberships   ProjectMember[]
   projectDiscussions   ProjectDiscussion[]
-  projectTasksCreated  ProjectTask[]    @relation("TaskCreator")
-  projectTasksAssigned ProjectTask[]    @relation("TaskAssignee")
+  projectTasksCreated  ProjectTask[]       @relation("TaskCreator")
+  projectTasksAssigned ProjectTask[]       @relation("TaskAssignee")
   taskComments         TaskComment[]
 
   @@index([qualityScore])
@@ -168,11 +168,11 @@ model UserAward {
   giverId    String
   // type: "quality_star" | "community_star" | "creative_star" | "helpful_star" | "outstanding_star"
   type       String
-  message    String?  // 颁奖留言，可选，200字以内
+  message    String? // 颁奖留言，可选，200字以内
   createdAt  DateTime @default(now())
 
-  receiver   User @relation("AwardReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  giver      User @relation("AwardGiver",    fields: [giverId],    references: [id])
+  receiver User @relation("AwardReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  giver    User @relation("AwardGiver", fields: [giverId], references: [id])
 
   @@index([receiverId])
   @@map("user_awards")
@@ -190,33 +190,48 @@ model Session {
 }
 
 model Iceberg {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
+  id                  String                   @id @default(cuid())
+  slug                String                   @unique
+  title               String
   description         String?
   renderedDescription String?
-  searchVector         String?   @map("search_vector")  // full-text search tsvector, auto-populated by PG trigger
-  topic       String   @default("general") // 主题分类：game / urban_legend / conspiracy ...
-  authorId    String
-  author      User     @relation(fields: [authorId], references: [id])
+  // PostgreSQL 原生全文索引列，由 001_fulltext_search.sql 和触发器维护。
+  // 标记为 Unsupported 可阻止 prisma db push 将 tsvector 错改为 TEXT。
+  searchVector        Unsupported("tsvector")? @map("search_vector")
+  topic               String                   @default("general") // 主题分类：game / urban_legend / conspiracy ...
+  authorId            String
+  author              User                     @relation(fields: [authorId], references: [id])
 
   // status: "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "ARCHIVED"
-  status      String   @default("DRAFT")
+  status String @default("DRAFT")
 
-  viewCount   Int      @default(0)
-  featured    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  viewCount Int      @default(0)
+  featured  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tiers       Tier[]
-  votes       Vote[]
-  watchlist   Watchlist[]
-  review      IcebergReview?
-  viewLogs    ViewLog[]
-  comments    Comment[]
-  collectionItems CollectionItem[]
-  projectId   String?
-  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  tiers                   Tier[]
+  votes                   Vote[]
+  watchlist               Watchlist[]
+  review                  IcebergReview?
+  viewLogs                ViewLog[]
+  comments                Comment[]
+  collectionItems         CollectionItem[]
+  projectId               String?
+  project                 Project?              @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  repositoryInitializedAt DateTime?
+  // DEFAULT: 公开个人仓库开放提案，Projects 仓库邀请制
+  // OPEN | INVITE_ONLY 可由仓库维护者显式覆盖
+  contributionMode        String                @default("DEFAULT")
+  nextPullNumber          Int                   @default(1)
+  nextIssueNumber         Int                   @default(1)
+  repositoryCommits       IcebergCommit[]
+  repositoryBranches      IcebergBranch[]
+  repositoryWorkingCopies IcebergWorkingCopy[]
+  repositoryPullRequests  IcebergPullRequest[]
+  repositoryIssues        IcebergIssue[]
+  repositoryCollaborators IcebergCollaborator[]
+  publication             IcebergPublication?
 
   @@index([authorId])
   @@index([status, topic, createdAt])
@@ -234,26 +249,26 @@ model Tier {
   icebergId String
   iceberg   Iceberg @relation(fields: [icebergId], references: [id], onDelete: Cascade)
 
-  items     Item[]
+  items Item[]
 
   @@index([icebergId, order])
   @@map("tiers")
 }
 
 model Item {
-  id        String   @id @default(cuid())
-  title     String
-  desc         String   // Markdown
-  renderedDesc String?  // Pre-rendered HTML (computed on save)
-  order        Int      @default(0)
-  tierId    String
-  tier      Tier     @relation(fields: [tierId], references: [id], onDelete: Cascade)
-  labels    String   @default("[]") // JSON array stored as string
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String     @id @default(cuid())
+  title        String
+  desc         String // Markdown
+  renderedDesc String? // Pre-rendered HTML (computed on save)
+  order        Int        @default(0)
+  tierId       String
+  tier         Tier       @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  labels       String     @default("[]") // JSON array stored as string
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  citations    Citation[]
 
   @@index([tierId, order])
-  citations Citation[]
   @@map("items")
 }
 
@@ -261,7 +276,7 @@ model Vote {
   id        String   @id @default(cuid())
   userId    String
   icebergId String
-  value     Int      // 1 = upvote, -1 = downvote
+  value     Int // 1 = upvote, -1 = downvote
   createdAt DateTime @default(now())
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -290,23 +305,23 @@ model Watchlist {
 model Notification {
   id           String   @id @default(cuid())
   userId       String
-  type         String   // iceberg_approved | iceberg_rejected | promotion_approved | promotion_rejected
-                        // appeal_approved | appeal_rejected | warned | restricted | banned | unbanned
-                        // comment_liked | comment_reply | iceberg_voted | iceberg_watchlisted
+  type         String // iceberg_approved | iceberg_rejected | promotion_approved | promotion_rejected
+  // appeal_approved | appeal_rejected | warned | restricted | banned | unbanned
+  // comment_liked | comment_reply | iceberg_voted | iceberg_watchlisted
   title        String
   body         String?
   link         String?
   read         Boolean  @default(false)
-  count        Int      @default(1)   // 聚合计数（点赞/回复合并时递增）
-  aggregateKey String?                // 聚合键：type + targetId，相同则合并
+  count        Int      @default(1) // 聚合计数（点赞/回复合并时递增）
+  aggregateKey String? // 聚合键：type + targetId，相同则合并
   updatedAt    DateTime @default(now()) @updatedAt
   createdAt    DateTime @default(now())
 
-  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, type, aggregateKey, read])
   @@index([userId, read])
   @@index([userId, createdAt])
-  @@unique([userId, type, aggregateKey, read])
   @@map("notifications")
 }
 
@@ -316,7 +331,7 @@ model ViewLog {
   icebergId String
   createdAt DateTime @default(now())
 
-  iceberg   Iceberg  @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+  iceberg Iceberg @relation(fields: [icebergId], references: [id], onDelete: Cascade)
 
   @@index([icebergId, createdAt])
   @@index([createdAt])
@@ -325,19 +340,19 @@ model ViewLog {
 
 // ── 晋升申请（USER → CONTRIBUTOR）─────────────────────────
 model PromotionRequest {
-  id          String    @id @default(cuid())
-  userId      String
-  targetRole  String    // 目前只有 "CONTRIBUTOR"
-  statement   String?   // 申请说明，可选，200字以内
-  status      String    @default("PENDING")
+  id         String    @id @default(cuid())
+  userId     String
+  targetRole String // 目前只有 "CONTRIBUTOR"
+  statement  String? // 申请说明，可选，200字以内
+  status     String    @default("PENDING")
   // PENDING | APPROVED | REJECTED | EXPIRED
-  reviewedBy  String?
-  reviewNote  String?
-  createdAt   DateTime  @default(now())
-  reviewedAt  DateTime?
-  expiresAt   DateTime  // createdAt + 30 天
+  reviewedBy String?
+  reviewNote String?
+  createdAt  DateTime  @default(now())
+  reviewedAt DateTime?
+  expiresAt  DateTime // createdAt + 30 天
 
-  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status, expiresAt])
@@ -349,46 +364,263 @@ model SystemSettings {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
-  updatedBy String?  // ADMIN userId
+  updatedBy String? // ADMIN userId
 
   @@map("system_settings")
 }
 
 // ── 内容审核记录──────────────────────────────────────────────
 model IcebergReview {
-  id             String    @id @default(cuid())
-  icebergId      String    @unique
-  reviewerId     String?
+  id         String  @id @default(cuid())
+  icebergId  String  @unique
+  reviewerId String?
+  commitId   String?
 
   // status: "PENDING" | "APPROVED" | "REJECTED" | "OVERRIDDEN"
-  status         String    @default("PENDING")
+  status String @default("PENDING")
 
-  note           String?   // 拒绝理由
-  overriddenBy   String?   // ADMIN Override 时填写
+  note           String? // 拒绝理由
+  overriddenBy   String? // ADMIN Override 时填写
   overrideReason String?
   createdAt      DateTime  @default(now())
   reviewedAt     DateTime?
 
-  iceberg        Iceberg   @relation(fields: [icebergId], references: [id], onDelete: Cascade)
-  reviewer       User?     @relation("ReviewedBy", fields: [reviewerId], references: [id])
+  iceberg  Iceberg @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+  reviewer User?   @relation("ReviewedBy", fields: [reviewerId], references: [id])
 
   @@index([status, createdAt])
   @@map("iceberg_reviews")
+}
+
+// ── 冰山图 GitHub 式版本控制 ─────────────────────────────────
+// Tree/Commit 均为不可变对象；Branch 只保存可移动的 head 引用。
+// 用户关系使用标量 ID，避免站点用户删除时破坏历史提交的审计记录。
+model IcebergTree {
+  id            String   @id @default(cuid())
+  hash          String   @unique
+  schemaVersion Int      @default(1)
+  snapshot      Json
+  byteSize      Int
+  createdAt     DateTime @default(now())
+
+  @@map("iceberg_trees")
+}
+
+model IcebergCommit {
+  id             String   @id @default(cuid())
+  icebergId      String
+  hash           String   @unique
+  treeId         String
+  firstParentId  String?
+  secondParentId String?
+  authorId       String
+  message        String
+  source         String   @default("MANUAL") // INITIAL | MANUAL | MERGE | REVERT | IMPORT
+  createdAt      DateTime @default(now())
+
+  iceberg Iceberg @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+
+  @@index([icebergId, createdAt])
+  @@index([treeId])
+  @@index([firstParentId])
+  @@index([secondParentId])
+  @@map("iceberg_commits")
+}
+
+model IcebergBranch {
+  id             String    @id @default(cuid())
+  icebergId      String
+  name           String
+  normalizedName String
+  title          String
+  headCommitId   String
+  createdById    String
+  protected      Boolean   @default(false)
+  archivedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  iceberg Iceberg @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+
+  @@unique([icebergId, normalizedName])
+  @@index([icebergId, archivedAt])
+  @@map("iceberg_branches")
+}
+
+model IcebergWorkingCopy {
+  id           String   @id @default(cuid())
+  icebergId    String
+  branchId     String
+  userId       String
+  baseCommitId String
+  snapshot     Json
+  revision     Int      @default(1)
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  iceberg Iceberg @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+
+  @@unique([branchId, userId])
+  @@index([icebergId, userId])
+  @@map("iceberg_working_copies")
+}
+
+model IcebergPullRequest {
+  id            String    @id @default(cuid())
+  icebergId     String
+  number        Int
+  title         String
+  body          String?
+  status        String    @default("OPEN") // OPEN | MERGED | CLOSED
+  baseBranchId  String
+  headBranchId  String
+  baseCommitId  String
+  headCommitId  String
+  authorId      String
+  mergeCommitId String?
+  mergedById    String?
+  mergedAt      DateTime?
+  closedAt      DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  iceberg  Iceberg              @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+  reviews  IcebergPullReview[]
+  comments IcebergPullComment[]
+
+  @@unique([icebergId, number])
+  @@index([icebergId, status, updatedAt])
+  @@index([headBranchId])
+  @@map("iceberg_pull_requests")
+}
+
+model IcebergPullReview {
+  id            String    @id @default(cuid())
+  pullRequestId String
+  reviewerId    String
+  state         String // APPROVED | CHANGES_REQUESTED | COMMENTED | DISMISSED
+  body          String?
+  headCommitId  String
+  dismissedById String?
+  dismissedAt   DateTime?
+  dismissReason String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  pullRequest IcebergPullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+
+  @@index([pullRequestId, reviewerId, createdAt])
+  @@map("iceberg_pull_reviews")
+}
+
+model IcebergPullComment {
+  id            String    @id @default(cuid())
+  pullRequestId String
+  authorId      String
+  commitId      String
+  path          String?
+  entityId      String?
+  field         String?
+  body          String
+  resolvedAt    DateTime?
+  resolvedById  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  pullRequest IcebergPullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+
+  @@index([pullRequestId, createdAt])
+  @@map("iceberg_pull_comments")
+}
+
+// Issue 只记录问题和建议，不创建分支，也不直接修改冰山图内容。
+model IcebergIssue {
+  id         String    @id @default(cuid())
+  icebergId  String
+  number     Int
+  title      String
+  body       String?
+  kind       String    @default("CONTENT") // CONTENT | BUG | SUGGESTION | OTHER
+  status     String    @default("OPEN") // OPEN | CLOSED
+  authorId   String
+  closedById String?
+  closedAt   DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  iceberg  Iceberg               @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+  comments IcebergIssueComment[]
+
+  @@unique([icebergId, number])
+  @@index([icebergId, status, updatedAt])
+  @@index([authorId, status])
+  @@map("iceberg_issues")
+}
+
+model IcebergIssueComment {
+  id        String   @id @default(cuid())
+  issueId   String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  issue IcebergIssue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([issueId, createdAt])
+  @@map("iceberg_issue_comments")
+}
+
+model IcebergCollaborator {
+  id          String    @id @default(cuid())
+  icebergId   String
+  userId      String
+  role        String    @default("CONTRIBUTOR") // CONTRIBUTOR | MAINTAINER
+  status      String    @default("PENDING") // PENDING | ACTIVE | DECLINED | BLOCKED
+  invitedById String
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  iceberg Iceberg @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+
+  @@unique([icebergId, userId])
+  @@index([userId, status])
+  @@map("iceberg_collaborators")
+}
+
+model IcebergPublication {
+  id                  String   @id @default(cuid())
+  icebergId           String   @unique
+  commitId            String
+  title               String
+  description         String?
+  renderedDescription String?
+  topic               String
+  snapshot            Json
+  searchText          String?
+  publishedAt         DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  iceberg Iceberg @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+
+  @@index([commitId])
+  @@index([topic, publishedAt])
+  @@map("iceberg_publications")
 }
 
 // ── 警告记录 ─────────────────────────────────────────────────
 model UserWarning {
   id              String    @id @default(cuid())
   userId          String
-  issuedBy        String    // EDITOR/ADMIN 的 userId
-  level           Int       // 1 | 2
+  issuedBy        String // EDITOR/ADMIN 的 userId
+  level           Int // 1 | 2
   reason          String
   createdAt       DateTime  @default(now())
   clearedAt       DateTime?
   clearedByAppeal Boolean   @default(false)
-  autoClears      DateTime  // WARNED_1: createdAt + 90d；WARNED_2 不自动清除
+  autoClears      DateTime // WARNED_1: createdAt + 90d；WARNED_2 不自动清除
 
-  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("user_warnings")
@@ -396,23 +628,23 @@ model UserWarning {
 
 // ── 申诉 ─────────────────────────────────────────────────────
 model Appeal {
-  id          String    @id @default(cuid())
-  userId      String
+  id     String @id @default(cuid())
+  userId String
 
   // type: "WARNED_2_CLEAR" | "READ_ONLY" | "TEMP_BAN" | "PERM_BAN"
-  type        String
+  type String
 
-  statement   String    // 用户说明，100字以上
+  statement String // 用户说明，100字以上
 
   // status: "PENDING" | "APPROVED" | "REJECTED"
-  status      String    @default("PENDING")
+  status String @default("PENDING")
 
-  reviewerId  String?   // 处理此申诉的 ADMIN（回避原决定者）
-  reviewNote  String?
-  createdAt   DateTime  @default(now())
-  reviewedAt  DateTime?
+  reviewerId String? // 处理此申诉的 ADMIN（回避原决定者）
+  reviewNote String?
+  createdAt  DateTime  @default(now())
+  reviewedAt DateTime?
 
-  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
@@ -421,15 +653,15 @@ model Appeal {
 
 // ── 用户反馈 ─────────────────────────────────────────────────
 model Feedback {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // type: "error" | "bug" | "feature" | "other"
-  type      String
+  type String
 
   content   String
-  contact   String?   // 可选联系方式
-  icebergId String?   // 来源冰山图
-  itemName  String?   // 来源词条
+  contact   String? // 可选联系方式
+  icebergId String? // 来源冰山图
+  itemName  String? // 来源词条
 
   // status: "pending" | "resolved" | "wontfix"
   status       String    @default("pending")
@@ -442,27 +674,28 @@ model Feedback {
   @@index([status])
   @@map("feedbacks")
 }
+
 model Report {
-  id          String    @id @default(cuid())
+  id String @id @default(cuid())
 
   // type: "iceberg" | "user" | "rfa_candidate"
-  type        String
+  type String
 
-  targetId    String    // 举报对象的 id
-  reason      String    // 举报理由，50字以内
-  detail      String?
-  filerId     String
+  targetId String // 举报对象的 id
+  reason   String // 举报理由，50字以内
+  detail   String?
+  filerId  String
 
   // status: "PENDING" | "RESOLVED_ACTION" | "RESOLVED_DISMISSED"
-  status      String    @default("PENDING")
+  status String @default("PENDING")
 
-  handlerId   String?
-  resolution  String?
-  createdAt   DateTime  @default(now())
-  resolvedAt  DateTime?
+  handlerId  String?
+  resolution String?
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
 
-  filer       User  @relation("ReportFiler",   fields: [filerId],   references: [id])
-  handler     User? @relation("ReportHandler", fields: [handlerId], references: [id])
+  filer   User  @relation("ReportFiler", fields: [filerId], references: [id])
+  handler User? @relation("ReportHandler", fields: [handlerId], references: [id])
 
   @@index([type, targetId])
   @@index([status])
@@ -476,6 +709,8 @@ model UserAchievement {
   // achievementId: "pioneer" | "prolific" | "popular" | "analyst" | "veteran" | "scholar"
   achievementId String
   unlockedAt    DateTime @default(now())
+  ruleVersion   Int      @default(1)
+  evidence      Json?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -486,44 +721,46 @@ model UserAchievement {
 
 // ── 探索成就定义（管理员可配置）────────────────────────────────
 model Achievement {
-  id           String   @id @default(cuid())
-  key          String   @unique  // 唯一键，对应 UserAchievement.achievementId
-  icon         String
-  label        String            // 英文标题
-  labelZh      String            // 中文标题
-  desc         String
-  color        String   @default("#6b7280")
+  id            String   @id @default(cuid())
+  key           String   @unique // 唯一键，对应 UserAchievement.achievementId
+  icon          String
+  label         String // 英文标题
+  labelZh       String // 中文标题
+  desc          String
+  color         String   @default("#6b7280")
   // triggerType: "read_count" | "bottom_tier" | "all_clear" | "manual"
-  triggerType  String
-  triggerTarget Int     @default(0) // read_count 时表示需达到的阅读数
-  sortOrder    Int      @default(0)
-  isHidden     Boolean  @default(false) // true = 未解锁时不展示
-  conditions   String   @default("[]") // JSON Condition[] 可视化积木
-  category     String?  // 分类：创作/阅读/投票/收藏/质量/搜索/随机/深夜/时刻/标签/词条/坚持/隐藏/其他
-  rarity       String?  @default("普通") // 普通 | 稀有 | 史诗 | 传说
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  triggerType   String
+  triggerTarget Int      @default(0) // read_count 时表示需达到的阅读数
+  sortOrder     Int      @default(0)
+  isHidden      Boolean  @default(false) // true = 未解锁时不展示
+  conditions    String   @default("[]") // JSON Condition[] 可视化积木
+  category      String? // 分类：创作/阅读/投票/收藏/质量/搜索/随机/深夜/时刻/标签/词条/坚持/隐藏/其他
+  rarity        String?  @default("普通") // 普通 | 稀有 | 史诗 | 传说
+  ruleVersion   Int      @default(1)
+  lifecycle     String   @default("ACTIVE") // ACTIVE | LEGACY | ARCHIVED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("achievements")
 }
 
 // ── 用户行为统计（成就系统）──────────────────────────────────────
 model UserStats {
-  userId              String   @id
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  totalRead           Int      @default(0)
-  searchCount         Int      @default(0)
-  randomCount         Int      @default(0)
-  nightReadCount      Int      @default(0)   // 0:00–5:00 阅读次数
-  visitedIcebergCount Int      @default(0)   // 探索过的不同冰山图数量
-  consecutiveDays     Int      @default(0)   // 连续访问天数
-  lastVisitDate       String?               // YYYY-MM-DD
-  totalVotesCast      Int      @default(0)
-  totalSessionMinutes Int      @default(0)
-  pendingAchievements String   @default("[]") // JSON string[]
+  totalRead           Int     @default(0)
+  searchCount         Int     @default(0)
+  randomCount         Int     @default(0)
+  nightReadCount      Int     @default(0) // 0:00–5:00 阅读次数
+  visitedIcebergCount Int     @default(0) // 探索过的不同冰山图数量
+  consecutiveDays     Int     @default(0) // 连续访问天数
+  lastVisitDate       String? // YYYY-MM-DD
+  totalVotesCast      Int     @default(0)
+  totalSessionMinutes Int     @default(0)
+  pendingAchievements String  @default("[]") // JSON string[]
 
-  updatedAt           DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
   @@map("user_stats")
 }
@@ -547,20 +784,20 @@ model ItemRead {
 
 model Election {
   id            String    @id @default(cuid())
-  initiatedBy   String    // ADMIN/FOUNDER userId
+  initiatedBy   String // ADMIN/FOUNDER userId
   title         String    @default("站长选举")
   description   String?
   // status: "OPEN_APPLY" | "VOTING" | "CLOSED" | "CONFIRMED"
   status        String    @default("OPEN_APPLY")
-  applyDeadline DateTime  // 候选人申请截止
-  voteDeadline  DateTime  // 投票截止
+  applyDeadline DateTime // 候选人申请截止
+  voteDeadline  DateTime // 投票截止
   confirmedAt   DateTime?
-  winnerId      String?   // 当选者 userId（CONFIRMED 后写入）
+  winnerId      String? // 当选者 userId（CONFIRMED 后写入）
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  candidates    ElectionCandidate[]
-  votes         ElectionVote[]
+  candidates ElectionCandidate[]
+  votes      ElectionVote[]
 
   @@index([status])
   @@map("elections")
@@ -570,13 +807,13 @@ model ElectionCandidate {
   id         String   @id @default(cuid())
   electionId String
   userId     String
-  statement  String?  // 竞选宣言，最多 500 字
+  statement  String? // 竞选宣言，最多 500 字
   // status: "RUNNING" | "WITHDRAWN" | "ELECTED" | "DEFEATED"
   status     String   @default("RUNNING")
   createdAt  DateTime @default(now())
 
-  election   Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([electionId, userId])
   @@index([electionId])
@@ -587,12 +824,12 @@ model ElectionVote {
   id          String   @id @default(cuid())
   electionId  String
   voterId     String
-  candidateId String   // ElectionCandidate.id
-  weight      Int      // USER=1 CONTRIBUTOR=2 EDITOR=3 MODERATOR=5 ADMIN=7
+  candidateId String // ElectionCandidate.id
+  weight      Int // USER=1 CONTRIBUTOR=2 EDITOR=3 MODERATOR=5 ADMIN=7
   createdAt   DateTime @default(now())
 
-  election    Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
-  voter       User     @relation(fields: [voterId], references: [id], onDelete: Cascade)
+  election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  voter    User     @relation(fields: [voterId], references: [id], onDelete: Cascade)
 
   @@unique([electionId, voterId])
   @@index([electionId, candidateId])
@@ -604,17 +841,17 @@ model Comment {
   id        String   @id @default(cuid())
   icebergId String?
   ideaId    String?
-  userId    String?  // null = 游客评论
-  guestName String?  // 游客昵称（userId 为 null 时使用）
+  userId    String? // null = 游客评论
+  guestName String? // 游客昵称（userId 为 null 时使用）
   content   String
-  parentId  String?  // null = 顶层评论；非 null = 回复（最多一级）
+  parentId  String? // null = 顶层评论；非 null = 回复（最多一级）
   createdAt DateTime @default(now())
 
-  iceberg Iceberg?     @relation(fields: [icebergId], references: [id], onDelete: Cascade)
-  idea    Idea?        @relation(fields: [ideaId], references: [id], onDelete: Cascade)
-  user    User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
-  parent  Comment?     @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies Comment[]    @relation("CommentReplies")
+  iceberg Iceberg?      @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+  idea    Idea?         @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  user    User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  parent  Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[]     @relation("CommentReplies")
   likes   CommentLike[]
 
   @@index([icebergId, createdAt])
@@ -639,14 +876,14 @@ model CommentLike {
 
 // ── EDITOR RfA（编辑申请资格投票）───────────────────────────
 model RfaRequest {
-  id          String    @id @default(cuid())
-  userId      String
-  statement   String?   // 自我陈述，可选，500字以内
+  id         String    @id @default(cuid())
+  userId     String
+  statement  String? // 自我陈述，可选，500字以内
   // status: "OPEN" | "APPROVED" | "REJECTED" | "CANCELLED"
-  status      String    @default("OPEN")
-  createdAt   DateTime  @default(now())
-  closesAt    DateTime  // createdAt + rfa_vote_days
-  resolvedAt  DateTime?
+  status     String    @default("OPEN")
+  createdAt  DateTime  @default(now())
+  closesAt   DateTime // createdAt + rfa_vote_days
+  resolvedAt DateTime?
 
   user  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   votes RfaVote[]
@@ -662,8 +899,8 @@ model RfaVote {
   voterId   String
   // vote: "APPROVE" | "OPPOSE" | "ABSTAIN"
   vote      String
-  weight    Int      // CONTRIBUTOR=1 EDITOR=2 MODERATOR=3 ADMIN=5 FOUNDER=7
-  comment   String?  // 可选留言
+  weight    Int // CONTRIBUTOR=1 EDITOR=2 MODERATOR=3 ADMIN=5 FOUNDER=7
+  comment   String? // 可选留言
   createdAt DateTime @default(now())
 
   request RfaRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
@@ -681,15 +918,15 @@ model ImpeachRequest {
   // targetRole: "MODERATOR" | "ADMIN"（被弹劾时所持有的角色）
   targetRole   String
   initiatedBy  String
-  reason       String    // 必填弹劾理由
+  reason       String // 必填弹劾理由
   // status: "OPEN" | "PASSED" | "REJECTED" | "CANCELLED"
   status       String    @default("OPEN")
   closesAt     DateTime
   resolvedAt   DateTime?
   createdAt    DateTime  @default(now())
 
-  target    User          @relation("ImpeachTarget",    fields: [targetUserId], references: [id])
-  initiator User          @relation("ImpeachInitiator", fields: [initiatedBy],  references: [id])
+  target    User          @relation("ImpeachTarget", fields: [targetUserId], references: [id])
+  initiator User          @relation("ImpeachInitiator", fields: [initiatedBy], references: [id])
   votes     ImpeachVote[]
 
   @@index([status, closesAt])
@@ -703,12 +940,12 @@ model ImpeachVote {
   voterId   String
   // vote: "SUPPORT" | "OPPOSE" | "ABSTAIN"
   vote      String
-  weight    Int      // EDITOR=1 MODERATOR=2 ADMIN=3 FOUNDER=5
+  weight    Int // EDITOR=1 MODERATOR=2 ADMIN=3 FOUNDER=5
   comment   String?
   createdAt DateTime @default(now())
 
   request ImpeachRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  voter   User           @relation(fields: [voterId],   references: [id], onDelete: Cascade)
+  voter   User           @relation(fields: [voterId], references: [id], onDelete: Cascade)
 
   @@unique([requestId, voterId])
   @@index([requestId])
@@ -719,11 +956,11 @@ model ImpeachVote {
 model ScoreLog {
   id        String   @id @default(cuid())
   userId    String
-  delta     Int      // 正数加分，负数扣分
+  delta     Int // 正数加分，负数扣分
   // reason: "comment" | "vote_cast" | "comment_liked" | "iceberg_created"
   //       | "iceberg_voted" | "promoted" | "weekly_bonus"
   reason    String
-  note      String?  // 附加上下文，例如冰山图标题
+  note      String? // 附加上下文，例如冰山图标题
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -733,21 +970,177 @@ model ScoreLog {
   @@map("score_logs")
 }
 
+// ── 能力、审核认证与不可变审计 ───────────────────────────────
+// User.role 仅用于兼容迁移；新授权读取这里的能力记录。
+model UserCapability {
+  id              String    @id @default(cuid())
+  userId          String
+  capability      String // PUBLICATION_REVIEW | CONTENT_CURATION | COMMUNITY_MODERATION | SITE_ADMINISTRATION
+  status          String    @default("ACTIVE") // TRIAL | ACTIVE | SUSPENDED | REVOKED
+  source          String    @default("AUTO_CERTIFICATION") // MIGRATION | AUTO_CERTIFICATION | APPLICATION | ADMIN | BREAK_GLASS
+  grantedById     String?
+  grantedAt       DateTime  @default(now())
+  probationEndsAt DateTime?
+  suspendedAt     DateTime?
+  suspendedUntil  DateTime?
+  revokedAt       DateTime?
+  reason          String?
+  metadata        Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([userId, capability])
+  @@index([capability, status])
+  @@index([userId, status])
+  @@map("user_capabilities")
+}
+
+model CapabilityApplication {
+  id          String    @id @default(cuid())
+  userId      String
+  capability  String
+  kind        String    @default("APPLICATION") // APPLICATION | REVOCATION | APPEAL
+  statement   String
+  status      String    @default("PENDING") // PENDING | APPROVED | REJECTED | CANCELLED
+  createdById String
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  decisions CapabilityDecision[]
+
+  @@index([status, createdAt])
+  @@index([userId, capability])
+  @@map("capability_applications")
+}
+
+model CapabilityDecision {
+  id            String   @id @default(cuid())
+  applicationId String
+  reviewerId    String
+  decision      String // APPROVE | REJECT
+  reason        String
+  createdAt     DateTime @default(now())
+
+  application CapabilityApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, reviewerId])
+  @@index([applicationId, decision])
+  @@map("capability_decisions")
+}
+
+model CapabilityAuditLog {
+  id            String   @id @default(cuid())
+  actorId       String?
+  subjectUserId String?
+  capability    String?
+  action        String
+  result        String
+  resourceType  String?
+  resourceId    String?
+  reason        String?
+  breakGlass    Boolean  @default(false)
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  @@index([subjectUserId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([capability, createdAt])
+  @@map("capability_audit_logs")
+}
+
+model ReviewerCertification {
+  userId          String    @id
+  status          String    @default("INELIGIBLE") // INELIGIBLE | ELIGIBLE | TRIAL | ACTIVE | SUSPENDED
+  certifiedAt     DateTime?
+  trialEndsAt     DateTime?
+  decisionCount   Int       @default(0)
+  auditedCount    Int       @default(0)
+  auditErrorCount Int       @default(0)
+  metrics         Json?
+  lastEvaluatedAt DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status, updatedAt])
+  @@map("reviewer_certifications")
+}
+
+model ReviewAudit {
+  id           String    @id @default(cuid())
+  decisionKey  String    @unique
+  reviewId     String
+  reviewerId   String
+  auditorId    String?
+  outcome      String    @default("PENDING") // PENDING | PASS | ERROR | SERIOUS
+  sampleRate   Int
+  isSelfReview Boolean   @default(false)
+  reason       String?
+  createdAt    DateTime  @default(now())
+  resolvedAt   DateTime?
+
+  @@index([outcome, createdAt])
+  @@index([reviewId, createdAt])
+  @@index([reviewerId, createdAt])
+  @@map("review_audits")
+}
+
+// ── 可审计贡献事实与多维档案 ─────────────────────────────────
+model ContributionEvent {
+  id             String   @id @default(cuid())
+  idempotencyKey String   @unique
+  userId         String
+  type           String
+  dimension      String // CREATION | COLLABORATION | REVIEW | SERVICE
+  resourceType   String
+  resourceId     String
+  icebergId      String?
+  projectId      String?
+  metadata       Json?
+  occurredAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@index([userId, dimension, occurredAt])
+  @@index([type, occurredAt])
+  @@index([icebergId, type])
+  @@map("contribution_events")
+}
+
+model UserContributionProfile {
+  userId                     String   @id
+  creationCount              Int      @default(0)
+  collaborationCount         Int      @default(0)
+  reviewCount                Int      @default(0)
+  serviceCount               Int      @default(0)
+  publishedIcebergCount      Int      @default(0)
+  mergedPullRequestCount     Int      @default(0)
+  distinctCollabIcebergCount Int      @default(0)
+  nonSelfReviewCount         Int      @default(0)
+  validReviewCount           Int      @default(0)
+  completedTaskCount         Int      @default(0)
+  updatedAt                  DateTime @updatedAt
+
+  @@index([creationCount])
+  @@index([collaborationCount])
+  @@index([reviewCount])
+  @@index([serviceCount])
+  @@map("user_contribution_profiles")
+}
+
 // ── 公告 ──────────────────────────────────────────────────
 model Announcement {
-  id        String   @id @default(cuid())
-  title     String
-  content   String   // Markdown
+  id       String  @id @default(cuid())
+  title    String
+  content  String // Markdown
   // type: "info" | "warning" | "maintenance" | "update"
-  type      String   @default("info")
-  pinned    Boolean  @default(false)
-  banner    Boolean  @default(false)  // 是否作为全站横幅展示（同时只建议开一条）
-  authorId  String
+  type     String  @default("info")
+  pinned   Boolean @default(false)
+  banner   Boolean @default(false) // 是否作为全站横幅展示（同时只建议开一条）
+  authorId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  author    User @relation(fields: [authorId], references: [id])
+  author User @relation(fields: [authorId], references: [id])
 
   @@index([createdAt])
   @@map("announcements")
@@ -755,23 +1148,23 @@ model Announcement {
 
 // ── 创意板 ──────────────────────────────────────────────────
 model Idea {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   title       String
   description String?
-  topic       String   @default("general")
+  topic       String  @default("general")
   creatorId   String
-  status      String   @default("OPEN")  // OPEN | CLAIMED | COMPLETED
+  status      String  @default("OPEN") // OPEN | CLAIMED | COMPLETED
   claimedBy   String?
-  icebergId   String?  // 完成后关联的冰山图
+  icebergId   String? // 完成后关联的冰山图
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  votes       IdeaVote[]
-  comments    Comment[]
-  claimants   IdeaClaimant[]
-  projectId   String?
-  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  creator   User           @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  votes     IdeaVote[]
+  comments  Comment[]
+  claimants IdeaClaimant[]
+  projectId String?
+  project   Project?       @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
   @@index([creatorId])
@@ -798,8 +1191,8 @@ model IdeaVote {
   userId    String
   createdAt DateTime @default(now())
 
-  idea      Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idea Idea @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([ideaId, userId])
   @@map("idea_votes")
@@ -807,29 +1200,31 @@ model IdeaVote {
 
 // ── 收藏集 ──────────────────────────────────────────────────
 model Collection {
-  id          String           @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String?
-  isPublic    Boolean          @default(false)
+  isPublic    Boolean  @default(false)
   userId      String
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items       CollectionItem[]
+  user  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CollectionItem[]
+
   @@index([userId])
   @@map("collections")
 }
 
 model CollectionItem {
-  id           String     @id @default(cuid())
+  id           String  @id @default(cuid())
   collectionId String
   icebergId    String
-  sortOrder    Int        @default(0)
+  sortOrder    Int     @default(0)
   note         String?
 
-  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  iceberg      Iceberg    @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  iceberg    Iceberg    @relation(fields: [icebergId], references: [id], onDelete: Cascade)
+
   @@unique([collectionId, icebergId])
   @@map("collection_items")
 }
@@ -841,8 +1236,9 @@ model Follow {
   followingId String
   createdAt   DateTime @default(now())
 
-  follower    User     @relation("FollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
-  following   User     @relation("FollowFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+  follower  User @relation("FollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("FollowFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
   @@unique([followerId, followingId])
   @@index([followingId])
   @@map("follows")
@@ -853,11 +1249,12 @@ model Draft {
   id        String   @id @default(cuid())
   userId    String
   icebergId String?
-  data      String   // JSON blob：完整 Iceberg（含 tiers/items）
+  data      String // JSON blob：完整 Iceberg（含 tiers/items）
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, icebergId])
   @@index([userId])
   @@map("drafts")
@@ -865,14 +1262,15 @@ model Draft {
 
 // ── 词条引用/来源 ──────────────────────────────────────────────
 model Citation {
-  id       String   @id @default(cuid())
-  itemId   String
-  text     String              // 引用文字
-  url      String?             // 外部链接
-  order    Int      @default(0)
+  id        String   @id @default(cuid())
+  itemId    String
+  text      String // 引用文字
+  url       String? // 外部链接
+  order     Int      @default(0)
   createdAt DateTime @default(now())
 
-  item     Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
   @@map("citations")
 }
 
@@ -884,16 +1282,17 @@ model Project {
   description String?
   topic       String
   creatorId   String
-  status      String   @default("ACTIVE")  // ACTIVE | ARCHIVED
+  status      String   @default("ACTIVE") // ACTIVE | ARCHIVED
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  creator     User            @relation(fields: [creatorId], references: [id])
+  creator     User                @relation(fields: [creatorId], references: [id])
   members     ProjectMember[]
   icebergs    Iceberg[]
   ideas       Idea[]
   discussions ProjectDiscussion[]
   tasks       ProjectTask[]
+
   @@map("projects")
 }
 
@@ -901,11 +1300,12 @@ model ProjectMember {
   id        String   @id @default(cuid())
   projectId String
   userId    String
-  role      String   @default("MEMBER")  // MEMBER | MODERATOR
+  role      String   @default("MEMBER") // MEMBER | MODERATOR
   joinedAt  DateTime @default(now())
 
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([projectId, userId])
   @@map("project_members")
 }
@@ -917,29 +1317,31 @@ model ProjectDiscussion {
   content   String
   createdAt DateTime @default(now())
 
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([projectId, createdAt])
   @@map("project_discussions")
 }
 
 model ProjectTask {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   projectId   String
   title       String
   description String?
-  status      String   @default("OPEN")  // OPEN | IN_PROGRESS | COMPLETED
-  priority    String?                     // P0 | P1 | P2 | P3
+  status      String    @default("OPEN") // OPEN | IN_PROGRESS | COMPLETED
+  priority    String? // P0 | P1 | P2 | P3
   dueDate     DateTime?
   assigneeId  String?
   creatorId   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  project     Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignee    User?          @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  creator     User           @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Cascade)
-  comments    TaskComment[]
+  project  Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee User?         @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  creator  User          @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  comments TaskComment[]
+
   @@index([projectId, status])
   @@map("project_tasks")
 }
@@ -951,9 +1353,8 @@ model TaskComment {
   content   String
   createdAt DateTime @default(now())
 
-  task      ProjectTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task ProjectTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("task_comments")
 }
-

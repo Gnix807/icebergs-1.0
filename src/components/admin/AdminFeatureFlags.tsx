@@ -8,8 +8,12 @@ const FLAGS = [
   { key: 'feature_appeals',        label: '申诉系统',                 desc: '封禁/警告后提交申诉的功能' },
   { key: 'feature_userboxes',      label: '用户框定制',               desc: '个人主页装饰性用户框' },
   { key: 'feature_privacy',        label: '隐私设置',                 desc: '公开统计/公开收藏夹开关' },
-  { key: 'feature_quality_score',  label: '质量分系统',               desc: '质量分展示与计算' },
+  { key: 'feature_quality_score',  label: '旧版质量分历史',           desc: '质量分已冻结；此开关只控制旧历史入口，不恢复计分' },
   { key: 'feature_session_mgmt',   label: '多设备会话管理',          desc: '查看并管理登录会话列表' },
+  { key: 'feature_git_collaboration', label: '冰山图版本控制',       desc: '工作副本、提交、分支、合并请求和发布快照' },
+  { key: 'feature_capability_auth', label: '能力授权严格模式',       desc: '启用后全站权限只读取能力记录；上线前必须完成回填验证' },
+  { key: 'feature_contribution_profiles', label: '多维贡献档案',    desc: '展示可审计的创作、协作、审阅和服务记录' },
+  { key: 'feature_legacy_governance_write', label: '旧治理写入',    desc: '默认关闭；仅生产回滚时临时恢复旧流程写入' },
 ];
 
 export function AdminFeatureFlags() {

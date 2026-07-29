@@ -2,7 +2,7 @@
  * POST /api/icebergs/[id]/transfer
  *
  * 转让冰山图所有权给另一个用户。
- * 仅作者本人或 ADMIN 可以操作。
+ * 仅作者本人可以操作；全站能力不会自动产生仓库写权限。
  */
 import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
@@ -60,9 +60,7 @@ export async function ALL(event: APIContext) {
     });
   }
 
-  // Only author or ADMIN can transfer
-  const isAdmin = session.isFounder || session.role === 'ADMIN';
-  if (iceberg.authorId !== session.userId && !isAdmin) {
+  if (iceberg.authorId !== session.userId) {
     return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '仅作者可以转让')), {
       status: 403, headers: { 'Content-Type': 'application/json' },
     });

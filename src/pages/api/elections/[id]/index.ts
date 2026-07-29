@@ -11,6 +11,7 @@ import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
+import { legacyGovernanceWritesEnabled } from '../../../../lib/governance';
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -20,6 +21,7 @@ function json(body: unknown, status = 200) {
 
 /** 懒推进：若截止时间已过，自动更新 status */
 async function maybeAdvance(election: { id: string; status: string; applyDeadline: Date; voteDeadline: Date }) {
+  if (!await legacyGovernanceWritesEnabled()) return election.status;
   const now = new Date();
   if (election.status === 'OPEN_APPLY' && now >= election.applyDeadline) {
     await prisma.election.update({ where: { id: election.id }, data: { status: 'VOTING' } });
@@ -33,6 +35,9 @@ async function maybeAdvance(election: { id: string; status: string; applyDeadlin
 }
 
 export async function GET(event: APIContext) {
+  if (event.url.searchParams.get('data') && !await legacyGovernanceWritesEnabled()) {
+    return json(error(ErrorCodes.LEGACY_GOVERNANCE_RETIRED, '角色选举已转为只读历史'), 409);
+  }
   const dataParam = event.url.searchParams.get('data');
   if (dataParam) {
 
@@ -127,4 +132,3 @@ export async function GET(event: APIContext) {
     myVote,
   }));
 }
-
