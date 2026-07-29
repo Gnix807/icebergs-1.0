@@ -36,6 +36,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           ['#what',    '什么是冰山图'],
           ['#start',   '快速开始'],
           ['#create',  '创建冰山图'],
+          ['#version-control', '版本协作'],
           ['#project', '专题协作'],
           ['#ideas',   '创意板'],
           ['#features','其他功能'],
@@ -120,7 +121,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           },
           {
             step: '投票、评论与关注',
-            desc: '登录后可对冰山图 <strong class="text-text-hi">投赞（+1）或踩（-1）</strong>，改变投票方向会抵消上一次投票。可在词条详情中 <strong class="text-text-hi">发表评论</strong> 并对评论点赞，支持楼中楼回复。在他人主页点击「+ 关注」即可 <strong class="text-text-hi">关注作者</strong>，首页将显示其更新动态。这些互动都会为你积累质量分。',
+            desc: '登录后可对冰山图 <strong class="text-text-hi">投赞（+1）或踩（-1）</strong>，改变投票方向会抵消上一次投票。可在词条详情中 <strong class="text-text-hi">发表评论</strong> 并对评论点赞，支持楼中楼回复。在他人主页点击「+ 关注」即可 <strong class="text-text-hi">关注作者</strong>，首页将显示其更新动态。互动记录不会转换成权限。',
             color: '#30363d',
           },
           {
@@ -164,6 +165,19 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           </div>
         </div>
 
+        <div class="border border-purple/25 bg-purple/5 p-4 mb-3 text-[11px] font-mono text-text-body">
+          <div class="text-[10px] text-purple mb-3">// 多人修改时怎样保存</div>
+          <p class="leading-relaxed mb-3">
+            编辑器会先把内容自动保存到你自己的<strong class="text-text-hi">工作区</strong>，不会立刻影响其他人。改完一组内容后，点击「提交版本」并写一句说明，其他协作者才能看到并审阅这次修改。
+          </p>
+          <p class="leading-relaxed mb-3">
+            作者和维护者可以直接更新<strong class="text-text-hi">主版本</strong>；其他贡献者要先点击「开始改动」，完成后发起合并请求（Pull Request）。维护者可以查看前后差异、留言、批准，或者要求继续修改。
+          </p>
+          <div class="border border-purple/20 bg-surface-2/60 px-3 py-2 text-[10px] leading-relaxed text-text-mid">
+            如果两个人改的是不同地方，网站会尽量自动合并；如果改到了同一处，会把两个版本并排显示，请你选择保留哪一个。合并后的内容仍是草稿，需要通过发布审核才会公开。
+          </div>
+        </div>
+
         <!-- 字段说明 -->
         <div class="border border-border-minimal bg-surface-2 p-4">
           <div class="text-[10px] font-mono text-text-body mb-3">字段说明</div>
@@ -186,7 +200,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
             </div>
             <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">词条</span>
-              <span class="text-text-body">每个知识点。每层至少 <strong class="text-text-hi">2 个词条</strong>，词条有标题（必填）和描述（推荐填写，全图 50% 以上词条须有描述）。词条数少于 5 个将被标记为 🌱 小作品。词条撰写规范详见 <a href="/guide/writing" class="text-brand hover:underline border-b border-brand/30">撰写指南 →</a></span>
+              <span class="text-text-body">每个知识点。每层至少 <strong class="text-text-hi">2 个词条</strong>，词条标题必填，描述可以在提交后逐步补充（建议全图 50% 以上词条有描述）。词条数少于 5 个将被标记为 🌱 小作品。词条撰写规范详见 <a href="/guide/writing" class="text-brand hover:underline border-b border-brand/30">撰写指南 →</a></span>
             </div>
             <div class="flex gap-3 items-start">
               <span class="text-brand w-14 flex-shrink-0">标签</span>
@@ -205,7 +219,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
               '已选择主题分类',
               '层数 ≥ 3 层',
               '每层词条数 ≥ 2 条',
-              '词条描述覆盖率 ≥ 50%（超过一半的词条有描述）',
+              '词条描述覆盖率建议 ≥ 50%（不足时会提醒，但不阻止提交）',
               '含 NSFW 内容时已勾选确认',
             ].map(item => (
               <li class="flex items-center gap-2">
@@ -221,24 +235,119 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
         <div class="border border-border-minimal bg-surface-2 p-4">
           <div class="text-[10px] font-mono text-text-body mb-3">草稿保存与审核流程</div>
           <div class="space-y-3 text-[11px] font-mono text-text-body">
-            <p>新建冰山图时退出编辑器会自动保存草稿（仅自己可见）。草稿可在个人主页「草稿」Tab 中继续编辑或删除。</p>
+            <p>新建冰山图时退出编辑器会自动保存草稿（仅自己可见）。启用版本控制后，自动保存只写入个人工作副本；需要点击「提交版本」才能形成团队可审阅的正式版本。</p>
             <p>完成编辑后点击提交，通过检查单即进入审核队列：</p>
             <div class="flex items-center gap-2 flex-wrap">
               <span class="border border-border-minimal px-2 py-1 text-text-body">草稿</span>
               <span class="text-text-body">──通过检查单──▶</span>
               <span class="border border-warning/20 px-2 py-1 text-warning">待审核</span>
-              <span class="text-text-body">──EDITOR 审核──▶</span>
+              <span class="text-text-body">──发布审核员──▶</span>
               <span class="border border-[#22c55e30] px-2 py-1 text-success">已发布</span>
             </div>
             <p class="text-[10px] text-text-mid">
               · 审核通常在 24–48 小时内完成。NSFW 内容进入专项审核队列，审核时间可能更长。<br/>
               · 被驳回时会收到通知并附上驳回原因，修改后可重新提交。<br/>
-              · 从 Iceberg Threads 同步现有作品前，编辑器会自动保存一份「源站同步前备份」，可在版本历史中恢复。<br/>
+              · 从 Iceberg Threads 同步得到的改动会先进入当前工作副本，并在提交时进入同一版本链；旧版浏览器本地历史仍保留为本机恢复备份。<br/>
               · 编辑器支持 <strong class="text-text-hi">Ctrl+S</strong> 快速保存草稿，<strong class="text-text-hi">Ctrl+Enter</strong> 提交审核。
             </p>
           </div>
         </div>
 
+        <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono text-text-body">
+          <div class="text-[10px] text-brand mb-3">// 一次改动如何进入公开页面</div>
+          <div class="flex flex-wrap items-center gap-2 leading-relaxed">
+            <span class="border border-border px-2 py-1">工作副本</span>
+            <span class="text-text-lo">→</span>
+            <span class="border border-purple/30 px-2 py-1 text-purple">提交版本</span>
+            <span class="text-text-lo">→</span>
+            <span class="border border-info/30 px-2 py-1 text-info">合并到 main</span>
+            <span class="text-text-lo">→</span>
+            <span class="border border-warning/30 px-2 py-1 text-warning">提交审核</span>
+            <span class="text-text-lo">→</span>
+            <span class="border border-success/30 px-2 py-1 text-success">公开发布</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── 03B 版本协作 ── -->
+    <section id="version-control" class="mb-10 scroll-mt-24">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-[10px] font-mono text-purple tracking-widest">03B · 问题反馈与版本协作（Issue / Branch / Pull Request）</span>
+        <div class="flex-1 border-t border-border-minimal"></div>
+      </div>
+
+      <div class="border border-purple/25 bg-purple/5 p-4 mb-3 text-[11px] font-mono text-text-body">
+        <p class="leading-relaxed">这套协作方式和 GitHub 有些相似，但不需要安装 Git。你照常在网页里编辑，网站负责记住每次提交、显示前后差异，并在多人改到同一处时提醒你处理。</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3 text-[11px] font-mono">
+        {[
+          ['问题 · Issue', '发现错误或有建议时先发起讨论。Issue 不会创建分支，也不会直接改动冰山图。'],
+          ['工作副本 · Working Copy', '编辑器自动保存的地方。每个人各自保存，不会因为别人同时编辑而被覆盖。'],
+          ['提交 · Commit', '一次写明作者、时间和说明的正式保存。恢复旧内容时也会留下记录，不会偷偷抹掉历史。'],
+          ['分支 · Branch', '一块独立的改稿空间。你可以放心修改，不会直接动到主版本和公开页面。'],
+          ['合并请求 · Pull Request', '改完后交给维护者审阅。页面会列出改动，也可以在具体位置留言。'],
+        ].map(([title, desc]) => (
+          <div class="border border-border-minimal bg-surface-2 p-4">
+            <div class="text-text-hi mb-1.5">{title}</div>
+            <p class="text-text-body leading-relaxed">{desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <div class="border border-warning/25 bg-warning/5 p-4 mb-3 text-[11px] font-mono">
+        <div class="text-warning mb-1.5">什么时候提 Issue，什么时候开始改动？</div>
+        <p class="leading-relaxed text-text-body">
+          还不确定怎么改、只想报告错误或补充线索时，选择「提出 Issue」。已经准备直接修改内容时，选择「开始改动」创建分支；完成后再发起合并请求。
+        </p>
+      </div>
+
+      <div class="space-y-2 mb-3 text-[11px] font-mono">
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-hi mb-2">作者或维护者：直接维护主版本</div>
+          <ol class="space-y-1 text-text-body">
+            <li><span class="text-purple mr-2">1.</span>打开主版本编辑，内容会自动保存。</li>
+            <li><span class="text-purple mr-2">2.</span>改完后点击「提交版本」，简单写清这次改了什么。</li>
+            <li><span class="text-purple mr-2">3.</span>需要公开时再点击「提交审核」。送审以后继续修改，也不会混进正在审核的那一版。</li>
+          </ol>
+        </div>
+        <div class="border border-border-minimal bg-surface-2 p-4">
+          <div class="text-text-hi mb-2">贡献者：通过分支与合并请求参与</div>
+          <ol class="space-y-1 text-text-body">
+            <li><span class="text-info mr-2">1.</span>点击「开始改动」，建立自己的改稿分支。</li>
+            <li><span class="text-info mr-2">2.</span>边改边保存；一时写不完也没关系，可以分几次提交。</li>
+            <li><span class="text-info mr-2">3.</span>发起合并请求，告诉维护者这次改了什么、为什么改。</li>
+            <li><span class="text-info mr-2">4.</span>如果维护者提出意见，继续在原分支修改并重新提交。</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 mb-3 text-[11px] font-mono">
+        <div class="border border-success/25 bg-success/5 p-4">
+          <div class="text-success mb-1.5">自动合并</div>
+          <p class="text-text-body leading-relaxed">两个人改的是不同词条或不同位置时，网站通常可以自动合在一起，不用手动复制粘贴。</p>
+        </div>
+        <div class="border border-warning/25 bg-warning/5 p-4">
+          <div class="text-warning mb-1.5">冲突解决</div>
+          <p class="text-text-body leading-relaxed">如果两个人改了同一段文字，或者一人删除、一人继续编辑，网站会显示两个版本，请协作者决定保留哪一个。</p>
+        </div>
+        <div class="border border-info/25 bg-info/5 p-4">
+          <div class="text-info mb-1.5">发布隔离</div>
+          <p class="text-text-body leading-relaxed">个人改稿、尚未合并的分支和未发布内容只对参与者可见。普通访客看到的仍是上一次审核通过的版本。</p>
+        </div>
+      </div>
+
+      <div class="border border-border-minimal bg-surface-2 p-4 text-[11px] font-mono">
+        <div class="text-text-hi mb-2">权限如何确定？</div>
+        <div class="space-y-1.5 text-text-body leading-relaxed">
+          <p><span class="text-brand">个人冰山图：</span>作者是维护者；作者可以单独邀请 CONTRIBUTOR 或 MAINTAINER。</p>
+          <p><span class="text-brand">Projects 冰山图：</span>普通项目成员自动成为贡献者；项目创建者与项目管理员自动成为维护者，无需为每张图重复邀请。</p>
+          <p><span class="text-brand">站务权限：</span>负责发布审核或社区管理，并不代表可以修改别人的冰山图。</p>
+          <p><span class="text-brand">外部投稿：</span>作者开放投稿后，登录用户可以提交自己的修改，但不能直接写进主版本。</p>
+        </div>
+        <p class="mt-3 text-[10px] text-text-mid">如果某张图尚未启用版本控制，它会继续使用原有编辑流程；管理员会通过功能开关和回填校验分阶段启用，不会直接改写生产数据。</p>
       </div>
     </section>
 
@@ -250,7 +359,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
       </div>
 
       <div class="border border-border-minimal bg-surface-2 p-4 mb-3 text-[11px] font-mono text-text-body">
-        <p class="leading-relaxed mb-3">专题协作参考 Wikipedia 的 WikiProject 机制，让多位创作者围绕同一主题协同工作。你可以创建或加入一个专题项目，使用看板分配任务、通过讨论区交流想法，并将多张冰山图链接到项目中形成系列内容。关联到项目的冰山图可由 <strong class="text-text-hi">组内任意成员共同编辑</strong>，无需原作者单独授权。</p>
+        <p class="leading-relaxed mb-3">专题适合需要多人长期整理的大选题。你可以用看板分任务，在讨论区商量方向，再把相关冰山图放到同一个专题里。普通成员负责改稿，项目管理员负责审阅和合并。</p>
         <p class="leading-relaxed">前往 <a href="/projects" class="text-brand hover:underline border-b border-brand/30">/projects</a> 浏览现有项目或创建新项目。</p>
       </div>
 
@@ -258,27 +367,27 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
         {[
           {
             icon: '+', label: '创建与加入项目',
-            desc: '点击「创建专题」新建项目：设置项目名称、简介、封面图、主题分类，可选择公开或邀请制。公开项目任何人都可申请加入；邀请制项目只能通过 <strong class="text-text-hi">邀请链接</strong> 加入。浏览项目列表时可点击「申请加入」，项目负责人审批后即可成为成员。',
+            desc: '点击「创建专题」设置名称、简介和主题分类。当前活跃专题允许已登录用户直接加入；项目管理员也可以复制带有加入参数的邀请链接，分享给希望参与的用户。',
           },
           {
             icon: '▣', label: '任务看板',
-            desc: '每个项目内置看板（Kanban），按「待开始 / 进行中 / 已完成」三列管理任务。成员可创建任务卡片，设置标题、描述、优先级和指派成员。拖动卡片切换状态，整个项目的进度一目了然。适合协调多人分工的大型冰山图系列创作。',
+            desc: '每个项目内置看板（Kanban），按「待处理 / 进行中 / 已完成」三列管理任务。成员可创建任务卡片，设置描述、优先级、截止时间和负责人，并用任务卡上的状态按钮推进流程。',
           },
           {
             icon: '◈', label: '成员管理',
-            desc: '项目负责人可管理成员角色：OWNER（创建者，最高权限）、ADMIN（可管理成员和设置）、MEMBER（普通成员，可编辑关联冰山图）。成员列表清晰展示每个人的角色和加入时间。',
+            desc: '专题分为创建者、管理员和普通成员。创建者与管理员可以审阅和合并，普通成员可以提交修改；离开专题后，对应的编辑权限也会取消。',
           },
           {
             icon: '▸', label: '协作编辑',
-            desc: '将冰山图链接到项目后，项目内所有成员均可 <strong class="text-text-hi">直接在编辑器中共编</strong> 该冰山图。修改记录会追踪作者信息，适合团队共同打磨大型主题冰山图。也可以将创意板条目链接到项目中，供成员认领实现。',
+            desc: '把冰山图加入专题后，成员可以各自在自己的分支上修改，再交给管理员审阅。创意板里的选题也可以加入专题，方便成员认领。',
           },
           {
             icon: '◎', label: '讨论区',
-            desc: '每个项目自带讨论区，成员可在其中交流选题、协调分工、讨论内容方向。支持 Markdown 格式和 @ 提及成员，讨论记录永久保存。',
+            desc: '讨论区适合商量选题、分工和整体方向。针对某次改稿的意见，写在合并请求里会更容易对应到具体内容。',
           },
           {
             icon: '⎉', label: '邀请链接',
-            desc: '项目设置中可生成或重置邀请链接，分享给外部人员即可快速加入。链接可随时失效重生成，确保项目安全性。',
+            desc: '项目管理员可以复制专题加入链接。链接只负责把已登录用户带入当前活跃专题；冰山图写入权限仍由项目角色、分支保护和合并审阅共同约束。',
           },
         ].map(({ icon, label, desc }, i) => (
           <div class="border border-border-minimal bg-surface-2 p-4 flex gap-4">
@@ -415,7 +524,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           {
             icon: '◆', label: '个人主页',
             link: null, linkLabel: null,
-            desc: '查看个人发布的冰山图、收藏、评论、质量分积分记录、成就（含稀有度等级）等。点击他人头像/用户名也可访问其主页，查看其公开作品和动态。',
+            desc: '查看目前承担的站务、参与记录、作品、收藏和成就。旧质量分只在本人可见的「旧版记录」中保留，公开页面不再显示综合等级。',
           },
           {
             icon: '⬙', label: '用户框',
@@ -425,7 +534,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           {
             icon: '◉', label: '小作品（Stub）标记',
             link: null, linkLabel: null,
-            desc: '自动评估冰山图质量：词条数 < 5 显示 🌱 标记，词条数 < 10 且描述覆盖率 < 30% 显示 🔧 标记，提示读者该作品尚待完善，欢迎作者继续补充内容。',
+            desc: '自动评估冰山图的完善程度：词条数 < 5 显示 🌱 标记，描述覆盖率 < 30% 显示 🔧 标记。标记只作完善提醒，不影响提交，作者可以在移植后继续补充内容。',
           },
           {
             icon: '☰', label: '草稿系统',
@@ -435,17 +544,17 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           {
             icon: '!', label: '举报',
             link: null, linkLabel: null,
-            desc: '在冰山图或评论处点击举报按钮，填写原因提交。由 MODERATOR+ 审查处理，违规内容将被移除。',
+            desc: '在冰山图或评论处点击举报并填写原因。社区管理员会查看相关内容和记录，必要时先将内容下架。',
           },
           {
-            icon: '↑', label: 'RfA（编辑申请）',
-            link: '/rfa', linkLabel: '/rfa',
-            desc: 'CONTRIBUTOR 资格用户可申请晋升为 EDITOR，需通过公开投票。详见规则页了解资格门槛和流程。',
+            icon: '↑', label: '申请参与站务',
+            link: '/org', linkLabel: '/org',
+            desc: '想参与发布审核、内容整理或社区管理，可以申请对应站务。发布审核员也可以凭实际协作和审阅记录进入试用；成就和旧身份不会自动带来权限。',
           },
           {
             icon: '⊘', label: '申诉',
             link: null, linkLabel: null,
-            desc: '账号受到处罚（限制、封禁）后，可在个人主页的通知中找到申诉入口，向 ADMIN 申请复查。',
+            desc: '账号受到处罚或站务权限被暂停后，可以提交申诉并查看处理结果。申诉会交给没有参与原决定的人复查。',
           },
           {
             icon: '+', label: '功能大厅',
@@ -504,7 +613,7 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           },
           {
             q: '我的冰山图提交后多久会被审核？',
-            a: '一般 24–48 小时内由 EDITOR 审核。平台活跃度较低时可能稍长。含 NSFW 内容的会进入专项队列，时间不定。',
+            a: '一般 24–48 小时内由发布审核员处理。平台活跃度较低时可能稍长。含 NSFW 内容的会进入专项队列，时间不定。',
           },
           {
             q: '冰山图被驳回后我该怎么做？',
@@ -516,27 +625,27 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           },
           {
             q: '什么样的内容会被驳回？',
-            a: '无事实依据的内容、层级梯度不合理（上层常识和底层内容区分不明显）、词条描述覆盖率低于 50%、NSFW 内容未打标、含广告/垃圾信息、与主题无关、重复提交相似主题等情况均可能被驳回。',
+            a: '无事实依据的内容、层级梯度不合理（上层常识和底层内容区分不明显）、NSFW 内容未打标、含广告/垃圾信息、与主题无关、重复提交相似主题等情况均可能被驳回。词条描述覆盖率不足会被标记为待完善，但不会单独成为阻止提交或驳回的理由。',
           },
           {
             q: '我能修改已发布的冰山图吗？',
             a: '发布后可以继续编辑词条内容，但对结构的重大修改需要重新提交审核。具体逻辑以编辑器的提示为准。',
           },
           {
-            q: '质量分会不会下降？',
-            a: '会。他人对你的冰山图投踩，或撤回对你冰山图的赞，都会扣分（每次 -1）。质量分直接影响晋升资格，请保持内容质量。',
+            q: '质量分和成就会影响权限吗？',
+            a: '不会。旧质量分只保留为本人可见的历史，成就也只是纪念。能否处理站务，要看当前获得的站务权限；能否修改某张冰山图，则要看你在该作品或专题中的身份。',
           },
           {
-            q: '创建分是在什么时候发放？',
-            a: '不是新建草稿就给分。仅在「新冰山图首次提交审核」时发放 +5，且每日最多计 2 次；驳回后再次提交不重复发放。',
+            q: '参与记录是怎么计算的？',
+            a: '作品真正发布、PR 合并、审阅确认有效或项目任务完成后，系统才会记一次。个人主页会把创作、协作、审阅和项目参与分开显示，不再合成一个总分。',
           },
           {
-            q: '我已经是 CONTRIBUTOR，什么时候可以申请 RfA？',
-            a: '需满足：质量分达到门槛且注册天数达到要求（见 /rules 规则页）。同一时刻只能有一个进行中的 RfA，失败后有冷却期。',
+            q: '原来的 RfA、晋升和选举去哪里了？',
+            a: '旧 RfA、自动晋升、选举和弹劾已经停用，原页面只保留历史记录。现在想参与站务，需要申请具体工作；发布审核员也可以在满足协作条件后进入试用。详情见平台规则。',
           },
           {
             q: '小作品（Stub）标记是什么？',
-            a: '词条数少于 5 个显示 🌱，词条数少于 10 个且描述覆盖率低于 30% 显示 🔧。这是自动评估标记，提示该作品内容尚浅，欢迎作者继续完善。',
+            a: '词条数少于 5 个显示 🌱，描述覆盖率低于 30% 显示 🔧。这是完善程度提醒，不影响提交，作者可以先移植作品，再逐步补充词条介绍。',
           },
           {
             q: '如何找到感兴趣的主题？',
@@ -544,7 +653,19 @@ const latexBlockExampleHtml = renderMarkdownWithMath(latexBlockExampleSource);
           },
           {
             q: '如何参与专题协作？',
-            a: '前往 <strong class="text-text-hi">/projects</strong> 浏览现有项目，点击「申请加入」等待审批；或自己创建一个新专题项目，设置主题和邀请方式。加入后可使用看板协调任务、在讨论区交流、共同编辑关联到项目的冰山图。也可将创意板条目链接到项目中供成员认领。',
+            a: '前往 <strong class="text-text-hi">/projects</strong> 浏览活跃专题。加入后可以认领任务、参与讨论，并修改专题里的冰山图。普通成员提交改稿，项目创建者和管理员负责审阅与合并。只有冰山图作者或站点管理员可以把作品加入专题。',
+          },
+          {
+            q: '自动保存和提交版本有什么区别？',
+            a: '自动保存只是防止刷新、断网或误关页面造成内容丢失，其他人不会立刻看到。点击「提交版本」并填写说明后，这次改稿才会进入协作记录，供其他人比较和审阅。',
+          },
+          {
+            q: '合并请求通过后为什么公开页面还没变化？',
+            a: '合并请求只会更新主草稿，不会直接改公开页面。维护者还要点击「提交审核」，审核通过后读者才会看到新版。送审以后继续修改，也不会混进正在审核的那一版。',
+          },
+          {
+            q: '多人同时修改时还会互相覆盖吗？',
+            a: '不会直接覆盖。两个人改的是不同地方时，网站会尝试自动合并；如果改到同一处，页面会把两个版本列出来，请你选择保留哪一个。同一账号开多个标签页时，也会提示较新的保存记录。',
           },
           {
             q: '词条标签有什么用？',

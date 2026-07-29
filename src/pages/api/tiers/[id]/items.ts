@@ -3,6 +3,7 @@ import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { renderMarkdownWithMath } from '../../../../lib/markdown';
+import { legacyRepositoryWriteBlocked } from '../../../../lib/icebergRepository';
 
 async function isProjectMember(userId: string, projectId: string | null): Promise<boolean> {
   if (!projectId) return false;
@@ -60,10 +61,15 @@ export async function POST(event: APIContext) {
         status: 404, headers: { 'Content-Type': 'application/json' },
       });
     }
+    if (await legacyRepositoryWriteBlocked(tier.icebergId)) {
+      return new Response(JSON.stringify(error(
+        'VERSION_CONTROL_ENABLED' as any,
+        '该冰山图已启用版本控制，请刷新编辑器。',
+      )), { status: 409, headers: { 'Content-Type': 'application/json' } });
+    }
 
-    const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
     const inProject = await isProjectMember(session.userId, tier.iceberg.projectId);
-    if (tier.iceberg.authorId !== session.userId && !canManageAny && !inProject) {
+    if (tier.iceberg.authorId !== session.userId && !inProject) {
       return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
         status: 403, headers: { 'Content-Type': 'application/json' },
       });
@@ -148,10 +154,15 @@ export async function GET(event: APIContext) {
           headers: { 'Content-Type': 'application/json' },
         });
       }
+      if (await legacyRepositoryWriteBlocked(tier.icebergId)) {
+        return new Response(JSON.stringify(error(
+          'VERSION_CONTROL_ENABLED' as any,
+          '该冰山图已启用版本控制，请刷新编辑器。',
+        )), { status: 409, headers: { 'Content-Type': 'application/json' } });
+      }
 
-      const canManageAny = session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR';
       const inProject = await isProjectMember(session.userId, tier.iceberg.projectId);
-      if (tier.iceberg.authorId !== session.userId && !canManageAny && !inProject) {
+      if (tier.iceberg.authorId !== session.userId && !inProject) {
         return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权操作')), {
           status: 403,
           headers: { 'Content-Type': 'application/json' },

@@ -2,6 +2,7 @@ import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth/index';
+import { overlayPublishedMetadata } from '../../../../lib/icebergRepository';
 
 // GET /api/users/:id/watchlist
 // Requires session; only the owner may view their own watchlist
@@ -43,7 +44,7 @@ export async function GET(event: APIContext) {
       },
     });
 
-    const icebergs = entries.map(e => e.iceberg);
+    const icebergs = await overlayPublishedMetadata(entries.map(e => e.iceberg));
 
     return new Response(JSON.stringify(success(icebergs)), {
       status: 200,
@@ -57,4 +58,3 @@ export async function GET(event: APIContext) {
     });
   }
 }
-

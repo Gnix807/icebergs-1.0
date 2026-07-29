@@ -2,6 +2,7 @@ import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
+import { hasCapability } from '../../../../lib/capabilities';
 
 export async function ALL(event: APIContext) {
   try {
@@ -11,8 +12,8 @@ export async function ALL(event: APIContext) {
         status: 401, headers: { 'Content-Type': 'application/json' },
       });
     }
-    if (session.role !== 'ADMIN' && !session.isFounder) {
-      return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '需要管理员权限')), {
+    if (!hasCapability(session, 'SITE_ADMINISTRATION')) {
+      return new Response(JSON.stringify(error(ErrorCodes.CAPABILITY_REQUIRED, '需要站点管理能力')), {
         status: 403, headers: { 'Content-Type': 'application/json' },
       });
     }

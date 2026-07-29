@@ -329,12 +329,12 @@ export function ExportButton({ icebergTitle, tiers, icebergUrl, labelColors }: E
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-nowrap items-center gap-2">
       {/* 主题切换 */}
       <button
         onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')}
         title={theme === 'light' ? '切换为深色导出' : '切换为浅色导出'}
-        className="px-2.5 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors"
+        className="shrink-0 whitespace-nowrap px-2.5 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors"
       >
         {theme === 'light' ? '☀' : '☾'}
       </button>
@@ -342,7 +342,7 @@ export function ExportButton({ icebergTitle, tiers, icebergUrl, labelColors }: E
       <button
         onClick={handleExport}
         disabled={isExporting}
-        className="px-4 py-2 bg-brand text-[#0A0A0A] font-medium rounded hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+        className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded bg-brand px-4 py-2 font-medium text-[#0A0A0A] transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isExporting
           ? <><span className="animate-spin inline-block">⟳</span>导出中...</>

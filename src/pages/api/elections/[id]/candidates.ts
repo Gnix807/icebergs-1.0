@@ -8,6 +8,7 @@ import { success, error, ErrorCodes } from '../../../../lib/api';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { notify } from '../../../../lib/notify';
+import { legacyGovernanceWritesEnabled } from '../../../../lib/governance';
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -16,6 +17,9 @@ function json(body: unknown, status = 200) {
 }
 
 export async function ALL(event: APIContext) {
+  if (!await legacyGovernanceWritesEnabled()) {
+    return json(error(ErrorCodes.LEGACY_GOVERNANCE_RETIRED, '角色选举已转为只读历史'), 409);
+  }
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -113,4 +117,3 @@ export async function ALL(event: APIContext) {
 
   return json(success({ candidate }), 201);
 }
-

@@ -6,7 +6,7 @@ import type { APIContext } from 'astro';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../lib/api';
-import { can } from '../../../lib/permissions';
+import { hasCapability } from '../../../lib/capabilities';
 
 const db = prisma;
 
@@ -16,7 +16,9 @@ export async function GET(event: APIContext) {
   if (dataParam) {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
-    if (!can(session, 'user:ban')) return json(error(ErrorCodes.FORBIDDEN, '需要管理员权限'), 403);
+    if (!hasCapability(session, 'SITE_ADMINISTRATION')) {
+      return json(error(ErrorCodes.CAPABILITY_REQUIRED, '需要站点管理能力'), 403);
+    }
 
     const body = JSON.parse(dataParam);
     const title: string = typeof body.title === 'string' ? body.title.trim() : '';
@@ -64,4 +66,3 @@ function json(body: unknown, status: number) {
     status, headers: { 'Content-Type': 'application/json' },
   });
 }
-

@@ -26,8 +26,6 @@ export async function GET(event: APIContext) {
 
     const overdueThreshold = new Date(Date.now() - OVERDUE_HOURS * 60 * 60 * 1000);
 
-    const canOverride = can(session, 'content:override'); // ADMIN / FOUNDER
-
     const include = {
       iceberg: {
         select: {
@@ -51,38 +49,23 @@ export async function GET(event: APIContext) {
       },
     } as const;
 
-    // Regular queue: exclude own icebergs (recusal)
+    // Self-review is allowed for certified reviewers. The decision is marked
+    // and sent to a 100% asynchronous audit queue by the write endpoint.
     const reviews = await prisma.icebergReview.findMany({
       where: {
         status: 'PENDING',
-        iceberg: { authorId: { not: session.userId } },
       },
       orderBy: { createdAt: 'asc' },
       include,
     });
 
-    // Self-authored: only visible to ADMIN/FOUNDER who can override
-    const selfReviews = canOverride
-      ? await prisma.icebergReview.findMany({
-          where: {
-            status: 'PENDING',
-            iceberg: { authorId: session.userId },
-          },
-          orderBy: { createdAt: 'asc' },
-          include,
-        })
-      : [];
-
-    const enrich = (r: (typeof reviews)[0], self: boolean) => ({
+    const enrich = (r: (typeof reviews)[0]) => ({
       ...r,
       overdue: r.createdAt < overdueThreshold,
-      selfAuthored: self,
+      selfAuthored: r.iceberg.author.id === session.userId,
     });
 
-    const enriched = [
-      ...reviews.map(r => enrich(r, false)),
-      ...selfReviews.map(r => enrich(r, true)),
-    ];
+    const enriched = reviews.map(enrich);
 
     return json(success({ reviews: enriched, total: enriched.length }), 200);
   } catch (err) {
@@ -97,4 +80,3 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
-

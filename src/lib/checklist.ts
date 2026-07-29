@@ -65,7 +65,9 @@ export function runChecklist(
     hint: tierItemsOk ? undefined : `${thinLabels} 请至少为每层添加 2 个词条`,
   });
 
-  // 5. >= 50% of items have non-empty desc
+  // 5. Item description coverage is recommended, but no longer blocks
+  // submission. This keeps older/imported title-only icebergs portable while
+  // still giving creators a visible target for later improvements.
   const allItems = iceberg.tiers.flatMap(t => t.items);
   const totalItems = allItems.length;
   const withDesc = allItems.filter(i => i.desc && i.desc.trim().length > 0).length;
@@ -73,9 +75,10 @@ export function runChecklist(
   const coveragePct = totalItems === 0 ? 100 : Math.round((withDesc / totalItems) * 100);
   items.push({
     key: 'coverage',
-    label: `词条描述覆盖率：${coveragePct}%`,
+    label: `词条描述覆盖率：${coveragePct}%（建议 ≥ 50%）`,
     pass: coverageOk,
-    hint: coverageOk ? undefined : '超过一半词条缺少描述，请为每个词条补充说明文字',
+    blocking: false,
+    hint: coverageOk ? undefined : '不影响提交，可以先进入审核，发布后再逐步补充词条介绍',
   });
 
   // 6. NSFW check — does NOT block submission, routes to NSFW queue
@@ -101,6 +104,6 @@ export function runChecklist(
       : undefined,
   });
 
-  const passed = items.every(i => i.pass);
+  const passed = items.every(i => i.pass || i.blocking === false);
   return { passed, items };
 }

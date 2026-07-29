@@ -16,7 +16,6 @@ import { UserIcebergs } from './UserIcebergs';
 import { UserWatchlist } from './UserWatchlist';
 import { UserSettings } from './UserSettings';
 import { AdminPanel } from '../admin/AdminPanel';
-import { getQualityLevel } from '../../lib/qualityLevel';
 import { toast } from '../ui/Toast';
 
 interface Iceberg {
@@ -83,14 +82,9 @@ interface Props {
   icebergs: Iceberg[];
   isOwner: boolean;
   presenceStatus?: 'online' | 'active' | 'offline';
-  viewerRole?: string;
   viewerIsFounder?: boolean;
+  viewerCapabilities?: string[];
   appealEligible?: boolean;
-  promotionEligible?: boolean;
-  promotionPending?: boolean;
-  rfaEligible?: boolean;       // CONTRIBUTOR + 满足门槛
-  rfaPending?: boolean;        // 已有 OPEN 的 RfA
-  rfaActiveId?: string | null; // 进行中的 RfA id（用于跳转）
   socialStats?: SocialStats;
   achievements?: { achievementId: string; unlockedAt: string }[];
   achievementDefs?: AchievementDef[];
@@ -98,31 +92,34 @@ interface Props {
   watchlistCount?: number;
   awards?: { id: string; type: string; message: string | null; createdAt: string; giver: { id: string; username: string; nickname: string | null } }[];
   userboxIds?: string[];
+  capabilityStates?: {
+    capability: string;
+    status: string;
+    source: string;
+    probationEndsAt: string | null;
+    suspendedUntil: string | null;
+  }[];
+  contributionProfile?: {
+    creationCount: number;
+    collaborationCount: number;
+    reviewCount: number;
+    serviceCount: number;
+    publishedIcebergCount: number;
+    mergedPullRequestCount: number;
+    distinctCollabIcebergCount: number;
+    nonSelfReviewCount: number;
+    validReviewCount: number;
+    completedTaskCount: number;
+  };
 }
 
 type Tab = 'icebergs' | 'drafts' | 'watchlist' | 'explore' | 'score' | 'settings' | 'admin';
 
-const LEVEL_COLORS: Record<number, string> = {
-  0: '#6b7280',
-  1: '#22c55e',
-  2: '#3b82f6',
-  3: '#f59e0b',
-  4: '#ef4444',
-};
-
-const LEVEL_LABELS: Record<number, string> = {
-  0: '访客',
-  1: '研究员',
-  2: '分析师',
-  3: '主管',
-  4: '管理员',
-};
-
-const ROLE_BADGES: Record<string, { label: string; color: string }> = {
-  ADMIN:       { label: 'ADMIN',   color: '#ef4444' },
-  EDITOR:      { label: 'EDITOR',  color: '#3b82f6' },
-  CONTRIBUTOR: { label: 'CONTRIB', color: '#22c55e' },
-  USER:        { label: 'USER',    color: '#6b7280' },
+const CAPABILITY_META: Record<string, { label: string; color: string }> = {
+  PUBLICATION_REVIEW: { label: '发布审核', color: '#22c55e' },
+  CONTENT_CURATION: { label: '内容整理', color: '#38bdf8' },
+  COMMUNITY_MODERATION: { label: '社区管理', color: '#f59e0b' },
+  SITE_ADMINISTRATION: { label: '站点管理', color: '#ef4444' },
 };
 
 type PresenceStatus = 'online' | 'active' | 'offline';
@@ -219,13 +216,19 @@ function ScoreLogTab({ userId }: { userId: string }) {
   if (logs.length === 0) {
     return (
       <div className="py-20 text-center border border-dashed border-border-subtle">
-        <p className="text-text-mid font-mono text-sm">暂无质量分记录</p>
+        <p className="text-text-mid font-mono text-sm">暂无旧版质量分记录</p>
       </div>
     );
   }
 
   return (
     <div>
+      <div className="mb-4 border border-warning/25 bg-warning/5 px-4 py-3">
+        <div className="text-xs font-mono text-warning">旧版质量分历史 · 仅本人可见</div>
+        <p className="mt-1 text-[10px] leading-relaxed text-text-mid">
+          该流水已冻结，不再新增，也不会影响权限、成就或公开排名。
+        </p>
+      </div>
       <div className="text-[10px] font-mono text-text-mid mb-4">
         // 共 {total} 条记录
       </div>
@@ -542,11 +545,24 @@ function StatCard({ label, value, valueColor }: { label: string; value: string; 
 }
 
 export function UserCenter({
-  user, icebergs, isOwner, viewerRole, viewerIsFounder,
-  appealEligible, promotionEligible, promotionPending,
+  user, icebergs, isOwner, viewerIsFounder, viewerCapabilities = [],
+  appealEligible,
   socialStats,
   achievements = [], achievementDefs = [], userReadCount = 0,
   awards = [], userboxIds = [], watchlistCount = 0,
+  capabilityStates = [],
+  contributionProfile = {
+    creationCount: 0,
+    collaborationCount: 0,
+    reviewCount: 0,
+    serviceCount: 0,
+    publishedIcebergCount: 0,
+    mergedPullRequestCount: 0,
+    distinctCollabIcebergCount: 0,
+    nonSelfReviewCount: 0,
+    validReviewCount: 0,
+    completedTaskCount: 0,
+  },
   presenceStatus = 'offline',
 }: Props) {
   const [activeTab, setActiveTab]     = useState<Tab>('icebergs');
@@ -581,14 +597,14 @@ export function UserCenter({
   const [followerCount, setFollowerCount]           = useState(0);
   const [followBusy, setFollowBusy]                 = useState(false);
   const [showAllAchievements, setShowAllAch]        = useState(false);
-  const qLevel      = getQualityLevel(user.qualityScore, user.role);
-  const levelColor  = LEVEL_COLORS[qLevel.level] ?? '#6b7280';
   const displayName = user.nickname || user.username;
-  const roleBadge   = ROLE_BADGES[user.role] ?? { label: user.role, color: '#6b7280' };
   const presence = PRESENCE_META[presenceStatus] ?? PRESENCE_META.offline;
 
-  const isEditorViewer = viewerRole === 'EDITOR' || viewerRole === 'ADMIN';
-  const isAdminViewer  = viewerRole === 'ADMIN';
+  const isEditorViewer = viewerIsFounder
+    || viewerCapabilities.some((capability) =>
+      ['COMMUNITY_MODERATION', 'SITE_ADMINISTRATION'].includes(capability));
+  const isAdminViewer = viewerIsFounder || viewerCapabilities.includes('SITE_ADMINISTRATION');
+  const hasConsoleAccess = viewerIsFounder || viewerCapabilities.length > 0;
   const showStats      = isOwner || user.privacyShowStats;
 
   // 浅色模式检测（供 inline style 条件渲染使用）
@@ -640,9 +656,9 @@ export function UserCenter({
     { id: 'drafts',    label: '草稿',     code: 'DRAFTS'    },
     { id: 'watchlist', label: '收藏',     code: 'WATCHLIST' },
     { id: 'explore',   label: '探索成就', code: 'EXPLORE'   },
-    ...(isOwner ? [{ id: 'score' as Tab, label: '积分', code: 'SCORE' }] : []),
+    ...(isOwner ? [{ id: 'score' as Tab, label: '旧版记录', code: 'LEGACY' }] : []),
     ...(isOwner ? [{ id: 'settings' as Tab, label: '设置', code: 'SETTINGS' }] : []),
-    ...(isOwner && isEditorViewer
+    ...(isOwner && hasConsoleAccess
       ? [{ id: 'admin' as Tab, label: '管理', code: 'RESTRICTED', amber: true }]
       : []),
   ];
@@ -799,11 +815,8 @@ export function UserCenter({
   };
 
   // Computed values for dashboard
-  const qualityLevel  = qLevel.level;
-  const levelLabel    = LEVEL_LABELS[qualityLevel] ?? '访客';
   const topAchievements = achievementDefs.filter(d => d.key in achievementMap);
   const totalUnlocked   = Object.keys(achievementMap).length;
-  const readCount       = userReadCount;
 
   function formatJoinDate(dateStr: string) {
     if (!dateStr) return '-';
@@ -884,13 +897,13 @@ export function UserCenter({
           <div className="user-profile-main flex items-start gap-4 sm:gap-5">
             {/* 头像 */}
             <div className="flex-shrink-0">
-              <div className="user-avatar-ring relative rounded-full p-[3px]" style={{ background: `conic-gradient(${levelColor} 0deg, ${levelColor} ${Math.round(qLevel.progress * 360)}deg, #21262d ${Math.round(qLevel.progress * 360)}deg)` }}>
+              <div className="user-avatar-ring relative rounded-full p-[3px]" style={{ background: 'linear-gradient(145deg, #00ff41, #38bdf8)' }}>
                 {user.avatar ? (
                   <img src={user.avatar} alt={displayName} className="block h-[4.5rem] w-[4.5rem] rounded-full object-cover md:h-[5.5rem] md:w-[5.5rem]"
                     onError={e => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement)!.style.display = 'flex'; }} />
                 ) : null}
                 <div className="h-[4.5rem] w-[4.5rem] rounded-full bg-surface-3 items-center justify-center md:h-[5.5rem] md:w-[5.5rem]" style={{ display: user.avatar ? 'none' : 'flex' }}>
-                  <span className="font-mono text-2xl font-bold" style={{ color: levelColor }}>{displayName.charAt(0).toUpperCase()}</span>
+                  <span className="font-mono text-2xl font-bold text-brand">{displayName.charAt(0).toUpperCase()}</span>
                 </div>
               </div>
             </div>
@@ -900,9 +913,6 @@ export function UserCenter({
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 <h1 className="user-profile-name text-xl font-mono font-bold text-text-hi md:text-2xl">{displayName}</h1>
                 {user.nickname && <span className="text-xs font-mono text-text-mid">@{user.username}</span>}
-                <span className="text-[10px] font-mono px-1.5 py-0.5 border rounded" style={{ color: roleBadge.color, borderColor: `${roleBadge.color}40`, background: `${roleBadge.color}10` }}>
-                  {roleBadge.label}
-                </span>
                 {user.isFounder && (
                   <span className="text-[10px] font-mono px-1.5 py-0.5 border rounded" style={{ color: '#f59e0b', borderColor: '#f59e0b50', background: '#f59e0b10' }}>✦ FOUNDER</span>
                 )}
@@ -981,25 +991,6 @@ export function UserCenter({
               </div>
             </div>
 
-            {/* 等级环 */}
-            {showStats && (
-              <div className="flex-shrink-0 hidden sm:flex flex-col items-center gap-1">
-                <div className="relative w-16 h-16">
-                  <svg className="w-16 h-16 -rotate-90" viewBox="0 0 72 72">
-                    <circle cx="36" cy="36" r="30" fill="none" stroke="var(--color-border)" strokeWidth="3" />
-                    <circle cx="36" cy="36" r="30" fill="none" stroke={levelColor} strokeWidth="3"
-                      strokeDasharray={`${qLevel.progress * 188.5} 188.5`} strokeLinecap="round" />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-lg font-mono font-bold tabular-nums leading-none" style={{ color: levelColor }}>{qLevel.level}</span>
-                    <span className="text-[8px] font-mono text-text-lo">{qLevel.label}</span>
-                  </div>
-                </div>
-                {qLevel.nextScore && (
-                  <div className="text-[9px] font-mono text-text-lo">{user.qualityScore}/{qLevel.nextScore}</div>
-                )}
-              </div>
-            )}
           </div>
         </div>
 
@@ -1034,17 +1025,87 @@ export function UserCenter({
         )}
       </div>
 
+      <div className="mb-5 grid gap-4 lg:grid-cols-2 boot-animate" style={{ animationDelay: '35ms' }}>
+        <section className="border border-border-subtle bg-surface-2 p-4 md:p-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[10px] font-mono tracking-widest text-brand">// CURRENT RESPONSIBILITIES</div>
+              <h2 className="mt-1 text-sm font-mono font-semibold text-text-hi">当前职责</h2>
+            </div>
+            <a href="/org" className="text-[10px] font-mono text-text-mid hover:text-brand">职责说明 →</a>
+          </div>
+          {capabilityStates.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border px-3 py-4 text-xs leading-relaxed text-text-body">
+              目前没有站务职责。你仍然可以创建冰山图，也可以为开放投稿的作品提出修改。
+            </div>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {capabilityStates.map((state) => {
+                const meta = CAPABILITY_META[state.capability] ?? { label: state.capability, color: '#6b7280' };
+                const statusLabel = state.status === 'TRIAL'
+                  ? '试用中'
+                  : state.status === 'SUSPENDED' ? '已暂停' : '有效';
+                return (
+                  <div key={state.capability} className="rounded-lg border border-border-subtle bg-surface-1 px-3 py-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-mono font-semibold" style={{ color: meta.color }}>{meta.label}</span>
+                      <span className="text-[9px] font-mono text-text-mid">{statusLabel}</span>
+                    </div>
+                    {(state.probationEndsAt || state.suspendedUntil) && (
+                      <div className="mt-1 text-[9px] font-mono text-text-lo">
+                        {state.status === 'SUSPENDED' ? '暂停至' : '试用至'}{' '}
+                        {new Date(state.suspendedUntil || state.probationEndsAt!).toLocaleDateString('zh-CN')}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {isOwner && user.role !== 'USER' && (
+            <p className="mt-3 text-[10px] font-mono text-text-lo">
+              旧版身份 {user.role} 仍会保留在记录中，但不再自动带来管理权限。
+            </p>
+          )}
+        </section>
+
+        <section className="border border-border-subtle bg-surface-2 p-4 md:p-5">
+          <div className="mb-3">
+            <div className="text-[10px] font-mono tracking-widest text-info">// GROWTH FOOTPRINT</div>
+            <h2 className="mt-1 text-sm font-mono font-semibold text-text-hi">参与记录</h2>
+          </div>
+          {showStats ? (
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                ['优质创作', contributionProfile.publishedIcebergCount, '已发布'],
+                ['已合并协作', contributionProfile.mergedPullRequestCount, `${contributionProfile.distinctCollabIcebergCount} 张冰山图`],
+                ['可靠审阅', contributionProfile.validReviewCount, `${contributionProfile.nonSelfReviewCount} 次协作审阅`],
+                ['项目与服务', contributionProfile.serviceCount, `${contributionProfile.completedTaskCount} 项任务`],
+              ].map(([label, value, hint]) => (
+                <div key={String(label)} className="rounded-lg border border-border-subtle bg-surface-1 px-3 py-3">
+                  <div className="text-[10px] font-mono text-text-mid">{label}</div>
+                  <div className="mt-1 text-lg font-mono font-semibold text-text-hi">{value}</div>
+                  <div className="text-[9px] font-mono text-text-lo">{hint}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-border px-3 py-4 text-xs text-text-body">
+              用户已隐藏公开统计。
+            </div>
+          )}
+          <p className="mt-3 text-[10px] leading-relaxed text-text-lo">
+            各维度独立展示；成就记录荣誉，贡献记录事实，两者都不会自动授予权限。
+          </p>
+        </section>
+      </div>
+
       {/* Actions Bar (owner only) */}
       {isOwner && (
         <div className="user-quick-actions flex items-center gap-2 mb-5 flex-wrap border border-border-subtle bg-surface-1 p-2 boot-animate" style={{ animationDelay: '40ms' }}>
           <a href="/iceberg/new" className="user-primary-action mobile-touch-target flex items-center px-4 py-2 bg-brand text-[#0A0A0A] text-xs font-mono font-bold hover:bg-brand-hover transition-colors">+ 创建冰山图</a>
           <a href={`/user/${user.id}?tab=settings`} className="user-secondary-action mobile-touch-target flex items-center px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">⚙ 设置</a>
           <a href="/feedback" className="user-secondary-action mobile-touch-target flex items-center px-4 py-2 border border-border text-xs font-mono text-text-body hover:border-brand hover:text-brand transition-colors">反馈</a>
-          {promotionEligible && features.feature_promotion !== false && (
-            <button onClick={() => setShowPromotion(true)} className="mobile-touch-target px-4 py-2 border border-warning/30 text-xs font-mono text-warning hover:border-warning hover:bg-warning/5 transition-colors">
-              申请晋升
-            </button>
-          )}
           {unreadCount > 0 && (
             <button onClick={() => setShowNotifPanel(true)} className="ml-auto text-[10px] font-mono text-text-mid hover:text-brand transition-colors">
               通知({unreadCount})
@@ -1116,7 +1177,12 @@ export function UserCenter({
                 )}
           </div>
         )}
-        {activeTab === 'admin' && isOwner && (viewerRole || viewerIsFounder) && <AdminPanel role={viewerRole ?? 'USER'} isFounder={viewerIsFounder} />}
+        {activeTab === 'admin' && isOwner && (viewerCapabilities.length > 0 || viewerIsFounder) && (
+          <AdminPanel
+            isFounder={viewerIsFounder}
+            capabilities={viewerCapabilities}
+          />
+        )}
       </div>
 
       {notifMounted && (

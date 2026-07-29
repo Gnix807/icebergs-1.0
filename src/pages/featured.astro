@@ -1,14 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { prisma } from '../lib/prisma';
-import { getSessionById } from '../lib/auth/index';
 import { getIcebergTopicLabel } from '../lib/icebergTopic';
+import { overlayPublishedMetadata } from '../lib/icebergRepository';
 
-const sessionId = Astro.cookies.get('session')?.value;
-const session = await getSessionById(sessionId);
-const isAdmin = session?.isFounder || session?.role === 'ADMIN';
-
-const featured = await prisma.iceberg.findMany({
+const featuredRows = await prisma.iceberg.findMany({
   where: { featured: true, status: 'PUBLISHED' },
   orderBy: { updatedAt: 'desc' },
   select: {
@@ -30,6 +26,7 @@ const featured = await prisma.iceberg.findMany({
     },
   },
 });
+const featured = await overlayPublishedMetadata(featuredRows);
 
 const tierColors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#ec4899', '#8b5cf6'];
 
@@ -61,7 +58,7 @@ function formatDate(date: Date | string) {
         <span class="text-warning">#</span> 精选内容
       </h1>
       <p class="text-sm text-text-body font-mono max-w-xl mx-auto leading-relaxed">
-        管理员甄选的优质冰山图。<br/>每一张都经过人工评审，在深度、结构或话题上具有突出价值。
+        内容策展员整理的优质冰山图。<br/>每一张都经过人工评审，在深度、结构或话题上具有突出价值。
       </p>
     </header>
 
@@ -89,7 +86,7 @@ function formatDate(date: Date | string) {
       <div class="py-20 text-center border border-dashed border-border-subtle bg-surface-2/30 reveal">
         <div class="font-mono text-text-lo text-3xl mb-4 leading-none select-none">⭐</div>
         <p class="text-text-body font-mono text-sm mb-1">暂无精选内容</p>
-        <p class="text-text-mid font-mono text-xs">管理员正在评审中，敬请期待</p>
+        <p class="text-text-mid font-mono text-xs">策展团队正在评审中，敬请期待</p>
       </div>
     ) : (
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

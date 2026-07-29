@@ -1,8 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { prisma } from '../lib/prisma';
+import { overlayPublishedMetadata } from '../lib/icebergRepository';
 
-const tab = (Astro.url.searchParams.get('tab') ?? 'views') as 'views' | 'votes' | 'users';
+const tab = (Astro.url.searchParams.get('tab') ?? 'views') as
+  'views' | 'votes' | 'creation' | 'collaboration' | 'review' | 'service';
 const period = (Astro.url.searchParams.get('period') ?? 'all') as 'week' | 'month' | 'all';
 
 let ranked: any[] = [];
@@ -16,19 +18,41 @@ try {
   const whereBase: any = { status: 'PUBLISHED' };
   if (periodGte) whereBase.createdAt = { gte: periodGte };
 
-  if (tab === 'users') {
-    const whereUser: any = {};
-    if (periodGte) whereUser.createdAt = { gte: periodGte };
-    userRanked = await prisma.user.findMany({
-      where: whereUser,
-      orderBy: { qualityScore: 'desc' },
-      take: 30,
+  if (!['views', 'votes'].includes(tab)) {
+    const eventTypes: Record<string, string[]> = {
+      creation: ['ICEBERG_PUBLISHED'],
+      collaboration: ['PULL_REQUEST_MERGED'],
+      review: ['REVIEW_AUDIT_PASSED'],
+      service: ['PROJECT_TASK_COMPLETED', 'MODERATION_CASE_RESOLVED'],
+    };
+    const grouped = await (prisma as any).contributionEvent.groupBy({
+      by: ['userId'],
+      where: {
+        type: { in: eventTypes[tab] ?? [] },
+        ...(periodGte ? { occurredAt: { gte: periodGte } } : {}),
+      },
+      _count: { _all: true },
+      orderBy: { _count: { userId: 'desc' } },
+      take: 60,
+    });
+    const users = await prisma.user.findMany({
+      where: {
+        id: { in: grouped.map((row: any) => row.userId) },
+        privacyShowStats: true,
+      },
       select: {
         id: true, username: true, nickname: true, avatar: true,
-        qualityScore: true, role: true, isFounder: true,
-        _count: { select: { icebergs: true } },
+        isFounder: true,
       },
     });
+    const usersById = Object.fromEntries(users.map((user) => [user.id, user]));
+    userRanked = grouped
+      .map((row: any) => ({
+        ...usersById[row.userId],
+        contributionCount: row._count._all,
+      }))
+      .filter((row: any) => row.id)
+      .slice(0, 30);
   } else if (tab === 'votes') {
     const publishedIds = await prisma.iceberg.findMany({ where: whereBase, select: { id: true } }).then(r => r.map(x => x.id));
     const voteAgg = await prisma.vote.groupBy({
@@ -67,11 +91,18 @@ try {
     const voteMap = Object.fromEntries(voteAgg.map(v => [v.icebergId, v._sum.value ?? 0]));
     ranked = ranked.map(r => ({ ...r, voteScore: voteMap[r.id] ?? 0 }));
   }
+  if (['views', 'votes'].includes(tab)) ranked = await overlayPublishedMetadata(ranked);
 } catch (err) { console.error('排行榜加载失败:', err); error = '加载失败'; }
 
 const maxViews = ranked.length > 0 ? Math.max(ranked[0].viewCount, 1) : 1;
 const maxVoteScore = ranked.length > 0 ? Math.max(...ranked.map(r => Math.max(0, r.voteScore)), 1) : 1;
-const maxQualityScore = userRanked.length > 0 ? userRanked[0].qualityScore : 1;
+const maxContributionCount = userRanked.length > 0 ? userRanked[0].contributionCount : 1;
+const contributionLabels: Record<string, string> = {
+  creation: '优质创作',
+  collaboration: '已合并协作',
+  review: '可靠审阅',
+  service: '项目与社区服务',
+};
 
 const topIcon = (i: number) => i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
 const rankBg = (i: number) => i === 0 ? 'bg-[#f59e0b]/10 border-[#f59e0b]/30' : i === 1 ? 'bg-[#9ca3af]/10 border-[#9ca3af]/30' : i === 2 ? 'bg-[#cd7f32]/10 border-[#cd7f32]/30' : 'bg-surface-2 border-border-subtle';
@@ -101,7 +132,10 @@ const periods = [
         {[
           { key: 'views', label: '热门' },
           { key: 'votes', label: '高赞' },
-          { key: 'users', label: '用户' },
+          { key: 'creation', label: '创作' },
+          { key: 'collaboration', label: '协作' },
+          { key: 'review', label: '审阅' },
+          { key: 'service', label: '服务' },
         ].map(t => (
           <a href={`/leaderboard?tab=${t.key}&period=${period}`}
             class={`mobile-touch-target flex flex-1 items-center justify-center px-5 py-2 text-xs font-mono transition-colors border-r border-border last:border-r-0 ${tab === t.key ? 'bg-brand text-[#0A0A0A] font-bold' : 'text-text-body hover:bg-surface-2'}`}>
@@ -121,9 +155,13 @@ const periods = [
 
     {error ? (
       <div class="p-8 text-center border border-border"><p class="text-red-500 font-mono">{error}</p></div>
-    ) : tab === 'users' ? (
-      /* ── 用户榜 ── */
+    ) : !['views', 'votes'].includes(tab) ? (
+      /* ── 多维贡献榜 ── */
       <div>
+        <div class="mb-5 border border-border-subtle bg-surface-2 px-4 py-3 text-xs font-mono text-text-body">
+          当前维度：<span class="text-brand">{contributionLabels[tab]}</span>。
+          仅统计已发布、已合并或通过审计的记录，不生成跨维度总排名。
+        </div>
         <!-- Top 3 特殊展示 -->
         {userRanked.length >= 3 && (
           <div class="grid grid-cols-3 gap-3 mb-6 reveal">
@@ -138,8 +176,8 @@ const periods = [
                     : <div class="w-10 h-10 rounded-full mx-auto mb-2 border border-border bg-surface-3 flex items-center justify-center text-sm font-mono text-text-mid">{(u.nickname || u.username).charAt(0)}</div>}
                   <div class="text-sm font-mono font-bold text-text-hi truncate">{u.nickname || u.username}</div>
                   <div class="text-[10px] font-mono text-text-mid">@{u.username}</div>
-                  <div class="mt-2 text-lg font-mono font-bold text-brand">{u.qualityScore}</div>
-                  <div class="text-[9px] font-mono text-text-lo">质量分</div>
+                  <div class="mt-2 text-lg font-mono font-bold text-brand">{u.contributionCount}</div>
+                  <div class="text-[9px] font-mono text-text-lo">{contributionLabels[tab]}</div>
                 </a>
               );
             })}
@@ -158,16 +196,14 @@ const periods = [
                 <div class="flex items-center gap-2">
                   <span class="text-sm font-mono font-bold text-text-hi truncate">{u.nickname || u.username}</span>
                   {u.isFounder && <span class="text-[8px] font-mono px-1 py-0.5 border border-[#f59e0b]/30 text-[#f59e0b]">FOUNDER</span>}
-                  {u.role !== 'USER' && <span class="text-[8px] font-mono px-1 py-0.5 border border-border text-text-mid">{u.role}</span>}
                 </div>
                 <div class="flex min-w-0 items-center gap-3 text-[10px] font-mono text-text-mid mt-0.5">
-                  <span>{u._count.icebergs} 冰山图</span>
-                  <span>质量分 {u.qualityScore}</span>
+                  <span>{contributionLabels[tab]} {u.contributionCount}</span>
                 </div>
               </div>
               <div class="hidden flex-shrink-0 w-24 sm:block">
                 <div class="h-1.5 bg-surface-3 overflow-hidden">
-                  <div class="h-full bg-brand transition-all" style={`width:${Math.round((u.qualityScore/maxQualityScore)*100)}%`}></div>
+                  <div class="h-full bg-brand transition-all" style={`width:${Math.round((u.contributionCount/maxContributionCount)*100)}%`}></div>
                 </div>
               </div>
             </a>

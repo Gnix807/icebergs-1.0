@@ -14,6 +14,7 @@ import { prisma } from '../../../../lib/prisma';
 import { success, error } from '../../../../lib/api';
 import { getRfaSettings, evaluateRfa } from '../../../../lib/rfa';
 import { notify } from '../../../../lib/notify';
+import { legacyGovernanceWritesEnabled } from '../../../../lib/governance';
 
 const db = prisma;
 
@@ -23,6 +24,12 @@ export async function ALL(event: APIContext) {
   if (!secret || auth !== `Bearer ${secret}`) {
     return new Response(JSON.stringify(error('FORBIDDEN', '无效密钥')), {
       status: 403,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  if (!await legacyGovernanceWritesEnabled()) {
+    return new Response(JSON.stringify(error('LEGACY_GOVERNANCE_RETIRED', 'RfA 推进任务已停用')), {
+      status: 409,
       headers: { 'Content-Type': 'application/json' },
     });
   }
@@ -74,4 +81,3 @@ export async function ALL(event: APIContext) {
     { status: 200, headers: { 'Content-Type': 'application/json' } },
   );
 }
-

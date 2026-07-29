@@ -61,71 +61,83 @@ export async function GET(event: APIContext) {
     }
 
     let icebergs: any[] = [];
+    // 已启用版本控制的冰山图只搜索最后一次审核通过的 Publication，
+    // 避免 main 主草稿中的未审核标题或词条泄露到公开搜索。
     try {
-      icebergs = await prisma.$queryRawUnsafe(
-        `SELECT ice."id", ice."slug", ice."title", ice."description",
-                ts_rank(ice."search_vector", to_tsquery('simple', $1)) AS rank
-         FROM "icebergs" ice
-         WHERE ice."status" = 'PUBLISHED' AND ice."search_vector" @@ to_tsquery('simple', $1)
-         ${cursor ? `AND ice."id" < $2` : ''}
-         ORDER BY rank DESC
-         LIMIT ${limit}`,
-        cursor ? [terms, cursor] : [terms],
-      ) as any[];
-    } catch (ftsErr) {
-      // tsvector 查询失败时回退到 LIKE
-      icebergs = await prisma.iceberg.findMany({
+      const publications = await (prisma as any).icebergPublication.findMany({
+        where: {
+          searchText: { contains: q, mode: 'insensitive' },
+          iceberg: {
+            status: 'PUBLISHED',
+            ...(cursor ? { id: { lt: cursor } } : {}),
+          },
+        },
+        include: {
+          iceberg: { select: { id: true, slug: true, viewCount: true } },
+        },
+        take: limit,
+        orderBy: { publishedAt: 'desc' },
+      });
+      icebergs = publications.map((publication: any) => ({
+        id: publication.iceberg.id,
+        slug: publication.iceberg.slug,
+        title: publication.title,
+        description: publication.description,
+        _count: {
+          tiers: Array.isArray(publication.snapshot?.tiers)
+            ? publication.snapshot.tiers.length
+            : 0,
+        },
+      }));
+    } catch {
+      // Publication 表尚未完成迁移时，下面的旧数据回退仍可提供搜索。
+    }
+
+    // 尚未初始化版本库的旧内容继续使用现有搜索向量，完成回填后会自然退出该路径。
+    if (icebergs.length < limit) {
+      const remaining = limit - icebergs.length;
+      const existingIds = icebergs.map((item) => item.id);
+      const legacy = await prisma.iceberg.findMany({
         where: {
           status: 'PUBLISHED',
+          repositoryInitializedAt: null,
+          id: {
+            notIn: existingIds,
+            ...(cursor ? { lt: cursor } : {}),
+          },
           OR: [
             { title: { contains: q } },
             { description: { contains: q } },
+            {
+              tiers: {
+                some: {
+                  items: {
+                    some: {
+                      OR: [
+                        { title: { contains: q } },
+                        { desc: { contains: q } },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
           ],
         },
         select: {
-          id: true, slug: true, title: true, description: true,
+          id: true,
+          slug: true,
+          title: true,
+          description: true,
           _count: { select: { tiers: true } },
         },
-        take: limit,
-        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        take: remaining,
         orderBy: { viewCount: 'desc' },
-      }) as any[];
-    }
-
-    // 也搜索词条内容
-    let itemIcebergIds: string[] = [];
-    try {
-      const matchingItems = await prisma.item.findMany({
-        where: {
-          tier: { iceberg: { status: 'PUBLISHED' } },
-          OR: [
-            { title: { contains: q } },
-            { desc: { contains: q } },
-          ],
-        },
-        select: { tier: { select: { icebergId: true } } },
-        take: limit,
-        distinct: ['tierId'],
       });
-      itemIcebergIds = [...new Set(matchingItems.map(i => i.tier.icebergId))];
-    } catch {}
-
-    // 合并结果：FTS 结果 + item 匹配结果的 iceberg，去重
-    const icebergIdSet = new Set(icebergs.map(i => i.id));
-    let extraIcebergs: any[] = [];
-    if (itemIcebergIds.length > 0) {
-      const newIds = itemIcebergIds.filter(id => !icebergIdSet.has(id));
-      if (newIds.length > 0) {
-        extraIcebergs = await prisma.iceberg.findMany({
-          where: { id: { in: newIds }, status: 'PUBLISHED' },
-          select: { id: true, slug: true, title: true, description: true,
-                    _count: { select: { tiers: true } } },
-          take: limit - icebergs.length,
-        });
-      }
+      icebergs.push(...legacy);
     }
 
-    const allResults = [...icebergs, ...extraIcebergs].slice(0, limit);
+    const allResults = icebergs.slice(0, limit);
     const nextCursor = allResults.length === limit ? allResults[allResults.length - 1].id : null;
 
     // 同时搜索用户
@@ -141,7 +153,7 @@ export async function GET(event: APIContext) {
         },
         select: { id: true, username: true, nickname: true, avatar: true },
         take: 5,
-        orderBy: { qualityScore: 'desc' },
+        orderBy: { createdAt: 'asc' },
       });
     } catch {}
 

@@ -14,7 +14,7 @@ import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { success, error } from '../../../../lib/api';
 import { notify } from '../../../../lib/notify';
-import { logScore } from '../../../../lib/scoreLog';
+import { logScore, QUALITY_SCORE_FROZEN } from '../../../../lib/scoreLog';
 
 export async function ALL(event: APIContext) {
   const secret = process.env.CRON_SECRET;
@@ -24,6 +24,12 @@ export async function ALL(event: APIContext) {
       status: 403,
       headers: { 'Content-Type': 'application/json' },
     });
+  }
+  if (QUALITY_SCORE_FROZEN) {
+    return new Response(JSON.stringify(success({
+      skipped: true,
+      reason: 'legacy quality score is frozen',
+    })), { status: 200, headers: { 'Content-Type': 'application/json' } });
   }
 
   const now = new Date();
@@ -95,4 +101,3 @@ export async function ALL(event: APIContext) {
     { status: 200, headers: { 'Content-Type': 'application/json' } },
   );
 }
-

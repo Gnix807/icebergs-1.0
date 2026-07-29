@@ -1,6 +1,6 @@
 /**
  * POST /api/users/[id]/warn
- * EDITOR / ADMIN — issue a warning (level 1 or 2).
+ * COMMUNITY_MODERATION — issue a warning (level 1 or 2).
  * Body: { level: 1 | 2, reason: string }
  *
  * Level 1 (WARNED_1): note only, auto-clears in 90 days.
@@ -18,7 +18,7 @@ export async function ALL(event: APIContext) {
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
     if (!can(session, 'user:warn')) {
-      return json(error(ErrorCodes.FORBIDDEN, '需要编辑或管理员权限'), 403);
+      return json(error(ErrorCodes.CAPABILITY_REQUIRED, '需要社区管理能力'), 403);
     }
 
     const { id } = event.params;
@@ -40,13 +40,8 @@ export async function ALL(event: APIContext) {
       return json(error(ErrorCodes.BAD_REQUEST, '理由不能为空（至少 5 字）'), 400);
     }
 
-    const target = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true, status: true } });
+    const target = await prisma.user.findUnique({ where: { id }, select: { id: true, status: true } });
     if (!target) return json(error(ErrorCodes.NOT_FOUND, '用户不存在'), 404);
-
-    // EDITOR cannot warn another EDITOR or ADMIN
-    if (session.role === 'EDITOR' && (target.role === 'EDITOR' || target.role === 'ADMIN')) {
-      return json(error(ErrorCodes.FORBIDDEN, '编辑无权警告同级或更高级用户'), 403);
-    }
 
     const now = new Date();
     const autoClears = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
@@ -90,4 +85,3 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
-

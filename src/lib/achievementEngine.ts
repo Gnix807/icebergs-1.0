@@ -116,6 +116,12 @@ function evaluateBlock(cond: BlockCondition, ctx: AchievementContext): boolean {
     case 'ideaSubmittedCount':      ctxValue = ctx.user.ideaSubmittedCount; break;
     case 'taskCompletedCount':      ctxValue = ctx.user.taskCompletedCount; break;
     case 'collabEditCount':         ctxValue = ctx.user.collabEditCount; break;
+    case 'publishedIcebergCount':   ctxValue = ctx.user.publishedIcebergCount; break;
+    case 'mergedPullRequestCount':  ctxValue = ctx.user.mergedPullRequestCount; break;
+    case 'distinctCollabIcebergCount': ctxValue = ctx.user.distinctCollabIcebergCount; break;
+    case 'nonSelfReviewCount':      ctxValue = ctx.user.nonSelfReviewCount; break;
+    case 'validReviewCount':        ctxValue = ctx.user.validReviewCount; break;
+    case 'completedTaskCount':      ctxValue = ctx.user.completedTaskCount; break;
     default:                        return false;
   }
 

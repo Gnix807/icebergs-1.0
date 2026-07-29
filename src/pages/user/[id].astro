@@ -3,6 +3,8 @@ import Layout from '../../layouts/Layout.astro';
 import { UserCenter } from '../../components/user/UserCenter';
 import { prisma } from '../../lib/prisma';
 import { getSessionById } from '../../lib/auth/index';
+import { overlayPublishedMetadata } from '../../lib/icebergRepository';
+import { getContributionProfile } from '../../lib/contributions';
 
 const { id } = Astro.params;
 
@@ -13,30 +15,85 @@ let userIcebergs: {
   _count: { tiers: number };
 }[] = [];
 let isOwner = false;
-let viewerRole: string | undefined = undefined;
 let viewerIsFounder = false;
+let viewerCapabilities: string[] = [];
 let appealEligible = false;
-let promotionEligible = false;
-let promotionPending = false;
-let rfaEligible = false;
-let rfaPending = false;
-let rfaActiveId: string | null = null;
 let socialStats = { totalViews: 0, totalVotes: 0 };
 let achievements: { achievementId: string; unlockedAt: string }[] = [];
-let achievementDefs: { key: string; icon: string; label: string; labelZh: string; desc: string; color: string; triggerType: string; triggerTarget: number; sortOrder: number; isHidden: boolean; }[] = [];
+let achievementDefs: {
+  key: string; icon: string; label: string; labelZh: string; desc: string;
+  color: string; triggerType: string; triggerTarget: number; sortOrder: number;
+  isHidden: boolean; conditions: string; category: string | null;
+  rarity: string | null; ruleVersion: number; lifecycle: string;
+}[] = [];
 let userReadCount = 0;
 let awards: { id: string; type: string; message: string | null; createdAt: string; giver: { id: string; username: string; nickname: string | null } }[] = [];
 let userboxIds: string[] = [];
 let watchlistCount = 0;
 let presenceStatus: 'online' | 'active' | 'offline' = 'offline';
+let capabilityStates: {
+  capability: string; status: string; source: string;
+  probationEndsAt: string | null; suspendedUntil: string | null;
+}[] = [];
+let contributionProfile = {
+  creationCount: 0,
+  collaborationCount: 0,
+  reviewCount: 0,
+  serviceCount: 0,
+  publishedIcebergCount: 0,
+  mergedPullRequestCount: 0,
+  distinctCollabIcebergCount: 0,
+  nonSelfReviewCount: 0,
+  validReviewCount: 0,
+  completedTaskCount: 0,
+};
 let error = null;
+
+const legacyAchievementSelect = {
+  key: true,
+  icon: true,
+  label: true,
+  labelZh: true,
+  desc: true,
+  color: true,
+  triggerType: true,
+  triggerTarget: true,
+  sortOrder: true,
+  isHidden: true,
+  conditions: true,
+  category: true,
+  rarity: true,
+} as const;
+
+async function loadAchievementDefinitionsCompat() {
+  try {
+    return await (prisma as any).achievement.findMany({
+      orderBy: { sortOrder: 'asc' },
+      select: {
+        ...legacyAchievementSelect,
+        ruleVersion: true,
+        lifecycle: true,
+      },
+    });
+  } catch (cause) {
+    // During an additive rollout the application can be deployed before the
+    // achievement versioning columns are applied. Account settings and the
+    // rest of the profile must remain available in that window.
+    console.warn('[user-profile] achievement version columns unavailable; using legacy projection');
+    const rows = await prisma.achievement.findMany({
+      orderBy: { sortOrder: 'asc' },
+      select: legacyAchievementSelect,
+    });
+    return rows.map((row) => ({ ...row, ruleVersion: 1, lifecycle: 'ACTIVE' }));
+  }
+}
 
 try {
   const sessionId = Astro.cookies.get('session')?.value;
   const session = await getSessionById(sessionId);
   isOwner = !!(session && session.userId === id);
-  viewerRole = session?.role;
   viewerIsFounder = session?.isFounder ?? false;
+  viewerCapabilities = session?.capabilities ?? [];
 
   if (id) {
     user = await prisma.user.findUnique({
@@ -88,67 +145,11 @@ try {
       appealEligible = !pendingAppeal;
     }
 
-    // 晋升申请资格（仅本人且为 USER 角色时计算）
-    if (isOwner && user?.role === 'USER') {
-      const pendingPromo = await prisma.promotionRequest.findFirst({
-        where: { userId: id!, status: 'PENDING' },
-        select: { id: true },
-      });
-      promotionPending = !!pendingPromo;
-
-      if (!promotionPending && user.status === 'ACTIVE') {
-        const ageDays = (Date.now() - new Date(user.createdAt).getTime()) / 86400000;
-        if (user.qualityScore >= 20 && user._count.icebergs >= 2 && ageDays >= 7) {
-          const recentWarn2 = await prisma.userWarning.findFirst({
-            where: {
-              userId: id!,
-              level: 2,
-              clearedAt: null,
-              createdAt: { gte: new Date(Date.now() - 90 * 86400000) },
-            },
-            select: { id: true },
-          });
-          promotionEligible = !recentWarn2;
-        }
-      }
-    }
-
-    // RfA 资格（仅本人且为 CONTRIBUTOR 角色时计算）
-    if (isOwner && user?.role === 'CONTRIBUTOR') {
-      const db = prisma;
-      const [openRfa, recentRejected, rfaSettings] = await Promise.all([
-        db.rfaRequest.findFirst({
-          where: { userId: id!, status: 'OPEN' },
-          select: { id: true },
-        }),
-        db.rfaRequest.findFirst({
-          where: {
-            userId: id!,
-            status: 'REJECTED',
-            resolvedAt: { gte: new Date(Date.now() - 15 * 86400_000) },
-          },
-          select: { id: true },
-        }),
-        prisma.systemSettings.findMany({
-          where: { key: { in: ['editor_min_score', 'editor_min_days'] } },
-        }),
-      ]);
-
-      rfaPending = !!openRfa;
-      rfaActiveId = openRfa?.id ?? null;
-
-      if (!rfaPending && !recentRejected && user.status === 'ACTIVE') {
-        const settingsMap: Record<string, string> = {};
-        rfaSettings.forEach((r: any) => { settingsMap[r.key] = r.value; });
-        const minScore = parseInt(settingsMap['editor_min_score'] ?? '100', 10);
-        const minDays  = parseInt(settingsMap['editor_min_days']  ?? '30',  10);
-        const ageDays  = (Date.now() - new Date(user.createdAt).getTime()) / 86400_000;
-        rfaEligible = user.qualityScore >= minScore && ageDays >= minDays;
-      }
-    }
-
     if (user) {
-      const [fetchedIcebergs, totalVotes, fetchedAchDefs, readCount, fetchedAwards, userStats, wlCount] = await Promise.all([
+      const [
+        fetchedIcebergs, totalVotes, fetchedAchDefs, readCount,
+        fetchedAwards, userStats, wlCount, fetchedCapabilityStates, fetchedContributionProfile,
+      ] = await Promise.all([
         prisma.iceberg.findMany({
           where: isOwner
             ? { authorId: id }
@@ -166,7 +167,7 @@ try {
           orderBy: { createdAt: 'desc' },
         }),
         prisma.vote.count({ where: { iceberg: { authorId: id }, value: 1 } }),
-        prisma.achievement.findMany({ orderBy: { sortOrder: 'asc' } }),
+        loadAchievementDefinitionsCompat(),
         prisma.itemRead.count({ where: { userId: id } }),
         prisma.userAward.findMany({
           where: { receiverId: id },
@@ -181,54 +182,51 @@ try {
           select: { lastVisitDate: true },
         }),
         prisma.watchlist.count({ where: { userId: id } }),
+        (prisma as any).userCapability.findMany({
+          where: { userId: id, status: { in: ['TRIAL', 'ACTIVE', 'SUSPENDED'] } },
+          orderBy: { capability: 'asc' },
+          select: {
+            capability: true,
+            status: true,
+            source: true,
+            probationEndsAt: true,
+            suspendedUntil: true,
+          },
+        }).catch(() => []),
+        getContributionProfile(id),
       ]);
-      userIcebergs = fetchedIcebergs;
-      achievementDefs = fetchedAchDefs;
+      userIcebergs = isOwner
+        ? fetchedIcebergs
+        : await overlayPublishedMetadata(fetchedIcebergs);
       userReadCount = readCount;
       awards = fetchedAwards.map((a: any) => ({ ...a, createdAt: new Date(a.createdAt).toISOString() }));
       userboxIds = JSON.parse(user.userboxIds ?? '[]');
       watchlistCount = wlCount;
+      capabilityStates = fetchedCapabilityStates.map((state: any) => ({
+        ...state,
+        probationEndsAt: state.probationEndsAt?.toISOString() ?? null,
+        suspendedUntil: state.suspendedUntil?.toISOString() ?? null,
+      }));
+      contributionProfile = fetchedContributionProfile;
       const totalViews = fetchedIcebergs.reduce((sum, ic) => sum + ic.viewCount, 0);
       socialStats = { totalViews, totalVotes };
       const today = new Date().toISOString().slice(0, 10);
       const activeToday = userStats?.lastVisitDate === today;
       presenceStatus = isOwner ? 'online' : (activeToday ? 'active' : 'offline');
 
-      // ── 成就系统：计算 + 持久化 ──────────────────────────────
-      const accountAgeDays = (Date.now() - new Date(user.createdAt).getTime()) / 86400000;
-      const earned = new Set<string>();
-      if (fetchedIcebergs.some(ic => ic.status === 'PUBLISHED'))        earned.add('pioneer');
-      if (user._count.icebergs >= 10)                                    earned.add('prolific');
-      if (totalVotes >= 50)                                               earned.add('popular');
-      if (user.qualityScore >= 100)                                       earned.add('analyst');
-      if (accountAgeDays >= 180)                                          earned.add('veteran');
-      if (user.qualityScore >= 500)                                       earned.add('scholar');
-
-      // 拉取已记录的成就
+      // 成就只读取永久解锁记录；页面访问不再根据角色或质量分写入新成就。
       const existing: { achievementId: string; unlockedAt: Date }[] =
         await prisma.userAchievement.findMany({
           where: { userId: id },
           select: { achievementId: true, unlockedAt: true },
         });
-      const existingIds = new Set(existing.map((a: any) => a.achievementId));
-
-      // 写入新解锁的成就
-      const toCreate = [...earned].filter(aid => !existingIds.has(aid));
-      if (toCreate.length > 0) {
-        await prisma.userAchievement.createMany({
-          data: toCreate.map((achievementId: string) => ({ userId: id, achievementId })),
-        });
-      }
-
-      // 合并：已有 + 本次新解锁
-      const nowStr = new Date().toISOString();
-      achievements = [
-        ...existing.map((a: any) => ({
-          achievementId: a.achievementId,
-          unlockedAt: new Date(a.unlockedAt).toISOString(),
-        })),
-        ...toCreate.map((achievementId: string) => ({ achievementId, unlockedAt: nowStr })),
-      ];
+      const existingIds = new Set(existing.map((achievement) => achievement.achievementId));
+      achievementDefs = fetchedAchDefs.filter((definition: any) =>
+        definition.lifecycle !== 'ARCHIVED' || existingIds.has(definition.key));
+      achievements = existing.map((achievement: any) => ({
+        achievementId: achievement.achievementId,
+        unlockedAt: new Date(achievement.unlockedAt).toISOString(),
+      }));
     }
   }
 
@@ -256,14 +254,9 @@ try {
         user={JSON.parse(JSON.stringify(user))}
         icebergs={JSON.parse(JSON.stringify(userIcebergs))}
         isOwner={isOwner}
-        viewerRole={viewerRole}
         viewerIsFounder={viewerIsFounder}
+        viewerCapabilities={viewerCapabilities}
         appealEligible={appealEligible}
-        promotionEligible={promotionEligible}
-        promotionPending={promotionPending}
-        rfaEligible={rfaEligible}
-        rfaPending={rfaPending}
-        rfaActiveId={rfaActiveId}
         socialStats={socialStats}
         achievements={achievements}
         achievementDefs={achievementDefs as any}
@@ -271,6 +264,8 @@ try {
         awards={awards}
         userboxIds={userboxIds}
         watchlistCount={watchlistCount}
+        capabilityStates={capabilityStates}
+        contributionProfile={contributionProfile}
         presenceStatus={presenceStatus}
       />
     )}

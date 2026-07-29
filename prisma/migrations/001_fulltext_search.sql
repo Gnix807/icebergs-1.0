@@ -9,6 +9,27 @@ DROP FUNCTION IF EXISTS update_iceberg_search_vector();
 -- 1. 添加 search_vector 列
 ALTER TABLE icebergs ADD COLUMN IF NOT EXISTS search_vector TSVECTOR;
 
+-- 兼容旧版本曾被 Prisma db push 误建为 TEXT 的数据库。
+-- 先移除依赖旧类型的索引，再无损转回 TSVECTOR；下方会根据标题和简介重建内容。
+DO $$
+DECLARE
+    current_udt TEXT;
+BEGIN
+    SELECT c.udt_name INTO current_udt
+    FROM information_schema.columns c
+    WHERE c.table_schema = current_schema()
+      AND c.table_name = 'icebergs'
+      AND c.column_name = 'search_vector';
+
+    IF current_udt IS DISTINCT FROM 'tsvector' THEN
+        DROP INDEX IF EXISTS idx_icebergs_search;
+        ALTER TABLE icebergs
+          ALTER COLUMN search_vector TYPE TSVECTOR
+          USING NULL::TSVECTOR;
+    END IF;
+END
+$$;
+
 -- 2. GIN 索引
 CREATE INDEX IF NOT EXISTS idx_icebergs_search ON icebergs USING GIN(search_vector);
 
@@ -52,7 +73,8 @@ CREATE TRIGGER trg_iceberg_search_vector
     BEFORE INSERT OR UPDATE OF title, description ON icebergs
     FOR EACH ROW EXECUTE FUNCTION update_iceberg_search_vector();
 
--- 5. 初始化现有数据
+-- 5. 只初始化新列或类型修复后尚未生成索引的数据，避免每次部署重写全表。
 UPDATE icebergs SET search_vector =
     setweight(to_search_vector(COALESCE(title, '')), 'A') ||
-    setweight(to_search_vector(COALESCE(description, '')), 'B');
+    setweight(to_search_vector(COALESCE(description, '')), 'B')
+WHERE search_vector IS NULL;

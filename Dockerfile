@@ -14,6 +14,7 @@ RUN npm ci --omit=dev && npm install prisma --no-save
 
 # 复制源码和配置
 COPY prisma/ prisma/
+COPY scripts/ scripts/
 COPY astro.config.mjs tsconfig.json tailwind.config.mjs ./
 COPY src/ src/
 COPY public/ public/

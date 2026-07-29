@@ -53,18 +53,18 @@ export function SocialBar({ icebergId }: Props) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-xs font-mono text-text-mid">
+      <div className="flex flex-nowrap items-center gap-2 text-xs font-mono text-text-mid">
         <span>loading...</span>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-nowrap items-center gap-2">
       {/* Upvote */}
       <button
         onClick={() => handleVote(1)}
-        className={`mobile-touch-target vote-btn flex items-center gap-1 px-3 py-1 border text-xs font-mono transition-colors ${
+        className={`mobile-touch-target vote-btn flex shrink-0 items-center gap-1 whitespace-nowrap px-3 py-1 border text-xs font-mono transition-colors ${
           userVote === 1
             ? 'active-up'
             : 'border-border text-text-body hover:border-success hover:text-success'
@@ -76,7 +76,7 @@ export function SocialBar({ icebergId }: Props) {
       {/* Downvote */}
       <button
         onClick={() => handleVote(-1)}
-        className={`mobile-touch-target vote-btn flex items-center gap-1 px-3 py-1 border text-xs font-mono transition-colors ${
+        className={`mobile-touch-target vote-btn flex shrink-0 items-center gap-1 whitespace-nowrap px-3 py-1 border text-xs font-mono transition-colors ${
           userVote === -1
             ? 'active-down'
             : 'border-border text-text-body hover:border-danger hover:text-danger'
@@ -88,7 +88,7 @@ export function SocialBar({ icebergId }: Props) {
       {/* Watchlist */}
       <button
         onClick={handleWatchlist}
-        className={`mobile-touch-target flex items-center gap-1 px-3 py-1 border text-xs font-mono transition-colors ${
+        className={`mobile-touch-target flex shrink-0 items-center gap-1 whitespace-nowrap px-3 py-1 border text-xs font-mono transition-colors ${
           inWatchlist
             ? 'border-warning text-warning'
             : 'border-border text-text-body hover:border-warning hover:text-warning'

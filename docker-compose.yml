@@ -6,7 +6,7 @@ services:
     environment:
       TZ: Asia/Shanghai
       POSTGRES_USER: icebergs
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-change-me}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       POSTGRES_DB: icebergs
     volumes:
       - pgdata:/var/lib/postgresql
@@ -26,22 +26,31 @@ services:
         condition: service_healthy
     ports:
       - "4321:4321"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:4321/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 120s
     environment:
       TZ: Asia/Shanghai
       HOST: 0.0.0.0
-      DB_PASSWORD: ${DB_PASSWORD:-change-me}
-      DATABASE_URL: postgresql://icebergs:${DB_PASSWORD:-change-me}@db:5432/icebergs
+      DB_HOST: db
+      DB_USER: icebergs
+      DB_NAME: icebergs
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DATABASE_URL: postgresql://icebergs:${DB_PASSWORD:?DB_PASSWORD is required}@db:5432/icebergs
       NODE_ENV: production
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      REDIRECT_URI: ${REDIRECT_URI}
-      CRON_SECRET: ${CRON_SECRET}
+      REDIRECT_URI: ${REDIRECT_URI:?REDIRECT_URI is required}
+      CRON_SECRET: ${CRON_SECRET:?CRON_SECRET is required}
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-console}
       EMAIL_FROM: ${EMAIL_FROM}
       RESEND_API_KEY: ${RESEND_API_KEY}
-      EMAIL_VERIFICATION_SECRET: ${EMAIL_VERIFICATION_SECRET:-change-me}
+      EMAIL_VERIFICATION_SECRET: ${EMAIL_VERIFICATION_SECRET:?EMAIL_VERIFICATION_SECRET is required}
     volumes:
       - ./uploads:/app/public/uploads
 

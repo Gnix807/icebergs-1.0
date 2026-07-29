@@ -6,6 +6,7 @@ import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../../lib/api';
+import { legacyGovernanceWritesEnabled } from '../../../../lib/governance';
 
 const db = prisma;
 
@@ -20,6 +21,9 @@ export async function GET(event: APIContext) {
 
   // 撤销 RfA（GET 兼容，action=delete）
   if (event.url.searchParams.get('action') === 'delete') {
+    if (!await legacyGovernanceWritesEnabled()) {
+      return json(error(ErrorCodes.LEGACY_GOVERNANCE_RETIRED, 'RfA 已转为只读历史'), 409);
+    }
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -80,5 +84,4 @@ export async function GET(event: APIContext) {
     },
   }));
 }
-
 

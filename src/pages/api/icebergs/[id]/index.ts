@@ -6,6 +6,10 @@ import { checkAchievements, updateDailyStreak } from '../../../../lib/achievemen
 import { normalizeIcebergTopic } from '../../../../lib/icebergTopic';
 import { renderMarkdownWithMath } from '../../../../lib/markdown';
 import { can } from '../../../../lib/permissions';
+import {
+  getRepositoryRole,
+  legacyRepositoryWriteBlocked,
+} from '../../../../lib/icebergRepository';
 
 const OWNER_DELETABLE_STATUSES = ['DRAFT', 'REJECTED'];
 
@@ -218,16 +222,15 @@ async function deleteIceberg(event: APIContext, legacyGet = false): Promise<Resp
     });
     if (!existing) return json(error(ErrorCodes.NOT_FOUND, '冰山图不存在'), 404);
 
-    const canDeleteAny = can(session, 'content:delete:any');
     const isOwner = existing.authorId === session.userId;
     const canDeleteOwn = isOwner && can(session, 'content:edit:own');
-    if (!canDeleteAny && !canDeleteOwn) {
+    if (!canDeleteOwn) {
       return json(error(ErrorCodes.FORBIDDEN, '无权删除该冰山图'), 403);
     }
-    if (!canDeleteAny && !OWNER_DELETABLE_STATUSES.includes(existing.status)) {
+    if (!OWNER_DELETABLE_STATUSES.includes(existing.status)) {
       return json(error(
         ErrorCodes.CONFLICT,
-        '待审核、已发布或已归档的冰山图只能由管理员删除',
+        '待审核、已发布或已归档的冰山图不能直接删除，请先通过发布或归档流程处理',
       ), 409);
     }
 
@@ -235,13 +238,11 @@ async function deleteIceberg(event: APIContext, legacyGet = false): Promise<Resp
     // loose iceberg IDs, so clean or unlink them in the same transaction.
     const deleted = await prisma.$transaction(async (tx) => {
       const result = await tx.iceberg.deleteMany({
-        where: canDeleteAny
-          ? { id: existing.id }
-          : {
-              id: existing.id,
-              authorId: session.userId,
-              status: { in: OWNER_DELETABLE_STATUSES },
-            },
+        where: {
+          id: existing.id,
+          authorId: session.userId,
+          status: { in: OWNER_DELETABLE_STATUSES },
+        },
       });
       if (result.count === 0) return false;
 
@@ -264,7 +265,7 @@ async function deleteIceberg(event: APIContext, legacyGet = false): Promise<Resp
         select: { authorId: true, status: true },
       });
       if (!latest) return json(error(ErrorCodes.NOT_FOUND, '冰山图不存在'), 404);
-      if (latest.authorId !== session.userId && !canDeleteAny) {
+      if (latest.authorId !== session.userId) {
         return json(error(ErrorCodes.FORBIDDEN, '冰山图所有者已变更，请刷新后重试'), 403);
       }
       return json(error(ErrorCodes.CONFLICT, '冰山图状态已变化，请刷新后重试'), 409);
@@ -312,13 +313,13 @@ export async function GET(event: APIContext) {
       if (!collaborationState) {
         return json(error(ErrorCodes.NOT_FOUND, '冰山图不存在'), 404);
       }
+      const repositoryRole = await getRepositoryRole(session, collaborationState);
       const canView = collaborationState.status === 'PUBLISHED'
         || (!!session && (
           collaborationState.authorId === session.userId
-          || session.isFounder
-          || session.role === 'ADMIN'
-          || session.role === 'EDITOR'
           || await isProjectMember(session.userId, collaborationState.projectId)
+          || repositoryRole === 'MAINTAINER'
+          || repositoryRole === 'CONTRIBUTOR'
         ));
       if (!canView) return json(error(ErrorCodes.NOT_FOUND, '冰山图不存在'), 404);
       return json(success({
@@ -354,9 +355,11 @@ export async function GET(event: APIContext) {
     }
 
     const isOwner = !!session && iceberg.authorId === session.userId;
-    const isPrivileged = !!session && (session.isFounder || session.role === 'ADMIN' || session.role === 'EDITOR');
     const inProject = !!session && await isProjectMember(session.userId, iceberg.projectId);
-    const canViewUnpublished = isOwner || isPrivileged || inProject;
+    const repositoryRole = await getRepositoryRole(session, iceberg);
+    const canViewUnpublished = isOwner || inProject
+      || repositoryRole === 'MAINTAINER'
+      || repositoryRole === 'CONTRIBUTOR';
 
     if (iceberg.status !== 'PUBLISHED' && !canViewUnpublished) {
       return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '冰山图不存在')), {
@@ -435,6 +438,12 @@ export async function PUT(event: APIContext) {
       return new Response(JSON.stringify(error(ErrorCodes.NOT_FOUND, '冰山图不存在')), {
         status: 404, headers: { 'Content-Type': 'application/json' },
       });
+    }
+    if (await legacyRepositoryWriteBlocked(existing.id)) {
+      return json(error(
+        'VERSION_CONTROL_ENABLED' as any,
+        '该冰山图已启用版本控制，请刷新编辑器后在工作副本中修改。',
+      ), 409);
     }
 
     const canManageAny = can(session, 'content:edit:any');

@@ -5,10 +5,12 @@ import { getSessionById } from '../../lib/auth';
 import { ImpeachVotePanel } from '../../components/impeach/ImpeachVotePanel';
 import { getImpeachSettings, evaluateImpeach, demotedRole } from '../../lib/impeach';
 import FeatureGate from '../../components/FeatureGate.astro';
+import { legacyGovernanceWritesEnabled } from '../../lib/governance';
 
 const { id } = Astro.params;
 const sessionId = Astro.cookies.get('session')?.value;
 const session   = await getSessionById(sessionId);
+const legacyWritesEnabled = await legacyGovernanceWritesEnabled();
 
 const reqRaw = await prisma.impeachRequest.findUnique({
   where: { id },
@@ -32,7 +34,7 @@ if (!reqRaw) return Astro.redirect('/impeach');
 
 // 懒推进
 let status = reqRaw.status;
-if (status === 'OPEN' && new Date() >= new Date(reqRaw.closesAt)) {
+if (legacyWritesEnabled && status === 'OPEN' && new Date() >= new Date(reqRaw.closesAt)) {
   const settings = await getImpeachSettings();
   const votes    = reqRaw.votes.map((v: any) => ({ vote: v.vote, weight: v.weight }));
   const outcome  = evaluateImpeach(votes, settings);
@@ -96,13 +98,18 @@ const targetDisplay    = reqRaw.target.nickname ?? reqRaw.target.username;
 const initiatorDisplay = reqRaw.initiator.nickname ?? reqRaw.initiator.username;
 
 // 谁可以撤销
-const canCancel = session && status === 'OPEN' &&
+const canCancel = legacyWritesEnabled && session && status === 'OPEN' &&
   (session.userId === reqRaw.initiatedBy || session.isFounder);
 ---
 
 <Layout title={`弹劾 @${targetDisplay} — 冰山图宇宙`}>
   <FeatureGate feature="feature_impeach" name="弹劾流程">
   <main class="max-w-2xl mx-auto px-4 py-8 reveal">
+    {!legacyWritesEnabled && (
+      <div class="mb-6 rounded-xl border border-info/30 bg-info/5 p-4 text-xs text-info">
+        此页面是旧版弹劾流程的历史档案。当前职责改由能力审计、紧急暂停和双人复核处理。
+      </div>
+    )}
 
     <div class="text-[10px] font-mono text-text-lo mb-6">
       <a href="/org" class="hover:text-text-body transition-colors">机构</a>
@@ -196,7 +203,7 @@ const canCancel = session && status === 'OPEN' &&
     <ImpeachVotePanel
       client:load
       impeachId={id!}
-      status={status}
+      status={legacyWritesEnabled ? status : 'ARCHIVED'}
       closesAt={reqRaw.closesAt.toISOString()}
       targetRole={reqRaw.targetRole}
       targetId={reqRaw.targetUserId}

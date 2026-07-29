@@ -17,6 +17,23 @@ import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { can } from '../../../../lib/permissions';
 import { notify } from '../../../../lib/notify';
+import {
+  DEFAULT_BRANCH_NAME,
+  ensureRepository,
+  getSnapshotForCommit,
+  isRepositoryFeatureEnabled,
+  snapshotSearchText,
+} from '../../../../lib/icebergRepository';
+import { renderMarkdownWithMath } from '../../../../lib/markdown';
+import {
+  assertReviewerMayDecide,
+  registerReviewDecision,
+} from '../../../../lib/reviewerCertification';
+import {
+  CONTRIBUTION_EVENT_TYPES,
+  recordContributionEvent,
+} from '../../../../lib/contributions';
+import { checkAchievements } from '../../../../lib/achievementService';
 
 export async function ALL(event: APIContext) {
   try {
@@ -39,7 +56,7 @@ export async function ALL(event: APIContext) {
       return json(error(ErrorCodes.BAD_REQUEST, '拒绝时必须填写理由（至少 5 字）'), 400);
     }
 
-    const review = await prisma.icebergReview.findUnique({
+    const review = await (prisma as any).icebergReview.findUnique({
       where: { id },
       include: { iceberg: { select: { id: true, slug: true, title: true, authorId: true, status: true } } },
     });
@@ -49,9 +66,19 @@ export async function ALL(event: APIContext) {
       return json(error(ErrorCodes.BAD_REQUEST, `审核记录状态为「${review.status}」，无法操作`), 400);
     }
 
-    // Recusal: reviewer must not be the author
-    if (review.iceberg.authorId === session.userId) {
-      return json(error(ErrorCodes.FORBIDDEN, '回避制度：不能审核自己的冰山图'), 403);
+    const isSelfReview = review.iceberg.authorId === session.userId;
+    let certification: any = null;
+    try {
+      ({ certification } = await assertReviewerMayDecide(session));
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : '';
+      if (message === 'DAILY_REVIEW_LIMIT') {
+        return json(error(ErrorCodes.DAILY_REVIEW_LIMIT, '试用审核员今日已达到 3 次审核上限'), 429);
+      }
+      if (message === 'CAPABILITY_SUSPENDED') {
+        return json(error(ErrorCodes.CAPABILITY_SUSPENDED, '发布审核能力当前处于暂停状态'), 403);
+      }
+      return json(error(ErrorCodes.CAPABILITY_REQUIRED, '需要有效的发布审核能力'), 403);
     }
 
     const now = new Date();
@@ -59,16 +86,90 @@ export async function ALL(event: APIContext) {
     const icebergLink = `/iceberg/${review.iceberg.slug || review.iceberg.id}`;
 
     if (action === 'approve') {
-      await prisma.$transaction([
-        prisma.icebergReview.update({
+      let publicationSnapshot = null;
+      let publicationCommitId = review.commitId as string | null;
+      if (await isRepositoryFeatureEnabled()) {
+        if (!publicationCommitId) {
+          await ensureRepository(review.iceberg.id, session.userId);
+          const main = await (prisma as any).icebergBranch.findFirst({
+            where: {
+              icebergId: review.iceberg.id,
+              normalizedName: DEFAULT_BRANCH_NAME,
+              archivedAt: null,
+            },
+            select: { headCommitId: true },
+          });
+          publicationCommitId = main?.headCommitId ?? null;
+        }
+        if (publicationCommitId) publicationSnapshot = await getSnapshotForCommit(publicationCommitId);
+      }
+
+      await prisma.$transaction(async (rawTx) => {
+        const tx = rawTx as any;
+        await tx.icebergReview.update({
           where: { id },
-          data: { status: 'APPROVED', reviewerId: session.userId, reviewedAt: now },
-        }),
-        prisma.iceberg.update({
+          data: {
+            status: 'APPROVED',
+            reviewerId: session.userId,
+            reviewedAt: now,
+            commitId: publicationCommitId,
+          },
+        });
+        await tx.iceberg.update({
           where: { id: review.iceberg.id },
           data: { status: 'PUBLISHED' },
-        }),
-      ]);
+        });
+        if (publicationSnapshot && publicationCommitId) {
+          await tx.icebergPublication.upsert({
+          where: { icebergId: review.iceberg.id },
+          create: {
+            icebergId: review.iceberg.id,
+            commitId: publicationCommitId,
+            title: publicationSnapshot.metadata.title,
+            description: publicationSnapshot.metadata.description,
+            renderedDescription: publicationSnapshot.metadata.description
+              ? renderMarkdownWithMath(publicationSnapshot.metadata.description) : null,
+            topic: publicationSnapshot.metadata.topic,
+            snapshot: publicationSnapshot,
+            searchText: snapshotSearchText(publicationSnapshot),
+            publishedAt: now,
+          },
+          update: {
+            commitId: publicationCommitId,
+            title: publicationSnapshot.metadata.title,
+            description: publicationSnapshot.metadata.description,
+            renderedDescription: publicationSnapshot.metadata.description
+              ? renderMarkdownWithMath(publicationSnapshot.metadata.description) : null,
+            topic: publicationSnapshot.metadata.topic,
+            snapshot: publicationSnapshot,
+            searchText: snapshotSearchText(publicationSnapshot),
+            publishedAt: now,
+          },
+          });
+        }
+        await recordContributionEvent({
+          idempotencyKey: `publication-review:${id}`,
+          userId: review.iceberg.authorId,
+          type: CONTRIBUTION_EVENT_TYPES.ICEBERG_PUBLISHED,
+          dimension: 'CREATION',
+          resourceType: 'iceberg-review',
+          resourceId: id,
+          icebergId: review.iceberg.id,
+          occurredAt: now,
+          metadata: {
+            commitId: publicationCommitId,
+            reviewerId: session.userId,
+            selfReview: isSelfReview,
+          },
+        }, tx);
+        await registerReviewDecision({
+          decisionKey: `${id}:${now.toISOString()}:approve`,
+          reviewId: id,
+          reviewerId: session.userId,
+          isSelfReview,
+          certificationStatus: certification?.status,
+        }, tx);
+      });
       await notify(
         review.iceberg.authorId,
         'iceberg_approved',
@@ -76,10 +177,12 @@ export async function ALL(event: APIContext) {
         '恭喜！你的冰山图已发布，现在所有人都可以看到它。',
         icebergLink,
       );
+      checkAchievements(review.iceberg.authorId, { type: 'contribution' }).catch(() => {});
     } else {
       // reject → send back to DRAFT
-      await prisma.$transaction([
-        prisma.icebergReview.update({
+      await prisma.$transaction(async (rawTx) => {
+        const tx = rawTx as any;
+        await tx.icebergReview.update({
           where: { id },
           data: {
             status: 'REJECTED',
@@ -87,12 +190,19 @@ export async function ALL(event: APIContext) {
             note: reason!.trim(),
             reviewedAt: now,
           },
-        }),
-        prisma.iceberg.update({
+        });
+        await tx.iceberg.update({
           where: { id: review.iceberg.id },
           data: { status: 'DRAFT' },
-        }),
-      ]);
+        });
+        await registerReviewDecision({
+          decisionKey: `${id}:${now.toISOString()}:reject`,
+          reviewId: id,
+          reviewerId: session.userId,
+          isSelfReview,
+          certificationStatus: certification?.status,
+        }, tx);
+      });
       await notify(
         review.iceberg.authorId,
         'iceberg_rejected',
@@ -104,6 +214,16 @@ export async function ALL(event: APIContext) {
 
     return json(success({ action, reviewId: id }), 200);
   } catch (err) {
+    const message = err instanceof Error ? err.message : '';
+    if (message === 'CAPABILITY_REQUIRED') {
+      return json(error(ErrorCodes.CAPABILITY_REQUIRED, '需要发布审核能力'), 403);
+    }
+    if (message === 'CAPABILITY_SUSPENDED') {
+      return json(error(ErrorCodes.CAPABILITY_SUSPENDED, '发布审核能力已暂停'), 403);
+    }
+    if (message === 'DAILY_REVIEW_LIMIT') {
+      return json(error(ErrorCodes.DAILY_REVIEW_LIMIT, '试用期今日审核次数已达上限'), 429);
+    }
     console.error('审核操作失败:', err);
     return json(error(ErrorCodes.INTERNAL_ERROR, '操作失败'), 500);
   }
@@ -115,4 +235,3 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
-

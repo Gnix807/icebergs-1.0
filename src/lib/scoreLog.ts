@@ -4,6 +4,9 @@
  */
 import { prisma } from './prisma';
 
+/** Legacy score is an immutable historical snapshot after the governance cutover. */
+export const QUALITY_SCORE_FROZEN = true;
+
 export type ScoreReason =
   | 'comment'        // 发表评论
   | 'vote_cast'      // 首次投票
@@ -19,6 +22,7 @@ export function logScore(
   reason: ScoreReason,
   note?: string,
 ): void {
+  if (QUALITY_SCORE_FROZEN) return;
   prisma.scoreLog.create({
     data: { userId, delta, reason, note },
   }).catch(() => {});

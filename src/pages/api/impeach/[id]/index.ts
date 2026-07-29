@@ -6,6 +6,7 @@ import type { APIContext } from 'astro';
 import { prisma } from '../../../../lib/prisma';
 import { getSession } from '../../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../../lib/api';
+import { legacyGovernanceWritesEnabled } from '../../../../lib/governance';
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -18,6 +19,9 @@ export async function GET(event: APIContext) {
 
   // 撤销弹劾（GET 兼容，action=delete）
   if (event.url.searchParams.get('action') === 'delete') {
+    if (!await legacyGovernanceWritesEnabled()) {
+      return json(error(ErrorCodes.LEGACY_GOVERNANCE_RETIRED, '角色弹劾已转为只读历史'), 409);
+    }
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -75,5 +79,4 @@ export async function GET(event: APIContext) {
 
   return json(success({ request: req, summary }));
 }
-
 

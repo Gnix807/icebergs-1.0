@@ -15,6 +15,11 @@ import { ItemEditorForm } from './ItemEditorForm';
 import { EditorToolbar } from './EditorToolbar';
 import { EditorActionBar } from './EditorActionBar';
 import { EditorDocumentPanel } from './EditorDocumentPanel';
+import {
+  RepositoryControls,
+  type RepositoryConflictState,
+  type RepositoryUiState,
+} from './RepositoryControls';
 import { useIcebergStore, type Tier, type Item, type Iceberg } from '../../stores/icebergStore';
 import { toast } from '../ui/Toast';
 import { ICEBERG_TOPICS, isPresetIcebergTopic, normalizeIcebergTopic } from '../../lib/icebergTopic';
@@ -121,6 +126,81 @@ function buildCreatePayload(target: Iceberg, slug: string) {
   };
 }
 
+function mergeImportedWorkingCopy(current: Iceberg, raw: Record<string, any>) {
+  const remoteTiers = Array.isArray(raw.tiers) ? raw.tiers : [];
+  const unmatchedTiers = [...current.tiers];
+  const summary: ImportSyncSummary = {
+    addedTiers: 0,
+    updatedTiers: 0,
+    preservedTiers: 0,
+    addedItems: 0,
+    updatedItems: 0,
+    preservedItems: 0,
+  };
+  const key = (value: unknown) => String(value ?? '').trim().toLocaleLowerCase();
+  const now = Date.now();
+  const tiers: Tier[] = remoteTiers.map((remoteTier: any, tierIndex: number) => {
+    const matchIndex = unmatchedTiers.findIndex((tier) => key(tier.name) === key(remoteTier.name));
+    const matched = matchIndex >= 0 ? unmatchedTiers.splice(matchIndex, 1)[0] : null;
+    const tierId = matched?.id ?? `tier_import_${now}_${tierIndex}`;
+    if (matched) summary.updatedTiers += 1;
+    else summary.addedTiers += 1;
+    const unmatchedItems = [...(matched?.items ?? [])];
+    const remoteItems = Array.isArray(remoteTier.items) ? remoteTier.items : [];
+    const items: Item[] = remoteItems.map((remoteItem: any, itemIndex: number) => {
+      const itemMatchIndex = unmatchedItems.findIndex((item) => key(item.title) === key(remoteItem.title));
+      const itemMatch = itemMatchIndex >= 0 ? unmatchedItems.splice(itemMatchIndex, 1)[0] : null;
+      if (itemMatch) summary.updatedItems += 1;
+      else summary.addedItems += 1;
+      return {
+        id: itemMatch?.id ?? `item_import_${now}_${tierIndex}_${itemIndex}`,
+        title: String(remoteItem.title || `词条 ${itemIndex + 1}`).slice(0, 240),
+        desc: String(remoteItem.desc || itemMatch?.desc || ''),
+        labels: [...new Set([
+          ...(itemMatch?.labels ?? []),
+          ...(Array.isArray(remoteItem.labels)
+            ? remoteItem.labels.filter((label: unknown): label is string => typeof label === 'string')
+            : []),
+        ])],
+        order: itemIndex,
+        tierId,
+      };
+    });
+    for (const localItem of unmatchedItems) {
+      items.push({ ...localItem, tierId, order: items.length });
+      summary.preservedItems += 1;
+    }
+    return {
+      id: tierId,
+      icebergId: current.id,
+      name: String(remoteTier.name || matched?.name || `层级 ${tierIndex + 1}`),
+      desc: String(remoteTier.desc || matched?.desc || ''),
+      order: tierIndex,
+      items,
+    };
+  });
+  for (const localTier of unmatchedTiers) {
+    tiers.push({
+      ...localTier,
+      order: tiers.length,
+      items: localTier.items.map((item, index) => ({ ...item, order: index })),
+    });
+    summary.preservedTiers += 1;
+    summary.preservedItems += localTier.items.length;
+  }
+  return {
+    iceberg: {
+      ...current,
+      title: typeof raw.title === 'string' && raw.title.trim() ? raw.title.slice(0, 120) : current.title,
+      description: typeof raw.description === 'string' && raw.description.trim()
+        ? raw.description
+        : current.description,
+      tiers,
+    },
+    summary,
+  };
+}
+
 interface IcebergEditorProps {
   icebergId?: string;
 }
@@ -157,6 +237,24 @@ interface ImportSyncSummary {
   addedItems: number;
   updatedItems: number;
   preservedItems: number;
+}
+
+interface RepositorySessionState {
+  role: RepositoryUiState['role'];
+  repository: {
+    defaultBranchId: string;
+    branches: RepositoryUiState['branches'];
+    currentBranch: RepositoryUiState['currentBranch'];
+    headCommit: RepositoryUiState['headCommit'];
+    mainHeadCommitId: string;
+    openPull?: { number: number; title: string } | null;
+  };
+  workingCopy: {
+    revision: number;
+    baseCommitId: string;
+    dirty: boolean;
+  };
+  iceberg: Iceberg;
 }
 
 interface MetadataBaseline {
@@ -244,6 +342,14 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
   const [pendingImportSync, setPendingImportSync] = useState<PendingImportSync | null>(null);
   const [isApplyingImportSync, setIsApplyingImportSync] = useState(false);
   const [lastImportSyncSummary, setLastImportSyncSummary] = useState<ImportSyncSummary | null>(null);
+  const [repositorySession, setRepositorySession] = useState<RepositorySessionState | null>(null);
+  const [repositoryWorkspaceDirty, setRepositoryWorkspaceDirty] = useState(false);
+  const [repositoryWorkspaceSaving, setRepositoryWorkspaceSaving] = useState(false);
+  const [repositoryConflict, setRepositoryConflict] = useState<
+    (RepositoryConflictState & { revision: number }) | null
+  >(null);
+  const repositorySaveTimerRef = useRef<number | null>(null);
+  const repositoryLoadingRef = useRef(false);
 
   const SLUG_RE = /^[a-zA-Z0-9_-]{2,60}$/;
 
@@ -264,6 +370,215 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     metadataBaselineRef.current = captureMetadata(target);
     metadataBaselineIcebergIdRef.current = target.id;
   }, []);
+
+  const loadRepositoryState = useCallback(async (branchId?: string) => {
+    const current = useIcebergStore.getState().iceberg;
+    const targetId = current && !current.id.startsWith('temp_') ? current.id : icebergId;
+    if (!targetId || targetId === 'new' || targetId === 'imported' || repositoryLoadingRef.current) return;
+    repositoryLoadingRef.current = true;
+    try {
+      const query = branchId ? `?branch=${encodeURIComponent(branchId)}` : '';
+      const res = await fetch(`/api/icebergs/${targetId}/repository${query}`, { cache: 'no-store' });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success || !data.data?.enabled || !data.data?.repository) {
+        if (data?.data?.enabled === false) setRepositorySession(null);
+        return;
+      }
+      const next = data.data as RepositorySessionState;
+      setRepositorySession(next);
+      setRepositoryWorkspaceDirty(next.workingCopy.dirty);
+      const loaded = withTopic(next.iceberg);
+      rememberMetadataBaseline(loaded);
+      setIceberg(loaded);
+      setLastSaved(new Date());
+      setRemoteUpdateAt(null);
+      setSyncFailures([]);
+    } catch (err) {
+      console.error('加载版本库工作副本失败:', err);
+    } finally {
+      repositoryLoadingRef.current = false;
+    }
+  }, [icebergId, rememberMetadataBaseline, setIceberg, setLastSaved]);
+
+  const saveRepositoryWorkspace = useCallback(async (snapshot?: Iceberg) => {
+    const current = snapshot ?? useIcebergStore.getState().iceberg;
+    const repo = repositorySession;
+    if (!current || !repo) return null;
+    setRepositoryWorkspaceSaving(true);
+    try {
+      const res = await fetch(`/api/icebergs/${current.id}/repository`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'save-workspace',
+          branchId: repo.repository.currentBranch.id,
+          revision: repo.workingCopy.revision,
+          baseCommitId: repo.workingCopy.baseCommitId,
+          snapshot: current,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        if (res.status === 409 && data?.error?.code === 'WORKSPACE_CONFLICT') {
+          toast('另一个标签页保存了更新的工作副本，请切换分支或重新载入', 'error');
+        } else {
+          toast(data?.error?.message || '工作副本保存失败', 'error');
+        }
+        return null;
+      }
+      const saved = data.data as { revision: number; baseCommitId: string };
+      setRepositorySession((previous) => previous ? {
+        ...previous,
+        workingCopy: {
+          ...previous.workingCopy,
+          revision: saved.revision,
+          baseCommitId: saved.baseCommitId,
+          dirty: true,
+        },
+      } : previous);
+      setRepositoryWorkspaceDirty(true);
+      setDirty(false);
+      setLastSaved(new Date());
+      clearDraft(current.id);
+      return saved;
+    } catch {
+      toast('工作副本保存失败，请检查网络', 'error');
+      return null;
+    } finally {
+      setRepositoryWorkspaceSaving(false);
+    }
+  }, [repositorySession, setDirty, setLastSaved]);
+
+  const selectRepositoryBranch = useCallback(async (branchId: string) => {
+    if (isDirty && repositorySession) {
+      const saved = await saveRepositoryWorkspace();
+      if (!saved) return;
+    }
+    await loadRepositoryState(branchId);
+  }, [isDirty, repositorySession, loadRepositoryState, saveRepositoryWorkspace]);
+
+  const createRepositoryBranch = useCallback(async (title: string) => {
+    const current = useIcebergStore.getState().iceberg;
+    if (!current || !repositorySession) return false;
+    const res = await fetch(`/api/icebergs/${current.id}/repository`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create-branch',
+        title,
+        baseBranchId: repositorySession.repository.currentBranch.id,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.success) {
+      toast(data?.error?.message || '创建分支失败', 'error');
+      return false;
+    }
+    await loadRepositoryState(data.data.id);
+    toast('改动分支已创建');
+    return true;
+  }, [repositorySession, loadRepositoryState]);
+
+  const commitRepositoryVersion = useCallback(async (message: string) => {
+    const current = useIcebergStore.getState().iceberg;
+    const repo = repositorySession;
+    if (!current || !repo) return false;
+    const saved = await saveRepositoryWorkspace(current);
+    if (!saved) return false;
+    const res = await fetch(`/api/icebergs/${current.id}/repository`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'commit',
+        branchId: repo.repository.currentBranch.id,
+        revision: saved.revision,
+        expectedHeadCommitId: repo.repository.currentBranch.headCommitId,
+        message,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.success) {
+      toast(data?.error?.message || '提交版本失败', 'error');
+      if (data?.error?.code === 'MERGE_CONFLICT' && Array.isArray(data.error.details?.conflicts)) {
+        setRepositoryConflict({
+          conflicts: data.error.details.conflicts,
+          headCommitId: data.error.details.headCommitId,
+          message,
+          revision: saved.revision,
+        });
+      } else if (res.status === 409) {
+        await loadRepositoryState(repo.repository.currentBranch.id);
+      }
+      return false;
+    }
+    setRepositoryConflict(null);
+    setRepositoryWorkspaceDirty(false);
+    await loadRepositoryState(repo.repository.currentBranch.id);
+    toast(`版本 ${data.data.shortHash} 已提交`);
+    return true;
+  }, [repositorySession, saveRepositoryWorkspace, loadRepositoryState]);
+
+  const resolveRepositoryConflicts = useCallback(async (resolutions: Array<{
+    path: string;
+    field: string;
+    choice: 'ours' | 'theirs';
+  }>) => {
+    const current = useIcebergStore.getState().iceberg;
+    const repo = repositorySession;
+    const conflict = repositoryConflict;
+    if (!current || !repo || !conflict) return false;
+    const res = await fetch(`/api/icebergs/${current.id}/repository`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'resolve-conflicts',
+        branchId: repo.repository.currentBranch.id,
+        revision: conflict.revision,
+        expectedHeadCommitId: conflict.headCommitId,
+        message: conflict.message,
+        resolutions,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.success) {
+      toast(data?.error?.message || '冲突解决提交失败', 'error');
+      if (res.status === 409) {
+        setRepositoryConflict(null);
+        await loadRepositoryState(repo.repository.currentBranch.id);
+      }
+      return false;
+    }
+    setRepositoryConflict(null);
+    setRepositoryWorkspaceDirty(false);
+    await loadRepositoryState(repo.repository.currentBranch.id);
+    toast(`冲突已解决，版本 ${data.data.shortHash} 已提交`);
+    return true;
+  }, [repositoryConflict, repositorySession, loadRepositoryState]);
+
+  const createRepositoryPull = useCallback(async (title: string, body: string) => {
+    const current = useIcebergStore.getState().iceberg;
+    const repo = repositorySession;
+    if (!current || !repo || repositoryWorkspaceDirty) return false;
+    const res = await fetch(`/api/icebergs/${current.id}/repository`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create-pull',
+        title,
+        body,
+        headBranchId: repo.repository.currentBranch.id,
+        baseBranchId: repo.repository.defaultBranchId,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.success) {
+      toast(data?.error?.message || '创建合并请求失败', 'error');
+      return false;
+    }
+    await loadRepositoryState(repo.repository.currentBranch.id);
+    toast(`合并请求 #${data.data.number} 已创建`);
+    return true;
+  }, [repositorySession, repositoryWorkspaceDirty, loadRepositoryState]);
 
   const acceptCollaborationRevision = useCallback((raw: unknown, broadcast = true) => {
     if (typeof raw !== 'string' || Number.isNaN(new Date(raw).getTime())) return;
@@ -752,9 +1067,16 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     };
   }, [icebergId, rememberMetadataBaseline]);
 
+  // 功能开关开启时，在旧详情接口完成权限校验后切换到服务端版本库工作副本。
+  useEffect(() => {
+    if (!iceberg || iceberg.id.startsWith('temp_') || repositorySession) return;
+    void loadRepositoryState();
+  }, [iceberg?.id, repositorySession, loadRepositoryState]);
+
   // 自动保存 (debounce 2秒)
   useEffect(() => {
     if (!isDirty || !iceberg) return;
+    if (repositorySession) return;
 
     // 清除之前的定时器
     if (autoSaveTimerRef.current) {
@@ -831,6 +1153,19 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     };
   }, [isDirty, iceberg, customSlug, pushVersionSnapshot, getDraftStorageKey, clearSyncFailure, queueSyncFailure, reconcileMetadataSave]);
 
+  // GitHub 式协作开启后，自动保存只写当前用户的工作副本，不推进分支 head。
+  useEffect(() => {
+    if (!repositorySession || !iceberg || !isDirty) return;
+    setRepositoryWorkspaceDirty(true);
+    if (repositorySaveTimerRef.current) window.clearTimeout(repositorySaveTimerRef.current);
+    repositorySaveTimerRef.current = window.setTimeout(() => {
+      void saveRepositoryWorkspace(iceberg);
+    }, 1500);
+    return () => {
+      if (repositorySaveTimerRef.current) window.clearTimeout(repositorySaveTimerRef.current);
+    };
+  }, [repositorySession, iceberg, isDirty, saveRepositoryWorkspace]);
+
   const createTempIcebergOnServer = useCallback(async (
     source: 'auto' | 'manual' | 'sync',
   ): Promise<Iceberg | null> => {
@@ -902,6 +1237,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
   // 确保 tier 已经同步到服务器
   const ensureTierSynced = useCallback(async (tier: Tier) => {
+    if (repositorySession) return tier;
     if (tier.id.startsWith('tier_')) {
       // 本地 tier，需要同步到服务器
       const icebergId = await getRealIcebergId('sync');
@@ -928,7 +1264,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       return null;
     }
     return tier; // 已经是服务器的数据
-  }, [getRealIcebergId, clearSyncFailure, queueSyncFailure, acceptCollaborationRevision]);
+  }, [repositorySession, getRealIcebergId, clearSyncFailure, queueSyncFailure, acceptCollaborationRevision]);
 
   // 添加层级
   const handleAddTier = async () => {
@@ -947,6 +1283,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     // 本地添加
     addTier(newTier);
     setDirty(true);
+    if (repositorySession) return;
 
     // 临时冰山图先确保创建成功，避免后续词条同步出现孤儿 tier
     if (wasTempIceberg) {
@@ -1009,6 +1346,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     const baseTier = useIcebergStore.getState().iceberg?.tiers.find((tier) => tier.id === tierId);
     updateTier(tierId, updates);
     setDirty(true);
+    if (repositorySession) return;
 
     // 如果是服务器数据，同步更新
     if (!tierId.startsWith('tier_') && (updates.name !== undefined || updates.desc !== undefined || updates.order !== undefined)) {
@@ -1064,6 +1402,10 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       : null;
     removeTier(tierId);
     setDirty(true);
+    if (repositorySession) {
+      if (baseTierSnapshot) setRecentlyDeletedTier(baseTierSnapshot);
+      return;
+    }
 
     if (!tierId.startsWith('tier_')) {
       const baseParam = baseTier
@@ -1117,7 +1459,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     if (!deletedTier || !current || isUndoingTierDelete) return;
     setIsUndoingTierDelete(true);
     try {
-      if (current.id.startsWith('temp_') || deletedTier.id.startsWith('tier_')) {
+      if (repositorySession || current.id.startsWith('temp_') || deletedTier.id.startsWith('tier_')) {
         useIcebergStore.setState((state) => {
           if (!state.iceberg) return state;
           const tiers = [
@@ -1169,6 +1511,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     addItem(tierId, item);
     setDirty(true);
     setSelectedItemId(item.id);
+    if (repositorySession) return;
 
     // 找到对应的 tier
     const tier = iceberg?.tiers.find((t) => t.id === tierId);
@@ -1253,6 +1596,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       .find((item) => item.id === itemId);
     updateItem(itemId, updates);
     setDirty(true);
+    if (repositorySession) return true;
 
     if (!itemId.startsWith('item_') && (updates.title !== undefined || updates.desc !== undefined || updates.labels !== undefined)) {
       const payload = {
@@ -1334,6 +1678,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
       .find((item) => item.id === itemId);
     removeItem(itemId);
     setDirty(true);
+    if (repositorySession) return;
 
     if (!itemId.startsWith('item_')) {
       const baseParam = baseItem?.updatedAt
@@ -1428,6 +1773,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     key: string,
     fallbackMessage: string,
   ) => {
+    if (repositorySession) return;
     const current = useIcebergStore.getState().iceberg;
     if (!current || current.id.startsWith('temp_')) return;
     const body = {
@@ -1612,6 +1958,11 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
 
   const handleSave = async () => {
     if (!iceberg) return;
+    if (repositorySession) {
+      const saved = await saveRepositoryWorkspace(iceberg);
+      if (saved) toast('工作副本已保存；需要形成正式历史时请点击“提交版本”');
+      return;
+    }
     try {
       if (iceberg.id.startsWith('temp_')) {
         const slugErr = validateSlug(customSlug);
@@ -1682,6 +2033,16 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
    */
   const handleSubmit = async (confirmedNsfw = nsfwConfirmed) => {
     if (!iceberg) return;
+    if (repositorySession) {
+      if (repositorySession.repository.currentBranch.id !== repositorySession.repository.defaultBranchId) {
+        toast('当前位于改动分支，请先发起并合并 Pull Request', 'error');
+        return;
+      }
+      if (repositoryWorkspaceDirty || isDirty || repositoryWorkspaceSaving) {
+        toast('请先提交当前版本，再提交审核', 'error');
+        return;
+      }
+    }
     setIsSubmitting(true);
     try {
       // 确保 iceberg 已持久化
@@ -1910,6 +2271,19 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
     try {
       // 在任何远端写入前保留完整本地快照，作为编辑器内可恢复版本。
       pushVersionSnapshot(iceberg, 'import');
+      if (repositorySession) {
+        const merged = mergeImportedWorkingCopy(iceberg, pendingImportSync.imported);
+        setIceberg(withTopic(merged.iceberg));
+        setDirty(true);
+        setRepositoryWorkspaceDirty(true);
+        setLastImportSyncSummary(merged.summary);
+        setPendingImportSync(null);
+        setSelectedItemId((current) => current && merged.iceberg.tiers.some(
+          (tier) => tier.items.some((item) => item.id === current),
+        ) ? current : null);
+        toast('源站更新已合并到工作副本，请检查后提交版本');
+        return;
+      }
       const res = await fetch(`/api/icebergs/${iceberg.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -1966,7 +2340,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           status={iceberg.status}
           icebergId={iceberg.id}
           isNew={iceberg.id.startsWith('temp_')}
-          isSaving={isSaving}
+          isSaving={isSaving || repositoryWorkspaceSaving}
           isDirty={isDirty}
           lastSaved={lastSaved}
           historyCount={versionHistory.length}
@@ -1982,6 +2356,29 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           }}
           onShowHistory={() => setShowVersionHistory(true)}
         />
+
+        {repositorySession && (
+          <RepositoryControls
+            state={{
+              role: repositorySession.role,
+              defaultBranchId: repositorySession.repository.defaultBranchId,
+              currentBranch: repositorySession.repository.currentBranch,
+              branches: repositorySession.repository.branches,
+              headCommit: repositorySession.repository.headCommit,
+              openPull: repositorySession.repository.openPull,
+              dirty: repositoryWorkspaceDirty,
+              workspaceSaving: repositoryWorkspaceSaving,
+            }}
+            icebergSlug={iceberg.slug || iceberg.id}
+            onSelectBranch={selectRepositoryBranch}
+            onCreateBranch={createRepositoryBranch}
+            onCommit={commitRepositoryVersion}
+            onCreatePull={createRepositoryPull}
+            conflict={repositoryConflict}
+            onResolveConflicts={resolveRepositoryConflicts}
+            onDismissConflict={() => setRepositoryConflict(null)}
+          />
+        )}
 
         {pendingImportSync && (
           <div className="mx-3 mt-3 flex flex-col gap-3 rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between lg:mx-0">
@@ -2464,6 +2861,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
                 isSaving={isSaving}
                 isSubmitting={isSubmitting}
                 submitText={submitButtonText}
+                saveText={repositorySession ? '[ 保存工作副本 ]' : '[ 保存草稿 ]'}
               />
             </>
           )}
@@ -2505,6 +2903,7 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
           isSaving={isSaving}
           isSubmitting={isSubmitting}
           submitText={submitButtonText}
+          saveText={repositorySession ? '[ 保存工作副本 ]' : '[ 保存草稿 ]'}
         />
       )}
 
@@ -2760,11 +3159,18 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
               <ul className="space-y-2 mb-6">
                 {checklistItems.map(item => (
                   <li key={item.key} className="flex items-start gap-3 text-xs">
-                    <span className={`flex-shrink-0 mt-0.5 ${item.pass ? 'text-success' : 'text-danger'}`}>
-                      {item.pass ? '✓' : '✗'}
+                    <span className={`flex-shrink-0 mt-0.5 ${
+                      item.pass ? 'text-success' : item.blocking === false ? 'text-warning' : 'text-danger'
+                    }`}>
+                      {item.pass ? '✓' : item.blocking === false ? '!' : '✗'}
                     </span>
-                    <span className={item.pass ? 'text-text-mid' : 'text-text-hi'}>
-                      {item.pass ? item.label : (item.hint ?? item.label)}
+                    <span className={
+                      item.pass ? 'text-text-mid' : item.blocking === false ? 'text-warning' : 'text-text-hi'
+                    }>
+                      <span className="block">{item.label}</span>
+                      {!item.pass && item.hint && (
+                        <span className="mt-0.5 block text-[10px] leading-relaxed text-text-mid">{item.hint}</span>
+                      )}
                     </span>
                   </li>
                 ))}
@@ -2792,7 +3198,11 @@ export function IcebergEditor({ icebergId }: IcebergEditorProps) {
               )}
 
               {checklistItems.every(i => i.pass) || (
-                checklistItems.every(i => i.pass || (i.key === 'nsfw' && nsfwConfirmed))
+                checklistItems.every(i => (
+                  i.pass
+                  || i.blocking === false
+                  || (i.key === 'nsfw' && nsfwConfirmed)
+                ))
               ) ? (
                 <div className="modern-modal-actions flex gap-3">
                   <button

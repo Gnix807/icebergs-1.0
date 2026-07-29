@@ -3,6 +3,7 @@ import { prisma } from '../../../../lib/prisma';
 import { success, error, ErrorCodes } from '../../../../lib/api';
 import { getSession } from '../../../../lib/auth/index';
 import { can } from '../../../../lib/permissions';
+import { hasCapability } from '../../../../lib/capabilities';
 
 function json(body: unknown, status: number) {
   return new Response(JSON.stringify(body), {
@@ -42,18 +43,18 @@ async function deleteIdea(event: APIContext, legacyGet = false): Promise<Respons
     });
     if (!existing) return json(error(ErrorCodes.NOT_FOUND, '创意不存在'), 404);
 
-    const canDeleteAny = can(session, 'content:delete:any');
+    const canModerate = hasCapability(session, 'COMMUNITY_MODERATION');
     const canDeleteOwn = existing.creatorId === session.userId
       && can(session, 'content:edit:own');
-    if (!canDeleteAny && !canDeleteOwn) {
-      return json(error(ErrorCodes.FORBIDDEN, '只有创建者或管理员可以删除创意'), 403);
+    if (!canModerate && !canDeleteOwn) {
+      return json(error(ErrorCodes.FORBIDDEN, '只有创建者或社区管理人员可以删除创意'), 403);
     }
 
     // Votes, claimants and comments cascade in the database. Keep ownership
     // in the final predicate so a concurrent permission change cannot turn
     // this into an unauthorized delete.
     const deleted = await prisma.idea.deleteMany({
-      where: canDeleteAny
+      where: canModerate
         ? { id }
         : { id, creatorId: session.userId },
     });
@@ -121,11 +122,11 @@ export async function GET(event: APIContext) {
         });
       }
 
-      // 只有创建者、认领者或管理员可以执行其余修改操作
+      // 只有创建者、认领者或具备社区管理能力的用户可以执行其余修改操作。
       const isOwner = idea.creatorId === session.userId;
       const isClaimant = idea.claimedBy === session.userId;
-      const isAdmin = session.isFounder || session.role === 'ADMIN';
-      if (!isOwner && !isClaimant && !isAdmin) {
+      const canModerate = hasCapability(session, 'COMMUNITY_MODERATION');
+      if (!isOwner && !isClaimant && !canModerate) {
         return new Response(JSON.stringify(error(ErrorCodes.FORBIDDEN, '无权限')), {
           status: 403, headers: { 'Content-Type': 'application/json' },
         });

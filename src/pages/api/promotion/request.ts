@@ -14,6 +14,7 @@ import type { APIContext } from 'astro';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { prisma } from '../../../lib/prisma';
 import { getSession } from '../../../lib/auth';
+import { legacyGovernanceWritesEnabled } from '../../../lib/governance';
 
 const EXPIRE_DAYS   = 30;
 
@@ -32,6 +33,9 @@ async function getThresholds() {
 
 export async function ALL(event: APIContext) {
   try {
+    if (!await legacyGovernanceWritesEnabled()) {
+      return json(error(ErrorCodes.LEGACY_GOVERNANCE_RETIRED, '角色晋升已停用，请使用贡献档案和能力申请'), 409);
+    }
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
@@ -114,4 +118,3 @@ function json(body: unknown, status: number) {
     headers: { 'Content-Type': 'application/json' },
   });
 }
-

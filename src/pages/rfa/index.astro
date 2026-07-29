@@ -4,15 +4,8 @@
  */
 import Layout from '../../layouts/Layout.astro';
 import { prisma } from '../../lib/prisma';
-import { getSessionById } from '../../lib/auth';
-import { getRfaSettings } from '../../lib/rfa';
-import FeatureGate from '../../components/FeatureGate.astro';
-
-const sessionId = Astro.cookies.get('session')?.value;
-const session   = await getSessionById(sessionId);
 
 const db = prisma;
-const settings = await getRfaSettings();
 
 const openRfas = await db.rfaRequest.findMany({
   where: { status: 'OPEN' },
@@ -48,15 +41,20 @@ const STATUS_COLOR: Record<string, string> = {
 ---
 
 <Layout title="编辑资格申请（RfA）— 冰山图宇宙">
-  <FeatureGate feature="feature_rfa" name="RfA 编辑选举">
   <main class="max-w-4xl mx-auto px-4 py-8">
 
     <div class="mb-8">
       <div class="text-[10px] font-mono text-text-lo tracking-widest mb-2">// RfA · 编辑资格申请</div>
       <h1 class="text-xl font-mono text-text-hi">编辑资格申请（RfA）</h1>
       <p class="text-xs font-mono text-text-lo mt-1">
-        CONTRIBUTOR 可提交申请，经 {settings.voteDays} 天公开投票，达到门槛后晋升为 EDITOR
+        本制度已退役。既有申请、投票和结果仅作为历史档案保留，不再接受新申请或投票。
       </p>
+    </div>
+
+    <div class="border border-warning/30 bg-warning/5 p-4 mb-8">
+      <div class="text-[10px] font-mono text-warning mb-1">LEGACY GOVERNANCE · READ ONLY</div>
+      <p class="text-[11px] font-mono leading-relaxed text-text-body">需要承担发布审核、内容策展、社区管理或站点管理职责时，请前往社区职责页申请具体能力。旧角色、质量分和公开拉票不再产生新权限。</p>
+      <a href="/org#capabilities" class="inline-block mt-2 text-[10px] font-mono text-brand hover:underline">前往能力中心 →</a>
     </div>
 
     <!-- 当前申请 -->
@@ -100,17 +98,6 @@ const STATUS_COLOR: Record<string, string> = {
       )}
     </section>
 
-    <!-- 申请入口 -->
-    {session?.role === 'CONTRIBUTOR' && (
-      <div class="border border-[#3b82f630] bg-info/5 p-4 mb-8">
-        <div class="text-[10px] font-mono text-info mb-2">你是 CONTRIBUTOR，满足条件即可提交 RfA</div>
-        <a href="/rfa/apply"
-          class="inline-block px-4 py-2 text-xs font-mono border border-info/25 text-info hover:bg-info/10 transition-colors">
-          申请编辑资格 →
-        </a>
-      </div>
-    )}
-
     <!-- 历史记录 -->
     {closedRfas.length > 0 && (
       <section>
@@ -141,5 +128,4 @@ const STATUS_COLOR: Record<string, string> = {
     )}
 
   </main>
-  </FeatureGate>
 </Layout>

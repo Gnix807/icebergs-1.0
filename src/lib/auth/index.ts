@@ -2,6 +2,11 @@ import { GitHub, Google } from 'arctic';
 import type { APIContext } from 'astro';
 import { prisma } from '../prisma';
 import type { Role, AccountStatus } from '../types';
+import {
+  resolveUserCapabilities,
+  type Capability,
+  type CapabilityState,
+} from '../capabilities';
 import 'dotenv/config';
 
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || '';
@@ -64,6 +69,8 @@ export interface SessionUser {
   role: Role;
   status: AccountStatus;
   isFounder: boolean;
+  capabilities: Capability[];
+  capabilityStates: CapabilityState[];
 }
 
 /** Resolve a raw session ID to a SessionUser (Astro pages). */
@@ -118,7 +125,15 @@ async function resolveSessionUser(userId: string): Promise<SessionUser | null> {
   // PERM_BANNED: block session — but FOUNDER is immune
   if (status === 'PERM_BANNED' && !isFounder) return null;
 
-  return { userId, role: user.role as Role, status, isFounder };
+  const resolved = await resolveUserCapabilities(userId, user.role, isFounder);
+  return {
+    userId,
+    role: user.role as Role,
+    status,
+    isFounder,
+    capabilities: resolved.capabilities,
+    capabilityStates: resolved.states,
+  };
 }
 
 export async function deleteSession(event: APIContext): Promise<void> {
@@ -128,4 +143,3 @@ export async function deleteSession(event: APIContext): Promise<void> {
   }
   event.cookies.delete('session', { path: '/' });
 }
-

@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import { prisma } from '../lib/prisma';
 import { getSessionById } from '../lib/auth';
+import { overlayPublishedMetadata } from '../lib/icebergRepository';
 
 let recentIcebergs: any[] = [];
 let topDeep: any[] = [];
@@ -163,6 +164,22 @@ try {
       .sort((a: any, b: any) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
       .slice(0, 6);
   }
+
+  [
+    recentIcebergs,
+    topDeep,
+    trendingIcebergs,
+    featuredIcebergs,
+    continueBrowsing,
+    followingUpdates,
+  ] = await Promise.all([
+    overlayPublishedMetadata(recentIcebergs),
+    overlayPublishedMetadata(topDeep),
+    overlayPublishedMetadata(trendingIcebergs),
+    overlayPublishedMetadata(featuredIcebergs),
+    overlayPublishedMetadata(continueBrowsing),
+    overlayPublishedMetadata(followingUpdates),
+  ]);
 } catch (err) {
   console.error('首页数据加载失败:', err);
   serverError = '数据加载失败，请刷新页面重试';

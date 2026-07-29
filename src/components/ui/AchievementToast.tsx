@@ -97,7 +97,7 @@ export function AchievementToast() {
         {/* 顶部标签 */}
         <div className="px-3 py-1 bg-surface-2 border-b border-border-subtle">
           <span className="text-[10px] font-mono text-brand tracking-widest animate-pulse">
-            ▶ 隐藏权限已解锁 // ACHIEVEMENT UNLOCKED
+            ▶ 成就已解锁 // ACHIEVEMENT UNLOCKED
           </span>
         </div>
         {/* 内容 */}

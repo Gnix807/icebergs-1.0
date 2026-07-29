@@ -201,7 +201,7 @@ export function AdminReviews() {
               defaultValue=""
             >
               <option value="" disabled>选择模板（可选）</option>
-              <option value="内容过于空洞，词条描述不足">内容过于空洞，词条描述不足</option>
+              <option value="内容过于空洞，词条标题或层级结构缺乏有效信息">内容过于空洞，词条标题或层级结构缺乏有效信息</option>
               <option value="存在明显错误信息，请提供来源引用">存在明显错误信息，请提供来源引用</option>
               <option value="层级划分不合理，请参考创作指南">层级划分不合理，请参考创作指南</option>
               <option value="包含违规内容">包含违规内容</option>

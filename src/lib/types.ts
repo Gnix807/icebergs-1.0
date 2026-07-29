@@ -67,6 +67,8 @@ export interface ChecklistItem {
   key: string;
   label: string;
   pass: boolean;
+  /** false 表示建议项：展示提醒，但不阻止提交审核 */
+  blocking?: boolean;
   hint?: string;
 }
 
@@ -107,7 +109,7 @@ export interface AchievementUserStats {
 
 export interface AchievementContext {
   userId: string
-  triggerType: 'read' | 'search' | 'random' | 'vote' | 'visit'
+  triggerType: 'read' | 'search' | 'random' | 'vote' | 'visit' | 'contribution' | 'review' | 'service'
   currentHour: number
   currentMinute: number
   currentDayOfWeek: number    // 0=Sunday
@@ -145,5 +147,11 @@ export interface AchievementContext {
     ideaSubmittedCount: number
     taskCompletedCount: number
     collabEditCount: number
+    publishedIcebergCount: number
+    mergedPullRequestCount: number
+    distinctCollabIcebergCount: number
+    nonSelfReviewCount: number
+    validReviewCount: number
+    completedTaskCount: number
   }
 }

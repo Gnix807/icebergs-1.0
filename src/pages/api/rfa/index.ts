@@ -8,6 +8,7 @@ import { getSession } from '../../../lib/auth';
 import { success, error, ErrorCodes } from '../../../lib/api';
 import { getRfaSettings } from '../../../lib/rfa';
 import { notify } from '../../../lib/notify';
+import { legacyGovernanceWritesEnabled } from '../../../lib/governance';
 
 const db = prisma;
 
@@ -20,6 +21,9 @@ function json(body: unknown, status = 200) {
 export async function GET(event: APIContext) {
   const dataParam = event.url.searchParams.get('data');
   if (dataParam) {
+    if (!await legacyGovernanceWritesEnabled()) {
+      return json(error(ErrorCodes.LEGACY_GOVERNANCE_RETIRED, 'RfA 已转为只读历史，请使用能力认证'), 409);
+    }
 
     const session = await getSession(event);
     if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
@@ -98,4 +102,3 @@ export async function GET(event: APIContext) {
   });
   return json(success({ requests }));
 }
-

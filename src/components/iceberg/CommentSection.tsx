@@ -27,8 +27,7 @@ interface CommentItem extends ReplyItem {
 interface Props {
   icebergId: string;
   currentUserId: string | null;
-  currentUserRole: string | null;
-  isFounder: boolean;
+  canModerateComments: boolean;
 }
 
 type Sort = 'time' | 'hot';
@@ -46,12 +45,6 @@ function formatDate(iso: string) {
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days} 天前`;
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-const ROLE_RANK: Record<string, number> = { USER: 0, CONTRIBUTOR: 1, EDITOR: 2, ADMIN: 3 };
-function canModerate(role: string | null, isFounder: boolean) {
-  if (isFounder) return true;
-  return (ROLE_RANK[role ?? ''] ?? -1) >= ROLE_RANK['EDITOR'];
 }
 
 function getDisplayName(c: ReplyItem): string {
@@ -114,7 +107,7 @@ function Avatar({
   );
 }
 
-export function CommentSection({ icebergId, currentUserId, currentUserRole, isFounder }: Props) {
+export function CommentSection({ icebergId, currentUserId, canModerateComments }: Props) {
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<Sort>('time');
@@ -258,9 +251,9 @@ export function CommentSection({ icebergId, currentUserId, currentUserRole, isFo
     }
   };
 
-  // 游客评论只有管理员/作者可删；注册用户可删自己的
+  // 注册用户可删自己的评论；社区管理能力可处理所有评论。
   const canDel = (c: ReplyItem) =>
-    (c.user && currentUserId === c.user.id) || canModerate(currentUserRole, isFounder);
+    (c.user && currentUserId === c.user.id) || canModerateComments;
 
   const handleKey = (e: React.KeyboardEvent, fn: () => void) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); fn(); }

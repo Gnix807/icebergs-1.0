@@ -14,13 +14,11 @@ export async function ALL(event: APIContext) {
   const session = await getSession(event);
   if (!session) return json(error(ErrorCodes.UNAUTHORIZED, '请先登录'), 401);
 
-  const isAdmin = session.isFounder || session.role === 'ADMIN';
-
   const project = await prisma.project.findUnique({ where: { slug: event.params.slug }, select: { id: true } });
   if (!project) return json(error(ErrorCodes.NOT_FOUND, '专题不存在'), 404);
 
   const inProject = await isProjectMember(session.userId, project.id);
-  if (!inProject && !isAdmin) return json(error(ErrorCodes.FORBIDDEN, '你不是该项目成员'), 403);
+  if (!inProject) return json(error(ErrorCodes.FORBIDDEN, '你不是该项目成员'), 403);
 
   let body: { type?: string; id?: string };
   try { body = event.request.method === 'GET' ? JSON.parse(event.url.searchParams.get('data') || '{}') : await event.request.json(); } catch { return json(error(ErrorCodes.BAD_REQUEST, '请求格式错误'), 400); }
@@ -29,7 +27,7 @@ export async function ALL(event: APIContext) {
   if (body.type === 'iceberg') {
     const existing = await prisma.iceberg.findUnique({ where: { id: body.id }, select: { projectId: true, authorId: true } });
     if (!existing) return json(error(ErrorCodes.NOT_FOUND, '冰山图不存在'), 404);
-    if (existing.authorId !== session.userId && !isAdmin) {
+    if (existing.authorId !== session.userId) {
       return json(error(ErrorCodes.FORBIDDEN, '只有作者才能将此冰山图关联到项目'), 403);
     }
     const newProjectId = existing.projectId === project.id ? null : project.id;

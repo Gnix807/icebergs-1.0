@@ -3,44 +3,38 @@ import { AdminReviews } from './AdminReviews';
 import { AdminUsers } from './AdminUsers';
 import { AdminSettings } from './AdminSettings';
 import { AdminAppeals } from './AdminAppeals';
-import { AdminPromotions } from './AdminPromotions';
 import { AdminReports } from './AdminReports';
 import { AdminFeedback } from './AdminFeedback';
 import { AdminAchievements } from './AdminAchievements';
-import { AdminElections } from './AdminElections';
 import { AdminAnnouncements } from './AdminAnnouncements';
 import { AdminFeatureFlags } from './AdminFeatureFlags';
 import { AdminSeo } from './AdminSeo';
+import { AdminCapabilities } from './AdminCapabilities';
 
-type AdminTab = 'reviews' | 'users' | 'settings' | 'appeals' | 'promotions' | 'reports' | 'feedback' | 'achievements' | 'elections' | 'announcements' | 'features' | 'seo';
+type AdminTab = 'reviews' | 'users' | 'settings' | 'appeals' | 'reports' | 'feedback' | 'achievements' | 'announcements' | 'features' | 'seo' | 'capabilities';
 
 interface Props {
-  role: string;
   isFounder?: boolean;
+  capabilities?: string[];
 }
 
-const TABS: { id: AdminTab; label: string; code: string; minRole: string }[] = [
-  { id: 'reviews',    label: '审核队列', code: 'REVIEWS',    minRole: 'EDITOR' },
-  { id: 'promotions', label: '晋升申请', code: 'PROMOTIONS', minRole: 'EDITOR' },
-  { id: 'reports',    label: '举报处理', code: 'REPORTS',    minRole: 'EDITOR' },
-  { id: 'feedback',   label: '用户反馈', code: 'FEEDBACK',   minRole: 'EDITOR' },
-  { id: 'users',      label: '用户管理', code: 'USERS',      minRole: 'ADMIN'  },
-  { id: 'appeals',    label: '申诉处理', code: 'APPEALS',    minRole: 'ADMIN'  },
-  { id: 'elections',  label: '站长选举', code: 'ELECTIONS',  minRole: 'ADMIN'  },
-  { id: 'announcements', label: '公告发布', code: 'ANNOUNCE', minRole: 'ADMIN' },
-  { id: 'achievements', label: '成就配置', code: 'ACHIEVEMENTS', minRole: 'ADMIN' },
-  { id: 'settings',     label: '系统配置', code: 'SETTINGS',     minRole: 'ADMIN' },
-  { id: 'features',     label: '功能开关', code: 'FEATURES',     minRole: 'ADMIN' },
-  { id: 'seo',          label: 'SEO',      code: 'SEO_META',    minRole: 'ADMIN' },
+const TABS: { id: AdminTab; label: string; code: string; capability: string }[] = [
+  { id: 'reviews', label: '审核队列', code: 'REVIEWS', capability: 'PUBLICATION_REVIEW' },
+  { id: 'reports', label: '举报处理', code: 'REPORTS', capability: 'COMMUNITY_MODERATION' },
+  { id: 'appeals', label: '申诉处理', code: 'APPEALS', capability: 'COMMUNITY_MODERATION' },
+  { id: 'users', label: '用户管理', code: 'USERS', capability: 'COMMUNITY_MODERATION' },
+  { id: 'feedback', label: '用户反馈', code: 'FEEDBACK', capability: 'CONTENT_CURATION' },
+  { id: 'capabilities', label: '能力与审计', code: 'CAPABILITIES', capability: 'SITE_ADMINISTRATION' },
+  { id: 'announcements', label: '公告发布', code: 'ANNOUNCE', capability: 'SITE_ADMINISTRATION' },
+  { id: 'achievements', label: '成就配置', code: 'ACHIEVEMENTS', capability: 'SITE_ADMINISTRATION' },
+  { id: 'settings', label: '系统配置', code: 'SETTINGS', capability: 'SITE_ADMINISTRATION' },
+  { id: 'features', label: '功能开关', code: 'FEATURES', capability: 'SITE_ADMINISTRATION' },
+  { id: 'seo', label: 'SEO', code: 'SEO_META', capability: 'SITE_ADMINISTRATION' },
 ];
 
-export function AdminPanel({ role, isFounder }: Props) {
-  const isAdmin = role === 'ADMIN' || isFounder;
-  const visibleTabs = TABS.filter(t =>
-    t.minRole === 'EDITOR'
-      ? role === 'EDITOR' || isAdmin
-      : isAdmin,
-  );
+export function AdminPanel({ isFounder, capabilities = [] }: Props) {
+  const visibleTabs = TABS.filter((tab) =>
+    isFounder || capabilities.includes(tab.capability));
 
   const [activeTab, setActiveTab] = useState<AdminTab>(visibleTabs[0]?.id ?? 'reviews');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -88,7 +82,7 @@ export function AdminPanel({ role, isFounder }: Props) {
       {/* 顶部状态栏 */}
       <div className="border border-border-subtle bg-surface-2 px-4 py-2 mb-4 flex items-center justify-between">
         <span className="text-[10px] font-mono text-text-mid tracking-widest">
-          ADMIN CONSOLE — {role}
+          RESPONSIBILITY CONSOLE — {capabilities.length} ACTIVE
         </span>
         <span className="text-[10px] font-mono text-success">● SECURE</span>
       </div>
@@ -137,12 +131,11 @@ export function AdminPanel({ role, isFounder }: Props) {
 
       {/* 面板内容 */}
       {activeTab === 'reviews'    && <AdminReviews />}
-      {activeTab === 'promotions' && <AdminPromotions />}
       {activeTab === 'reports'    && <AdminReports />}
       {activeTab === 'feedback'   && <AdminFeedback />}
       {activeTab === 'users'      && <AdminUsers />}
       {activeTab === 'appeals'      && <AdminAppeals />}
-      {activeTab === 'elections'    && <AdminElections />}
+      {activeTab === 'capabilities' && <AdminCapabilities isFounder={isFounder} />}
       {activeTab === 'announcements' && <AdminAnnouncements />}
       {activeTab === 'achievements' && <AdminAchievements isFounder={isFounder} />}
       {activeTab === 'settings'     && <AdminSettings />}
