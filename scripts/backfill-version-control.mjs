@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
 const VERIFY_ONLY = process.argv.includes('--verify-only');
 const DRY_RUN = process.argv.includes('--dry-run');
 const limitArg = process.argv.find((arg) => arg.startsWith('--limit='));
@@ -66,7 +66,7 @@ function searchText(snapshot) {
   ].join(' ').slice(0, 1_000_000);
 }
 
-async function backfillOne(iceberg) {
+async function backfillOne(prisma, iceberg) {
   const exists = await prisma.icebergBranch.findFirst({
     where: { icebergId: iceberg.id, normalizedName: 'main', archivedAt: null },
   });
@@ -147,11 +147,11 @@ async function backfillOne(iceberg) {
   return 'created';
 }
 
-async function verifyOne(iceberg) {
+async function verifyOne(prisma, iceberg) {
   const branch = await prisma.icebergBranch.findFirst({
     where: { icebergId: iceberg.id, normalizedName: 'main', archivedAt: null },
   });
-  if (!branch) return { missing: true };
+  if (!branch) return { missing: 'repository' };
   const commit = await prisma.icebergCommit.findFirst({
     where: { id: branch.headCommitId, icebergId: iceberg.id },
   });
@@ -166,7 +166,13 @@ async function verifyOne(iceberg) {
   }
   if (iceberg.status === 'PUBLISHED') {
     const publication = await prisma.icebergPublication.findUnique({ where: { icebergId: iceberg.id } });
-    if (!publication) throw new Error(`publication missing: ${iceberg.id}`);
+    if (!publication) {
+      return {
+        missing: 'publication',
+        commitId: commit.id,
+        snapshot: tree.snapshot,
+      };
+    }
     const publicationCommit = await prisma.icebergCommit.findFirst({
       where: { id: publication.commitId, icebergId: iceberg.id },
     });
@@ -179,13 +185,35 @@ async function verifyOne(iceberg) {
       throw new Error(`publication snapshot mismatch: ${iceberg.id}`);
     }
   }
-  return { missing: false };
+  return { missing: null };
 }
 
-async function main() {
+async function backfillPublication(prisma, iceberg, verification) {
+  await prisma.icebergPublication.upsert({
+    where: { icebergId: iceberg.id },
+    create: {
+      icebergId: iceberg.id,
+      commitId: verification.commitId,
+      title: iceberg.title,
+      description: iceberg.description,
+      renderedDescription: iceberg.renderedDescription,
+      topic: iceberg.topic,
+      snapshot: verification.snapshot,
+      searchText: searchText(verification.snapshot),
+      publishedAt: new Date(),
+    },
+    update: {},
+  });
+}
+
+export async function runBackfill(prisma, {
+  verifyOnly = VERIFY_ONLY,
+  dryRun = DRY_RUN,
+  limit = LIMIT,
+} = {}) {
   const icebergs = await prisma.iceberg.findMany({
     orderBy: { createdAt: 'asc' },
-    ...(LIMIT ? { take: LIMIT } : {}),
+    ...(limit ? { take: limit } : {}),
     include: {
       tiers: {
         orderBy: { order: 'asc' },
@@ -197,27 +225,54 @@ async function main() {
   let skipped = 0;
   let missing = 0;
   let verified = 0;
+  let publicationsCreated = 0;
   for (const iceberg of icebergs) {
-    const verification = await verifyOne(iceberg);
+    const verification = await verifyOne(prisma, iceberg);
     if (!verification.missing) {
       verified += 1;
       skipped += 1;
       continue;
     }
     missing += 1;
-    if (VERIFY_ONLY || DRY_RUN) continue;
-    const result = await backfillOne(iceberg);
-    if (result === 'created') created += 1;
-    else skipped += 1;
+    if (verifyOnly || dryRun) continue;
+    if (verification.missing === 'repository') {
+      const result = await backfillOne(prisma, iceberg);
+      if (result === 'created') created += 1;
+      else skipped += 1;
+    } else {
+      await backfillPublication(prisma, iceberg, verification);
+      publicationsCreated += 1;
+    }
+    const repaired = await verifyOne(prisma, iceberg);
+    if (repaired.missing) throw new Error(`backfill incomplete (${repaired.missing}): ${iceberg.id}`);
+    verified += 1;
   }
-  const mode = VERIFY_ONLY ? 'verify-only' : DRY_RUN ? 'dry-run' : 'write';
-  console.log(`version-control backfill complete: mode=${mode}, total=${icebergs.length}, created=${created}, verified=${verified}, missing=${missing}, skipped=${skipped}`);
-  if (VERIFY_ONLY && missing > 0) process.exitCode = 2;
+  const mode = verifyOnly ? 'verify-only' : dryRun ? 'dry-run' : 'write';
+  const stats = {
+    mode,
+    total: icebergs.length,
+    created,
+    publicationsCreated,
+    verified,
+    missing,
+    skipped,
+  };
+  console.log(`version-control backfill complete: mode=${mode}, total=${stats.total}, created=${created}, publicationsCreated=${publicationsCreated}, verified=${verified}, missing=${missing}, skipped=${skipped}`);
+  return stats;
 }
 
-main()
-  .catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-  })
-  .finally(() => prisma.$disconnect());
+const isDirectRun = Boolean(process.argv[1])
+  && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectRun) {
+  const prisma = new PrismaClient();
+  runBackfill(prisma)
+    .then((stats) => {
+      if (VERIFY_ONLY && stats.missing > 0) process.exitCode = 2;
+    })
+    .catch((error) => {
+      console.error(error);
+      process.exitCode = 1;
+    })
+    .finally(() => prisma.$disconnect());
+}

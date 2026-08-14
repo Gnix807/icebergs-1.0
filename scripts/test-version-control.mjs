@@ -3,6 +3,7 @@ import { unlink } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
+import { runBackfill } from './backfill-version-control.mjs';
 
 const outfile = new URL(`../.vc-core-test-${randomUUID()}.mjs`, import.meta.url);
 
@@ -103,6 +104,55 @@ try {
   });
   assert.ok(diffSnapshots(base, moved).some((change) =>
     change.kind === 'item' && change.change === 'moved'));
+
+  const publishedSnapshot = snapshot({
+    metadata: { title: 'Miscellanea', description: '旧站已发布内容', topic: 'other' },
+  });
+  const publishedIceberg = {
+    id: 'Miscellanea',
+    authorId: 'author-a',
+    status: 'PUBLISHED',
+    title: publishedSnapshot.metadata.title,
+    description: publishedSnapshot.metadata.description,
+    renderedDescription: '<p>旧站已发布内容</p>',
+    topic: publishedSnapshot.metadata.topic,
+    tiers: publishedSnapshot.tiers.map((tier) => ({
+      ...tier,
+      items: tier.items.map((item) => ({ ...item, labels: JSON.stringify(item.labels) })),
+    })),
+  };
+  const legacyBranch = { id: 'branch-main', headCommitId: 'commit-initial' };
+  const legacyCommit = { id: 'commit-initial', icebergId: publishedIceberg.id, treeId: 'tree-initial' };
+  const legacyTree = {
+    id: 'tree-initial',
+    hash: hashSnapshot(publishedSnapshot),
+    snapshot: publishedSnapshot,
+  };
+  let publication = null;
+  const fakePrisma = {
+    iceberg: { findMany: async () => [publishedIceberg] },
+    icebergBranch: { findFirst: async () => legacyBranch },
+    icebergCommit: { findFirst: async () => legacyCommit },
+    icebergTree: { findUnique: async () => legacyTree },
+    icebergPublication: {
+      findUnique: async () => publication,
+      upsert: async ({ create }) => {
+        publication = { id: 'publication-a', ...create };
+        return publication;
+      },
+    },
+  };
+  const verifyOnlyStats = await runBackfill(fakePrisma, { verifyOnly: true, dryRun: false });
+  assert.equal(verifyOnlyStats.missing, 1);
+  assert.equal(verifyOnlyStats.publicationsCreated, 0);
+  assert.equal(publication, null);
+  const backfillStats = await runBackfill(fakePrisma, { verifyOnly: false, dryRun: false });
+  assert.equal(backfillStats.publicationsCreated, 1);
+  assert.equal(publication.commitId, legacyCommit.id);
+  assert.deepEqual(publication.snapshot, publishedSnapshot);
+  const repeatedBackfillStats = await runBackfill(fakePrisma, { verifyOnly: false, dryRun: false });
+  assert.equal(repeatedBackfillStats.publicationsCreated, 0);
+  assert.equal(repeatedBackfillStats.skipped, 1);
 
   console.log('version-control core tests passed');
 } finally {
