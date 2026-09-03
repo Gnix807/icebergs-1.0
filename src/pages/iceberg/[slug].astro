@@ -5,6 +5,7 @@ import { renderMarkdownWithMath } from '../../lib/markdown';
 import { SocialBar } from '../../components/iceberg/SocialBar';
 import { ExportButton } from '../../components/iceberg/ExportButton';
 import { CommentSection } from '../../components/iceberg/CommentSection';
+import { IcebergModerationControl } from '../../components/iceberg/IcebergModerationControl';
 import { getSessionById } from '../../lib/auth/index';
 import { checkAchievements, updateDailyStreak } from '../../lib/achievementService';
 import { getRepositoryRole, normalizeSnapshot } from '../../lib/icebergRepository';
@@ -17,6 +18,7 @@ const sessionId = Astro.cookies.get('session')?.value;
 const session   = await getSessionById(sessionId);
 const isLoggedIn = !!session;
 const canCurate = hasCapability(session, 'CONTENT_CURATION');
+const canModerateIceberg = hasCapability(session, 'COMMUNITY_MODERATION');
 
 let iceberg: any = null;
 let error = null;
@@ -30,7 +32,13 @@ try {
   if (slug) {
     const whereClause: any = { OR: [{ slug }, { id: slug }] };
     if (session?.userId) {
-      whereClause.AND = [{ OR: [{ status: 'PUBLISHED' }, { authorId: session.userId }] }];
+      whereClause.AND = [{
+        OR: [
+          { status: 'PUBLISHED' },
+          ...(canModerateIceberg ? [{ status: 'ARCHIVED' }] : []),
+          { authorId: session.userId },
+        ],
+      }];
     } else {
       whereClause.status = 'PUBLISHED';
     }
@@ -426,23 +434,35 @@ if (iceberg?.status === 'PUBLISHED') {
                 </a>
               </span>
             </div>
-            {iceberg.status === 'PUBLISHED' && (
+            {(iceberg.status === 'PUBLISHED' || (canModerateIceberg && iceberg.status === 'ARCHIVED')) && (
               <div class="iceberg-meta-actions flex min-w-0 flex-wrap items-center gap-2">
-                <SocialBar client:load icebergId={iceberg.id} />
-                <ExportButton
-                  client:load
-                  icebergTitle={iceberg.title}
-                  tiers={iceberg.tiers.map((tier: any, ti: number) => ({
-                    name: tier.name,
-                    color: tierColors[ti % 6],
-                    items: tier.items.map((item: any) => ({
-                      title: item.title,
-                      labels: ((item as any)._labels as string[]) || [],
-                    })),
-                  }))}
-                  icebergUrl={`${Astro.url.origin}/iceberg/${iceberg.slug}`}
-                  labelColors={labelColorMap}
-                />
+                {iceberg.status === 'PUBLISHED' && (
+                  <>
+                    <SocialBar client:load icebergId={iceberg.id} />
+                    <ExportButton
+                      client:load
+                      icebergTitle={iceberg.title}
+                      tiers={iceberg.tiers.map((tier: any, ti: number) => ({
+                        name: tier.name,
+                        color: tierColors[ti % 6],
+                        items: tier.items.map((item: any) => ({
+                          title: item.title,
+                          labels: ((item as any)._labels as string[]) || [],
+                        })),
+                      }))}
+                      icebergUrl={`${Astro.url.origin}/iceberg/${iceberg.slug}`}
+                      labelColors={labelColorMap}
+                    />
+                  </>
+                )}
+                {canModerateIceberg && (
+                  <IcebergModerationControl
+                    client:load
+                    icebergId={iceberg.id}
+                    icebergTitle={iceberg.title}
+                    status={iceberg.status}
+                  />
+                )}
               </div>
             )}
           </div>
