@@ -12,6 +12,29 @@ export type IcebergModerationTransition =
   | { kind: 'noop'; to: 'PUBLISHED' | 'ARCHIVED' }
   | { kind: 'invalid'; message: string };
 
+export function isAllowedRequestOrigin(
+  requestUrl: string | URL,
+  origin: string | null,
+  configuredPublicUrl?: string | null,
+): boolean {
+  if (!origin) return true;
+
+  try {
+    const request = new URL(requestUrl);
+    const source = new URL(origin);
+    if (source.origin === request.origin || source.host === request.host) return true;
+
+    if (configuredPublicUrl) {
+      const configured = new URL(configuredPublicUrl);
+      if (source.origin === configured.origin) return true;
+    }
+  } catch {
+    return false;
+  }
+
+  return false;
+}
+
 export function parseIcebergModerationRequest(raw: unknown): IcebergModerationRequestResult {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     return { ok: false, message: '请求格式错误' };
