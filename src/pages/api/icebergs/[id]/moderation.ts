@@ -4,6 +4,7 @@ import { getSession } from '../../../../lib/auth';
 import { hasCapability, writeCapabilityAudit } from '../../../../lib/capabilities';
 import {
   getIcebergModerationTransition,
+  isAllowedRequestOrigin,
   parseIcebergModerationRequest,
 } from '../../../../lib/icebergModeration';
 import { notify } from '../../../../lib/notify';
@@ -24,7 +25,7 @@ function json(body: unknown, status = 200) {
 export async function POST(event: APIContext) {
   try {
     const origin = event.request.headers.get('origin');
-    if (origin && origin !== event.url.origin) {
+    if (!isAllowedRequestOrigin(event.url, origin, process.env.REDIRECT_URI)) {
       return json(error(ErrorCodes.FORBIDDEN, '拒绝跨站管理请求'), 403);
     }
 

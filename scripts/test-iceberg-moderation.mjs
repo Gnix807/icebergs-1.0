@@ -17,8 +17,32 @@ try {
   });
   const {
     getIcebergModerationTransition,
+    isAllowedRequestOrigin,
     parseIcebergModerationRequest,
   } = await import(`${outfile.href}?v=${Date.now()}`);
+
+  assert.equal(isAllowedRequestOrigin(
+    'http://icebergs.gnix807.cn/api/icebergs/test/moderation',
+    'https://icebergs.gnix807.cn',
+  ), true);
+  assert.equal(isAllowedRequestOrigin(
+    'http://app:4321/api/icebergs/test/moderation',
+    'https://icebergs.gnix807.cn',
+    'https://icebergs.gnix807.cn/api/auth/callback',
+  ), true);
+  assert.equal(isAllowedRequestOrigin(
+    'http://icebergs.gnix807.cn/api/icebergs/test/moderation',
+    'https://evil.example',
+    'https://icebergs.gnix807.cn/api/auth/callback',
+  ), false);
+  assert.equal(isAllowedRequestOrigin(
+    'http://icebergs.gnix807.cn/api/icebergs/test/moderation',
+    'not-a-url',
+  ), false);
+  assert.equal(isAllowedRequestOrigin(
+    'http://icebergs.gnix807.cn/api/icebergs/test/moderation',
+    null,
+  ), true);
 
   assert.deepEqual(
     parseIcebergModerationRequest({ action: 'ARCHIVE', reason: '存在明确违规内容' }),
